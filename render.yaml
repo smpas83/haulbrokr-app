@@ -1,0 +1,47 @@
+# Render Blueprint — API only (web deploys to Vercel, database on Neon)
+# https://render.com/docs/blueprint-spec
+#
+# Deploy: Render Dashboard → New Blueprint → connect this repo
+# After deploy, note the service URL (e.g. haulbrokr-api.onrender.com)
+# and set it in artifacts/dumpbroker/vercel.json if the name differs.
+
+services:
+  - type: web
+    name: haulbrokr-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      # Neon Postgres — paste connection string from neon.tech dashboard
+      # Use pooled URL with ?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: UPLOAD_TOKEN_SECRET
+        generateValue: true
+      - key: TICKET_QR_SECRET
+        generateValue: true
+      - key: ADMIN_USER_IDS
+        sync: false
+      # Cloudflare R2 or AWS S3 path prefixes — see docs/DEPLOY-VERCEL-RENDER.md
+      - key: PRIVATE_OBJECT_DIR
+        sync: false
+      - key: PUBLIC_OBJECT_SEARCH_PATHS
+        sync: false

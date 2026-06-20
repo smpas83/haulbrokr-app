@@ -1,0 +1,3883 @@
+openapi: 3.1.0
+info:
+  title: HaulBrokr API
+  version: 1.0.0
+  description: HaulBrokr API — Uber for dump trucks
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: profiles
+    description: User profile management
+  - name: trucks
+    description: Truck fleet management
+  - name: requests
+    description: Job request management
+  - name: bids
+    description: Bidding on job requests
+  - name: jobs
+    description: Active and completed jobs
+  - name: dashboard
+    description: Dashboard analytics
+  - name: wallet
+    description: Provider wallet balances and transactions
+  - name: dump-sites
+    description: Dump site / disposal facility directory
+  - name: account
+    description: Account compliance — W-9, insurance, payment setup
+  - name: payouts
+    description: Provider payout (Stripe Connect) status and onboarding
+  - name: admin
+    description: Admin review of carrier compliance and customer credit applications
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── Profiles ─────────────────────────────────────────────────────────────────
+  /profiles/me:
+    get:
+      operationId: getMyProfile
+      tags: [profiles]
+      summary: Get authenticated user's profile
+      responses:
+        "200":
+          description: Profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: Profile not found
+    patch:
+      operationId: updateMyProfile
+      tags: [profiles]
+      summary: Update authenticated user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /profiles:
+    post:
+      operationId: createProfile
+      tags: [profiles]
+      summary: Create a new profile for the authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileInput"
+      responses:
+        "201":
+          description: Profile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  # ── Trucks ───────────────────────────────────────────────────────────────────
+  /trucks:
+    get:
+      operationId: listTrucks
+      tags: [trucks]
+      summary: List trucks (own fleet for providers, available for customers)
+      parameters:
+        - name: available
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of trucks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Truck"
+    post:
+      operationId: createTruck
+      tags: [trucks]
+      summary: Add a truck to the fleet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TruckInput"
+      responses:
+        "201":
+          description: Truck created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Truck"
+
+  /trucks/{id}:
+    get:
+      operationId: getTruck
+      tags: [trucks]
+      summary: Get a truck by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Truck found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Truck"
+        "404":
+          description: Truck not found
+    patch:
+      operationId: updateTruck
+      tags: [trucks]
+      summary: Update a truck
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TruckUpdate"
+      responses:
+        "200":
+          description: Truck updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Truck"
+    delete:
+      operationId: deleteTruck
+      tags: [trucks]
+      summary: Remove a truck from the fleet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Truck deleted
+
+  # ── Job Requests ─────────────────────────────────────────────────────────────
+  /requests:
+    get:
+      operationId: listRequests
+      tags: [requests]
+      summary: List job requests
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, bidding, accepted, in_progress, completed, cancelled]
+        - name: mine
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of job requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobRequest"
+    post:
+      operationId: createRequest
+      tags: [requests]
+      summary: Post a new job request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobRequestInput"
+      responses:
+        "201":
+          description: Request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobRequest"
+
+  /requests/{id}:
+    get:
+      operationId: getRequest
+      tags: [requests]
+      summary: Get a job request by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Request found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobRequest"
+        "404":
+          description: Request not found
+    patch:
+      operationId: updateRequest
+      tags: [requests]
+      summary: Update a job request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobRequestUpdate"
+      responses:
+        "200":
+          description: Request updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobRequest"
+    delete:
+      operationId: deleteRequest
+      tags: [requests]
+      summary: Cancel a job request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Request cancelled
+
+  # ── Bids ─────────────────────────────────────────────────────────────────────
+  /requests/{requestId}/bids:
+    get:
+      operationId: listBids
+      tags: [bids]
+      summary: List bids on a job request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of bids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bid"
+    post:
+      operationId: createBid
+      tags: [bids]
+      summary: Place a bid on a job request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BidInput"
+      responses:
+        "201":
+          description: Bid placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+
+  /bids/{id}:
+    get:
+      operationId: getBid
+      tags: [bids]
+      summary: Get a bid by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bid found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+        "404":
+          description: Bid not found
+    patch:
+      operationId: updateBid
+      tags: [bids]
+      summary: Accept or reject a bid
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BidUpdate"
+      responses:
+        "200":
+          description: Bid updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+
+  # ── Jobs ─────────────────────────────────────────────────────────────────────
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List active and completed jobs for the current user
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, in_progress, completed]
+      responses:
+        "200":
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a job by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Job not found
+    patch:
+      operationId: updateJob
+      tags: [jobs]
+      summary: Update job status (start, complete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobUpdate"
+      responses:
+        "200":
+          description: Job updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  # ── Ratings ───────────────────────────────────────────────────────────────────
+  /jobs/{id}/rating:
+    get:
+      operationId: getJobRating
+      tags: [ratings]
+      summary: Get the caller's given and received rating for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Rating pair for the caller on this job
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mine, theirs]
+                properties:
+                  mine:
+                    oneOf:
+                      - $ref: "#/components/schemas/RatingResponse"
+                      - type: "null"
+                  theirs:
+                    oneOf:
+                      - $ref: "#/components/schemas/RatingResponse"
+                      - type: "null"
+    post:
+      operationId: createJobRating
+      tags: [ratings]
+      summary: Rate the counterparty on a completed job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRatingRequest"
+      responses:
+        "200":
+          description: Rating created or updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingResponse"
+
+  # ── Dashboard ─────────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/activity:
+    get:
+      operationId: getDashboardActivity
+      tags: [dashboard]
+      summary: Get recent activity feed
+      responses:
+        "200":
+          description: Activity feed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  # ── Wallet ────────────────────────────────────────────────────────────────
+  /wallet:
+    get:
+      operationId: getWallet
+      tags: [wallet]
+      summary: Get provider wallet balances and transactions
+      responses:
+        "200":
+          description: Wallet balances and transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wallet"
+
+  # ── Dump Sites ────────────────────────────────────────────────────────────
+  /dump-sites:
+    get:
+      operationId: listDumpSites
+      tags: [dump-sites]
+      summary: List dump sites, optionally filtered by state or type
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [landfill, transfer_station, recycling_center, construction_debris, hazardous_waste, compost]
+      responses:
+        "200":
+          description: List of dump sites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DumpSite"
+
+  /dump-sites/states:
+    get:
+      operationId: listDumpSiteStates
+      tags: [dump-sites]
+      summary: List all states that have registered dump sites
+      responses:
+        "200":
+          description: List of state abbreviations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  # ── Account Compliance ────────────────────────────────────────────────────
+  /account/status:
+    get:
+      operationId: getAccountStatus
+      tags: [account]
+      summary: Get overall account compliance status
+      responses:
+        "200":
+          description: Account compliance status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountStatus"
+
+  /account/w9:
+    get:
+      operationId: getW9
+      tags: [account]
+      summary: Get W-9 submission
+      responses:
+        "200":
+          description: W-9 found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/W9Submission"
+        "404":
+          description: Not submitted
+    post:
+      operationId: submitW9
+      tags: [account]
+      summary: Submit W-9 form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/W9Input"
+      responses:
+        "201":
+          description: W-9 submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/W9Submission"
+    patch:
+      operationId: updateW9
+      tags: [account]
+      summary: Update W-9 submission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/W9Input"
+      responses:
+        "200":
+          description: W-9 updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/W9Submission"
+
+  /account/insurance:
+    get:
+      operationId: getInsurance
+      tags: [account]
+      summary: Get insurance submission
+      responses:
+        "200":
+          description: Insurance info found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceSubmission"
+        "404":
+          description: Not submitted
+    post:
+      operationId: submitInsurance
+      tags: [account]
+      summary: Submit insurance and bonding information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InsuranceInput"
+      responses:
+        "201":
+          description: Insurance submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceSubmission"
+    patch:
+      operationId: updateInsurance
+      tags: [account]
+      summary: Update insurance submission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InsuranceInput"
+      responses:
+        "200":
+          description: Insurance updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceSubmission"
+
+  /account/payment-method:
+    get:
+      operationId: getPaymentMethod
+      tags: [account]
+      summary: Get billing payment method (customer)
+      responses:
+        "200":
+          description: Payment method found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethod"
+        "404":
+          description: Not set
+    post:
+      operationId: setPaymentMethod
+      tags: [account]
+      summary: Set billing payment method
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentMethodInput"
+      responses:
+        "201":
+          description: Payment method set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethod"
+    patch:
+      operationId: updatePaymentMethod
+      tags: [account]
+      summary: Update payment method
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentMethodInput"
+      responses:
+        "200":
+          description: Payment method updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethod"
+
+  /account/payment-method/setup-intent:
+    post:
+      operationId: createPaymentMethodSetupIntent
+      tags: [account]
+      summary: Create a Stripe SetupIntent to securely capture a customer card
+      responses:
+        "200":
+          description: SetupIntent client secret and publishable key for Stripe Elements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetupIntentResponse"
+
+  /account/payment-method/bank-setup-intent:
+    post:
+      operationId: createPaymentMethodBankSetupIntent
+      tags: [account]
+      summary: Create a Stripe SetupIntent to securely capture a customer US bank account (ACH)
+      responses:
+        "200":
+          description: SetupIntent client secret and publishable key for Stripe Elements (us_bank_account)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetupIntentResponse"
+
+  /account/payment-method/verify-microdeposits:
+    post:
+      operationId: verifyPaymentMethodMicrodeposits
+      tags: [account]
+      summary: Finish ACH micro-deposit verification for the saved bank account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyMicrodepositsInput"
+      responses:
+        "200":
+          description: Bank account verified; payment method is now chargeable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethod"
+        "400":
+          description: Wrong amounts/code, or nothing to verify
+        "404":
+          description: No bank account awaiting verification
+
+  /account/payout:
+    get:
+      operationId: getPayoutAccount
+      tags: [account]
+      summary: Get payout bank account (provider)
+      responses:
+        "200":
+          description: Payout account found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayoutAccount"
+        "404":
+          description: Not set
+    post:
+      operationId: setPayoutAccount
+      tags: [account]
+      summary: Set payout bank account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayoutAccountInput"
+      responses:
+        "201":
+          description: Payout account set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayoutAccount"
+    patch:
+      operationId: updatePayoutAccount
+      tags: [account]
+      summary: Update payout bank account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayoutAccountInput"
+      responses:
+        "200":
+          description: Payout account updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayoutAccount"
+
+  /payouts/status:
+    get:
+      operationId: getPayoutStatus
+      tags: [payouts]
+      summary: Get provider Stripe Connect payout status and outstanding requirements
+      responses:
+        "200":
+          description: Current payout status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayoutStatus"
+
+  /payouts/connect-link:
+    post:
+      operationId: connectPayoutLink
+      tags: [payouts]
+      summary: Create or fetch the provider's Stripe Connect account and return a hosted onboarding URL
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayoutConnectLinkInput"
+      responses:
+        "200":
+          description: Hosted Stripe onboarding link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayoutConnectLink"
+
+  /account/compliance:
+    get:
+      operationId: getCompliance
+      tags: [account]
+      summary: Get DOT/CDL & FMCSA compliance record
+      responses:
+        "200":
+          description: Compliance record (or null)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ComplianceRecord"
+                  - type: "null"
+    post:
+      operationId: submitCompliance
+      tags: [account]
+      summary: Submit or update DOT/CDL/MC details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplianceInput"
+      responses:
+        "200":
+          description: Compliance record saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplianceRecord"
+
+  /account/compliance/verify:
+    patch:
+      operationId: verifyCompliance
+      tags: [account]
+      summary: Manually mark compliance checks as verified (admin/demo)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyComplianceInput"
+      responses:
+        "200":
+          description: Compliance verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplianceRecord"
+
+  /account/credit-application:
+    get:
+      operationId: getCreditApplication
+      tags: [account]
+      summary: Get the customer's credit application for invoicing terms
+      responses:
+        "200":
+          description: Credit application (or null)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CreditApplication"
+                  - type: "null"
+    post:
+      operationId: submitCreditApplication
+      tags: [account]
+      summary: Submit or update a credit application for Net invoicing terms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditApplicationInput"
+      responses:
+        "200":
+          description: Credit application saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditApplication"
+
+  /admin/access:
+    get:
+      operationId: getAdminAccess
+      tags: [admin]
+      summary: Whether the current user is a HaulBrokr admin
+      responses:
+        "200":
+          description: Admin access flag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAccess"
+
+  /admin/overview:
+    get:
+      operationId: getAdminOverview
+      tags: [admin]
+      summary: Platform-wide command-center KPIs (overview permission)
+      responses:
+        "200":
+          description: Current-state platform KPIs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
+
+  /admin/compliance:
+    get:
+      operationId: listAdminCompliance
+      tags: [admin]
+      summary: List carrier compliance records for admin review
+      responses:
+        "200":
+          description: Compliance records with carrier profile
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminComplianceItem"
+
+  /admin/compliance/{profileId}:
+    patch:
+      operationId: reviewCompliance
+      tags: [admin]
+      summary: Approve or reject a carrier's compliance record
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminReviewInput"
+      responses:
+        "200":
+          description: Updated compliance record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplianceRecord"
+
+  /admin/credit-applications:
+    get:
+      operationId: listAdminCreditApplications
+      tags: [admin]
+      summary: List credit applications for admin review
+      responses:
+        "200":
+          description: Credit applications with customer profile
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminCreditApplicationItem"
+
+  /admin/stuck-payouts:
+    get:
+      operationId: listStuckPayouts
+      tags: [admin]
+      summary: List provider payouts stuck in requires_action with a succeeded charge
+      responses:
+        "200":
+          description: Stuck provider payouts awaiting a transfer retry
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StuckPayoutItem"
+
+  /admin/stuck-payouts/{id}/retry:
+    post:
+      operationId: retryStuckPayout
+      tags: [admin]
+      summary: Retry only the provider transfer for a stuck payout (never re-charges)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Retry outcome (released or skipped)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetryPayoutResult"
+        "502":
+          description: The transfer was attempted but failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetryPayoutResult"
+
+  /admin/stuck-payouts/{id}/reset-failures:
+    post:
+      operationId: resetStuckPayoutFailures
+      tags: [admin]
+      summary: Clear a stuck payout's consecutive failure count and alert flag (does not retry)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The payout's escalation state after the reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetPayoutFailuresResult"
+
+  /admin/credit-applications/{profileId}:
+    patch:
+      operationId: reviewCreditApplication
+      tags: [admin]
+      summary: Approve or reject a customer's credit application
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminReviewInput"
+      responses:
+        "200":
+          description: Updated credit application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreditApplication"
+
+  /admin/staff:
+    get:
+      operationId: listAdminStaff
+      tags: [admin]
+      summary: List HaulBrokr staff members and their roles (manage_staff only)
+      responses:
+        "200":
+          description: Staff members with their assigned role
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StaffMember"
+
+  /admin/staff/{profileId}:
+    patch:
+      operationId: updateStaffRole
+      tags: [admin]
+      summary: Assign or clear a profile's staff role (manage_staff only)
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStaffRoleInput"
+      responses:
+        "200":
+          description: Updated staff member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffMember"
+
+  /admin/bin-orders:
+    get:
+      operationId: listAdminBinOrders
+      tags: [admin]
+      summary: List every customer's bin orders for staff fulfilment
+      responses:
+        "200":
+          description: Bin orders with enriched labels and display status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BinOrder"
+
+  /bin-orders/{id}/status:
+    patch:
+      operationId: advanceBinOrderStatus
+      tags: [admin]
+      summary: Advance a bin order through its fulfilment lifecycle (staff only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdvanceBinOrderInput"
+      responses:
+        "200":
+          description: Updated bin order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BinOrder"
+
+  /jobs/{id}/charge:
+    post:
+      operationId: chargeJob
+      tags: [jobs]
+      summary: Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Charge processed (paid/released) or invoice created (invoiced)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}/release:
+    post:
+      operationId: releaseJobPayment
+      tags: [jobs]
+      summary: Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Net payout released to provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}/payment-confirmation:
+    get:
+      operationId: getJobPaymentConfirmation
+      tags: [jobs]
+      summary: Get the client secret needed to confirm a payment that the bank flagged as requiring customer authentication (3-D Secure).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client secret + publishable key to confirm the pending PaymentIntent on-session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentConfirmation"
+
+  /jobs/{id}/confirm-payment:
+    post:
+      operationId: confirmJobPayment
+      tags: [jobs]
+      summary: Finalize a payment after the customer re-authenticated the card on-session (transfers the net payout and marks the job released).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payment confirmed; net payout released to provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}/checkout-session:
+    post:
+      operationId: createJobCheckoutSession
+      tags: [jobs]
+      summary: Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutSessionInput"
+      responses:
+        "200":
+          description: Hosted Checkout URL to redirect the customer to.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutSession"
+
+  /jobs/{id}/verify-checkout:
+    post:
+      operationId: verifyJobCheckout
+      tags: [jobs]
+      summary: Verify a returned Stripe Checkout Session and finalize the job — records the PaymentIntent and marks it released once payment_status is paid. Idempotent.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyCheckoutInput"
+      responses:
+        "200":
+          description: Job after finalizing the Checkout payment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  # ── Company Members ──────────────────────────────────────────────────────────
+  /organizations/members:
+    get:
+      operationId: listOrgMembers
+      tags: [organizations]
+      summary: List members of the current user's company
+      responses:
+        "200":
+          description: Company members
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgMembersResponse"
+  /organizations/members/{id}:
+    patch:
+      operationId: updateOrgMemberRole
+      tags: [organizations]
+      summary: Promote or demote a company member (owner/admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMemberRoleInput"
+      responses:
+        "200":
+          description: Member updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgMember"
+    delete:
+      operationId: removeOrgMember
+      tags: [organizations]
+      summary: Remove a member from the company (owner/admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Member removed
+
+  # ── Job Assignment & Status ──────────────────────────────────────────────────
+  /jobs/{id}/assign:
+    post:
+      operationId: assignJob
+      tags: [jobs]
+      summary: Assign a driver and truck to a job (creates a load ticket)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignJobInput"
+      responses:
+        "201":
+          description: Driver/truck assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+  /jobs/{id}/status-updates:
+    get:
+      operationId: listJobStatusUpdates
+      tags: [jobs]
+      summary: Timeline of driver-reported status updates for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Status update timeline
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobStatusUpdate"
+    post:
+      operationId: createJobStatusUpdate
+      tags: [jobs]
+      summary: Driver reports a status update (en route, arrived, loading, etc.)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobStatusUpdateInput"
+      responses:
+        "201":
+          description: Status update recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatusUpdate"
+  /jobs/{id}/approve-completion:
+    post:
+      operationId: approveJobCompletion
+      tags: [jobs]
+      summary: Foreman/customer approves a completed job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Completion approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+  /jobs/{id}/flag-completion:
+    post:
+      operationId: flagJobCompletion
+      tags: [jobs]
+      summary: Foreman/customer flags a completed job with an issue
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FlagCompletionInput"
+      responses:
+        "200":
+          description: Completion flagged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  # ── Job Messages (Chat) ─────────────────────────────────────────────────────
+  /jobs/{id}/messages:
+    get:
+      operationId: getJobMessages
+      tags: [jobs]
+      summary: List chat messages for a job (members only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Messages ordered oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobMessage"
+    post:
+      operationId: createJobMessage
+      tags: [jobs]
+      summary: Post a chat message to a job (members only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobMessageRequest"
+      responses:
+        "201":
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobMessage"
+
+  # ── Project (Job Site) Foreman Assignments ──────────────────────────────────
+  /projects/{id}/assignments:
+    get:
+      operationId: listProjectAssignments
+      tags: [projects]
+      summary: List foremen assigned to a job site
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Assigned foremen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectAssignment"
+    post:
+      operationId: createProjectAssignment
+      tags: [projects]
+      summary: Assign a foreman to a job site
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectAssignmentInput"
+      responses:
+        "201":
+          description: Foreman assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectAssignment"
+  /projects/{id}/assignments/{profileId}:
+    delete:
+      operationId: removeProjectAssignment
+      tags: [projects]
+      summary: Unassign a foreman from a job site
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Foreman unassigned
+
+# OpenAPI path extensions — merged into openapi.yaml before codegen.
+# Run: node scripts/merge-openapi.mjs
+
+  # ── Organizations (extended) ───────────────────────────────────────────────
+  /organizations/me:
+    get:
+      operationId: getMyOrganization
+      tags: [organizations]
+      summary: Get the authenticated user's organization
+      responses:
+        "200":
+          description: Organization
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          description: No organization
+
+  /organizations/rotate-code:
+    post:
+      operationId: rotateOrganizationInviteCode
+      tags: [organizations]
+      summary: Rotate organization invite code (owner only)
+      responses:
+        "200":
+          description: New invite code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inviteCode:
+                    type: string
+
+  # ── Projects CRUD ──────────────────────────────────────────────────────────
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List customer projects
+      responses:
+        "200":
+          description: Projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                siteAddress:
+                  type: string
+                totalBudget:
+                  type: number
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get project by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                type: object
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Factoring ──────────────────────────────────────────────────────────────
+  /factoring:
+    get:
+      operationId: listFactoringRequests
+      tags: [factoring]
+      summary: List provider factoring requests
+      responses:
+        "200":
+          description: Factoring requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+    post:
+      operationId: createFactoringRequest
+      tags: [factoring]
+      summary: Request invoice factoring advance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobId]
+              properties:
+                jobId:
+                  type: integer
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /factoring/{id}/approve:
+    patch:
+      operationId: approveFactoringRequest
+      tags: [factoring]
+      summary: Staff approve and fund factoring request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── QuickBooks (simulated) ─────────────────────────────────────────────────
+  /quickbooks/status:
+    get:
+      operationId: getQuickBooksStatus
+      tags: [integrations]
+      summary: QuickBooks connection status
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /quickbooks/connect:
+    post:
+      operationId: connectQuickBooks
+      tags: [integrations]
+      summary: Connect QuickBooks (simulated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [companyName]
+              properties:
+                companyName:
+                  type: string
+      responses:
+        "200":
+          description: Connected
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /quickbooks/disconnect:
+    post:
+      operationId: disconnectQuickBooks
+      tags: [integrations]
+      summary: Disconnect QuickBooks
+      responses:
+        "200":
+          description: Disconnected
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /quickbooks/sync:
+    post:
+      operationId: syncQuickBooks
+      tags: [integrations]
+      summary: Sync invoices to QuickBooks (simulated)
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── Tickets ────────────────────────────────────────────────────────────────
+  /jobs/{id}/tickets:
+    get:
+      operationId: listJobTickets
+      tags: [tickets]
+      summary: List load tickets for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tickets
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      operationId: createJobTicket
+      tags: [tickets]
+      summary: Create a load ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /tickets/{id}/clock-in:
+    post:
+      operationId: clockInTicket
+      tags: [tickets]
+      summary: Clock in on a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Clocked in
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /tickets/{id}/clock-out:
+    post:
+      operationId: clockOutTicket
+      tags: [tickets]
+      summary: Clock out on a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Clocked out
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /tickets/{id}/qr:
+    post:
+      operationId: issueTicketQr
+      tags: [tickets]
+      summary: Issue QR verification token for ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: QR token
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /tickets/verify:
+    post:
+      operationId: verifyTicketQr
+      tags: [tickets]
+      summary: Verify ticket via QR token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── Delivery evidence ──────────────────────────────────────────────────────
+  /jobs/{jobId}/evidence:
+    get:
+      operationId: listJobEvidence
+      tags: [evidence]
+      summary: List delivery evidence for a job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Evidence list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+    post:
+      operationId: createJobEvidence
+      tags: [evidence]
+      summary: Upload delivery evidence
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── Bin orders (customer) ──────────────────────────────────────────────────
+  /bins:
+    get:
+      operationId: listBinCatalog
+      tags: [bins]
+      summary: Bin catalog and pricing
+      responses:
+        "200":
+          description: Catalog
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /bin-orders:
+    get:
+      operationId: listBinOrders
+      tags: [bins]
+      summary: List user's bin orders
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+    post:
+      operationId: createBinOrder
+      tags: [bins]
+      summary: Create bin order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /bin-orders/{id}:
+    get:
+      operationId: getBinOrder
+      tags: [bins]
+      summary: Get bin order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── Driver documents ─────────────────────────────────────────────────────
+  /driver-docs:
+    get:
+      operationId: listDriverDocs
+      tags: [driver-docs]
+      summary: List driver documents
+      responses:
+        "200":
+          description: Documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /driver-docs/{docType}:
+    put:
+      operationId: upsertDriverDoc
+      tags: [driver-docs]
+      summary: Upsert a driver document
+      parameters:
+        - name: docType
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      operationId: deleteDriverDoc
+      tags: [driver-docs]
+      summary: Delete a driver document
+      parameters:
+        - name: docType
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    # ── User Profile ──────────────────────────────────────────────────────────
+    UserProfile:
+      type: object
+      required: [id, clerkId, role, companyName, createdAt]
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        role:
+          type: string
+          enum: [customer, provider, driver, supervisor]
+        companyName:
+          type: string
+        contactName:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        state:
+          type: ["string", "null"]
+        zip:
+          type: ["string", "null"]
+        organizationId:
+          type: ["integer", "null"]
+        dba:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        mcNumber:
+          type: ["string", "null"]
+        capacityTons:
+          type: ["number", "null"]
+        capacityYards:
+          type: ["number", "null"]
+        countiesServed:
+          type: ["string", "null"]
+        hourlyRate:
+          type: ["number", "null"]
+        minimumHours:
+          type: ["number", "null"]
+        equipmentTypes:
+          type: ["string", "null"]
+        billingEinLast4:
+          type: ["string", "null"]
+        apContactName:
+          type: ["string", "null"]
+        apEmail:
+          type: ["string", "null"]
+        paymentTerms:
+          type: ["string", "null"]
+          enum: [due_on_receipt, net_15, net_30, prepaid, null]
+        createdAt:
+          type: string
+          format: date-time
+
+    UserProfileInput:
+      type: object
+      required: [role, companyName]
+      properties:
+        role:
+          type: string
+          enum: [customer, provider, driver, supervisor]
+        companyName:
+          type: string
+        contactName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        inviteCode:
+          type: string
+        dba:
+          type: string
+        website:
+          type: string
+        mcNumber:
+          type: string
+        capacityTons:
+          type: number
+        capacityYards:
+          type: number
+        countiesServed:
+          type: string
+        hourlyRate:
+          type: number
+        minimumHours:
+          type: number
+        equipmentTypes:
+          type: string
+        billingEinLast4:
+          type: string
+        apContactName:
+          type: string
+        apEmail:
+          type: string
+        paymentTerms:
+          type: string
+          enum: [due_on_receipt, net_15, net_30, prepaid]
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        companyName:
+          type: string
+        contactName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        dba:
+          type: string
+        website:
+          type: string
+        mcNumber:
+          type: string
+        capacityTons:
+          type: number
+        capacityYards:
+          type: number
+        countiesServed:
+          type: string
+        hourlyRate:
+          type: number
+        minimumHours:
+          type: number
+        equipmentTypes:
+          type: string
+        billingEinLast4:
+          type: string
+        apContactName:
+          type: string
+        apEmail:
+          type: string
+        paymentTerms:
+          type: string
+          enum: [due_on_receipt, net_15, net_30, prepaid]
+
+    # ── Truck ─────────────────────────────────────────────────────────────────
+    Truck:
+      type: object
+      required: [id, ownerId, ownerCompany, truckType, capacityTons, ratePerHour, isAvailable, createdAt]
+      properties:
+        id:
+          type: integer
+        ownerId:
+          type: integer
+        ownerCompany:
+          type: string
+        truckType:
+          type: string
+          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+        capacityTons:
+          type: number
+        ratePerHour:
+          type: number
+        licensePlate:
+          type: ["string", "null"]
+        year:
+          type: ["integer", "null"]
+        make:
+          type: ["string", "null"]
+        model:
+          type: ["string", "null"]
+        truckNumber:
+          type: ["string", "null"]
+        vin:
+          type: ["string", "null"]
+        coiStatus:
+          type: string
+          enum: [none, pending, active, expired]
+        assignedDriverId:
+          type: ["integer", "null"]
+        isAvailable:
+          type: boolean
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    TruckInput:
+      type: object
+      required: [truckType, capacityTons, ratePerHour]
+      properties:
+        truckType:
+          type: string
+          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+        capacityTons:
+          type: number
+        ratePerHour:
+          type: number
+        licensePlate:
+          type: string
+        year:
+          type: integer
+        make:
+          type: string
+        model:
+          type: string
+        truckNumber:
+          type: string
+        vin:
+          type: string
+        coiStatus:
+          type: string
+          enum: [none, pending, active, expired]
+        assignedDriverId:
+          type: integer
+        isAvailable:
+          type: boolean
+        notes:
+          type: string
+
+    TruckUpdate:
+      type: object
+      properties:
+        truckType:
+          type: string
+          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+        capacityTons:
+          type: number
+        ratePerHour:
+          type: number
+        licensePlate:
+          type: string
+        year:
+          type: integer
+        make:
+          type: string
+        model:
+          type: string
+        truckNumber:
+          type: string
+        vin:
+          type: string
+        coiStatus:
+          type: string
+          enum: [none, pending, active, expired]
+        assignedDriverId:
+          type: integer
+        isAvailable:
+          type: boolean
+        notes:
+          type: string
+
+    # ── Job Request ────────────────────────────────────────────────────────────
+    JobRequest:
+      type: object
+      required: [id, customerId, customerCompany, materialType, quantityTons, pickupAddress, deliveryAddress, scheduledDate, status, trucksNeeded, createdAt]
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        customerCompany:
+          type: string
+        materialType:
+          type: string
+          enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
+        quantityTons:
+          type: number
+        pickupAddress:
+          type: string
+        deliveryAddress:
+          type: string
+        scheduledDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [open, bidding, accepted, in_progress, completed, cancelled]
+        trucksNeeded:
+          type: integer
+        budgetPerHour:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        bidCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    JobRequestInput:
+      type: object
+      required: [materialType, quantityTons, pickupAddress, deliveryAddress, scheduledDate, trucksNeeded]
+      properties:
+        materialType:
+          type: string
+          enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
+        quantityTons:
+          type: number
+        pickupAddress:
+          type: string
+        deliveryAddress:
+          type: string
+        scheduledDate:
+          type: string
+          format: date-time
+        trucksNeeded:
+          type: integer
+        budgetPerHour:
+          type: number
+        notes:
+          type: string
+
+    JobRequestUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [open, bidding, accepted, in_progress, completed, cancelled]
+        materialType:
+          type: string
+          enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
+        quantityTons:
+          type: number
+        pickupAddress:
+          type: string
+        deliveryAddress:
+          type: string
+        scheduledDate:
+          type: string
+          format: date-time
+        trucksNeeded:
+          type: integer
+        budgetPerHour:
+          type: number
+        notes:
+          type: string
+
+    # ── Bid ───────────────────────────────────────────────────────────────────
+    Bid:
+      type: object
+      required: [id, requestId, providerId, providerCompany, ratePerHour, trucksOffered, status, createdAt]
+      properties:
+        id:
+          type: integer
+        requestId:
+          type: integer
+        providerId:
+          type: integer
+        providerCompany:
+          type: string
+        ratePerHour:
+          type: number
+        trucksOffered:
+          type: integer
+        estimatedHours:
+          type: ["number", "null"]
+        message:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, accepted, rejected, withdrawn]
+        createdAt:
+          type: string
+          format: date-time
+
+    BidInput:
+      type: object
+      required: [ratePerHour, trucksOffered]
+      properties:
+        ratePerHour:
+          type: number
+        trucksOffered:
+          type: integer
+        estimatedHours:
+          type: number
+        message:
+          type: string
+
+    BidUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected, withdrawn]
+
+    # ── Job ───────────────────────────────────────────────────────────────────
+    Job:
+      type: object
+      required: [id, requestId, bidId, customerId, customerCompany, providerId, providerCompany, ratePerHour, trucksAssigned, status, materialType, pickupAddress, deliveryAddress, scheduledDate, createdAt]
+      properties:
+        id:
+          type: integer
+        requestId:
+          type: integer
+        bidId:
+          type: integer
+        customerId:
+          type: integer
+        customerCompany:
+          type: string
+        providerId:
+          type: integer
+        providerCompany:
+          type: string
+        ratePerHour:
+          type: number
+        trucksAssigned:
+          type: integer
+        status:
+          type: string
+          enum: [active, in_progress, completed]
+        materialType:
+          type: string
+        pickupAddress:
+          type: string
+        deliveryAddress:
+          type: string
+        scheduledDate:
+          type: string
+          format: date-time
+        startedAt:
+          type: ["string", "null"]
+          format: date-time
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        totalHours:
+          type: ["number", "null"]
+        totalAmount:
+          type: ["number", "null"]
+        platformFeeRate:
+          type: ["number", "null"]
+        platformFeeAmount:
+          type: ["number", "null"]
+        customerTotalAmount:
+          type: ["number", "null"]
+        providerNetAmount:
+          type: ["number", "null"]
+        paymentStatus:
+          type: string
+          enum: [unpaid, invoiced, paid, released, failed, requires_action]
+        paymentDueDate:
+          type: ["string", "null"]
+          format: date-time
+        invoicedAt:
+          type: ["string", "null"]
+          format: date-time
+        paidAt:
+          type: ["string", "null"]
+          format: date-time
+        releasedAt:
+          type: ["string", "null"]
+          format: date-time
+        projectId:
+          type: ["integer", "null"]
+        completionApproval:
+          type: ["string", "null"]
+          enum: [pending, approved, flagged, null]
+        approvedByProfileId:
+          type: ["integer", "null"]
+        completionApprovedAt:
+          type: ["string", "null"]
+          format: date-time
+        flagReason:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    JobUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [in_progress, completed]
+        totalHours:
+          type: number
+        notes:
+          type: string
+
+    # ── Dashboard ─────────────────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      required: [openRequests, activeJobs, completedJobs, totalBids, pendingBids, totalRevenue, totalSpent]
+      properties:
+        openRequests:
+          type: integer
+        activeJobs:
+          type: integer
+        completedJobs:
+          type: integer
+        totalBids:
+          type: integer
+        pendingBids:
+          type: integer
+        totalRevenue:
+          type: number
+        totalSpent:
+          type: number
+
+    ActivityItem:
+      type: object
+      required: [id, type, description, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [request_posted, bid_placed, bid_accepted, job_started, job_completed, payment_failed, payment_requires_action, application_approved, application_rejected, payout_delayed, payout_stuck_alert, bin_confirmed, bin_delivered, bin_picked_up, bin_cancelled]
+        description:
+          type: string
+        relatedId:
+          type: ["integer", "null"]
+        relatedBinOrderId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Wallet ────────────────────────────────────────────────────────────────
+    WalletTransaction:
+      type: object
+      required: [id, type, description, amount, status, createdAt]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [payout, factoring, earning]
+        description:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Wallet:
+      type: object
+      required: [availableBalance, pendingBalance, lifetimeEarnings, payoutAccount, transactions]
+      properties:
+        availableBalance:
+          type: number
+        pendingBalance:
+          type: number
+        lifetimeEarnings:
+          type: number
+        payoutAccount:
+          type: object
+          required: [connected, payoutsEnabled, bankLast4]
+          properties:
+            connected:
+              type: boolean
+            payoutsEnabled:
+              type: boolean
+            bankLast4:
+              type: ["string", "null"]
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/WalletTransaction"
+
+    # ── Dump Site ─────────────────────────────────────────────────────────────
+    DumpSite:
+      type: object
+      required: [id, name, address, city, state, zip, type, isActive]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        type:
+          type: string
+          enum: [landfill, transfer_station, recycling_center, construction_debris, hazardous_waste, compost]
+        phone:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        fullAddress:
+          type: string
+
+    # ── W-9 ───────────────────────────────────────────────────────────────────
+    W9Submission:
+      type: object
+      required: [id, profileId, legalName, businessType, taxIdType, taxIdLast4, address, city, state, zip, signatureFullName, agreedToTerms, status, createdAt]
+      properties:
+        id:
+          type: integer
+        profileId:
+          type: integer
+        legalName:
+          type: string
+        businessName:
+          type: ["string", "null"]
+        businessType:
+          type: string
+          enum: [sole_proprietor, single_member_llc, multi_member_llc, partnership, c_corporation, s_corporation, other]
+        taxIdType:
+          type: string
+          enum: [ein, ssn]
+        taxIdLast4:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        signatureFullName:
+          type: string
+        agreedToTerms:
+          type: string
+        status:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        createdAt:
+          type: string
+          format: date-time
+
+    W9Input:
+      type: object
+      required: [legalName, businessType, taxIdType, taxIdLast4, address, city, state, zip, signatureFullName, agreedToTerms]
+      properties:
+        legalName:
+          type: string
+        businessName:
+          type: string
+        businessType:
+          type: string
+          enum: [sole_proprietor, single_member_llc, multi_member_llc, partnership, c_corporation, s_corporation, other]
+        taxIdType:
+          type: string
+          enum: [ein, ssn]
+        taxIdLast4:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        signatureFullName:
+          type: string
+        agreedToTerms:
+          type: string
+
+    # ── Insurance ─────────────────────────────────────────────────────────────
+    InsuranceSubmission:
+      type: object
+      required: [id, profileId, glCarrier, glPolicyNumber, glCoverageAmount, glExpirationDate, status, createdAt]
+      properties:
+        id:
+          type: integer
+        profileId:
+          type: integer
+        glCarrier:
+          type: string
+        glPolicyNumber:
+          type: string
+        glCoverageAmount:
+          type: number
+        glExpirationDate:
+          type: string
+          format: date-time
+        autoCarrier:
+          type: ["string", "null"]
+        autoPolicyNumber:
+          type: ["string", "null"]
+        autoCoverageAmount:
+          type: ["number", "null"]
+        autoExpirationDate:
+          type: ["string", "null"]
+          format: date-time
+        wcCarrier:
+          type: ["string", "null"]
+        wcPolicyNumber:
+          type: ["string", "null"]
+        wcExpirationDate:
+          type: ["string", "null"]
+          format: date-time
+        bondCompany:
+          type: ["string", "null"]
+        bondAmount:
+          type: ["number", "null"]
+        bondExpirationDate:
+          type: ["string", "null"]
+          format: date-time
+        certificateHolderName:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        createdAt:
+          type: string
+          format: date-time
+
+    InsuranceInput:
+      type: object
+      required: [glCarrier, glPolicyNumber, glCoverageAmount, glExpirationDate]
+      properties:
+        glCarrier:
+          type: string
+        glPolicyNumber:
+          type: string
+        glCoverageAmount:
+          type: number
+        glExpirationDate:
+          type: string
+          format: date-time
+        autoCarrier:
+          type: string
+        autoPolicyNumber:
+          type: string
+        autoCoverageAmount:
+          type: number
+        autoExpirationDate:
+          type: string
+          format: date-time
+        wcCarrier:
+          type: string
+        wcPolicyNumber:
+          type: string
+        wcExpirationDate:
+          type: string
+          format: date-time
+        bondCompany:
+          type: string
+        bondAmount:
+          type: number
+        bondExpirationDate:
+          type: string
+          format: date-time
+        certificateHolderName:
+          type: string
+
+    # ── Payment Method (Customer) ─────────────────────────────────────────────
+    PaymentMethod:
+      type: object
+      required: [id, profileId, methodType, createdAt]
+      properties:
+        id:
+          type: integer
+        profileId:
+          type: integer
+        methodType:
+          type: string
+          enum: [credit_card, ach, net_15, net_30, net_45]
+        cardBrand:
+          type: ["string", "null"]
+        stripePaymentMethodId:
+          type: ["string", "null"]
+        verificationStatus:
+          type: ["string", "null"]
+          description: >-
+            null when nothing needs verifying (cards, net terms, instantly-verified
+            ACH); "pending" when an ACH bank account is awaiting micro-deposit
+            confirmation (not yet chargeable); "verified" once confirmed.
+        cardLast4:
+          type: ["string", "null"]
+        cardExpMonth:
+          type: ["string", "null"]
+        cardExpYear:
+          type: ["string", "null"]
+        cardholderName:
+          type: ["string", "null"]
+        bankName:
+          type: ["string", "null"]
+        accountLast4:
+          type: ["string", "null"]
+        routingLast4:
+          type: ["string", "null"]
+        billingAddress:
+          type: ["string", "null"]
+        billingCity:
+          type: ["string", "null"]
+        billingState:
+          type: ["string", "null"]
+        billingZip:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    PaymentMethodInput:
+      type: object
+      required: [methodType]
+      properties:
+        methodType:
+          type: string
+          enum: [credit_card, ach, net_15, net_30, net_45]
+        stripePaymentMethodId:
+          type: string
+          description: >-
+            Stripe PaymentMethod id (pm_…) returned after confirming a SetupIntent
+            with Stripe Elements. When provided, the server stores it as the real
+            chargeable instrument and mirrors the card metadata from Stripe.
+        stripeSetupIntentId:
+          type: string
+          description: >-
+            Stripe SetupIntent id (seti_…) the PaymentMethod was created from. For
+            ACH, the server reads its status to mark the instrument "pending"
+            (micro-deposits) or "verified", and retains it so the customer can
+            finish micro-deposit verification later.
+        cardBrand:
+          type: string
+        cardLast4:
+          type: string
+        cardExpMonth:
+          type: string
+        cardExpYear:
+          type: string
+        cardholderName:
+          type: string
+        bankName:
+          type: string
+        accountLast4:
+          type: string
+        routingLast4:
+          type: string
+        billingAddress:
+          type: string
+        billingCity:
+          type: string
+        billingState:
+          type: string
+        billingZip:
+          type: string
+
+    VerifyMicrodepositsInput:
+      type: object
+      description: >-
+        Provide EITHER the two micro-deposit amounts (in cents, as they appear on
+        the customer's bank statement) OR the 6-character descriptor code Stripe
+        included with a single verification deposit.
+      properties:
+        amounts:
+          type: array
+          description: The two micro-deposit amounts in cents, e.g. [32, 45].
+          items:
+            type: integer
+          minItems: 2
+          maxItems: 2
+        descriptorCode:
+          type: string
+          description: The descriptor code (e.g. "SM11AA") from the verification deposit.
+
+    SetupIntentResponse:
+      type: object
+      required: [clientSecret, publishableKey]
+      properties:
+        clientSecret:
+          type: string
+          description: SetupIntent client secret used to confirm the card with Stripe Elements.
+        publishableKey:
+          type: string
+          description: Stripe publishable key for initialising Stripe.js on the client.
+
+    PaymentConfirmation:
+      type: object
+      required: [clientSecret, publishableKey, paymentIntentId]
+      properties:
+        clientSecret:
+          type: string
+          description: PaymentIntent client secret used with stripe.confirmCardPayment to complete bank authentication on-session.
+        publishableKey:
+          type: string
+          description: Stripe publishable key for initialising Stripe.js on the client.
+        paymentIntentId:
+          type: string
+          description: The PaymentIntent awaiting customer authentication.
+
+    # ── Payout Account (Provider) ─────────────────────────────────────────────
+    PayoutAccount:
+      type: object
+      required: [id, profileId, bankName, accountHolderName, accountType, routingLast4, accountLast4, status, createdAt]
+      properties:
+        id:
+          type: integer
+        profileId:
+          type: integer
+        bankName:
+          type: string
+        accountHolderName:
+          type: string
+        accountType:
+          type: string
+          enum: [checking, savings]
+        routingLast4:
+          type: string
+        accountLast4:
+          type: string
+        status:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        createdAt:
+          type: string
+          format: date-time
+
+    PayoutAccountInput:
+      type: object
+      required: [bankName, accountHolderName, accountType, routingNumber, accountNumber]
+      properties:
+        bankName:
+          type: string
+        accountHolderName:
+          type: string
+        accountType:
+          type: string
+          enum: [checking, savings]
+        routingNumber:
+          type: string
+        accountNumber:
+          type: string
+
+    # ── Payout Status (Stripe Connect) ────────────────────────────────────────
+    PayoutRequirement:
+      type: object
+      required: [code, label]
+      properties:
+        code:
+          type: string
+          description: The raw Stripe requirement key, e.g. "external_account".
+        label:
+          type: string
+          description: A short, human-readable description of what the provider must do.
+
+    PayoutRequirements:
+      type: object
+      required: [currentlyDue, pendingVerification, disabledReason, currentDeadline]
+      properties:
+        currentlyDue:
+          type: array
+          items:
+            $ref: "#/components/schemas/PayoutRequirement"
+          description: Steps the provider must complete now to keep payouts flowing.
+        pendingVerification:
+          type: array
+          items:
+            $ref: "#/components/schemas/PayoutRequirement"
+          description: Items Stripe is actively reviewing — nothing for the provider to do.
+        disabledReason:
+          type: ["string", "null"]
+          description: Stripe's machine reason payouts are disabled, if any.
+        currentDeadline:
+          type: ["integer", "null"]
+          description: Unix seconds by which currentlyDue items must be resolved, if Stripe set a deadline.
+
+    PayoutStatus:
+      type: object
+      required: [connected, chargesEnabled, payoutsEnabled, detailsSubmitted]
+      properties:
+        connected:
+          type: boolean
+        stripeAccountId:
+          type: string
+        chargesEnabled:
+          type: boolean
+        payoutsEnabled:
+          type: boolean
+        detailsSubmitted:
+          type: boolean
+        requirements:
+          $ref: "#/components/schemas/PayoutRequirements"
+
+    PayoutConnectLinkInput:
+      type: object
+      properties:
+        returnTo:
+          type: string
+          description: Optional deep link the hosted onboarding return page should bounce back to (mobile only).
+
+    PayoutConnectLink:
+      type: object
+      required: [url, stripeAccountId]
+      properties:
+        url:
+          type: string
+          description: Stripe-hosted onboarding URL to redirect the provider to.
+        stripeAccountId:
+          type: string
+          description: The provider's Stripe Connect account id.
+
+    CheckoutSessionInput:
+      type: object
+      properties:
+        returnTo:
+          type: string
+          description: Optional URL/deep link the hosted Checkout return page should bounce back to (a web page URL or a mobile deep link).
+
+    CheckoutSession:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          description: Stripe-hosted Checkout URL to redirect the customer to.
+
+    VerifyCheckoutInput:
+      type: object
+      required: [sessionId]
+      properties:
+        sessionId:
+          type: string
+          description: The Stripe Checkout Session id handed back to the app on return from Checkout.
+
+    # ── Account Status ────────────────────────────────────────────────────────
+    AccountStatus:
+      type: object
+      required: [profileComplete, w9Status, insuranceStatus, paymentStatus, payoutStatus, canBid, canPost]
+      properties:
+        profileComplete:
+          type: boolean
+        w9Status:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        insuranceStatus:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        paymentStatus:
+          type: string
+          enum: [not_set, set]
+        payoutStatus:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        canBid:
+          type: boolean
+        canPost:
+          type: boolean
+
+    # ── Compliance (DOT / CDL / FMCSA) ────────────────────────────────────────
+    ComplianceRecord:
+      type: object
+      required: [id, profileId, status]
+      properties:
+        id:
+          type: integer
+        profileId:
+          type: integer
+        dotNumber:
+          type: ["string", "null"]
+        mcNumber:
+          type: ["string", "null"]
+        dotVerified:
+          type: boolean
+        cdlNumber:
+          type: ["string", "null"]
+        cdlState:
+          type: ["string", "null"]
+        cdlClass:
+          type: ["string", "null"]
+        cdlExpiry:
+          type: ["string", "null"]
+          format: date-time
+        cdlVerified:
+          type: boolean
+        fmcsaAuthority:
+          type: string
+          enum: [unknown, verified, failed]
+        insuranceActive:
+          type: string
+          enum: [unknown, verified, failed]
+        dotOperatingStatus:
+          type: string
+          enum: [unknown, verified, failed]
+        safetyRating:
+          type: ["string", "null"]
+        notSuspended:
+          type: string
+          enum: [unknown, verified, failed]
+        complianceCheckedAt:
+          type: ["string", "null"]
+          format: date-time
+        status:
+          type: string
+        reviewNote:
+          type: ["string", "null"]
+
+    VerifyComplianceInput:
+      type: object
+      properties:
+        profileId:
+          type: integer
+          description: Staff-only — verify this carrier's compliance record. Defaults to the caller's own record.
+
+    ComplianceInput:
+      type: object
+      properties:
+        dotNumber:
+          type: string
+        mcNumber:
+          type: string
+        cdlNumber:
+          type: string
+        cdlState:
+          type: string
+        cdlClass:
+          type: string
+        cdlExpiry:
+          type: string
+          format: date-time
+
+    # ── Credit Application (Customer, for Net terms) ───────────────────────────
+    CreditApplication:
+      type: object
+      required: [id, profileId, wantsInvoicing, status, createdAt]
+      properties:
+        id:
+          type: integer
+        profileId:
+          type: integer
+        wantsInvoicing:
+          type: boolean
+        tradeReferences:
+          type: ["string", "null"]
+        bankReference:
+          type: ["string", "null"]
+        estimatedMonthlySpend:
+          type: ["number", "null"]
+        status:
+          type: string
+          enum: [not_submitted, pending, approved, rejected]
+        reviewNote:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    CreditApplicationInput:
+      type: object
+      properties:
+        wantsInvoicing:
+          type: boolean
+        tradeReferences:
+          type: string
+        bankReference:
+          type: string
+        estimatedMonthlySpend:
+          type: number
+
+    # ── Admin review ───────────────────────────────────────────────────────────
+    AdminAccess:
+      type: object
+      required: [isAdmin, permissions]
+      properties:
+        isAdmin:
+          type: boolean
+          description: True when the caller has any staff role (at least one permission).
+        staffRole:
+          type: ["string", "null"]
+          enum: [ap, ar, cfo, cto, ceo, accounting, it, null]
+          description: The caller's resolved HaulBrokr staff role, or null if not staff.
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [overview, payouts, credit, compliance, bins, view_staff, manage_staff]
+          description: The exact capabilities this staff role unlocks.
+
+    StaffMember:
+      type: object
+      required: [id, companyName, role, staffRole]
+      properties:
+        id:
+          type: integer
+        companyName:
+          type: string
+        contactName:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        state:
+          type: ["string", "null"]
+        role:
+          type: string
+        staffRole:
+          type: ["string", "null"]
+          enum: [ap, ar, cfo, cto, ceo, accounting, it, null]
+
+    UpdateStaffRoleInput:
+      type: object
+      required: [staffRole]
+      properties:
+        staffRole:
+          type: ["string", "null"]
+          enum: [ceo, cto, cfo, accounting, it, null]
+          description: The staff role to assign, or null to remove staff access.
+
+    AdminOverview:
+      type: object
+      required:
+        [
+          totalJobs,
+          gmv,
+          brokerFees,
+          activeJobs,
+          completedJobs,
+          newCarriers,
+          newCustomers,
+          stuckPayouts,
+          pendingCompliance,
+          pendingCredit,
+          openBinOrders,
+        ]
+      properties:
+        totalJobs:
+          type: integer
+          description: Total number of jobs ever brokered on the platform.
+        gmv:
+          type: number
+          description: Gross merchandise value — total customer-billed across all jobs.
+        brokerFees:
+          type: number
+          description: Total broker (platform) fees earned across all jobs.
+        activeJobs:
+          type: integer
+          description: Jobs currently active or in progress.
+        completedJobs:
+          type: integer
+          description: Jobs that have been completed.
+        newCarriers:
+          type: integer
+          description: Count of carrier (provider) accounts.
+        newCustomers:
+          type: integer
+          description: Count of customer accounts.
+        stuckPayouts:
+          type: integer
+          description: Provider payouts stuck awaiting a transfer retry.
+        pendingCompliance:
+          type: integer
+          description: Carrier compliance records awaiting review.
+        pendingCredit:
+          type: integer
+          description: Customer credit applications awaiting review.
+        openBinOrders:
+          type: integer
+          description: Bin orders not yet picked up or cancelled.
+
+    AdvanceBinOrderInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [confirmed, delivered, picked_up]
+          description: The next lifecycle status to move the bin order to.
+
+    BinOrder:
+      type: object
+      required:
+        [
+          id,
+          customerId,
+          serviceType,
+          binSize,
+          binType,
+          quantity,
+          deliveryAddress,
+          deliveryDate,
+          wasteType,
+          status,
+          binSizeLabel,
+          binTypeLabel,
+          estimatedCost,
+          displayStatus,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        customerCompany:
+          type: ["string", "null"]
+        serviceType:
+          type: string
+        binSize:
+          type: string
+        binType:
+          type: string
+        quantity:
+          type: integer
+        deliveryAddress:
+          type: string
+        deliveryLat:
+          type: ["string", "null"]
+        deliveryLng:
+          type: ["string", "null"]
+        deliveryDate:
+          type: string
+          format: date-time
+        pickupDate:
+          type: ["string", "null"]
+          format: date-time
+        wasteType:
+          type: string
+        preferredProvider:
+          type: ["string", "null"]
+        status:
+          type: string
+        estimatedCostCents:
+          type: ["integer", "null"]
+        notes:
+          type: ["string", "null"]
+        binSizeLabel:
+          type: string
+        binTypeLabel:
+          type: string
+        priceRange:
+          type: ["string", "null"]
+        priceUnit:
+          type: ["string", "null"]
+        estimatedCost:
+          type: string
+        displayStatus:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    StuckPayoutItem:
+      type: object
+      required: [id, materialType, customerCompany, providerCompany, paymentAttempts, payoutRetryFailures]
+      properties:
+        id:
+          type: integer
+        materialType:
+          type: string
+        customerCompany:
+          type: string
+        providerCompany:
+          type: string
+        providerNetAmount:
+          type: ["number", "null"]
+        customerTotalAmount:
+          type: ["number", "null"]
+        paymentAttempts:
+          type: integer
+        payoutRetryFailures:
+          type: integer
+          description: Consecutive failed transfer attempts for this payout.
+        payoutAlertSentAt:
+          type: ["string", "null"]
+          format: date-time
+          description: When admins were alerted that this payout crossed the failure threshold, if ever.
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    RetryPayoutResult:
+      type: object
+      required: [jobId, outcome, message]
+      properties:
+        jobId:
+          type: integer
+        outcome:
+          type: string
+          enum: [released, skipped, failed]
+        message:
+          type: string
+
+    ResetPayoutFailuresResult:
+      type: object
+      required: [id, payoutRetryFailures, payoutAlertSentAt]
+      properties:
+        id:
+          type: integer
+        payoutRetryFailures:
+          type: integer
+          description: Always 0 after a reset.
+        payoutAlertSentAt:
+          type: ["string", "null"]
+          format: date-time
+          description: Always null after a reset.
+
+    AdminReviewInput:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [approve, reject]
+        note:
+          type: string
+          description: Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.
+
+    AdminProfileSummary:
+      type: object
+      required: [id, companyName, role]
+      properties:
+        id:
+          type: integer
+        companyName:
+          type: string
+        contactName:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        state:
+          type: ["string", "null"]
+        role:
+          type: string
+
+    AdminComplianceItem:
+      type: object
+      required: [id, profileId, status, profile]
+      properties:
+        id:
+          type: integer
+        profileId:
+          type: integer
+        dotNumber:
+          type: ["string", "null"]
+        mcNumber:
+          type: ["string", "null"]
+        cdlNumber:
+          type: ["string", "null"]
+        cdlState:
+          type: ["string", "null"]
+        cdlClass:
+          type: ["string", "null"]
+        cdlExpiry:
+          type: ["string", "null"]
+          format: date-time
+        dotVerified:
+          type: boolean
+        cdlVerified:
+          type: boolean
+        fmcsaAuthority:
+          type: string
+        insuranceActive:
+          type: string
+        dotOperatingStatus:
+          type: string
+        notSuspended:
+          type: string
+        safetyRating:
+          type: ["string", "null"]
+        status:
+          type: string
+        reviewNote:
+          type: ["string", "null"]
+        submittedAt:
+          type: ["string", "null"]
+          format: date-time
+        profile:
+          $ref: "#/components/schemas/AdminProfileSummary"
+
+    AdminCreditApplicationItem:
+      type: object
+      required: [id, profileId, wantsInvoicing, status, profile]
+      properties:
+        id:
+          type: integer
+        profileId:
+          type: integer
+        wantsInvoicing:
+          type: boolean
+        tradeReferences:
+          type: ["string", "null"]
+        bankReference:
+          type: ["string", "null"]
+        estimatedMonthlySpend:
+          type: ["number", "null"]
+        status:
+          type: string
+        reviewNote:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        profile:
+          $ref: "#/components/schemas/AdminProfileSummary"
+
+    # ── Company Members ──────────────────────────────────────────────────────
+    OrgMember:
+      type: object
+      required: [id, role, companyName, createdAt]
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          enum: [customer, provider, driver, supervisor]
+        orgRole:
+          type: ["string", "null"]
+        contactName:
+          type: ["string", "null"]
+        companyName:
+          type: string
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    OrgMembersResponse:
+      type: object
+      required: [members]
+      properties:
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrgMember"
+
+    UpdateMemberRoleInput:
+      type: object
+      required: [orgRole]
+      properties:
+        orgRole:
+          type: string
+          enum: [admin, member]
+
+    # ── Tickets & Job Status ─────────────────────────────────────────────────
+    Ticket:
+      type: object
+      required: [id, jobId, driverProfileId, loadNumber, status, createdAt]
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        driverProfileId:
+          type: integer
+        truckId:
+          type: ["integer", "null"]
+        loadNumber:
+          type: integer
+        status:
+          type: string
+          enum: [pending, in_progress, completed, verified]
+        clockedInAt:
+          type: ["string", "null"]
+          format: date-time
+        clockedOutAt:
+          type: ["string", "null"]
+          format: date-time
+        weightTons:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        photoUrl:
+          type: ["string", "null"]
+        verifiedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    JobMessage:
+      type: object
+      required: [id, jobId, senderProfileId, senderName, body, createdAt]
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        senderProfileId:
+          type: integer
+        senderName:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateJobMessageRequest:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 2000
+
+    AssignJobInput:
+      type: object
+      required: [driverProfileId]
+      properties:
+        driverProfileId:
+          type: integer
+        truckId:
+          type: integer
+
+    JobStatusUpdate:
+      type: object
+      required: [id, jobId, actorProfileId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        ticketId:
+          type: ["integer", "null"]
+        actorProfileId:
+          type: integer
+        actorName:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [en_route, arrived, loading, loaded, dumping, completed]
+        note:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    JobStatusUpdateInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [en_route, arrived, loading, loaded, dumping, completed]
+        ticketId:
+          type: integer
+        note:
+          type: string
+
+    FlagCompletionInput:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+
+    # ── Project (Job Site) Assignments ───────────────────────────────────────
+    ProjectAssignment:
+      type: object
+      required: [id, projectId, supervisorProfileId, createdAt]
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        supervisorProfileId:
+          type: integer
+        supervisorName:
+          type: ["string", "null"]
+        assignedByProfileId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    ProjectAssignmentInput:
+      type: object
+      required: [supervisorProfileId]
+      properties:
+        supervisorProfileId:
+          type: integer
+
+    # ── Ratings ──────────────────────────────────────────────────────────────
+    RatingResponse:
+      type: object
+      required: [id, jobId, raterProfileId, rateeProfileId, stars, createdAt]
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        raterProfileId:
+          type: integer
+        rateeProfileId:
+          type: integer
+        stars:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateRatingRequest:
+      type: object
+      required: [stars]
+      properties:
+        stars:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string

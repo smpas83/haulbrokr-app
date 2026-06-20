@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  // Do NOT add "vite.config.ts" here. Vite runs the config via esbuild, not tsc,
+  // and the async defineConfig pattern (shared with the dumpbroker web artifacts)
+  // trips TS2769 under this vite version. The sibling web artifacts only include
+  // src/**/*, so they never typecheck their vite.config.ts — keep this consistent
+  // or the deployment typecheck gate breaks here while prod runs fine.
+  "include": ["src/**/*", "mockupPreviewPlugin.ts"],
+  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node", "vite/client"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

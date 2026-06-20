@@ -1,0 +1,41 @@
+# Local full stack — API + PostgreSQL
+# Usage: docker compose up --build
+# Then: pnpm --filter @workspace/db run push (from host with DATABASE_URL below)
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: haulbrokr
+      POSTGRES_PASSWORD: haulbrokr
+      POSTGRES_DB: haulbrokr
+    ports:
+      - "5432:5432"
+    volumes:
+      - haulbrokr_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U haulbrokr"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://haulbrokr:haulbrokr@db:5432/haulbrokr?sslmode=disable
+      PORT: "8080"
+      NODE_ENV: production
+      PAYMENTS_MOCK_MODE: "true"
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-sk_test_placeholder}
+      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:-pk_test_placeholder}
+      UPLOAD_TOKEN_SECRET: ${UPLOAD_TOKEN_SECRET:-local-dev-upload-secret-32chars-min}
+      TICKET_QR_SECRET: ${TICKET_QR_SECRET:-local-dev-ticket-qr-secret-32chars}
+      LOG_LEVEL: info
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  haulbrokr_pg:

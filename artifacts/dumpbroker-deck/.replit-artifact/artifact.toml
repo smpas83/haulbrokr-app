@@ -1,0 +1,31 @@
+kind = "slides"
+previewPath = "/dumpbroker-deck/"
+title = "HaulBrokr Pitch Deck"
+version = "1.0.0"
+id = "artifacts/dumpbroker-deck"
+router = "path"
+
+[[integratedSkills]]
+name = "slides"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/dumpbroker-deck/" ]
+localPort = 21989
+
+[services.development]
+run = "pnpm --filter @workspace/dumpbroker-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dumpbroker-deck", "run", "build" ]
+publicDir = "artifacts/dumpbroker-deck/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21989"
+BASE_PATH = "/dumpbroker-deck/"

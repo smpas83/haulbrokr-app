@@ -1,0 +1,163 @@
+kind = "web"
+previewPath = "/"
+title = "HaulBrokr"
+version = "1.0.0"
+id = "artifacts/dumpbroker"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25050
+
+[services.development]
+run = "pnpm --filter @workspace/dumpbroker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dumpbroker", "run", "build" ]
+publicDir = "artifacts/dumpbroker/dist/public"
+serve = "static"
+
+# Public pre-rendered routes
+[[services.production.rewrites]]
+from = "/support"
+to = "/support.html"
+
+[[services.production.rewrites]]
+from = "/support/"
+to = "/support.html"
+
+[[services.production.rewrites]]
+from = "/privacy"
+to = "/privacy.html"
+
+[[services.production.rewrites]]
+from = "/privacy/"
+to = "/privacy.html"
+
+# SPA app shell routes — serve index.html so client-side routing takes over
+[[services.production.rewrites]]
+from = "/sign-in"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/sign-in/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/sign-up"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/sign-up/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/onboarding"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/onboarding/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/dashboard"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/dashboard/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/requests"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/requests/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/fleet"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/fleet/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/jobs"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/jobs/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/account"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/account/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/company"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/company/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/bins"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/bins/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/projects"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/projects/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/factoring"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/factoring/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/integrations"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/integrations/*"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/admin"
+to = "/index.html"
+
+[[services.production.rewrites]]
+from = "/admin/*"
+to = "/index.html"
+
+# Catch-all: unknown paths get a real 404 document (not the homepage)
+[[services.production.rewrites]]
+from = "/*"
+to = "/404.html"
+status = 404
+
+[services.env]
+PORT = "25050"
+BASE_PATH = "/"

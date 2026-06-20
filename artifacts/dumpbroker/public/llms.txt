@@ -1,0 +1,9 @@
+# HaulBrokr
+
+HaulBrokr is an on-demand hauling marketplace that connects customers who need junk removal, dumpster rental, or bulk debris hauled away with licensed local hauling providers. Customers can post a load, receive competitive offers, track their job in real time, and pay securely through the platform. Providers use HaulBrokr to find nearby jobs, manage their schedule, and receive fast payouts.
+
+## Public Pages
+
+- Home: https://haulbrokr.com/
+- Support: https://haulbrokr.com/support
+- Privacy Policy: https://haulbrokr.com/privacy

@@ -1,0 +1,531 @@
+# OpenAPI path extensions — merged into openapi.yaml before codegen.
+# Run: node scripts/merge-openapi.mjs
+
+  # ── Organizations (extended) ───────────────────────────────────────────────
+  /organizations/me:
+    get:
+      operationId: getMyOrganization
+      tags: [organizations]
+      summary: Get the authenticated user's organization
+      responses:
+        "200":
+          description: Organization
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          description: No organization
+
+  /organizations/rotate-code:
+    post:
+      operationId: rotateOrganizationInviteCode
+      tags: [organizations]
+      summary: Rotate organization invite code (owner only)
+      responses:
+        "200":
+          description: New invite code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inviteCode:
+                    type: string
+
+  # ── Projects CRUD ──────────────────────────────────────────────────────────
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List customer projects
+      responses:
+        "200":
+          description: Projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                siteAddress:
+                  type: string
+                totalBudget:
+                  type: number
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get project by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                type: object
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Factoring ──────────────────────────────────────────────────────────────
+  /factoring:
+    get:
+      operationId: listFactoringRequests
+      tags: [factoring]
+      summary: List provider factoring requests
+      responses:
+        "200":
+          description: Factoring requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+    post:
+      operationId: createFactoringRequest
+      tags: [factoring]
+      summary: Request invoice factoring advance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobId]
+              properties:
+                jobId:
+                  type: integer
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /factoring/{id}/approve:
+    patch:
+      operationId: approveFactoringRequest
+      tags: [factoring]
+      summary: Staff approve and fund factoring request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── QuickBooks (simulated) ─────────────────────────────────────────────────
+  /quickbooks/status:
+    get:
+      operationId: getQuickBooksStatus
+      tags: [integrations]
+      summary: QuickBooks connection status
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /quickbooks/connect:
+    post:
+      operationId: connectQuickBooks
+      tags: [integrations]
+      summary: Connect QuickBooks (simulated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [companyName]
+              properties:
+                companyName:
+                  type: string
+      responses:
+        "200":
+          description: Connected
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /quickbooks/disconnect:
+    post:
+      operationId: disconnectQuickBooks
+      tags: [integrations]
+      summary: Disconnect QuickBooks
+      responses:
+        "200":
+          description: Disconnected
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /quickbooks/sync:
+    post:
+      operationId: syncQuickBooks
+      tags: [integrations]
+      summary: Sync invoices to QuickBooks (simulated)
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── Tickets ────────────────────────────────────────────────────────────────
+  /jobs/{id}/tickets:
+    get:
+      operationId: listJobTickets
+      tags: [tickets]
+      summary: List load tickets for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tickets
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      operationId: createJobTicket
+      tags: [tickets]
+      summary: Create a load ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /tickets/{id}/clock-in:
+    post:
+      operationId: clockInTicket
+      tags: [tickets]
+      summary: Clock in on a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Clocked in
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /tickets/{id}/clock-out:
+    post:
+      operationId: clockOutTicket
+      tags: [tickets]
+      summary: Clock out on a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Clocked out
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /tickets/{id}/qr:
+    post:
+      operationId: issueTicketQr
+      tags: [tickets]
+      summary: Issue QR verification token for ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: QR token
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /tickets/verify:
+    post:
+      operationId: verifyTicketQr
+      tags: [tickets]
+      summary: Verify ticket via QR token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── Delivery evidence ──────────────────────────────────────────────────────
+  /jobs/{jobId}/evidence:
+    get:
+      operationId: listJobEvidence
+      tags: [evidence]
+      summary: List delivery evidence for a job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Evidence list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+    post:
+      operationId: createJobEvidence
+      tags: [evidence]
+      summary: Upload delivery evidence
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── Bin orders (customer) ──────────────────────────────────────────────────
+  /bins:
+    get:
+      operationId: listBinCatalog
+      tags: [bins]
+      summary: Bin catalog and pricing
+      responses:
+        "200":
+          description: Catalog
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /bin-orders:
+    get:
+      operationId: listBinOrders
+      tags: [bins]
+      summary: List user's bin orders
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+    post:
+      operationId: createBinOrder
+      tags: [bins]
+      summary: Create bin order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /bin-orders/{id}:
+    get:
+      operationId: getBinOrder
+      tags: [bins]
+      summary: Get bin order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ── Driver documents ─────────────────────────────────────────────────────
+  /driver-docs:
+    get:
+      operationId: listDriverDocs
+      tags: [driver-docs]
+      summary: List driver documents
+      responses:
+        "200":
+          description: Documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /driver-docs/{docType}:
+    put:
+      operationId: upsertDriverDoc
+      tags: [driver-docs]
+      summary: Upsert a driver document
+      parameters:
+        - name: docType
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      operationId: deleteDriverDoc
+      tags: [driver-docs]
+      summary: Delete a driver document
+      parameters:
+        - name: docType
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted

@@ -1,0 +1,135 @@
+For HaulBrokr, think of it as Uber + Freight Broker + Marketplace. You need two onboarding paths:
+1. Driver / Carrier Signup (Dump Truck Companies)
+Basic Company Information
+* Company Name
+* DBA
+* EIN
+* Address
+* Contact Name
+* Phone
+* Email
+* Website
+* DOT Number
+* MC Number (if applicable)
+Required Documents
+✅ W-9
+✅ Certificate of Insurance (COI)
+✅ Business License
+✅ Driver's License (owner/operator)
+✅ DOT Authority
+✅ MC Authority (if applicable)
+✅ Vehicle Registration
+✅ Equipment List
+✅ Signed Carrier Agreement
+✅ ACH / Banking Information
+✅ Voided Check
+✅ Safety Rating Information
+✅ Bond (only if they are acting as a broker, not just hauling) 
+Equipment Profile
+* Dump Truck
+* Super 10
+* End Dump
+* Side Dump
+* Belly Dump
+* Transfer
+* Lowboy
+* Water Truck
+* Excavator
+* Dozer
+* Skid Steer
+Capacity
+* Tons
+* Yardage
+* Counties Served
+* Hourly Rate
+* Minimum Hours
+Compliance Checks
+Automatically verify:
+* FMCSA Authority
+* Insurance Active
+* DOT Status
+* Safety Score
+* Not Suspended 
+
+2. Customer Signup (Contractors)
+Much easier.
+Company Information
+* Company Name
+* Contact Name
+* Email
+* Phone
+* Address
+Billing Information
+* EIN
+* Accounts Payable Contact
+* AP Email
+* Payment Terms
+Credit Application
+If they want invoicing:
+* Trade References
+* Bank Reference
+* Estimated Monthly Spend
+Upload Documents
+Optional:
+* W-9
+* Purchase Order Template
+* Tax Exempt Certificate
+Payment Options
+* Credit Card
+* ACH
+* Net 15
+* Net 30
+
+3. Job Posting Requirements
+Customer creates:
+Project Information
+* Project Name
+* Project Address
+* GPS Pin
+* Start Date
+* End Date
+Hauling Requirements
+* Material Type
+* Tons Needed
+* Truck Type
+* Hours Needed
+* Number of Trucks
+Pricing
+Choose:
+Instant Book
+HaulBrokr rate displayed
+Bid Request
+Drivers submit bids
+
+4. Rating System
+Customer Rates Driver
+* On Time
+* Professional
+* Safety
+* Equipment Quality
+Driver Rates Customer
+* Paid On Time
+* Job Site Conditions
+* Ease of Communication
+This becomes your biggest competitive advantage.
+
+5. Fraud Prevention
+Require:
+Drivers
+* SMS Verification
+* Email Verification
+* ID Verification
+* Insurance Verification
+* DOT Verification
+Customers
+* Credit Card Verification
+* EIN Verification
+* Business Registration Check
+
+6. Revenue Model
+
+15% broker fee Haulbrokr
+Example:
+* Driver wants $100/hr
+* Customer pays $115/hr
+* HaulBrokr keeps $15/hr

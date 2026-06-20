@@ -1,0 +1,162 @@
+[
+  {
+    "id": "db-slide-0001-cover-0000000001",
+    "position": 1,
+    "filepath": "src/pages/slides/Slide01Cover.tsx",
+    "title": "Cover — HaulBrokr",
+    "description": "Founding deck cover with hero image, tagline, and confidentiality notice",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0002-prob1-0000000002",
+    "position": 2,
+    "filepath": "src/pages/slides/Slide02Problem1.tsx",
+    "title": "The Problem — A Fragmented, Analog Industry",
+    "description": "$47B market with no digital dispatch layer. Four core pain points.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0003-prob2-0000000003",
+    "position": 3,
+    "filepath": "src/pages/slides/Slide03Problem2.tsx",
+    "title": "The Problem — The Cost of Inefficiency",
+    "description": "Three quantified pain stats: 3.2 hrs lost, 38% idle time, $8.2B market waste.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0004-soln-0000000004",
+    "position": 4,
+    "filepath": "src/pages/slides/Slide04Solution.tsx",
+    "title": "The Solution — One Platform. Both Sides.",
+    "description": "HaulBrokr overview: contractor app, operator app, admin, fleet SaaS.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0005-hiw1-0000000005",
+    "position": 5,
+    "filepath": "src/pages/slides/Slide05HowItWorks1.tsx",
+    "title": "How It Works — Four-Step Flow",
+    "description": "Post a job → Smart match → Live dispatch → Auto-invoice. Visual step diagram.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0006-hiw2-0000000006",
+    "position": 6,
+    "filepath": "src/pages/slides/Slide06HowItWorks2.tsx",
+    "title": "How It Works — Platform Feature Set",
+    "description": "Six feature cards: GPS tracking, digital tickets, compliance, payments, bids, SaaS.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0007-mkt1-0000000007",
+    "position": 7,
+    "filepath": "src/pages/slides/Slide07Market1.tsx",
+    "title": "Market Opportunity — TAM / SAM / SOM",
+    "description": "$47B TAM, $12B SAM, $480M SOM. Three metric cards.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0008-mkt2-0000000008",
+    "position": 8,
+    "filepath": "src/pages/slides/Slide08Market2.tsx",
+    "title": "Market Opportunity — Texas-First Expansion",
+    "description": "Geographic rollout: Houston → DFW → SA/Austin → Sun Belt. Why Texas rationale.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0009-biz1-0000000009",
+    "position": 9,
+    "filepath": "src/pages/slides/Slide09BusinessModel1.tsx",
+    "title": "Business Model — Three Revenue Streams",
+    "description": "Platform commission 8-12%, Fleet SaaS $299-$999/mo, Embedded finance Yr 2+.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0010-biz2-0000000010",
+    "position": 10,
+    "filepath": "src/pages/slides/Slide10BusinessModel2.tsx",
+    "title": "Business Model — Unit Economics",
+    "description": "Per-job P&L waterfall. Year 1 / Year 3 scale targets.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0011-trc1-0000000011",
+    "position": 11,
+    "filepath": "src/pages/slides/Slide11Traction1.tsx",
+    "title": "Traction — Where We Are Today",
+    "description": "MVP live, 40 operators onboarded, 8 GC firms in LOI discussions.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0012-trc2-0000000012",
+    "position": 12,
+    "filepath": "src/pages/slides/Slide12Traction2.tsx",
+    "title": "Traction — 18-Month Roadmap",
+    "description": "Four-milestone timeline: Houston to DFW to Texas to Sun Belt. Series A target $8-12M.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0013-tech-0000000013",
+    "position": 13,
+    "filepath": "src/pages/slides/Slide13Technology.tsx",
+    "title": "Technology — Built for Scale",
+    "description": "React Native, Node.js, Google Maps, Stripe Connect. Moat and defensibility.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0014-tm1-0000000014",
+    "position": 14,
+    "filepath": "src/pages/slides/Slide14Team1.tsx",
+    "title": "The Team — Founding Partners",
+    "description": "CEO (industry), CTO (engineering), CFO (finance). Role cards with equity.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0015-tm2-0000000015",
+    "position": 15,
+    "filepath": "src/pages/slides/Slide15Team2.tsx",
+    "title": "The Team — Advisory Board and Open Roles",
+    "description": "Three advisers. VP Marketing open (3%), employee pool (10%), board observer seat.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0016-eq1-0000000016",
+    "position": 16,
+    "filepath": "src/pages/slides/Slide16Equity1.tsx",
+    "title": "Equity Structure — Ownership at a Glance",
+    "description": "SVG donut chart: Founders 70%, Employee 10%, CTO 8%, CFO 6%, Advisers 3%, Marketing 3%.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0017-eq2-0000000017",
+    "position": 17,
+    "filepath": "src/pages/slides/Slide17Equity2.tsx",
+    "title": "Equity Structure — Partner Benefits and Governance",
+    "description": "Pro-rata dividends, liquidity rights, board seat, vesting schedules.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0018-inv-0000000018",
+    "position": 18,
+    "filepath": "src/pages/slides/Slide18InvestmentTerms.tsx",
+    "title": "Investment — Founding Round Terms",
+    "description": "Round structure, equity available, allocation table by role.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0019-uof-0000000019",
+    "position": 19,
+    "filepath": "src/pages/slides/Slide19UseOfFunds.tsx",
+    "title": "Investment — Use of Funds",
+    "description": "Capital allocation: 40% product, 25% supply, 20% marketing, 10% legal, 5% reserve.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "db-slide-0020-cta-0000000020",
+    "position": 20,
+    "filepath": "src/pages/slides/Slide20CTA.tsx",
+    "title": "Join the Foundation",
+    "description": "Closing CTA. Founder email, demo link, confidentiality footer.",
+    "speakerNotes": ""
+  }
+]

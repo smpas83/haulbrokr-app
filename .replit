@@ -1,0 +1,128 @@
+modules = ["nodejs-24", "postgresql-16", "python-3.11"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "test"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "webbuild"
+
+[[workflows.workflow]]
+name = "test"
+author = "agent"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node scripts/test-with-ports.mjs"
+
+[[workflows.workflow]]
+name = "webbuild"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/dumpbroker-mobile run check:web-build"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+integrations = ["stripe:1.0.0"]
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 180000
+
+[nix]
+channel = "stable-25_05"
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+exposeLocalhost = true
+
+[[ports]]
+localPort = 8081
+externalPort = 80
+exposeLocalhost = true
+
+[[ports]]
+localPort = 8082
+externalPort = 3003
+exposeLocalhost = true
+
+[[ports]]
+localPort = 8088
+externalPort = 5173
+exposeLocalhost = true
+
+[[ports]]
+localPort = 9000
+externalPort = 9000
+exposeLocalhost = true
+
+[[ports]]
+localPort = 18118
+externalPort = 4200
+exposeLocalhost = true
+
+[[ports]]
+localPort = 21989
+externalPort = 3001
+exposeLocalhost = true
+
+[[ports]]
+localPort = 23806
+externalPort = 3002
+
+[[ports]]
+localPort = 23807
+externalPort = 5000
+exposeLocalhost = true
+
+[[ports]]
+localPort = 23808
+externalPort = 6800
+exposeLocalhost = true
+
+[[ports]]
+localPort = 23809
+externalPort = 8000
+exposeLocalhost = true
+
+[[ports]]
+localPort = 23810
+externalPort = 8008
+exposeLocalhost = true
+
+[[ports]]
+localPort = 24678
+externalPort = 6000
+exposeLocalhost = true
+
+[[ports]]
+localPort = 25050
+externalPort = 3000
+exposeLocalhost = true
