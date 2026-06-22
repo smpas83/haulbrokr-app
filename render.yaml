@@ -10,7 +10,8 @@ services:
     name: haulbrokr-api
     runtime: docker
     dockerfilePath: ./Dockerfile
-    plan: starter
+    # Free = $0 (spins down after 15 min idle, ~1 min cold start). Starter = $7/mo always-on.
+    plan: free
     region: oregon
     healthCheckPath: /api/healthz
     envVars:
@@ -42,8 +43,7 @@ services:
         generateValue: true
       - key: ADMIN_USER_IDS
         sync: false
-      # Cloudflare R2 or AWS S3 path prefixes — see docs/DEPLOY-VERCEL-RENDER.md
       - key: PRIVATE_OBJECT_DIR
-        sync: false
+        value: /haulbrokr/private
       - key: PUBLIC_OBJECT_SEARCH_PATHS
-        sync: false
+        value: /haulbrokr/public
