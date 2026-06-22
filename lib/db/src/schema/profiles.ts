@@ -18,7 +18,7 @@ export const orgRoleEnum = pgEnum("org_role", ["owner", "admin", "member"]);
 // Accounting scope (see ROLE_PERMISSIONS in requireAdmin.ts) and are never
 // offered when assigning a role.
 export const staffRoleEnum = pgEnum("staff_role", [
-  "ap", "ar", "cfo", "cto", "ceo", "accounting", "it",
+  "ap", "ar", "cfo", "cto", "ceo", "accounting", "it", "president", "programmer",
 ]);
 
 export const profilesTable = pgTable("profiles", {

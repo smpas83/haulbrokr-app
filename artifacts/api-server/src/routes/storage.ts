@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 import { and, eq } from "drizzle-orm";
 import { db, driverDocumentsTable } from "@workspace/db";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
   issueUploadToken,
   verifyUploadToken,
@@ -67,7 +67,7 @@ router.post("/storage/uploads/request-url", requireProfile, async (req: Request,
 
   try {
     const { name, size, contentType } = parsed.data;
-    const profile = (req as any).profile;
+    const profile = getRequestProfile(req);
 
     if (!checkUploadRateLimit(String(profile.id))) {
       res.status(429).json({ error: "Too many upload requests. Please wait before requesting another upload URL." });
@@ -109,7 +109,7 @@ router.post("/storage/uploads/finalize", requireProfile, async (req: Request, re
   }
 
   const { uploadToken, objectPath } = parsed.data;
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
 
   if (isUploadTokenConsumed(uploadToken)) {
     res.status(403).json({ error: "Upload token has already been used" });
@@ -228,7 +228,7 @@ router.get("/storage/objects/*path", requireProfile, async (req: Request, res: R
     const objectPath = `/objects/${wildcardPath}`;
 
     // ACL: caller must own a driver_documents row that references this object.
-    const profile = (req as any).profile;
+    const profile = getRequestProfile(req);
     const [owned] = await db.select({ id: driverDocumentsTable.id })
       .from(driverDocumentsTable)
       .where(and(

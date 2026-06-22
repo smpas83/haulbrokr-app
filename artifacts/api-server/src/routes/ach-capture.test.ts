@@ -136,6 +136,7 @@ vi.mock("../middlewares/requireAuth", () => ({
     };
     next();
   },
+  getRequestProfile: (req: any) => req.profile,
 }));
 
 import accountRouter from "./account";

@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and, sql } from "drizzle-orm";
 import { db, requestsTable, profilesTable, bidsTable, activityTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
   ListRequestsQueryParams,
   ListRequestsResponse,
@@ -17,7 +17,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/requests", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const params = ListRequestsQueryParams.safeParse(req.query);
 
   let rows: typeof requestsTable.$inferSelect[] = [];
@@ -57,7 +57,7 @@ router.get("/requests", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.post("/requests", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (profile.role !== "customer") {
     res.status(403).json({ error: "Only customers can post requests" });
     return;
@@ -89,7 +89,7 @@ router.post("/requests", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.get("/requests/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = GetRequestParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -147,7 +147,7 @@ router.get("/requests/:id", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.patch("/requests/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = UpdateRequestParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -183,7 +183,7 @@ router.patch("/requests/:id", requireProfile, async (req, res): Promise<void> =>
 });
 
 router.delete("/requests/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = DeleteRequestParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {

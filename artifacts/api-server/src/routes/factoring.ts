@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and, sql } from "drizzle-orm";
 import { db, factoringRequestsTable, jobsTable, profilesTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { requirePermission } from "../middlewares/requireAdmin";
 
 const FACTORING_FEE_RATE = 0.03; // 3% same-day advance fee
@@ -9,7 +9,7 @@ const FACTORING_FEE_RATE = 0.03; // 3% same-day advance fee
 const router: IRouter = Router();
 
 router.get("/factoring", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const rows = await db.select().from(factoringRequestsTable)
     .where(eq(factoringRequestsTable.providerId, profile.id))
     .orderBy(sql`${factoringRequestsTable.createdAt} desc`);
@@ -23,7 +23,7 @@ router.get("/factoring", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.post("/factoring", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (profile.role !== "provider") {
     res.status(403).json({ error: "Only providers can request factoring" });
     return;

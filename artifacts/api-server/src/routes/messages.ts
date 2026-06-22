@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, asc } from "drizzle-orm";
 import { db, jobMessagesTable, profilesTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { loadJobIfMember } from "../lib/access";
 import {
   GetJobMessagesResponse,
@@ -16,7 +16,7 @@ function senderName(profile: { companyName?: string | null; contactName?: string
 }
 
 router.get("/jobs/:id/messages", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const jobId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
   const job = await loadJobIfMember(jobId, profile);
@@ -50,7 +50,7 @@ router.get("/jobs/:id/messages", requireProfile, async (req, res): Promise<void>
 });
 
 router.post("/jobs/:id/messages", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const jobId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
   const job = await loadJobIfMember(jobId, profile);

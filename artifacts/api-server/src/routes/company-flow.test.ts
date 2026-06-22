@@ -30,6 +30,7 @@ vi.mock("../middlewares/requireAuth", () => ({
     req.clerkId = actor.current.clerkId;
     next();
   },
+  getRequestProfile: (req: any) => req.profile,
 }));
 
 import jobsRouter from "./jobs";

@@ -6,8 +6,10 @@
  * return page can never become an open redirect.
  */
 
+import type { Request } from "express";
+
 /** Origin (proto://host) of the incoming request, honouring the proxy headers. */
-export function returnUrlBase(req: any): string {
+export function returnUrlBase(req: Request): string {
   const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
   const host = (req.headers["x-forwarded-host"] as string) || req.get("host");
   return `${proto}://${host}`;
@@ -19,7 +21,7 @@ export function returnUrlBase(req: any): string {
  * previews are allowed.
  */
 export function isAllowedReturnTo(value: string): boolean {
-  if (value.startsWith("dumpbroker://")) return true;
+  if (value.startsWith("haulbrokr://")) return true;
   if (value.startsWith("exp://")) return true;
   try {
     const u = new URL(value);
@@ -32,7 +34,9 @@ export function isAllowedReturnTo(value: string): boolean {
       host.endsWith(".replit.app") ||
       host.endsWith(".repl.co") ||
       host.endsWith(".worf.replit.dev") ||
-      host.endsWith(".janeway.replit.dev")
+      host.endsWith(".janeway.replit.dev") ||
+      host === "haulbrokr.com" ||
+      host.endsWith(".haulbrokr.com")
     );
   } catch {
     return false;

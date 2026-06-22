@@ -35,7 +35,9 @@ jobs:
       CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
       UPLOAD_TOKEN_SECRET: ci-upload-token-secret-32chars-minimum
       TICKET_QR_SECRET: ci-ticket-qr-secret-32chars-minimum
+      STAFF_AUTH_SECRET: ci-staff-auth-secret-32chars-minimum
       PAYMENTS_MOCK_MODE: "true"
+      RUN_DB_TESTS: "true"
       NODE_ENV: test
 
     steps:
@@ -63,13 +65,13 @@ jobs:
         run: pnpm --filter @workspace/api-server run test
 
       - name: Web app tests
-        run: pnpm --filter @workspace/dumpbroker run test
+        run: pnpm --filter @workspace/haulbrokr run test
 
       - name: Mobile tests
-        run: pnpm --filter @workspace/dumpbroker-mobile run test
+        run: pnpm --filter @workspace/haulbrokr-mobile run test
 
       - name: Build API
         run: pnpm --filter @workspace/api-server run build
 
       - name: Build web
-        run: pnpm --filter @workspace/dumpbroker run build
+        run: pnpm --filter @workspace/haulbrokr run build

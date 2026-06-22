@@ -12,7 +12,7 @@ import {
   trucksTable,
   jobStatusUpdatesTable,
 } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
 import { checkProviderPayoutReadiness } from "../lib/payoutStatus";
 import { settleConfirmedPayout } from "../lib/payoutRetry";
@@ -253,7 +253,7 @@ function authRequiredPaymentIntent(err: any): string | null {
 }
 
 router.get("/jobs", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const params = ListJobsQueryParams.safeParse(req.query);
 
   // Org members (driver / supervisor) see their whole company's jobs on the
@@ -325,7 +325,7 @@ ${cta}</div></body></html>`);
 });
 
 router.get("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = GetJobParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -342,7 +342,7 @@ router.get("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = UpdateJobParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -419,7 +419,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
  *   and the provider is NOT paid until the customer's invoice is paid (release).
  */
 router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = ChargeJobParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -556,7 +556,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
  * invoice once the customer has paid it. The 15% broker fee is retained.
  */
 router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = ReleaseJobPaymentParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -651,7 +651,7 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
  * job parked in `requires_action`.
  */
 router.get("/jobs/:id/payment-confirmation", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = GetJobPaymentConfirmationParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -685,7 +685,7 @@ router.get("/jobs/:id/payment-confirmation", requireProfile, async (req, res): P
  * (15% broker fee retained), marking the job released.
  */
 router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = ConfirmJobPaymentParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -760,7 +760,7 @@ router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promi
  * is verified on return via /verify-checkout.
  */
 router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = CreateJobCheckoutSessionParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -869,7 +869,7 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
  * `failed`. An unpaid/incomplete session leaves the job untouched and payable.
  */
 router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = VerifyJobCheckoutParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -952,7 +952,7 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
 
 // ── Driver / truck assignment ───────────────────────────────────────────────
 router.post("/jobs/:id/assign", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const jobId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
   if (!DRIVER_SIDE.has(profile.role) || !isOrgManager(profile)) {
@@ -1004,7 +1004,7 @@ router.post("/jobs/:id/assign", requireProfile, async (req, res): Promise<void> 
 
 // ── Driver status-update timeline ───────────────────────────────────────────
 router.get("/jobs/:id/status-updates", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const jobId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
   const job = await loadJobIfMember(jobId, profile);
@@ -1032,7 +1032,7 @@ router.get("/jobs/:id/status-updates", requireProfile, async (req, res): Promise
 });
 
 router.post("/jobs/:id/status-updates", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const jobId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
   if (!DRIVER_SIDE.has(profile.role)) {
@@ -1066,7 +1066,7 @@ router.post("/jobs/:id/status-updates", requireProfile, async (req, res): Promis
 
 // ── Completion approval (foreman / customer) ────────────────────────────────
 router.post("/jobs/:id/approve-completion", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const jobId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
   if (!CUSTOMER_SIDE.has(profile.role)) {
@@ -1099,7 +1099,7 @@ router.post("/jobs/:id/approve-completion", requireProfile, async (req, res): Pr
 });
 
 router.post("/jobs/:id/flag-completion", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const jobId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
   if (!CUSTOMER_SIDE.has(profile.role)) {

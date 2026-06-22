@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
 import { eq, and, or, sql, isNull } from "drizzle-orm";
 import crypto from "node:crypto";
-import { db, profilesTable, ticketsTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { db, profilesTable, ticketsTable, type Profile, type Ticket, type Job } from "@workspace/db";
+import { requireProfile, getRequestProfile } from "../middlewares/requireAuth";
 import { loadJobIfMember, DRIVER_SIDE, CUSTOMER_SIDE } from "../lib/access";
 
 const router: IRouter = Router();
@@ -20,7 +20,7 @@ function getSecret(): string {
   // Dev-mode fallback: derive from DATABASE_URL so tokens survive restarts
   // in a single environment but differ across deployments. NEVER ship to prod
   // without setting TICKET_QR_SECRET — the API logs a warning at first use.
-  const seed = process.env.DATABASE_URL ?? "dumpbroker-dev-fallback";
+  const seed = process.env.DATABASE_URL ?? "haulbrokr-dev-fallback";
   return crypto.createHash("sha256").update(`db-ticket-qr:${seed}`).digest("hex");
 }
 
@@ -37,6 +37,24 @@ function signPayload(payload: object): string {
   const sig = crypto.createHmac("sha256", getSecret()).update(json).digest();
   return `${b64url(json)}.${b64url(sig)}`;
 }
+interface TicketTokenPayload {
+  j: number;
+  t: number;
+  n: string;
+  e: number;
+}
+
+function isTicketTokenPayload(value: unknown): value is TicketTokenPayload {
+  if (!value || typeof value !== "object") return false;
+  const p = value as Record<string, unknown>;
+  return (
+    typeof p.j === "number" &&
+    typeof p.t === "number" &&
+    typeof p.n === "string" &&
+    typeof p.e === "number"
+  );
+}
+
 function verifyToken(token: string): { ok: true; j: number; t: number; n: string; e: number } | { ok: false; error: string } {
   const parts = token.trim().split(".");
   if (parts.length !== 2) return { ok: false, error: "Malformed token" };
@@ -51,9 +69,13 @@ function verifyToken(token: string): { ok: true; j: number; t: number; n: string
   if (expectedSig.length !== actualSig.length || !crypto.timingSafeEqual(expectedSig, actualSig)) {
     return { ok: false, error: "Invalid signature" };
   }
-  let payload: any;
-  try { payload = JSON.parse(payloadJson); } catch { return { ok: false, error: "Malformed payload" }; }
-  if (typeof payload?.j !== "number" || typeof payload?.t !== "number" || typeof payload?.n !== "string" || typeof payload?.e !== "number") {
+  let payload: unknown;
+  try {
+    payload = JSON.parse(payloadJson);
+  } catch {
+    return { ok: false, error: "Malformed payload" };
+  }
+  if (!isTicketTokenPayload(payload)) {
     return { ok: false, error: "Malformed payload fields" };
   }
   if (Date.now() > payload.e) return { ok: false, error: "Token expired — driver should refresh the QR." };
@@ -63,7 +85,7 @@ function verifyToken(token: string): { ok: true; j: number; t: number; n: string
 // ── Routes ────────────────────────────────────────────────────────────────
 
 router.get("/jobs/:id/tickets", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const jobId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
   const job = await loadJobIfMember(jobId, profile);
@@ -75,7 +97,7 @@ router.get("/jobs/:id/tickets", requireProfile, async (req, res): Promise<void> 
 });
 
 router.post("/jobs/:id/tickets", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (!DRIVER_SIDE.has(profile.role)) {
     res.status(403).json({ error: "Only drivers and providers can create tickets." });
     return;
@@ -118,7 +140,10 @@ router.post("/jobs/:id/tickets", requireProfile, async (req, res): Promise<void>
   res.status(201).json(ticket);
 });
 
-async function loadOwnedTicket(ticketId: number, profile: any): Promise<{ ticket: any; job: any } | null> {
+async function loadOwnedTicket(
+  ticketId: number,
+  profile: Profile,
+): Promise<{ ticket: Ticket; job: Job } | null> {
   const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId));
   if (!ticket) return null;
   const job = await loadJobIfMember(ticket.jobId, profile);
@@ -130,7 +155,7 @@ async function loadOwnedTicket(ticketId: number, profile: any): Promise<{ ticket
 }
 
 router.post("/tickets/:id/clock-in", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (!DRIVER_SIDE.has(profile.role)) { res.status(403).json({ error: "Only drivers and providers can clock in." }); return; }
   const id = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid ticket id" }); return; }
@@ -145,7 +170,7 @@ router.post("/tickets/:id/clock-in", requireProfile, async (req, res): Promise<v
 });
 
 router.post("/tickets/:id/clock-out", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (!DRIVER_SIDE.has(profile.role)) { res.status(403).json({ error: "Only drivers and providers can clock out." }); return; }
   const id = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid ticket id" }); return; }
@@ -161,7 +186,7 @@ router.post("/tickets/:id/clock-out", requireProfile, async (req, res): Promise<
 });
 
 router.post("/tickets/:id/qr", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (!DRIVER_SIDE.has(profile.role)) { res.status(403).json({ error: "Only drivers and providers can issue ticket QR codes." }); return; }
   const id = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid ticket id" }); return; }
@@ -180,7 +205,7 @@ router.post("/tickets/:id/qr", requireProfile, async (req, res): Promise<void> =
 });
 
 router.post("/tickets/verify", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (!CUSTOMER_SIDE.has(profile.role)) {
     res.status(403).json({ error: "Only customers and supervisors can verify tickets." });
     return;

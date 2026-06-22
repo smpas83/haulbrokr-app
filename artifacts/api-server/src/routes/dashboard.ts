@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, or, sql, and } from "drizzle-orm";
 import { db, requestsTable, jobsTable, bidsTable, activityTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
   GetDashboardStatsResponse,
   GetDashboardActivityResponse,
@@ -10,7 +10,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/dashboard/stats", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
 
   if (profile.role === "customer") {
     const [openResult] = await db.select({ count: sql<number>`count(*)` }).from(requestsTable)
@@ -56,7 +56,7 @@ router.get("/dashboard/stats", requireProfile, async (req, res): Promise<void> =
 });
 
 router.get("/dashboard/activity", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const activities = await db.select().from(activityTable)
     .where(eq(activityTable.profileId, profile.id))
     .orderBy(sql`${activityTable.createdAt} desc`)

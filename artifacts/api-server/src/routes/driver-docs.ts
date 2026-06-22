@@ -7,7 +7,7 @@ import {
   DRIVER_DOC_TYPES,
   type DriverDocType,
 } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { verifyStorageToken } from "../lib/uploadToken";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 
@@ -26,7 +26,7 @@ const UpsertBody = z.object({
 });
 
 router.get("/driver-docs", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const rows = await db.select().from(driverDocumentsTable)
     .where(eq(driverDocumentsTable.profileId, profile.id));
   res.json(rows);
@@ -41,7 +41,7 @@ router.put("/driver-docs/:docType", requireProfile, async (req, res): Promise<vo
   if (!parsed.success) { res.status(400).json({ error: "Invalid body" }); return; }
   const { objectPath, storageToken, fileName, mimeType, docNumber, expiry } = parsed.data;
 
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
 
   if (objectPath !== undefined) {
     if (!storageToken) {
@@ -120,7 +120,7 @@ router.put("/driver-docs/:docType", requireProfile, async (req, res): Promise<vo
 router.delete("/driver-docs/:docType", requireProfile, async (req, res): Promise<void> => {
   const parsedType = DocTypeSchema.safeParse(req.params.docType);
   if (!parsedType.success) { res.status(400).json({ error: "Invalid doc type" }); return; }
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   await db.delete(driverDocumentsTable)
     .where(and(
       eq(driverDocumentsTable.profileId, profile.id),

@@ -3,7 +3,7 @@
 #
 # Deploy: Render Dashboard → New Blueprint → connect this repo
 # After deploy, note the service URL (e.g. haulbrokr-api.onrender.com)
-# and set it in artifacts/dumpbroker/vercel.json if the name differs.
+# and set it in artifacts/haulbrokr/vercel.json if the name differs.
 
 services:
   - type: web
@@ -37,6 +37,8 @@ services:
       - key: UPLOAD_TOKEN_SECRET
         generateValue: true
       - key: TICKET_QR_SECRET
+        generateValue: true
+      - key: STAFF_AUTH_SECRET
         generateValue: true
       - key: ADMIN_USER_IDS
         sync: false

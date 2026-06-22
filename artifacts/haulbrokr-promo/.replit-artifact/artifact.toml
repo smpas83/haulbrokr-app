@@ -1,0 +1,31 @@
+kind = "video"
+previewPath = "/haulbrokr-promo/"
+title = "HaulBrokr Promo"
+version = "1.0.0"
+id = "artifacts/haulbrokr-promo"
+router = "path"
+
+[[integratedSkills]]
+name = "video-js"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/haulbrokr-promo/" ]
+localPort = 18118
+
+[services.development]
+run = "pnpm --filter @workspace/haulbrokr-promo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/haulbrokr-promo", "run", "build" ]
+publicDir = "artifacts/haulbrokr-promo/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18118"
+BASE_PATH = "/haulbrokr-promo/"

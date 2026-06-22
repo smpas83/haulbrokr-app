@@ -23,8 +23,8 @@ pnpm --filter @workspace/db run push
 
 # 5. Run an app (each runs independently — set PORT to any free port)
 PORT=5000 pnpm --filter @workspace/api-server run dev        # Backend API
-PORT=5173 pnpm --filter @workspace/dumpbroker run dev        # Web app
-PORT=8082 pnpm --filter @workspace/dumpbroker-mobile run dev # Mobile (Expo)
+PORT=5173 pnpm --filter @workspace/haulbrokr run dev        # Web app
+PORT=8082 pnpm --filter @workspace/haulbrokr-mobile run dev # Mobile (Expo)
 ```
 
 ## Repo layout
@@ -32,10 +32,10 @@ PORT=8082 pnpm --filter @workspace/dumpbroker-mobile run dev # Mobile (Expo)
 ```
 artifacts/
   api-server/         Backend API (Express + Drizzle + Postgres)
-  dumpbroker/         Web app (React + Vite + Tailwind)
-  dumpbroker-mobile/  Mobile app (Expo → iOS + Android)
-  dumpbroker-deck/    Pitch deck (slides)
-  dumpbroker-promo/   Promo video
+  haulbrokr/         Web app (React + Vite + Tailwind)
+  haulbrokr-mobile/  Mobile app (Expo → iOS + Android)
+  haulbrokr-deck/    Pitch deck (slides)
+  haulbrokr-promo/   Promo video
   mockup-sandbox/     Component preview (dev tooling)
 lib/
   db/                 PostgreSQL schema + Drizzle client
@@ -61,7 +61,5 @@ pnpm run build       # typecheck + build all packages
 ## Notes
 
 - **pnpm only.** A `preinstall` guard refuses npm/yarn.
-- Internal package/folder names still use the original `dumpbroker` identifier; all
-  user-facing branding is **HaulBrokr**. See `MIGRATION_TO_CURSOR.md` for why this is
-  intentional.
+- Package and folder names use the `haulbrokr` identifier; user-facing branding is **HaulBrokr**.
 - Never commit secrets or `.env` files — they are git-ignored.

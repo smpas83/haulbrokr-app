@@ -19,6 +19,7 @@ import storageRouter from "./storage";
 import driverDocsRouter from "./driver-docs";
 import payoutsRouter from "./payouts";
 import messagesRouter from "./messages";
+import staffAuthRouter from "./staff-auth";
 import adminRouter from "./admin";
 import ratingsRouter from "./ratings";
 
@@ -44,6 +45,7 @@ router.use(storageRouter);
 router.use(driverDocsRouter);
 router.use(payoutsRouter);
 router.use(messagesRouter);
+router.use(staffAuthRouter);
 router.use(adminRouter);
 router.use(ratingsRouter);
 

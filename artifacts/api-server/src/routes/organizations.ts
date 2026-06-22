@@ -24,7 +24,7 @@ async function loadProfile(clerkId: string) {
 }
 
 router.get("/organizations/me", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkId as string;
+  const clerkId = req.clerkId as string;
   const profile = await loadProfile(clerkId);
   if (!profile?.organizationId) {
     res.status(404).json({ error: "No organization" });
@@ -39,7 +39,7 @@ router.get("/organizations/me", requireAuth, async (req, res): Promise<void> => 
 });
 
 router.get("/organizations/members", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkId as string;
+  const clerkId = req.clerkId as string;
   const profile = await loadProfile(clerkId);
   if (!profile?.organizationId) {
     res.status(404).json({ error: "No organization" });
@@ -59,7 +59,7 @@ router.get("/organizations/members", requireAuth, async (req, res): Promise<void
 });
 
 router.patch("/organizations/members/:id", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkId as string;
+  const clerkId = req.clerkId as string;
   const profile = await loadProfile(clerkId);
   if (!profile?.organizationId) {
     res.status(404).json({ error: "No organization" });
@@ -104,7 +104,7 @@ router.patch("/organizations/members/:id", requireAuth, async (req, res): Promis
 });
 
 router.delete("/organizations/members/:id", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkId as string;
+  const clerkId = req.clerkId as string;
   const profile = await loadProfile(clerkId);
   if (!profile?.organizationId) {
     res.status(404).json({ error: "No organization" });
@@ -137,7 +137,7 @@ router.delete("/organizations/members/:id", requireAuth, async (req, res): Promi
 });
 
 router.post("/organizations/rotate-code", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkId as string;
+  const clerkId = req.clerkId as string;
   const profile = await loadProfile(clerkId);
   if (!profile?.organizationId) {
     res.status(404).json({ error: "No organization" });

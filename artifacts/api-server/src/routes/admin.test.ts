@@ -75,12 +75,25 @@ vi.mock("../lib/payoutRetry", () => ({
 
 // Inject an authenticated admin profile (id 1) without Clerk. requireAdmin
 // itself grants access outside production when no allowlist is configured.
+vi.mock("../middlewares/staffAuth", () => ({
+  attachStaffSession: (_req: any, _res: any, next: any) => next(),
+  requireStaffOrProfile: (req: any, _res: any, next: any) => {
+    req.profile = { ...h.profile };
+    next();
+  },
+}));
+
 vi.mock("../middlewares/requireAuth", () => ({
+  attachClerkProfileIfPresent: (req: any, _res: any, next: any) => {
+    req.profile = { ...h.profile };
+    next();
+  },
   requireAuth: (_req: any, _res: any, next: any) => next(),
   requireProfile: (req: any, _res: any, next: any) => {
     req.profile = { ...h.profile };
     next();
   },
+  getRequestProfile: (req: any) => req.profile,
 }));
 
 import adminRouter from "./admin";

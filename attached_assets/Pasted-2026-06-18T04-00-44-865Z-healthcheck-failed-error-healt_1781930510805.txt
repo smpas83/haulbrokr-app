@@ -16,7 +16,7 @@
 2026-06-18T04:09:52.906Z healthcheck failed error=healthcheck /api returned status 500
 2026-06-18T04:09:52.989Z healthcheck failed error=healthcheck /mobile/ returned status 500
 2026-06-18T04:10:03.493Z artifact process exited with error error=signal: terminated artifact=artifacts/api-server
-2026-06-18T04:10:03.512Z artifact process exited with error error=signal: terminated artifact=artifacts/dumpbroker-mobile
+2026-06-18T04:10:03.512Z artifact process exited with error error=signal: terminated artifact=artifacts/haulbrokr-mobile
 2026-06-18T04:14:58.933Z (node:18) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
 2026-06-18T04:14:58.933Z In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
 2026-06-18T04:14:58.933Z See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
@@ -33,7 +33,7 @@
 2026-06-18T04:44:07.307Z healthcheck failed error=healthcheck /api returned status 500
 2026-06-18T04:44:07.320Z healthcheck failed error=healthcheck /mobile/ returned status 500
 2026-06-18T04:44:13.241Z artifact process exited with error error=signal: terminated artifact=artifacts/api-server
-2026-06-18T04:44:13.269Z artifact process exited with error artifact=artifacts/dumpbroker-mobile error=signal: terminated
+2026-06-18T04:44:13.269Z artifact process exited with error artifact=artifacts/haulbrokr-mobile error=signal: terminated
 2026-06-18T04:49:09.794Z (node:18) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
 2026-06-18T04:49:09.794Z - If you want the current behavior, explicitly use 'sslmode=verify-full'
 2026-06-18T04:49:09.794Z See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
@@ -48,7 +48,7 @@
 2026-06-18T04:54:51.299Z healthcheck failed error=healthcheck /mobile/ returned status 500
 2026-06-18T04:54:51.435Z healthcheck failed error=healthcheck /mobile/ returned status 500
 2026-06-18T04:55:00.931Z artifact process exited with error error=signal: terminated artifact=artifacts/api-server
-2026-06-18T04:55:00.954Z artifact process exited with error error=signal: terminated artifact=artifacts/dumpbroker-mobile
+2026-06-18T04:55:00.954Z artifact process exited with error error=signal: terminated artifact=artifacts/haulbrokr-mobile
 2026-06-18T04:59:56.081Z In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
 2026-06-18T04:59:56.081Z See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
 2026-06-18T04:59:56.081Z To prepare for this change:
@@ -61,7 +61,7 @@
 2026-06-18T05:12:41.066Z healthcheck failed error=healthcheck /api returned status 500
 2026-06-18T05:12:42.300Z healthcheck failed error=healthcheck /api returned status 500
 2026-06-18T05:12:49.050Z artifact process exited with error error=signal: terminated artifact=artifacts/api-server
-2026-06-18T05:12:49.078Z artifact process exited with error error=signal: terminated artifact=artifacts/dumpbroker-mobile
+2026-06-18T05:12:49.078Z artifact process exited with error error=signal: terminated artifact=artifacts/haulbrokr-mobile
 2026-06-18T05:17:43.446Z - If you want the current behavior, explicitly use 'sslmode=verify-full'
 2026-06-18T05:17:43.446Z See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
 2026-06-18T05:17:43.446Z To prepare for this change:
@@ -76,7 +76,7 @@
 2026-06-18T18:21:11.374Z healthcheck failed error=healthcheck /mobile/ returned status 500
 2026-06-18T18:21:11.441Z healthcheck failed error=healthcheck /mobile/ returned status 500
 2026-06-18T18:25:28.581Z artifact process exited with error error=signal: terminated artifact=artifacts/api-server
-2026-06-18T18:25:28.596Z artifact process exited with error error=signal: terminated artifact=artifacts/dumpbroker-mobile
+2026-06-18T18:25:28.596Z artifact process exited with error error=signal: terminated artifact=artifacts/haulbrokr-mobile
 2026-06-18T18:26:15.566Z To prepare for this change:
 2026-06-18T18:26:15.566Z See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
 2026-06-18T18:26:15.566Z - If you want the current behavior, explicitly use 'sslmode=verify-full'

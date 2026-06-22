@@ -26,7 +26,7 @@ HaulBrokr is a dump-truck hauling marketplace with a public web app, a mobile ap
 
 ## Scan Anchors
 
-- **Production entry points**: `artifacts/api-server/src/index.ts`, `artifacts/api-server/src/app.ts`, `artifacts/dumpbroker/src/main.tsx`, `artifacts/dumpbroker-mobile/app/_layout.tsx`.
+- **Production entry points**: `artifacts/api-server/src/index.ts`, `artifacts/api-server/src/app.ts`, `artifacts/haulbrokr/src/main.tsx`, `artifacts/haulbrokr-mobile/app/_layout.tsx`.
 - **Highest-risk backend areas**: `artifacts/api-server/src/routes/jobs.ts`, `routes/account.ts`, `routes/payouts.ts`, `routes/admin.ts`, `routes/storage.ts`, and `artifacts/api-server/src/lib/access.ts` / payout helpers.
 - **Public surfaces**: `/api/healthz`, `/api/dump-sites*`, `/api/storage/public-objects/*`, the public web SPA, and any mobile/web sign-in flows.
 - **Authenticated surfaces**: most `/api` marketplace routes guarded by `requireAuth` or `requireProfile`.

@@ -1,0 +1,31 @@
+kind = "slides"
+previewPath = "/haulbrokr-deck/"
+title = "HaulBrokr Pitch Deck"
+version = "1.0.0"
+id = "artifacts/haulbrokr-deck"
+router = "path"
+
+[[integratedSkills]]
+name = "slides"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/haulbrokr-deck/" ]
+localPort = 21989
+
+[services.development]
+run = "pnpm --filter @workspace/haulbrokr-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/haulbrokr-deck", "run", "build" ]
+publicDir = "artifacts/haulbrokr-deck/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21989"
+BASE_PATH = "/haulbrokr-deck/"

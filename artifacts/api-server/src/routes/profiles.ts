@@ -41,7 +41,7 @@ function buildProfileFields(body: any): Record<string, unknown> {
 }
 
 router.get("/profiles/me", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkId as string;
+  const clerkId = req.clerkId as string;
   const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.clerkId, clerkId));
   if (!profile) {
     res.status(404).json({ error: "Profile not found" });
@@ -56,7 +56,7 @@ router.get("/profiles/me", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.patch("/profiles/me", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkId as string;
+  const clerkId = req.clerkId as string;
   const allowed: Record<string, unknown> = buildProfileFields(req.body);
   if (req.body?.companyName !== undefined) allowed.companyName = String(req.body.companyName).trim();
   if (req.body?.phone !== undefined) allowed.phone = req.body.phone === null ? null : String(req.body.phone).trim();
@@ -76,7 +76,7 @@ const VALID_ROLES = ["customer", "provider", "driver", "supervisor"] as const;
 type Role = (typeof VALID_ROLES)[number];
 
 router.post("/profiles", requireAuth, async (req, res): Promise<void> => {
-  const clerkId = (req as any).clerkId as string;
+  const clerkId = req.clerkId as string;
   const role = req.body?.role as Role;
   const companyName = String(req.body?.companyName ?? "").trim();
   const phone = req.body?.phone ? String(req.body.phone).trim() : undefined;

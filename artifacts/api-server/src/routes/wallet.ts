@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, jobsTable, factoringRequestsTable, payoutAccountsTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { GetWalletResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -15,7 +15,7 @@ const AVAILABLE_STATUSES = new Set(["paid", "released"]);
 const PENDING_STATUSES = new Set(["unpaid", "invoiced", "requires_action"]);
 
 router.get("/wallet", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (!PROVIDER_ROLES.has(profile.role)) {
     res.status(403).json({ error: "Only providers and drivers have a wallet." });
     return;

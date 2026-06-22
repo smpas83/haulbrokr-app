@@ -23,7 +23,7 @@
 - Fleet dispatch and hauling jobs
 
 ## Notes
-- Scope inferred from the deployed web artifact source at `artifacts/dumpbroker`.
+- Scope inferred from the deployed web artifact source at `artifacts/haulbrokr`.
 - The website is a Vite + React app with Wouter client-side routing.
 - Public `/`, `/support`, and `/privacy` routes are implemented through route-specific HTML shells plus a post-build prerender step, while authenticated product routes remain client-rendered.
 

@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, bidsTable, requestsTable, profilesTable, jobsTable, activityTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
   ListBidsParams,
   ListBidsResponse,
@@ -17,7 +17,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/requests/:requestId/bids", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const rawId = Array.isArray(req.params.requestId) ? req.params.requestId[0] : req.params.requestId;
   const params = ListBidsParams.safeParse({ requestId: parseInt(rawId, 10) });
   if (!params.success) {
@@ -68,7 +68,7 @@ router.get("/requests/:requestId/bids", requireProfile, async (req, res): Promis
 });
 
 router.post("/requests/:requestId/bids", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (profile.role !== "provider") {
     res.status(403).json({ error: "Only providers can place bids" });
     return;
@@ -115,7 +115,7 @@ router.post("/requests/:requestId/bids", requireProfile, async (req, res): Promi
 });
 
 router.get("/bids/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = GetBidParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -157,7 +157,7 @@ router.get("/bids/:id", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = UpdateBidParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {

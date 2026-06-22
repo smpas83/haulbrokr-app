@@ -95,7 +95,7 @@ router.get("/bins", requireAuth, async (req, res) => {
 
 // GET /bin-orders — list user's bin orders
 router.get("/bin-orders", requireAuth, async (req, res) => {
-  const userId = (req as any).clerkId as string;
+  const userId = req.clerkId as string;
   const orders = await db
     .select()
     .from(binOrders)
@@ -109,7 +109,7 @@ router.get("/bin-orders", requireAuth, async (req, res) => {
 // same enriched shape as the list endpoint. 404s for a missing order OR one that
 // belongs to another customer, so ownership never leaks via a probe.
 router.get("/bin-orders/:id", requireAuth, async (req, res) => {
-  const userId = (req as any).clerkId as string;
+  const userId = req.clerkId as string;
   const id = req.params.id as string;
 
   const [order] = await db.select().from(binOrders).where(eq(binOrders.id, id));
@@ -154,7 +154,7 @@ router.get("/admin/bin-orders", requireAuth, requirePermission("bins"), async (r
 
 // POST /bin-orders — create a new bin order
 router.post("/bin-orders", requireAuth, async (req, res) => {
-  const userId = (req as any).clerkId as string;
+  const userId = req.clerkId as string;
   const body = req.body;
 
   const { serviceType, binSize, binType, deliveryAddress, deliveryDate, wasteType } = body;
@@ -196,7 +196,7 @@ router.post("/bin-orders", requireAuth, async (req, res) => {
 // Customers can change the delivery date, waste type, or delivery address of an
 // order that hasn't been delivered or closed out yet.
 router.patch("/bin-orders/:id", requireAuth, async (req, res) => {
-  const userId = (req as any).clerkId as string;
+  const userId = req.clerkId as string;
   const id = req.params.id as string;
   const body = req.body ?? {};
 
@@ -256,7 +256,7 @@ router.patch("/bin-orders/:id", requireAuth, async (req, res) => {
 
 // PATCH /bin-orders/:id/cancel
 router.patch("/bin-orders/:id/cancel", requireAuth, async (req, res) => {
-  const userId = (req as any).clerkId as string;
+  const userId = req.clerkId as string;
   const id = req.params.id as string;
 
   const [existing] = await db.select().from(binOrders).where(eq(binOrders.id, id));

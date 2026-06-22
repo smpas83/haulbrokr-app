@@ -6,7 +6,8 @@ import { eq } from "drizzle-orm";
 // admin command center. The named roles are:
 //   - CEO        — sees everything (Overview + all review tabs + bin orders) and
 //                  can VIEW the team roster, but cannot make staff-role edits.
-//   - CTO / IT   — full technical superadmin (everything, incl. staff management).
+//   - President  — same executive visibility as CEO (Overview + reviews + bins + team roster).
+//   - Programmer — technical superadmin (same as CTO / IT).
 //   - CFO        — all finance (payouts/credit/compliance) + bin orders + staff
 //                  management + Overview.
 //   - Accounting — combined former AP/AR scope (payouts/credit/compliance) + Overview,
@@ -14,7 +15,16 @@ import { eq } from "drizzle-orm";
 // `ap`/`ar` are legacy enum values kept for backward compatibility: they resolve
 // to the Accounting scope so existing staff keep working. They are never offered
 // when assigning a role (see ASSIGNABLE_ROLES).
-export type StaffRole = "ap" | "ar" | "cfo" | "cto" | "ceo" | "accounting" | "it";
+export type StaffRole =
+  | "ap"
+  | "ar"
+  | "cfo"
+  | "cto"
+  | "ceo"
+  | "accounting"
+  | "it"
+  | "president"
+  | "programmer";
 export type Permission =
   | "overview"
   | "payouts"
@@ -38,19 +48,23 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
   accounting: [...REVIEW_SCOPE],
   // CEO: full visibility incl. bins + read-only team roster, no staff edits.
   ceo: [...REVIEW_SCOPE, "bins", "view_staff"],
+  // President: executive visibility incl. bins + read-only team roster.
+  president: [...REVIEW_SCOPE, "bins", "view_staff"],
   // CFO: finance review + full staff management, but NO operational bins.
   cfo: [...REVIEW_SCOPE, "view_staff", "manage_staff"],
   // Technical superadmins: review scope + bins + full staff management.
   cto: [...REVIEW_SCOPE, "bins", "view_staff", "manage_staff"],
   it: [...REVIEW_SCOPE, "bins", "view_staff", "manage_staff"],
+  programmer: [...REVIEW_SCOPE, "bins", "view_staff", "manage_staff"],
 };
 
-// Every valid enum value (incl. legacy) — used to validate an incoming role.
-export const STAFF_ROLES: StaffRole[] = ["ap", "ar", "cfo", "cto", "ceo", "accounting", "it"];
+export const STAFF_ROLES: StaffRole[] = [
+  "ap", "ar", "cfo", "cto", "ceo", "accounting", "it", "president", "programmer",
+];
 
-// The roles an admin may actually assign through the Team UI. Legacy ap/ar are
-// intentionally excluded — they only persist on pre-existing records.
-export const ASSIGNABLE_ROLES: StaffRole[] = ["ceo", "cto", "cfo", "accounting", "it"];
+export const ASSIGNABLE_ROLES: StaffRole[] = [
+  "ceo", "president", "cto", "cfo", "accounting", "it", "programmer",
+];
 
 function isStaffRole(value: unknown): value is StaffRole {
   return typeof value === "string" && (STAFF_ROLES as string[]).includes(value);
@@ -61,7 +75,7 @@ function isStaffRole(value: unknown): value is StaffRole {
 // outside production so the demo/dev flow can exercise the admin dashboard —
 // never a self-serve hole in prod.
 function isAllowlistedSuperadmin(req: Request): boolean {
-  const clerkId: string | undefined = (req as any).clerkId;
+  const clerkId = req.clerkId;
   const allowlist = (process.env.ADMIN_USER_IDS ?? "")
     .split(",")
     .map((s) => s.trim())
@@ -75,12 +89,15 @@ function isAllowlistedSuperadmin(req: Request): boolean {
 // assigning roles to other staff. Otherwise the role comes from the profile's
 // staffRole column. Returns null for non-staff.
 export async function getStaffRole(req: Request): Promise<StaffRole | null> {
+  if (req.staffUser?.staffRole && isStaffRole(req.staffUser.staffRole)) {
+    return req.staffUser.staffRole;
+  }
   if (isAllowlistedSuperadmin(req)) return "cto";
   // Prefer a profile already attached by requireProfile to avoid a re-query.
-  const attached = (req as any).profile;
+  const attached = req.profile;
   if (attached && isStaffRole(attached.staffRole)) return attached.staffRole;
   if (attached && attached.staffRole == null) return null;
-  const clerkId: string | undefined = (req as any).clerkId;
+  const clerkId = req.clerkId;
   if (!clerkId) return null;
   const [profile] = await db
     .select({ staffRole: profilesTable.staffRole })

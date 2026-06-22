@@ -5,11 +5,7 @@ working on it in **Cursor** (or any local environment). It describes the stack, 
 to run, build, and deploy every piece, the full list of environment variables the
 code actually reads, and the known caveats.
 
-> **Naming note:** internal package/folder names still use the original `dumpbroker`
-> identifier (e.g. `@workspace/dumpbroker`, mobile bundle id `com.dumpbroker.mobile`,
-> URL scheme `dumpbroker`). These are intentionally left unchanged — renaming the
-> mobile bundle identifier/scheme breaks the in-progress Apple Sign-In / code-signing
-> setup. All user-facing branding is **HaulBrokr**.
+> **Naming:** packages, folders, bundle ID (`com.haulbrokr.mobile`), and URL scheme (`haulbrokr`) use the **haulbrokr** identifier. User-facing branding is **HaulBrokr**.
 
 ---
 
@@ -22,10 +18,10 @@ containing several independently runnable apps ("artifacts") plus shared librari
 | Path | Name | Kind | Stack |
 |---|---|---|---|
 | `artifacts/api-server` | `@workspace/api-server` | Backend API | Node + Express 5 + Drizzle ORM (TypeScript), bundled with esbuild |
-| `artifacts/dumpbroker` | `@workspace/dumpbroker` | Marketing/web app | React 19 + Vite 7 + Tailwind CSS 4 |
-| `artifacts/dumpbroker-mobile` | `@workspace/dumpbroker-mobile` | Mobile app (iOS + Android) | React Native + Expo (Expo Router) |
-| `artifacts/dumpbroker-deck` | `@workspace/dumpbroker-deck` | Pitch deck (slides) | React + Vite |
-| `artifacts/dumpbroker-promo` | `@workspace/dumpbroker-promo` | Promo video | React + Vite |
+| `artifacts/haulbrokr` | `@workspace/haulbrokr` | Marketing/web app | React 19 + Vite 7 + Tailwind CSS 4 |
+| `artifacts/haulbrokr-mobile` | `@workspace/haulbrokr-mobile` | Mobile app (iOS + Android) | React Native + Expo (Expo Router) |
+| `artifacts/haulbrokr-deck` | `@workspace/haulbrokr-deck` | Pitch deck (slides) | React + Vite |
+| `artifacts/haulbrokr-promo` | `@workspace/haulbrokr-promo` | Promo video | React + Vite |
 | `artifacts/mockup-sandbox` | `@workspace/mockup-sandbox` | Component preview (dev tooling) | React + Vite |
 
 Shared libraries (`lib/*`):
@@ -113,7 +109,7 @@ Set these in your shell, your hosting provider's secret manager, or a local `.en
 > **Resend (email):** delivered through the Replit Connectors hostname on Replit. Off
 > Replit, supply a Resend API key in `src/.../resendClient.ts`.
 
-### Web app — `artifacts/dumpbroker`
+### Web app — `artifacts/haulbrokr`
 | Variable | Purpose |
 |---|---|
 | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for the browser |
@@ -121,7 +117,7 @@ Set these in your shell, your hosting provider's secret manager, or a local `.en
 | `BASE_PATH` | Base path prefix (defaults to `/`; injected at serve time on Replit) |
 | `PORT` | Vite dev/preview server port |
 
-### Mobile app — `artifacts/dumpbroker-mobile`
+### Mobile app — `artifacts/haulbrokr-mobile`
 | Variable | Purpose |
 |---|---|
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for the app |
@@ -130,7 +126,7 @@ Set these in your shell, your hosting provider's secret manager, or a local `.en
 | `METRO_PORT` / `RCT_METRO_PORT` | Metro bundler port |
 | `PORT` | Expo dev server port |
 
-### Slides / promo / sandbox (`dumpbroker-deck`, `dumpbroker-promo`, `mockup-sandbox`)
+### Slides / promo / sandbox (`haulbrokr-deck`, `haulbrokr-promo`, `mockup-sandbox`)
 | Variable | Purpose |
 |---|---|
 | `PORT` | Vite dev/preview server port |
@@ -159,10 +155,10 @@ Auth is handled by **Clerk** across all three runtimes (backend, web, mobile).
   production (no IDs ⇒ no admins) and falls back to an open `cto` role in development.
   Per-role staff permissions (ap / ar / cfo / cto) are enforced centrally in
   `requireAdmin.ts`.
-- **Web (`dumpbroker`):** wraps the app in Clerk's React provider in `src/AuthShell.tsx`,
+- **Web (`haulbrokr`):** wraps the app in Clerk's React provider in `src/AuthShell.tsx`,
   configured with `VITE_CLERK_PUBLISHABLE_KEY` and `VITE_CLERK_PROXY_URL` (routes Clerk
   traffic through the API proxy above).
-- **Mobile (`dumpbroker-mobile`):** uses `@clerk/expo` with a secure token cache; the
+- **Mobile (`haulbrokr-mobile`):** uses `@clerk/expo` with a secure token cache; the
   provider is configured in `app/_layout.tsx` / `context/ClerkAuthContext.tsx` from
   `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`.
 - **Getting keys:** on Replit these came from the Replit-managed Clerk integration. Off
@@ -179,7 +175,7 @@ Auth is handled by **Clerk** across all three runtimes (backend, web, mobile).
 | **Stripe** | Payments + Connect payouts (has a mock mode) | `artifacts/api-server/src/lib/stripeClient.ts` |
 | **Resend** | Transactional email (e.g. payout alerts) | `artifacts/api-server/src/lib/resendClient.ts` |
 | **Object storage** | Document/file uploads (W-9, insurance, delivery evidence, driver docs) | `artifacts/api-server/src/lib/objectStorage.ts` |
-| **Google Maps** | Mobile map UI | `react-native-maps` via `artifacts/dumpbroker-mobile/lib/maps.ts` |
+| **Google Maps** | Mobile map UI | `react-native-maps` via `artifacts/haulbrokr-mobile/lib/maps.ts` |
 
 **Important — Replit Connectors:** on Replit, **Stripe** and **Resend** credentials are
 fetched at runtime from the Replit Connectors proxy (`REPLIT_CONNECTORS_HOSTNAME` plus a
@@ -231,19 +227,19 @@ Each command runs one artifact. Set `PORT` to any free port you like.
 PORT=5000 pnpm --filter @workspace/api-server run dev
 
 # Web app
-PORT=5173 pnpm --filter @workspace/dumpbroker run dev
+PORT=5173 pnpm --filter @workspace/haulbrokr run dev
 
 # Pitch deck
-PORT=4173 pnpm --filter @workspace/dumpbroker-deck run dev
+PORT=4173 pnpm --filter @workspace/haulbrokr-deck run dev
 
 # Promo video
-PORT=4174 pnpm --filter @workspace/dumpbroker-promo run dev
+PORT=4174 pnpm --filter @workspace/haulbrokr-promo run dev
 
 # Component sandbox (dev tooling)
 PORT=8081 pnpm --filter @workspace/mockup-sandbox run dev
 
 # Mobile (Expo) — then scan the QR with Expo Go
-PORT=8082 pnpm --filter @workspace/dumpbroker-mobile run dev
+PORT=8082 pnpm --filter @workspace/haulbrokr-mobile run dev
 ```
 
 > The `dev` script for the mobile app only applies the Replit-specific
@@ -252,7 +248,7 @@ PORT=8082 pnpm --filter @workspace/dumpbroker-mobile run dev
 > — Expo loads `.env` automatically and the `dev` command falls back to those
 > values:
 > ```bash
-> cd artifacts/dumpbroker-mobile
+> cd artifacts/haulbrokr-mobile
 > cp .env.example .env          # set EXPO_PUBLIC_DOMAIN + EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
 > pnpm run dev                  # or: PORT=8082 pnpm run dev
 > ```
@@ -269,8 +265,8 @@ pnpm run build       # typecheck, then build every package that has a build scri
 Per-artifact builds (run from the repo root):
 ```bash
 pnpm --filter @workspace/api-server run build      # esbuild bundle → dist/
-pnpm --filter @workspace/dumpbroker run build      # Vite build + prerender
-pnpm --filter @workspace/dumpbroker-mobile run build
+pnpm --filter @workspace/haulbrokr run build      # Vite build + prerender
+pnpm --filter @workspace/haulbrokr-mobile run build
 ```
 
 Regenerate API hooks / Zod schemas after editing the OpenAPI spec:
@@ -291,9 +287,9 @@ target that suits it:
 - **Web / slides / promo** (Vite apps): `pnpm --filter <name> run build` produces a
   static `dist/`. Host on any static host/CDN (Vercel, Netlify, Cloudflare Pages,
   S3+CloudFront). Set `BASE_PATH` if not served from the domain root.
-- **Mobile** (`dumpbroker-mobile`): build installable/store binaries with EAS:
+- **Mobile** (`haulbrokr-mobile`): build installable/store binaries with EAS:
   ```bash
-  cd artifacts/dumpbroker-mobile
+  cd artifacts/haulbrokr-mobile
   npx eas build --platform ios     # or android, or all
   npx eas submit --platform ios    # to submit to the stores
   ```
@@ -322,8 +318,7 @@ target that suits it:
 
 - **pnpm only.** A `preinstall` guard deletes `package-lock.json`/`yarn.lock` and
   refuses non-pnpm installs. Always use pnpm.
-- **`dumpbroker` naming retained.** See the note at the top — do not rename the mobile
-  bundle id/scheme; it is tied to Apple Sign-In / code signing.
+- **`haulbrokr` naming.** Packages, folders, bundle id, and URL scheme use the `haulbrokr` identifier (see note at top).
 - **Expo Go stale icon.** The launcher icon (`assets/images/app-icon-v2.png`) and
   splash are baked in at build time. In the Expo Go dev launcher the icon can look
   cached/stale — that is an Expo Go quirk, not a code bug; a real EAS build always
@@ -332,7 +327,7 @@ target that suits it:
   are required and documented inline there — injecting `@babel/generator` into
   `react-native-worklets`, and pinning `@hookform/resolvers` to zod v3. Keep these if
   you stay on pnpm.
-- **Web-runtime guard test** (`dumpbroker-mobile` `check-web-runtime`): a heavy
+- **Web-runtime guard test** (`haulbrokr-mobile` `check-web-runtime`): a heavy
   headless-Chromium E2E check. It can time out when run in parallel with the `webbuild`
   validation (both launch Chromium). The `webbuild` validation is the authoritative
   "does the web bundle render" check.

@@ -32,6 +32,7 @@ services:
       CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:-pk_test_placeholder}
       UPLOAD_TOKEN_SECRET: ${UPLOAD_TOKEN_SECRET:-local-dev-upload-secret-32chars-min}
       TICKET_QR_SECRET: ${TICKET_QR_SECRET:-local-dev-ticket-qr-secret-32chars}
+      STAFF_AUTH_SECRET: ${STAFF_AUTH_SECRET:-local-dev-staff-auth-secret-32chars}
       LOG_LEVEL: info
     depends_on:
       db:

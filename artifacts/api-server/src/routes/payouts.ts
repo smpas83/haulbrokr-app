@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, payoutAccountsTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { getUncachableStripeClient } from "../lib/stripeClient";
 import { syncStripeStatus, buildPayoutRequirements } from "../lib/payoutStatus";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
@@ -10,7 +10,7 @@ const router: IRouter = Router();
 
 /** POST /payouts/connect-link — create/get Connect Express account, return onboarding URL. */
 router.post("/payouts/connect-link", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   try {
     const stripe = await getUncachableStripeClient();
     const [existing] = await db.select().from(payoutAccountsTable)
@@ -69,7 +69,7 @@ router.post("/payouts/connect-link", requireProfile, async (req, res): Promise<v
 
 /** GET /payouts/status — refresh from Stripe and return current capability flags. */
 router.get("/payouts/status", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const [row] = await db.select().from(payoutAccountsTable)
     .where(eq(payoutAccountsTable.profileId, profile.id));
   if (!row?.stripeAccountId) {

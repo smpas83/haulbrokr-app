@@ -41,7 +41,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pnpm --filter @workspace/dumpbroker-mobile run check:web-build"
+args = "pnpm --filter @workspace/haulbrokr-mobile run check:web-build"
 
 [workflows.workflow.metadata]
 isValidation = true

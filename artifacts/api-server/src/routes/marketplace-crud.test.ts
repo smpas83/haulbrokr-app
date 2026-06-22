@@ -94,6 +94,16 @@ vi.mock("@workspace/db", () => {
         },
       }),
     }),
+    update: (table: unknown) => ({
+      set: (vals: Record<string, unknown>) => ({
+        where: (..._args: unknown[]) => {
+          if (table === requestsTable) {
+            for (const r of h.requests) Object.assign(r, vals);
+          }
+          return Promise.resolve([]);
+        },
+      }),
+    }),
     selectDistinct: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
   };
 
@@ -113,6 +123,7 @@ vi.mock("../middlewares/requireAuth", () => ({
     req.profile = h.profile;
     next();
   },
+  getRequestProfile: (req: any) => req.profile,
 }));
 
 import trucksRouter from "./trucks";

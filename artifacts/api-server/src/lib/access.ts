@@ -1,4 +1,4 @@
-import { db, jobsTable, profilesTable, projectAssignmentsTable } from "@workspace/db";
+import { db, jobsTable, profilesTable, projectAssignmentsTable, type Job, type Profile } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
 /**
@@ -7,7 +7,7 @@ import { eq, and } from "drizzle-orm";
  * members on the matching side (supervisor in the customer org, driver in the
  * provider org).
  */
-export async function loadJobIfMember(jobId: number, profile: any): Promise<any | null> {
+export async function loadJobIfMember(jobId: number, profile: Profile): Promise<Job | null> {
   const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
   if (!job) return null;
 
@@ -31,7 +31,7 @@ export async function loadJobIfMember(jobId: number, profile: any): Promise<any 
  * Org owners and admins qualify; base customer/provider accounts are always the
  * owner of their organization.
  */
-export function isOrgManager(profile: any): boolean {
+export function isOrgManager(profile: Profile): boolean {
   if (profile.orgRole === "owner" || profile.orgRole === "admin") return true;
   return profile.role === "customer" || profile.role === "provider";
 }
@@ -46,7 +46,7 @@ export const CUSTOMER_SIDE = new Set(["customer", "supervisor"]);
  *  - A supervisor (foreman) member may act ONLY on jobs whose project they are
  *    assigned to via project_assignments.
  */
-export async function canReviewCompletion(job: any, profile: any): Promise<boolean> {
+export async function canReviewCompletion(job: Job, profile: Profile): Promise<boolean> {
   if (job.customerId === profile.id) return true;
   if (!profile.organizationId) return false;
 
@@ -71,7 +71,7 @@ export async function canReviewCompletion(job: any, profile: any): Promise<boole
  * see every profile that shares their organization (so they get the whole
  * company's jobs on the relevant side).
  */
-export async function orgScopedActorIds(profile: any): Promise<number[]> {
+export async function orgScopedActorIds(profile: Profile): Promise<number[]> {
   if ((profile.role === "driver" || profile.role === "supervisor") && profile.organizationId) {
     const rows = await db
       .select({ id: profilesTable.id })

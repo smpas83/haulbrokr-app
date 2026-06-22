@@ -5,11 +5,7 @@ marketplace. This is a **pnpm monorepo** containing the web app, the mobile app
 (iOS + Android from one Expo codebase), the backend API, a pitch deck, and shared
 libraries.
 
-> Note: internal package/folder names still use the original `dumpbroker` identifier
-> (e.g. `@workspace/dumpbroker`, bundle id `com.dumpbroker.mobile`, URL scheme
-> `dumpbroker`). These are intentionally left unchanged because renaming the mobile
-> bundle identifier/scheme breaks the in-progress Apple Sign-In / code-signing setup.
-> All user-facing branding is **HaulBrokr**.
+> Package and folder names use the `haulbrokr` identifier (e.g. `@workspace/haulbrokr`, bundle id `com.haulbrokr.mobile`, URL scheme `haulbrokr`). User-facing branding is **HaulBrokr**.
 
 ---
 
@@ -57,9 +53,9 @@ pnpm --filter @workspace/db run push     # push schema to your DATABASE_URL (dev
 | What | Command | Notes |
 |---|---|---|
 | **Backend API** | `pnpm --filter @workspace/api-server run dev` | Express + Drizzle |
-| **Website** | `pnpm --filter @workspace/dumpbroker run dev` | React + Vite |
-| **Mobile (iOS + Android)** | `pnpm --filter @workspace/dumpbroker-mobile run dev` | Expo; open in Expo Go |
-| **Pitch deck** | `pnpm --filter @workspace/dumpbroker-deck run dev` | Slides |
+| **Website** | `pnpm --filter @workspace/haulbrokr run dev` | React + Vite |
+| **Mobile (iOS + Android)** | `pnpm --filter @workspace/haulbrokr-mobile run dev` | Expo; open in Expo Go |
+| **Pitch deck** | `pnpm --filter @workspace/haulbrokr-deck run dev` | Slides |
 
 Each dev server reads a `PORT` env var (assigned automatically on Replit; set your
 own when running elsewhere).
@@ -73,12 +69,12 @@ pnpm run build            # typecheck + build all
 
 ## 7. iOS & Android builds
 
-The mobile app is a single Expo project (`artifacts/dumpbroker-mobile`) that targets
+The mobile app is a single Expo project (`artifacts/haulbrokr-mobile`) that targets
 both platforms.
 - **Quick preview:** run the mobile dev command above, then scan the QR with Expo Go.
 - **Installable / store builds:** use EAS:
   ```bash
-  cd artifacts/dumpbroker-mobile
+  cd artifacts/haulbrokr-mobile
   npx eas build --platform ios        # or android, or all
   ```
   Config: `app.json` (icon, splash, bundle id, permissions) and `eas.json`.
@@ -93,9 +89,9 @@ bug; a real EAS build always shows the correct icon.
 
 ```
 artifacts/
-  dumpbroker/          # Website (React + Vite)
-  dumpbroker-mobile/   # Mobile app (Expo → iOS + Android)
-  dumpbroker-deck/     # Pitch deck (slides)
+  haulbrokr/          # Website (React + Vite)
+  haulbrokr-mobile/   # Mobile app (Expo → iOS + Android)
+  haulbrokr-deck/     # Pitch deck (slides)
   api-server/          # Backend API (Express + Drizzle + Postgres)
   mockup-sandbox/      # Component preview workspace (dev tooling)
 packages/ (or libs/)   # Shared code: DB schema, API spec/codegen, shared UI/types

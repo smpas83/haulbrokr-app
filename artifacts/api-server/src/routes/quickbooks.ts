@@ -1,12 +1,12 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, quickbooksConnectionsTable, jobsTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
 router.get("/quickbooks/status", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const [conn] = await db.select().from(quickbooksConnectionsTable)
     .where(eq(quickbooksConnectionsTable.profileId, profile.id));
   res.json(conn ?? { connected: false, invoicesSynced: 0, lastSyncedAt: null, companyName: null });
@@ -14,7 +14,7 @@ router.get("/quickbooks/status", requireProfile, async (req, res): Promise<void>
 
 // Simulated OAuth connect (in production this would redirect to QB OAuth)
 router.post("/quickbooks/connect", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const { companyName } = req.body;
   if (!companyName) { res.status(400).json({ error: "companyName is required" }); return; }
 
@@ -40,7 +40,7 @@ router.post("/quickbooks/connect", requireProfile, async (req, res): Promise<voi
 });
 
 router.post("/quickbooks/disconnect", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   await db.update(quickbooksConnectionsTable)
     .set({ connected: false, realmId: null })
     .where(eq(quickbooksConnectionsTable.profileId, profile.id));
@@ -48,7 +48,7 @@ router.post("/quickbooks/disconnect", requireProfile, async (req, res): Promise<
 });
 
 router.post("/quickbooks/sync", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const [conn] = await db.select().from(quickbooksConnectionsTable)
     .where(eq(quickbooksConnectionsTable.profileId, profile.id));
   if (!conn?.connected) {

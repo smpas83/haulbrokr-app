@@ -26,6 +26,9 @@ fi
 echo "==> Pushing database schema"
 pnpm --filter @workspace/db run push
 
+echo "==> Optional: seed staff admin logins (CEO, CFO, IT, etc.)"
+echo "    STAFF_DEFAULT_PASSWORD='your-password' pnpm --filter @workspace/api-server run seed-staff"
+
 echo "==> Typecheck"
 pnpm run typecheck
 
@@ -36,5 +39,5 @@ echo ""
 echo "Bootstrap complete. Start services:"
 echo "  docker compose up -d db          # if using local Postgres"
 echo "  PORT=8080 pnpm --filter @workspace/api-server run dev"
-echo "  PORT=5173 pnpm --filter @workspace/dumpbroker run dev"
-echo "  PORT=8082 pnpm --filter @workspace/dumpbroker-mobile run dev"
+echo "  PORT=5173 pnpm --filter @workspace/haulbrokr run dev"
+echo "  PORT=8082 pnpm --filter @workspace/haulbrokr-mobile run dev"

@@ -10,7 +10,7 @@ import {
   dotCdlTable,
   creditApplicationsTable,
 } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { hasPermission } from "../middlewares/requireAdmin";
 import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
 import {
@@ -44,7 +44,7 @@ const canVerifyCompliance = (req: Parameters<typeof hasPermission>[0]) =>
 
 // ── Account Status ────────────────────────────────────────────────────────────
 router.get("/account/status", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
 
   const [w9] = await db.select().from(w9SubmissionsTable).where(eq(w9SubmissionsTable.profileId, profile.id));
   const [insurance] = await db.select().from(insuranceSubmissionsTable).where(eq(insuranceSubmissionsTable.profileId, profile.id));
@@ -80,7 +80,7 @@ router.get("/account/status", requireProfile, async (req, res): Promise<void> =>
 
 // ── W-9 ───────────────────────────────────────────────────────────────────────
 router.get("/account/w9", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const [w9] = await db.select().from(w9SubmissionsTable).where(eq(w9SubmissionsTable.profileId, profile.id));
   if (!w9) {
     res.status(404).json({ error: "W-9 not submitted" });
@@ -90,7 +90,7 @@ router.get("/account/w9", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.post("/account/w9", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = SubmitW9Body.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -110,7 +110,7 @@ router.post("/account/w9", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.patch("/account/w9", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = UpdateW9Body.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -130,7 +130,7 @@ router.patch("/account/w9", requireProfile, async (req, res): Promise<void> => {
 
 // ── Insurance ─────────────────────────────────────────────────────────────────
 router.get("/account/insurance", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const [insurance] = await db.select().from(insuranceSubmissionsTable).where(eq(insuranceSubmissionsTable.profileId, profile.id));
   if (!insurance) {
     res.status(404).json({ error: "Insurance not submitted" });
@@ -145,7 +145,7 @@ router.get("/account/insurance", requireProfile, async (req, res): Promise<void>
 });
 
 router.post("/account/insurance", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = SubmitInsuranceBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -173,7 +173,7 @@ router.post("/account/insurance", requireProfile, async (req, res): Promise<void
 });
 
 router.patch("/account/insurance", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = UpdateInsuranceBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -309,7 +309,7 @@ async function resolveStripePaymentMethod(
 // Stripe Elements. Returns the client secret to confirm with and the publishable
 // key to boot Stripe.js. No card data ever touches our server.
 router.post("/account/payment-method/setup-intent", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   try {
     const customerId = await ensureStripeCustomerId(profile);
     const stripe = await getUncachableStripeClient();
@@ -332,7 +332,7 @@ router.post("/account/payment-method/setup-intent", requireProfile, async (req, 
 // us_bank_account PaymentMethod (pm_…) we can later charge off-session. No bank
 // credentials ever touch our server.
 router.post("/account/payment-method/bank-setup-intent", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   try {
     const customerId = await ensureStripeCustomerId(profile);
     const stripe = await getUncachableStripeClient();
@@ -355,7 +355,7 @@ router.post("/account/payment-method/bank-setup-intent", requireProfile, async (
 });
 
 router.get("/account/payment-method", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const [pm] = await db.select().from(paymentMethodsTable).where(eq(paymentMethodsTable.profileId, profile.id));
   if (!pm) {
     res.status(404).json({ error: "Payment method not set" });
@@ -365,7 +365,7 @@ router.get("/account/payment-method", requireProfile, async (req, res): Promise<
 });
 
 router.post("/account/payment-method", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = SetPaymentMethodBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -402,7 +402,7 @@ router.post("/account/payment-method", requireProfile, async (req, res): Promise
 });
 
 router.patch("/account/payment-method", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = UpdatePaymentMethodBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -441,7 +441,7 @@ router.patch("/account/payment-method", requireProfile, async (req, res): Promis
 // instantly, Stripe sends 1-2 tiny deposits; the customer enters the amounts (or
 // the descriptor code) here to confirm ownership and make the bank chargeable.
 router.post("/account/payment-method/verify-microdeposits", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = VerifyPaymentMethodMicrodepositsBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -488,7 +488,7 @@ router.post("/account/payment-method/verify-microdeposits", requireProfile, asyn
 
 // ── Payout Account (Provider) ─────────────────────────────────────────────────
 router.get("/account/payout", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const [payout] = await db.select().from(payoutAccountsTable).where(eq(payoutAccountsTable.profileId, profile.id));
   if (!payout) {
     res.status(404).json({ error: "Payout account not set" });
@@ -498,7 +498,7 @@ router.get("/account/payout", requireProfile, async (req, res): Promise<void> =>
 });
 
 router.post("/account/payout", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = SetPayoutAccountBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -523,7 +523,7 @@ router.post("/account/payout", requireProfile, async (req, res): Promise<void> =
 });
 
 router.patch("/account/payout", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = UpdatePayoutAccountBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -546,13 +546,13 @@ router.patch("/account/payout", requireProfile, async (req, res): Promise<void> 
 
 // ── Compliance (DOT / CDL / FMCSA) ────────────────────────────────────────────
 router.get("/account/compliance", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const [rec] = await db.select().from(dotCdlTable).where(eq(dotCdlTable.profileId, profile.id));
   res.json(rec ?? null);
 });
 
 router.post("/account/compliance", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = SubmitComplianceBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -586,7 +586,7 @@ router.patch("/account/compliance/verify", requireProfile, async (req, res): Pro
     res.status(403).json({ error: "Compliance verification is performed manually by HaulBrokr staff." });
     return;
   }
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   // Staff may verify any carrier by passing profileId; otherwise the action
   // applies to the caller's own compliance record (demo/self-serve fallback).
   const targetProfileId =
@@ -614,7 +614,7 @@ router.patch("/account/compliance/verify", requireProfile, async (req, res): Pro
 
 // ── Credit Application (Customer, for Net invoicing terms) ─────────────────────
 router.get("/account/credit-application", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const [rec] = await db.select().from(creditApplicationsTable).where(eq(creditApplicationsTable.profileId, profile.id));
   if (!rec) {
     res.json(null);
@@ -624,7 +624,7 @@ router.get("/account/credit-application", requireProfile, async (req, res): Prom
 });
 
 router.post("/account/credit-application", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const parsed = SubmitCreditApplicationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

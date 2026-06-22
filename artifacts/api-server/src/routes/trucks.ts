@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, trucksTable, profilesTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
   ListTrucksQueryParams,
   ListTrucksResponse,
@@ -17,7 +17,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/trucks", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const params = ListTrucksQueryParams.safeParse(req.query);
 
   let trucks;
@@ -42,7 +42,7 @@ router.get("/trucks", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.post("/trucks", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (profile.role !== "provider") {
     res.status(403).json({ error: "Only providers can add trucks" });
     return;
@@ -87,7 +87,7 @@ router.get("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.patch("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = UpdateTruckParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -121,7 +121,7 @@ router.patch("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.delete("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = DeleteTruckParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {

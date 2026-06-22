@@ -75,6 +75,7 @@ vi.mock("../middlewares/requireAuth", () => ({
     req.profile = { ...h.profile };
     next();
   },
+  getRequestProfile: (req: any) => req.profile,
 }));
 
 vi.mock("../middlewares/requireAdmin", () => ({

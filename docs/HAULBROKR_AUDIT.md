@@ -21,7 +21,7 @@ Generated: June 2026. See also `MIGRATION_TO_CURSOR.md` and `DEVELOPER_HANDOFF.m
 
 ## 1. Architecture
 
-pnpm monorepo: `artifacts/` (api-server, dumpbroker web, dumpbroker-mobile, deck, promo, mockup-sandbox) + `lib/` (db, api-spec, api-zod, api-client-react).
+pnpm monorepo: `artifacts/` (api-server, haulbrokr web, haulbrokr-mobile, deck, promo, mockup-sandbox) + `lib/` (db, api-spec, api-zod, api-client-react).
 
 **Stack:** Express 5, Drizzle/PostgreSQL, React 19/Vite, Expo SDK 54, Clerk, Stripe Connect, Resend.
 
@@ -86,7 +86,7 @@ Staff RBAC via `profiles.staff_role` + `ADMIN_USER_IDS` bootstrap.
 - Soft FKs on `organizations` / `profiles.organization_id`
 - `bin_orders.customer_id` is text, not FK
 - Replit object storage sidecar for uploads
-- Internal `dumpbroker` naming (intentional for Apple Sign-In)
+- Consistent `haulbrokr` naming across packages, folders, and mobile bundle ID
 
 ---
 
@@ -109,7 +109,7 @@ Staff RBAC via `profiles.staff_role` + `ADMIN_USER_IDS` bootstrap.
 
 ### Phase 2 — Web (Week 3)
 
-1. Build: `pnpm --filter @workspace/dumpbroker run build`
+1. Build: `pnpm --filter @workspace/haulbrokr run build`
 2. Deploy static `dist/` to CDN
 3. `VITE_CLERK_PROXY_URL=/api/__clerk`
 
@@ -127,7 +127,7 @@ Staff RBAC via `profiles.staff_role` + `ADMIN_USER_IDS` bootstrap.
 
 ### Phase 5 — Mobile Web (Week 6)
 
-1. `pnpm --filter @workspace/dumpbroker-mobile run build`
+1. `pnpm --filter @workspace/haulbrokr-mobile run build`
 2. Serve at `/mobile/` or subdomain
 
 ### Phase 6 — QA (Week 7)

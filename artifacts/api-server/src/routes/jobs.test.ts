@@ -80,6 +80,7 @@ vi.mock("../middlewares/requireAuth", () => ({
     req.profile = { id: 1 };
     next();
   },
+  getRequestProfile: (req: any) => req.profile,
 }));
 
 import jobsRouter, { computeBreakdown } from "./jobs";

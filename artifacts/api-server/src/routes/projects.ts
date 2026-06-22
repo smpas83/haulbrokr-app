@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and, sql } from "drizzle-orm";
 import { db, projectsTable, requestsTable, jobsTable, profilesTable, projectAssignmentsTable } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isOrgManager } from "../lib/access";
 import {
   ListProjectAssignmentsResponse,
@@ -11,7 +11,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/projects", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (profile.role !== "customer") {
     res.status(403).json({ error: "Only customers can access projects" });
     return;
@@ -27,7 +27,7 @@ router.get("/projects", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.post("/projects", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   if (profile.role !== "customer") {
     res.status(403).json({ error: "Only customers can create projects" });
     return;
@@ -48,7 +48,7 @@ router.post("/projects", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.get("/projects/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const id = parseInt(req.params.id as string, 10);
   const [project] = await db.select().from(projectsTable)
     .where(and(eq(projectsTable.id, id), eq(projectsTable.customerId, profile.id)));
@@ -73,7 +73,7 @@ router.get("/projects/:id", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.patch("/projects/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const id = parseInt(req.params.id as string, 10);
   const { name, description, siteAddress, totalBudget, status, startDate, endDate, notes } = req.body;
   const updates: Record<string, any> = {};
@@ -94,7 +94,7 @@ router.patch("/projects/:id", requireProfile, async (req, res): Promise<void> =>
 });
 
 router.delete("/projects/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const id = parseInt(req.params.id as string, 10);
   const [deleted] = await db.delete(projectsTable)
     .where(and(eq(projectsTable.id, id), eq(projectsTable.customerId, profile.id)))
@@ -116,7 +116,7 @@ async function loadProjectIfOwned(projectId: number, profile: any) {
 }
 
 router.get("/projects/:id/assignments", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const projectId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(projectId)) { res.status(400).json({ error: "Invalid project id" }); return; }
   const project = await loadProjectIfOwned(projectId, profile);
@@ -141,7 +141,7 @@ router.get("/projects/:id/assignments", requireProfile, async (req, res): Promis
 });
 
 router.post("/projects/:id/assignments", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const projectId = parseInt(String(req.params.id), 10);
   if (!Number.isFinite(projectId)) { res.status(400).json({ error: "Invalid project id" }); return; }
   if (!isOrgManager(profile)) {
@@ -180,7 +180,7 @@ router.post("/projects/:id/assignments", requireProfile, async (req, res): Promi
 });
 
 router.delete("/projects/:id/assignments/:profileId", requireProfile, async (req, res): Promise<void> => {
-  const profile = (req as any).profile;
+  const profile = getRequestProfile(req);
   const projectId = parseInt(String(req.params.id), 10);
   const supervisorProfileId = parseInt(String(req.params.profileId), 10);
   if (!Number.isFinite(projectId) || !Number.isFinite(supervisorProfileId)) {

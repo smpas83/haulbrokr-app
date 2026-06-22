@@ -9,7 +9,8 @@ import {
   jobsTable,
   binOrders,
 } from "@workspace/db";
-import { requireProfile } from "../middlewares/requireAuth";
+import { requireStaffOrProfile, attachStaffSession } from "../middlewares/staffAuth";
+import { attachClerkProfileIfPresent } from "../middlewares/requireAuth";
 import {
   requireAdmin,
   requirePermission,
@@ -22,6 +23,9 @@ import { findStuckPayoutJobs, retryStuckPayout } from "../lib/payoutRetry";
 import { getUncachableResendClient } from "../lib/resendClient";
 
 const router: IRouter = Router();
+
+router.use(attachStaffSession);
+router.use(attachClerkProfileIfPresent);
 
 /**
  * Records an in-app notification telling an applicant their carrier or credit
@@ -93,16 +97,22 @@ function profileSummary(p: any) {
 // Returns whether the caller is staff at all plus their resolved staff role and
 // the exact permission set, so the frontends can show only the tabs/actions the
 // role unlocks.
-router.get("/admin/access", requireProfile, async (req, res): Promise<void> => {
+router.get("/admin/access", async (req, res): Promise<void> => {
   const [staffRole, permissions] = await Promise.all([getStaffRole(req), getPermissions(req)]);
-  res.json({ isAdmin: permissions.length > 0, staffRole, permissions });
+  res.json({
+    isAdmin: permissions.length > 0,
+    staffRole,
+    permissions,
+    staffDisplayName: req.staffUser?.displayName ?? null,
+    authMethod: req.staffUser ? "staff" : staffRole ? "clerk" : null,
+  });
 });
 
 // ── Platform command-center overview ──────────────────────────────────────────
 // Global, current-state KPIs across the whole platform. Gated by the "overview"
 // permission, which every staff role holds. Distinct from /dashboard/stats, which
 // is scoped to the calling customer/provider.
-router.get("/admin/overview", requireProfile, requirePermission("overview"), async (_req, res): Promise<void> => {
+router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview"), async (_req, res): Promise<void> => {
   const [
     [jobAgg],
     [activeAgg],
@@ -171,7 +181,7 @@ router.get("/admin/overview", requireProfile, requirePermission("overview"), asy
 // List every HaulBrokr staff member (profiles with a non-null staffRole). Gated
 // by "view_staff" (held by CEO + the manage roles) so the CEO can see the roster
 // read-only; only the "manage_staff" roles (CFO/CTO/IT) can edit via PATCH below.
-router.get("/admin/staff", requireProfile, requirePermission("view_staff"), async (_req, res): Promise<void> => {
+router.get("/admin/staff", requireStaffOrProfile, requirePermission("view_staff"), async (_req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(profilesTable)
@@ -181,7 +191,7 @@ router.get("/admin/staff", requireProfile, requirePermission("view_staff"), asyn
 });
 
 // Assign (or clear, with staffRole: null) a profile's staff role.
-router.patch("/admin/staff/:profileId", requireProfile, requirePermission("manage_staff"), async (req, res): Promise<void> => {
+router.patch("/admin/staff/:profileId", requireStaffOrProfile, requirePermission("manage_staff"), async (req, res): Promise<void> => {
   const parsed = UpdateStaffRoleBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -210,7 +220,7 @@ router.patch("/admin/staff/:profileId", requireProfile, requirePermission("manag
 });
 
 // ── Carrier compliance review ─────────────────────────────────────────────────
-router.get("/admin/compliance", requireProfile, requirePermission("compliance"), async (_req, res): Promise<void> => {
+router.get("/admin/compliance", requireStaffOrProfile, requirePermission("compliance"), async (_req, res): Promise<void> => {
   const rows = await db
     .select({ rec: dotCdlTable, profile: profilesTable })
     .from(dotCdlTable)
@@ -241,7 +251,7 @@ router.get("/admin/compliance", requireProfile, requirePermission("compliance"),
   );
 });
 
-router.patch("/admin/compliance/:profileId", requireProfile, requirePermission("compliance"), async (req, res): Promise<void> => {
+router.patch("/admin/compliance/:profileId", requireStaffOrProfile, requirePermission("compliance"), async (req, res): Promise<void> => {
   const parsed = ReviewComplianceBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -295,7 +305,7 @@ router.patch("/admin/compliance/:profileId", requireProfile, requirePermission("
 });
 
 // ── Customer credit-application review ─────────────────────────────────────────
-router.get("/admin/credit-applications", requireProfile, requirePermission("credit"), async (_req, res): Promise<void> => {
+router.get("/admin/credit-applications", requireStaffOrProfile, requirePermission("credit"), async (_req, res): Promise<void> => {
   const rows = await db
     .select({ rec: creditApplicationsTable, profile: profilesTable })
     .from(creditApplicationsTable)
@@ -317,7 +327,7 @@ router.get("/admin/credit-applications", requireProfile, requirePermission("cred
   );
 });
 
-router.patch("/admin/credit-applications/:profileId", requireProfile, requirePermission("credit"), async (req, res): Promise<void> => {
+router.patch("/admin/credit-applications/:profileId", requireStaffOrProfile, requirePermission("credit"), async (req, res): Promise<void> => {
   const parsed = ReviewCreditApplicationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -349,7 +359,7 @@ router.patch("/admin/credit-applications/:profileId", requireProfile, requirePer
 // whose provider transfer never completed. The background sweep resolves these
 // automatically; these endpoints let an admin see what's outstanding and nudge
 // a single payout through immediately.
-router.get("/admin/stuck-payouts", requireProfile, requirePermission("payouts"), async (_req, res): Promise<void> => {
+router.get("/admin/stuck-payouts", requireStaffOrProfile, requirePermission("payouts"), async (_req, res): Promise<void> => {
   const jobs = await findStuckPayoutJobs();
   const items = await Promise.all(
     jobs.map(async (job) => {
@@ -376,7 +386,7 @@ router.get("/admin/stuck-payouts", requireProfile, requirePermission("payouts"),
   res.json(items);
 });
 
-router.post("/admin/stuck-payouts/:id/retry", requireProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
+router.post("/admin/stuck-payouts/:id/retry", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
   const jobId = Number(req.params.id);
   if (!Number.isInteger(jobId)) {
     res.status(400).json({ error: "Invalid job id" });
@@ -398,7 +408,7 @@ router.post("/admin/stuck-payouts/:id/retry", requireProfile, requirePermission(
 // This zeroes the consecutive failure counter and clears the alert timestamp so
 // the most-failed-first sort and "Alerted" badges stay meaningful. It does NOT
 // attempt a transfer — that's what /retry is for.
-router.post("/admin/stuck-payouts/:id/reset-failures", requireProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
+router.post("/admin/stuck-payouts/:id/reset-failures", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
   const jobId = Number(req.params.id);
   if (!Number.isInteger(jobId)) {
     res.status(400).json({ error: "Invalid job id" });
