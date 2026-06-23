@@ -1,8 +1,11 @@
 import "./load-env.js";
+import { validateProductionEnv } from "./lib/validateProductionEnv";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startPayoutRetryScheduler } from "./lib/payoutRetryScheduler";
 import { startOrphanUploadCleaner } from "./lib/orphanUploadCleaner";
+
+validateProductionEnv();
 
 const rawPort = process.env["PORT"];
 
