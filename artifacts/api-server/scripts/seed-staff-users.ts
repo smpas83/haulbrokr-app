@@ -5,6 +5,8 @@
  *
  * Or put DATABASE_URL + STAFF_DEFAULT_PASSWORD in repo-root `.env`, then:
  *   pnpm --filter @workspace/api-server run seed-staff
+ *
+ * Shell exports take precedence over `.env` (export DATABASE_URL=... wins).
  */
 import "../src/load-env.js";
 import { eq } from "drizzle-orm";
