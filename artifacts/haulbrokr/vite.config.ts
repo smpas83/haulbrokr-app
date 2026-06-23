@@ -101,6 +101,7 @@ function publicRoutesDevMiddleware(): Plugin {
         }
 
         const isKnown =
+          stripped.startsWith("/api") ||
           knownSpaRoutes.has(stripped) ||
           knownSpaRoutes.has(stripped.replace(/\/$/, "") || "/") ||
           knownSpaPrefixes.some((p) => stripped.startsWith(p)) ||
