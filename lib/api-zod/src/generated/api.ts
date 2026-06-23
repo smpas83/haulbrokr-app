@@ -2107,7 +2107,7 @@ export const ListJobStatusUpdatesResponseItem = zod.object({
   "ticketId": zod.number().nullish(),
   "actorProfileId": zod.number(),
   "actorName": zod.string().nullish(),
-  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'completed']),
+  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'checked_in', 'started', 'ticket_uploaded', 'photo_uploaded', 'completed']),
   "note": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -2122,7 +2122,7 @@ export const CreateJobStatusUpdateParams = zod.object({
 })
 
 export const CreateJobStatusUpdateBody = zod.object({
-  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'completed']),
+  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'checked_in', 'started', 'ticket_uploaded', 'photo_uploaded', 'completed']),
   "ticketId": zod.number().optional(),
   "note": zod.string().optional()
 })

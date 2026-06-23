@@ -6,7 +6,8 @@ import { ticketsTable } from "./tickets";
 import { profilesTable } from "./profiles";
 
 export const jobStatusUpdateTypeEnum = pgEnum("job_status_update_type", [
-  "en_route", "arrived", "loading", "loaded", "dumping", "completed",
+  "en_route", "arrived", "loading", "loaded", "dumping",
+  "checked_in", "started", "ticket_uploaded", "photo_uploaded", "completed",
 ]);
 
 export const jobStatusUpdatesTable = pgTable("job_status_updates", {

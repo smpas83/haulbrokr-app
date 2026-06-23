@@ -15,5 +15,9 @@ export const JobStatusUpdateInputStatus = {
   loading: 'loading',
   loaded: 'loaded',
   dumping: 'dumping',
+  checked_in: 'checked_in',
+  started: 'started',
+  ticket_uploaded: 'ticket_uploaded',
+  photo_uploaded: 'photo_uploaded',
   completed: 'completed',
 } as const;

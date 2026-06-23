@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { db, profilesTable, ticketsTable, type Profile, type Ticket, type Job } from "@workspace/db";
 import { requireProfile, getRequestProfile } from "../middlewares/requireAuth";
 import { loadJobIfMember, DRIVER_SIDE, CUSTOMER_SIDE } from "../lib/access";
+import { recordJobTimelineEvent } from "../lib/jobTimeline";
 
 const router: IRouter = Router();
 
@@ -137,6 +138,10 @@ router.post("/jobs/:id/tickets", requireProfile, async (req, res): Promise<void>
     notes: body.notes ?? null,
     photoUrl: body.photoUrl ?? null,
   }).returning();
+  await recordJobTimelineEvent(jobId, profile.id, "ticket_uploaded", {
+    ticketId: ticket.id,
+    note: body.photoUrl ? `Load #${nextLoad} ticket with photo` : `Load #${nextLoad} ticket logged`,
+  });
   res.status(201).json(ticket);
 });
 
@@ -166,6 +171,10 @@ router.post("/tickets/:id/clock-in", requireProfile, async (req, res): Promise<v
     .set({ clockedInAt: new Date(), status: "in_progress" })
     .where(eq(ticketsTable.id, id))
     .returning();
+  await recordJobTimelineEvent(found.ticket.jobId, profile.id, "checked_in", {
+    ticketId: id,
+    note: `Checked in for load #${found.ticket.loadNumber}`,
+  });
   res.json(updated);
 });
 

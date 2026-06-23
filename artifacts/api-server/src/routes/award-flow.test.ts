@@ -23,6 +23,7 @@ vi.mock("@workspace/db", () => {
   const jobsTable = makeTable("jobs");
   const profilesTable = makeTable("profiles");
   const activityTable = makeTable("activity");
+  const jobStatusUpdatesTable = makeTable("job_status_updates");
 
   const db = {
     select: () => ({
@@ -44,7 +45,7 @@ vi.mock("@workspace/db", () => {
           h.jobs.push(job);
           return { returning: () => Promise.resolve([job]) };
         }
-        if (table === activityTable) {
+        if (table === activityTable || table === jobStatusUpdatesTable) {
           return Promise.resolve(undefined);
         }
         return Promise.resolve(undefined);
@@ -89,7 +90,7 @@ vi.mock("@workspace/db", () => {
     }),
   };
 
-  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable };
+  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable, jobStatusUpdatesTable };
 });
 
 vi.mock("../middlewares/requireAuth", () => ({
@@ -105,6 +106,7 @@ vi.mock("../lib/access", () => ({
   orgScopedActorIds: async () => [h.profile.id],
   isOrgManager: () => false,
   canReviewCompletion: () => false,
+  isDriverAssignedToJob: async () => false,
   DRIVER_SIDE: new Set(["provider", "driver"]),
   CUSTOMER_SIDE: new Set(["customer", "supervisor"]),
 }));

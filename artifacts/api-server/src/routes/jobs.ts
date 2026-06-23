@@ -18,7 +18,8 @@ import { getUncachableStripeClient, getStripePublishableKey } from "../lib/strip
 import { checkProviderPayoutReadiness } from "../lib/payoutStatus";
 import { settleConfirmedPayout } from "../lib/payoutRetry";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
-import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds } from "../lib/access";
+import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
+import { recordJobTimelineEvent } from "../lib/jobTimeline";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -480,6 +481,17 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     return;
   }
 
+  const isProvider = existingJob.providerId === profile.id;
+  const isAssignedDriver = profile.role === "driver" && await isDriverAssignedToJob(params.data.id, profile.id);
+  if (!isProvider && !isAssignedDriver) {
+    res.status(403).json({ error: "Only the hauling company or an assigned driver can update this job." });
+    return;
+  }
+  if (isAssignedDriver && !isProvider && (parsed.data.totalHours !== undefined || parsed.data.notes !== undefined)) {
+    res.status(403).json({ error: "Drivers can only update job status." });
+    return;
+  }
+
   if (parsed.data.status === "in_progress" && !["accepted", "active"].includes(existingJob.status)) {
     res.status(400).json({ error: "Job must be accepted before starting" });
     return;
@@ -508,7 +520,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   const [job] = await db
     .update(jobsTable)
     .set(updates)
-    .where(and(eq(jobsTable.id, params.data.id), eq(jobsTable.providerId, profile.id)))
+    .where(eq(jobsTable.id, params.data.id))
     .returning();
 
   if (!job) {
@@ -524,6 +536,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
       description: `Completed job #${job.id} — ${job.materialType} delivery`,
       relatedId: job.id,
     });
+    await recordJobTimelineEvent(job.id, profile.id, "completed", { note: "Job marked complete" });
   } else if (parsed.data.status === "in_progress") {
     await db.update(requestsTable).set({ status: "in_progress" }).where(eq(requestsTable.id, job.requestId));
     await db.insert(activityTable).values({
@@ -532,6 +545,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
       description: `Started job #${job.id} — ${job.materialType} delivery`,
       relatedId: job.id,
     });
+    await recordJobTimelineEvent(job.id, profile.id, "started", { note: "Work started" });
   }
 
   const { customerCompany, providerCompany } = await companiesFor(job);

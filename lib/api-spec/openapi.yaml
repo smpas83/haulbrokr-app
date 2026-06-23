@@ -4063,7 +4063,7 @@ components:
           type: ["string", "null"]
         status:
           type: string
-          enum: [en_route, arrived, loading, loaded, dumping, completed]
+          enum: [en_route, arrived, loading, loaded, dumping, checked_in, started, ticket_uploaded, photo_uploaded, completed]
         note:
           type: ["string", "null"]
         createdAt:
@@ -4076,7 +4076,7 @@ components:
       properties:
         status:
           type: string
-          enum: [en_route, arrived, loading, loaded, dumping, completed]
+          enum: [en_route, arrived, loading, loaded, dumping, checked_in, started, ticket_uploaded, photo_uploaded, completed]
         ticketId:
           type: integer
         note:

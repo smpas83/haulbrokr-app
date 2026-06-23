@@ -12,7 +12,7 @@ import {
   useCreateJobCheckoutSession, useVerifyJobCheckout,
   useGetPaymentMethod, useSetPaymentMethod, useUpdatePaymentMethod, getGetPaymentMethodQueryKey,
   useAssignJob, useApproveJobCompletion, useFlagJobCompletion,
-  useListJobStatusUpdates, useListOrgMembers, useListTrucks,
+  useListJobStatusUpdates, useListOrgMembers, useListTrucks, getListJobStatusUpdatesQueryKey,
   type Job
 } from "@workspace/api-client-react";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
@@ -48,7 +48,7 @@ async function apiFetch(path: string, options?: RequestInit) {
   return res.json();
 }
 
-function EvidencePanel({ jobId, isProvider }: { jobId: number; isProvider: boolean }) {
+function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean }) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [form, setForm] = useState({ photoUrl: "", photoCaption: "", siteNotes: "" });
@@ -77,14 +77,14 @@ function EvidencePanel({ jobId, isProvider }: { jobId: number; isProvider: boole
         <h3 className="font-bold text-lg flex items-center gap-2">
           <Camera className="h-5 w-5 text-muted-foreground" /> Proof of Delivery &amp; Site Notes
         </h3>
-        {isProvider && (
+        {canUpload && (
           <Button size="sm" variant="outline" className="rounded-none border-2 font-bold text-xs" onClick={() => setShowForm(s => !s)}>
             <Plus className="h-3 w-3 mr-1" />{showForm ? "Cancel" : "Add Evidence"}
           </Button>
         )}
       </div>
 
-      {showForm && isProvider && (
+      {showForm && canUpload && (
         <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Photo URL</Label>
@@ -110,7 +110,7 @@ function EvidencePanel({ jobId, isProvider }: { jobId: number; isProvider: boole
         <div className="border-2 border-dashed border-border p-8 text-center">
           <Camera className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
           <p className="text-sm text-muted-foreground">No delivery photos or site notes yet</p>
-          {isProvider && <p className="text-xs text-muted-foreground mt-1">Add proof of delivery once you've completed the drop-off</p>}
+          {canUpload && <p className="text-xs text-muted-foreground mt-1">Add proof of delivery once you've completed the drop-off</p>}
         </div>
       ) : (
         <div className="space-y-3">
@@ -617,6 +617,10 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
 }
 
 const STATUS_UPDATE_LABEL: Record<string, string> = {
+  checked_in: "Checked In",
+  started: "Work Started",
+  ticket_uploaded: "Haul Ticket Uploaded",
+  photo_uploaded: "Job Photo Uploaded",
   en_route: "En Route",
   arrived: "Arrived On Site",
   loading: "Loading",
@@ -624,6 +628,178 @@ const STATUS_UPDATE_LABEL: Record<string, string> = {
   dumping: "Dumping",
   completed: "Completed",
 };
+
+function HaulTicketsPanel({ jobId }: { jobId: number }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["tickets", jobId],
+    queryFn: () => apiFetch(`/jobs/${jobId}/tickets`),
+    enabled: !!jobId,
+  });
+  const tickets = (data?.tickets ?? []) as any[];
+
+  if (isLoading) {
+    return <div className="border-t-2 border-border p-6 md:p-8"><Skeleton className="h-24 w-full" /></div>;
+  }
+  if (tickets.length === 0) return null;
+
+  return (
+    <div className="border-t-2 border-border p-6 md:p-8 space-y-4">
+      <h3 className="font-bold text-lg flex items-center gap-2">
+        <Receipt className="h-5 w-5 text-muted-foreground" /> Haul Tickets
+      </h3>
+      <div className="space-y-3">
+        {tickets.map((t) => (
+          <div key={t.id} className="bg-muted/20 border border-border p-4 space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="font-bold text-sm">Load #{t.loadNumber}</span>
+              <Badge variant="outline" className="rounded-none text-xs uppercase">{t.status.replace("_", " ")}</Badge>
+            </div>
+            {t.weightTons != null && <p className="text-sm">Weight: {t.weightTons} tons</p>}
+            {t.notes && <p className="text-sm text-muted-foreground">{t.notes}</p>}
+            {t.photoUrl && (
+              <img src={t.photoUrl} alt={`Load #${t.loadNumber} ticket`} className="max-h-48 object-cover border border-border w-full" onError={(ev) => (ev.currentTarget.style.display = "none")} />
+            )}
+            {t.clockedInAt && (
+              <p className="text-xs text-muted-foreground">Checked in {format(new Date(t.clockedInAt), "MMM d, h:mm a")}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DriverFieldOpsPanel({ job }: { job: Job }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data: profile } = useGetMyProfile();
+  const updateJob = useUpdateJob();
+  const [ticketForm, setTicketForm] = useState({ weightTons: "", photoUrl: "", notes: "" });
+  const [photoForm, setPhotoForm] = useState({ photoUrl: "", photoCaption: "" });
+
+  const { data: ticketData } = useQuery({
+    queryKey: ["tickets", job.id],
+    queryFn: () => apiFetch(`/jobs/${job.id}/tickets`),
+    enabled: !!job.id,
+  });
+  const myTicket = ((ticketData?.tickets ?? []) as any[]).find((t) => t.driverProfileId === profile?.id);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: getGetJobQueryKey(job.id) });
+    qc.invalidateQueries({ queryKey: ["tickets", job.id] });
+    qc.invalidateQueries({ queryKey: ["evidence", job.id] });
+    qc.invalidateQueries({ queryKey: getListJobStatusUpdatesQueryKey(job.id) });
+  };
+
+  const checkIn = useMutation({
+    mutationFn: () => apiFetch(`/tickets/${myTicket.id}/clock-in`, { method: "POST" }),
+    onSuccess: () => { toast({ title: "Checked in" }); refresh(); },
+    onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
+  });
+
+  const uploadTicket = useMutation({
+    mutationFn: () => apiFetch(`/jobs/${job.id}/tickets`, {
+      method: "POST",
+      body: JSON.stringify({
+        weightTons: ticketForm.weightTons ? Number(ticketForm.weightTons) : undefined,
+        photoUrl: ticketForm.photoUrl || undefined,
+        notes: ticketForm.notes || undefined,
+      }),
+    }),
+    onSuccess: () => {
+      toast({ title: "Haul ticket uploaded" });
+      setTicketForm({ weightTons: "", photoUrl: "", notes: "" });
+      refresh();
+    },
+    onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
+  });
+
+  const uploadPhoto = useMutation({
+    mutationFn: () => apiFetch(`/jobs/${job.id}/evidence`, {
+      method: "POST",
+      body: JSON.stringify(photoForm),
+    }),
+    onSuccess: () => {
+      toast({ title: "Photo uploaded" });
+      setPhotoForm({ photoUrl: "", photoCaption: "" });
+      refresh();
+    },
+    onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
+  });
+
+  const handleStart = () => {
+    updateJob.mutate({ id: job.id, data: { status: "in_progress" } }, {
+      onSuccess: () => { toast({ title: "Work started" }); refresh(); },
+      onError: (e) => toast({ title: e instanceof Error ? e.message : "Failed", variant: "destructive" }),
+    });
+  };
+
+  const handleComplete = () => {
+    updateJob.mutate({ id: job.id, data: { status: "completed" } }, {
+      onSuccess: () => { toast({ title: "Job completed" }); refresh(); },
+      onError: (e) => toast({ title: e instanceof Error ? e.message : "Failed", variant: "destructive" }),
+    });
+  };
+
+  if (!myTicket) {
+    return (
+      <div className="border-t-2 border-border p-6 md:p-8">
+        <p className="text-sm text-muted-foreground">You have not been assigned to this job yet.</p>
+      </div>
+    );
+  }
+
+  const activeStatuses = ["accepted", "active", "in_progress"];
+  if (!activeStatuses.includes(job.status)) return null;
+
+  return (
+    <div className="border-t-2 border-border p-6 md:p-8 space-y-6">
+      <h3 className="font-bold text-lg flex items-center gap-2">
+        <Truck className="h-5 w-5 text-muted-foreground" /> Field Operations
+      </h3>
+      <div className="flex flex-wrap gap-3">
+        {!myTicket.clockedInAt && (
+          <Button className="rounded-none font-bold" onClick={() => checkIn.mutate()} disabled={checkIn.isPending}>
+            {checkIn.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+            Check In
+          </Button>
+        )}
+        {(job.status === "accepted" || job.status === "active") && (
+          <Button className="rounded-none font-bold bg-purple-600 hover:bg-purple-700 text-white" onClick={handleStart} disabled={updateJob.isPending}>
+            {updateJob.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Flag className="mr-2 h-4 w-4" />}
+            Start Work
+          </Button>
+        )}
+        {job.status === "in_progress" && (
+          <Button className="rounded-none font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleComplete} disabled={updateJob.isPending}>
+            {updateJob.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+            Complete Job
+          </Button>
+        )}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Upload Haul Ticket</p>
+          <Input className="rounded-none" placeholder="Weight (tons)" value={ticketForm.weightTons} onChange={(e) => setTicketForm((f) => ({ ...f, weightTons: e.target.value }))} />
+          <Input className="rounded-none" placeholder="Ticket photo URL" value={ticketForm.photoUrl} onChange={(e) => setTicketForm((f) => ({ ...f, photoUrl: e.target.value }))} />
+          <Input className="rounded-none" placeholder="Notes" value={ticketForm.notes} onChange={(e) => setTicketForm((f) => ({ ...f, notes: e.target.value }))} />
+          <Button size="sm" className="rounded-none font-bold w-full" disabled={uploadTicket.isPending} onClick={() => uploadTicket.mutate()}>
+            {uploadTicket.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null} Submit Ticket
+          </Button>
+        </div>
+        <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Upload Job Photo</p>
+          <Input className="rounded-none" placeholder="Photo URL" value={photoForm.photoUrl} onChange={(e) => setPhotoForm((f) => ({ ...f, photoUrl: e.target.value }))} />
+          <Input className="rounded-none" placeholder="Caption" value={photoForm.photoCaption} onChange={(e) => setPhotoForm((f) => ({ ...f, photoCaption: e.target.value }))} />
+          <Button size="sm" className="rounded-none font-bold w-full" disabled={uploadPhoto.isPending} onClick={() => uploadPhoto.mutate()}>
+            {uploadPhoto.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null} Submit Photo
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function StatusTimeline({ jobId }: { jobId: number }) {
   const { data: updates, isLoading } = useListJobStatusUpdates(jobId);
@@ -863,6 +1039,8 @@ export default function JobDetailPage() {
 
   const isCustomer = profile?.role === "customer";
   const isProvider = profile?.role === "provider";
+  const isDriver = profile?.role === "driver";
+  const canUploadEvidence = isProvider || isDriver;
 
   const refreshJob = () => queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
 
@@ -1138,6 +1316,8 @@ export default function JobDetailPage() {
           <AssignDriverPanel job={job} />
         )}
 
+        {isDriver && <DriverFieldOpsPanel job={job} />}
+
         {job.status === "completed" && isCustomer && (
           <CompletionReviewPanel job={job} />
         )}
@@ -1148,7 +1328,9 @@ export default function JobDetailPage() {
 
         <StatusTimeline jobId={id} />
 
-        <EvidencePanel jobId={id} isProvider={isProvider} />
+        <HaulTicketsPanel jobId={id} />
+
+        <EvidencePanel jobId={id} canUpload={canUploadEvidence} />
       </div>
     </div>
   );

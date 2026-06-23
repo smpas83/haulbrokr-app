@@ -1,4 +1,4 @@
-import { db, jobsTable, profilesTable, projectAssignmentsTable, type Job, type Profile } from "@workspace/db";
+import { db, jobsTable, profilesTable, projectAssignmentsTable, ticketsTable, type Job, type Profile } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
 /**
@@ -12,6 +12,8 @@ export async function loadJobIfMember(jobId: number, profile: Profile): Promise<
   if (!job) return null;
 
   if (job.customerId === profile.id || job.providerId === profile.id) return job;
+
+  if (profile.staffRole) return job;
 
   if (profile.organizationId) {
     const [customerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.customerId));
@@ -38,6 +40,15 @@ export function isOrgManager(profile: Profile): boolean {
 
 export const DRIVER_SIDE = new Set(["provider", "driver"]);
 export const CUSTOMER_SIDE = new Set(["customer", "supervisor"]);
+
+/** Whether the profile has a load ticket assigned on this job. */
+export async function isDriverAssignedToJob(jobId: number, profileId: number): Promise<boolean> {
+  const [ticket] = await db
+    .select({ id: ticketsTable.id })
+    .from(ticketsTable)
+    .where(and(eq(ticketsTable.jobId, jobId), eq(ticketsTable.driverProfileId, profileId)));
+  return !!ticket;
+}
 
 /**
  * Whether the profile may review (approve / flag) completion of the given job.
