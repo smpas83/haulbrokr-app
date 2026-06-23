@@ -174,6 +174,7 @@ function baseJob(overrides: Record<string, unknown> = {}) {
     scheduledDate: new Date("2026-06-01T00:00:00Z"),
     startTime: "08:00",
     estimatedHours: "8",
+    notes: "Use the south gate after 7am.",
     createdAt: new Date("2026-05-01T00:00:00Z"),
     paymentStatus: "unpaid",
     customerTotalAmount: "115.00",

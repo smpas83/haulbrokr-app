@@ -139,6 +139,7 @@ function sampleJob(overrides: Record<string, unknown> = {}) {
     scheduledDate: new Date(),
     startTime: "08:00",
     estimatedHours: "8",
+    notes: "End-dump only; no belly dumps.",
     paymentStatus: "unpaid",
     createdAt: new Date(),
     ...overrides,
@@ -153,11 +154,14 @@ beforeEach(() => {
     status: "bid_received",
     materialType: "dirt",
     truckType: "dump_truck",
+    quantityTons: "100",
     pickupAddress: "A",
     deliveryAddress: "B",
     scheduledDate: new Date(),
     startTime: "08:00",
     estimatedHours: "8",
+    trucksNeeded: 2,
+    notes: "End-dump only; no belly dumps.",
   }];
   h.bids = [{
     id: 5,

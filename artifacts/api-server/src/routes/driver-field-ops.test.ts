@@ -160,6 +160,7 @@ function sampleJob(overrides: Record<string, unknown> = {}) {
     scheduledDate: new Date(),
     startTime: "08:00",
     estimatedHours: "8",
+    notes: "Check in with foreman at trailer.",
     paymentStatus: "unpaid",
     platformFeeRate: "0.15",
     createdAt: new Date(),
