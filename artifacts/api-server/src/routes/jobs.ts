@@ -14,6 +14,8 @@ import {
   jobStatusUpdatesTable,
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
+import { isAdmin } from "../middlewares/requireAdmin";
+import { buildJobInvoicePdf, canDownloadJobInvoice } from "../lib/jobInvoice";
 import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
 import { checkProviderPayoutReadiness } from "../lib/payoutStatus";
 import { settleConfirmedPayout } from "../lib/payoutRetry";
@@ -346,6 +348,50 @@ router.get("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   }
   const { customerCompany, providerCompany } = await companiesFor(job);
   res.json(GetJobResponse.parse(serializeJob(job, customerCompany, providerCompany)));
+});
+
+/**
+ * GET /jobs/:id/invoice — download a PDF invoice for a completed job.
+ * Available to the customer (or their org) and HaulBrokr staff admins.
+ */
+router.get("/jobs/:id/invoice", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const params = GetJobParams.safeParse({ id: parseInt(raw, 10) });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, params.data.id));
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+  if (job.status !== "completed") {
+    res.status(400).json({ error: "Invoices are available only for completed jobs." });
+    return;
+  }
+
+  const staff = await isAdmin(req);
+  if (!staff && !(await canDownloadJobInvoice(job, profile))) {
+    res.status(403).json({ error: "You do not have permission to download this invoice." });
+    return;
+  }
+
+  try {
+    const built = await buildJobInvoicePdf(job.id);
+    if (!built) {
+      res.status(404).json({ error: "Job not found" });
+      return;
+    }
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${built.invoiceNumber}.pdf"`);
+    res.send(Buffer.from(built.pdf));
+  } catch (err) {
+    req.log?.error?.({ err, jobId: job.id }, "Job invoice PDF generation failed");
+    res.status(500).json({ error: "Could not generate invoice PDF." });
+  }
 });
 
 router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> => {
