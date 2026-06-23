@@ -45,6 +45,16 @@ services:
         generateValue: true
       - key: ADMIN_USER_IDS
         sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
       - key: PRIVATE_OBJECT_DIR
         value: /haulbrokr/private
       - key: PUBLIC_OBJECT_SEARCH_PATHS
