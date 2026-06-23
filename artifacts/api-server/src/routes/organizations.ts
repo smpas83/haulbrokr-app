@@ -47,7 +47,15 @@ router.get("/organizations/compliance-status", requireAuth, async (req, res): Pr
     res.status(404).json({ error: "No organization" });
     return;
   }
-  const snapshot = await getCarrierComplianceSnapshot(profile.organizationId);
+  const [org] = await db
+    .select()
+    .from(organizationsTable)
+    .where(eq(organizationsTable.id, profile.organizationId));
+  if (!org || org.type !== "provider" || !org.ownerProfileId) {
+    res.status(404).json({ error: "Carrier compliance record not found" });
+    return;
+  }
+  const snapshot = await getCarrierComplianceSnapshot(org.ownerProfileId);
   if (!snapshot) {
     res.status(404).json({ error: "Carrier compliance record not found" });
     return;

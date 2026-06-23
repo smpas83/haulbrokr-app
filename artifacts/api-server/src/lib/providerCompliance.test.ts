@@ -7,10 +7,10 @@ describe("computeProviderCanBid", () => {
     w9Status: "verified",
     insuranceStatus: "verified",
     dotCdlStatus: "verified",
-    payoutStatus: "pending",
+    payoutStatus: "verified",
   };
 
-  it("is true when all required artifacts are verified and payout is on file", () => {
+  it("is true when all required artifacts are verified and payout is verified", () => {
     expect(computeProviderCanBid(base)).toBe(true);
   });
 
@@ -28,6 +28,14 @@ describe("computeProviderCanBid", () => {
 
   it("is false when payout has not been submitted", () => {
     expect(computeProviderCanBid({ ...base, payoutStatus: "not_submitted" })).toBe(false);
+  });
+
+  it("is false when payout is pending verification", () => {
+    expect(computeProviderCanBid({ ...base, payoutStatus: "pending" })).toBe(false);
+  });
+
+  it("is false when payout is rejected", () => {
+    expect(computeProviderCanBid({ ...base, payoutStatus: "rejected" })).toBe(false);
   });
 
   it("is false for non-provider roles", () => {

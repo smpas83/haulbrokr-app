@@ -30,9 +30,16 @@ export function isAdminUploadDocType(value: string): value is AdminUploadDocType
   return (ADMIN_UPLOAD_DOC_TYPES as readonly string[]).includes(value);
 }
 
+/** Payout statuses that satisfy the bidding gate (verification_status enum). */
+export const BIDDING_READY_PAYOUT_STATUSES = new Set(["verified"]);
+
+export function isPayoutReadyForBidding(payoutStatus: string): boolean {
+  return BIDDING_READY_PAYOUT_STATUSES.has(payoutStatus);
+}
+
 /**
  * A provider may bid once every required compliance artifact is admin-approved
- * and a payout account has been submitted.
+ * and payout verification is complete.
  */
 export function computeProviderCanBid(input: {
   role: string;
@@ -46,8 +53,34 @@ export function computeProviderCanBid(input: {
     && input.w9Status === "verified"
     && input.insuranceStatus === "verified"
     && input.dotCdlStatus === "verified"
-    && input.payoutStatus !== "not_submitted"
+    && isPayoutReadyForBidding(input.payoutStatus)
   );
+}
+
+function artifactLabel(name: string, status: string): string {
+  if (status === "not_submitted") return `${name} submission`;
+  return `${name} approval (currently ${status})`;
+}
+
+/** Human-readable blockers when computeProviderCanBid is false. */
+export function describeCanBidBlockers(input: {
+  role: string;
+  w9Status: string;
+  insuranceStatus: string;
+  dotCdlStatus: string | undefined;
+  payoutStatus: string;
+}): string[] {
+  const blockers: string[] = [];
+  if (input.role !== "provider") blockers.push("a provider account");
+  if (input.w9Status !== "verified") blockers.push(artifactLabel("W-9", input.w9Status));
+  if (input.insuranceStatus !== "verified") blockers.push(artifactLabel("insurance", input.insuranceStatus));
+  const dotCdlStatus = input.dotCdlStatus ?? "not_submitted";
+  if (dotCdlStatus !== "verified") blockers.push(artifactLabel("DOT/CDL", dotCdlStatus));
+  if (!isPayoutReadyForBidding(input.payoutStatus)) {
+    if (input.payoutStatus === "not_submitted") blockers.push("payout account on file");
+    else blockers.push(`verified payout account (currently ${input.payoutStatus})`);
+  }
+  return blockers;
 }
 
 /** True when any required artifact still needs admin action. */

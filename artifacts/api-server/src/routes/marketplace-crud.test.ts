@@ -126,6 +126,19 @@ vi.mock("../middlewares/requireAuth", () => ({
   getRequestProfile: (req: any) => req.profile,
 }));
 
+vi.mock("../lib/adminComplianceBundle", () => ({
+  getCarrierComplianceSnapshot: async () => ({
+    w9Status: "verified",
+    insuranceStatus: "verified",
+    dotCdlStatus: "verified",
+    payoutStatus: "verified",
+    canBid: true,
+    w9ReviewNote: null,
+    insuranceReviewNote: null,
+    dotCdlReviewNote: null,
+  }),
+}));
+
 import trucksRouter from "./trucks";
 import requestsRouter from "./requests";
 import bidsRouter from "./bids";

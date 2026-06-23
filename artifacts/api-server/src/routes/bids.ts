@@ -2,6 +2,8 @@ import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, bidsTable, requestsTable, profilesTable, jobsTable, activityTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
+import { getCarrierComplianceSnapshot } from "../lib/adminComplianceBundle";
+import { describeCanBidBlockers } from "../lib/providerCompliance";
 import {
   ListBidsParams,
   ListBidsResponse,
@@ -89,6 +91,22 @@ router.post("/requests/:requestId/bids", requireProfile, async (req, res): Promi
     res.status(404).json({ error: "Request not found" });
     return;
   }
+
+  const compliance = await getCarrierComplianceSnapshot(profile.id);
+  if (!compliance?.canBid) {
+    const blockers = describeCanBidBlockers({
+      role: profile.role,
+      w9Status: compliance?.w9Status ?? "not_submitted",
+      insuranceStatus: compliance?.insuranceStatus ?? "not_submitted",
+      dotCdlStatus: compliance?.dotCdlStatus ?? "not_submitted",
+      payoutStatus: compliance?.payoutStatus ?? "not_submitted",
+    });
+    res.status(403).json({
+      error: `Cannot place a bid until compliance and payout requirements are met: ${blockers.join("; ")}.`,
+    });
+    return;
+  }
+
   const [bid] = await db.insert(bidsTable).values({
     ...parsed.data,
     requestId: pathParams.data.requestId,
