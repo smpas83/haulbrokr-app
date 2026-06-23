@@ -1750,6 +1750,21 @@ paths:
         "404":
           description: No organization
 
+  /organizations/compliance-status:
+    get:
+      operationId: getOrganizationComplianceStatus
+      tags: [organizations]
+      summary: Get hauling company compliance status for org members
+      responses:
+        "200":
+          description: Carrier compliance snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationComplianceStatus"
+        "404":
+          description: No organization or carrier record
+
   /organizations/rotate-code:
     post:
       operationId: rotateOrganizationInviteCode
@@ -3319,7 +3334,7 @@ components:
     # ── Account Status ────────────────────────────────────────────────────────
     AccountStatus:
       type: object
-      required: [profileComplete, w9Status, insuranceStatus, paymentStatus, payoutStatus, canBid, canPost]
+      required: [profileComplete, w9Status, insuranceStatus, dotCdlStatus, paymentStatus, payoutStatus, canBid, canPost]
       properties:
         profileComplete:
           type: boolean
@@ -3327,6 +3342,9 @@ components:
           type: string
           enum: [not_submitted, pending, verified, rejected]
         insuranceStatus:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        dotCdlStatus:
           type: string
           enum: [not_submitted, pending, verified, rejected]
         paymentStatus:
@@ -3339,6 +3357,31 @@ components:
           type: boolean
         canPost:
           type: boolean
+
+    OrganizationComplianceStatus:
+      type: object
+      required: [w9Status, insuranceStatus, dotCdlStatus, payoutStatus, canBid]
+      properties:
+        w9Status:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        insuranceStatus:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        dotCdlStatus:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        payoutStatus:
+          type: string
+          enum: [not_submitted, pending, verified, rejected]
+        canBid:
+          type: boolean
+        w9ReviewNote:
+          type: ["string", "null"]
+        insuranceReviewNote:
+          type: ["string", "null"]
+        dotCdlReviewNote:
+          type: ["string", "null"]
 
     # ── Compliance (DOT / CDL / FMCSA) ────────────────────────────────────────
     ComplianceRecord:

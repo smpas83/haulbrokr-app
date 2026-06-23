@@ -432,5 +432,19 @@ describe("GET /account/status canBid", () => {
 
     const res = await request(makeApp()).get("/account/status");
     expect(res.body.canBid).toBe(false);
+    expect(res.body.dotCdlStatus).toBe("pending");
+  });
+
+  it("is false when any required document is rejected", async () => {
+    h.profile = { id: PROFILE_ID, role: "provider", companyName: "Acme", contactName: "Pat", phone: "1", city: "LA", state: "CA" };
+    const { w9SubmissionsTable, insuranceSubmissionsTable, dotCdlTable, payoutAccountsTable } = await import("@workspace/db");
+    h.rows.set(w9SubmissionsTable, [{ status: "rejected" }]);
+    h.rows.set(insuranceSubmissionsTable, [{ status: "verified" }]);
+    h.rows.set(dotCdlTable, [{ status: "verified" }]);
+    h.rows.set(payoutAccountsTable, [{ status: "pending" }]);
+
+    const res = await request(makeApp()).get("/account/status");
+    expect(res.body.canBid).toBe(false);
+    expect(res.body.w9Status).toBe("rejected");
   });
 });

@@ -19,6 +19,13 @@ export const ADMIN_UPLOAD_DOC_TYPES = [
 
 export type AdminUploadDocType = (typeof ADMIN_UPLOAD_DOC_TYPES)[number];
 
+export const W9_UPLOAD_DOC_TYPES = new Set<AdminUploadDocType>(["w9"]);
+export const COI_UPLOAD_DOC_TYPES = new Set<AdminUploadDocType>(["coi"]);
+export const DOT_UPLOAD_DOC_TYPES = new Set<AdminUploadDocType>([
+  "dot_authority", "dot_medical_card", "mc_authority",
+]);
+export const CDL_UPLOAD_DOC_TYPES = new Set<AdminUploadDocType>(["cdl_front", "cdl_back"]);
+
 export function isAdminUploadDocType(value: string): value is AdminUploadDocType {
   return (ADMIN_UPLOAD_DOC_TYPES as readonly string[]).includes(value);
 }

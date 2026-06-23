@@ -846,6 +846,7 @@ export const GetAccountStatusResponse = zod.object({
   "profileComplete": zod.boolean(),
   "w9Status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
   "insuranceStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "dotCdlStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
   "paymentStatus": zod.enum(['not_set', 'set']),
   "payoutStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
   "canBid": zod.boolean(),
@@ -2301,6 +2302,21 @@ export const RemoveProjectAssignmentParams = zod.object({
 export const GetMyOrganizationResponse = zod.object({
 
 }).passthrough()
+
+
+/**
+ * @summary Get hauling company compliance status for org members
+ */
+export const GetOrganizationComplianceStatusResponse = zod.object({
+  "w9Status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "insuranceStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "dotCdlStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "payoutStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "canBid": zod.boolean(),
+  "w9ReviewNote": zod.string().nullish(),
+  "insuranceReviewNote": zod.string().nullish(),
+  "dotCdlReviewNote": zod.string().nullish()
+})
 
 
 /**

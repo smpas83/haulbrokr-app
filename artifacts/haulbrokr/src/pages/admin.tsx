@@ -143,6 +143,57 @@ function docTypeLabel(docType: string) {
   return docType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+const W9_UPLOAD_DOC_TYPES = new Set(["w9"]);
+const COI_UPLOAD_DOC_TYPES = new Set(["coi"]);
+const DOT_UPLOAD_DOC_TYPES = new Set(["dot_authority", "dot_medical_card", "mc_authority"]);
+const CDL_UPLOAD_DOC_TYPES = new Set(["cdl_front", "cdl_back"]);
+const GROUPED_UPLOAD_DOC_TYPES = new Set([
+  ...W9_UPLOAD_DOC_TYPES, ...COI_UPLOAD_DOC_TYPES, ...DOT_UPLOAD_DOC_TYPES, ...CDL_UPLOAD_DOC_TYPES,
+]);
+
+function normalizeUploadStatus(status: string) {
+  return status === "uploaded" ? "pending" : status;
+}
+
+function UploadedDocReview({
+  doc,
+  makeAct,
+  anyPending,
+}: {
+  doc: AdminUploadedComplianceDocument;
+  makeAct: (kind: "doc", docType: string) => (action: "approve" | "reject", note?: string) => void;
+  anyPending: boolean;
+}) {
+  return (
+    <DocumentReviewSection
+      title={docTypeLabel(doc.docType)}
+      status={normalizeUploadStatus(doc.status)}
+      reviewNote={doc.reviewNote}
+      approveDisabled={doc.status === "verified"}
+      rejectDisabled={doc.status === "rejected"}
+      isPending={anyPending}
+      onSubmit={makeAct("doc", doc.docType)}
+    >
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="File" value={doc.fileName} />
+        {doc.objectPath && (
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">View</div>
+            <a
+              href={`/api/storage${doc.objectPath}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-primary underline"
+            >
+              Open document
+            </a>
+          </div>
+        )}
+      </div>
+    </DocumentReviewSection>
+  );
+}
+
 function DocumentReviewSection({
   title,
   status,
@@ -215,6 +266,12 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
 
   const anyPending = reviewDotCdl.isPending || reviewW9.isPending || reviewInsurance.isPending || reviewDoc.isPending;
 
+  const w9Uploads = item.uploadedDocuments.filter((d) => W9_UPLOAD_DOC_TYPES.has(d.docType));
+  const coiUploads = item.uploadedDocuments.filter((d) => COI_UPLOAD_DOC_TYPES.has(d.docType));
+  const dotUploads = item.uploadedDocuments.filter((d) => DOT_UPLOAD_DOC_TYPES.has(d.docType));
+  const cdlUploads = item.uploadedDocuments.filter((d) => CDL_UPLOAD_DOC_TYPES.has(d.docType));
+  const otherUploads = item.uploadedDocuments.filter((d) => !GROUPED_UPLOAD_DOC_TYPES.has(d.docType));
+
   return (
     <Card className="rounded-none border-2">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-4">
@@ -240,92 +297,113 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {item.w9 && (
-          <DocumentReviewSection
-            title="W-9 (tax form)"
-            status={item.w9.status}
-            reviewNote={item.w9.reviewNote}
-            approveDisabled={item.w9.status === "verified"}
-            rejectDisabled={item.w9.status === "rejected"}
-            isPending={anyPending}
-            onSubmit={makeAct("w9")}
-          >
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <Field label="Legal name" value={item.w9.legalName} />
-              <Field label="Business name" value={item.w9.businessName} />
-              <Field label="Tax ID" value={`${item.w9.taxIdType?.toUpperCase() ?? "?"} ····${item.w9.taxIdLast4 ?? "????"}`} />
-            </div>
-          </DocumentReviewSection>
-        )}
-
-        {item.insurance && (
-          <DocumentReviewSection
-            title="Insurance / COI (form)"
-            status={item.insurance.status}
-            reviewNote={item.insurance.reviewNote}
-            approveDisabled={item.insurance.status === "verified"}
-            rejectDisabled={item.insurance.status === "rejected"}
-            isPending={anyPending}
-            onSubmit={makeAct("insurance")}
-          >
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <Field label="GL carrier" value={item.insurance.glCarrier} />
-              <Field label="Policy #" value={item.insurance.glPolicyNumber} />
-              <Field label="Coverage" value={`$${item.insurance.glCoverageAmount.toLocaleString()}`} />
-              <Field label="Expires" value={item.insurance.glExpirationDate ? new Date(item.insurance.glExpirationDate).toLocaleDateString() : null} />
-            </div>
-          </DocumentReviewSection>
-        )}
-
-        {item.dotCdl && (
-          <DocumentReviewSection
-            title="DOT / CDL compliance"
-            status={item.dotCdl.status}
-            reviewNote={item.dotCdl.reviewNote}
-            approveDisabled={item.dotCdl.status === "verified"}
-            rejectDisabled={item.dotCdl.status === "rejected"}
-            isPending={anyPending}
-            onSubmit={makeAct("dotCdl")}
-          >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Field label="DOT #" value={item.dotCdl.dotNumber} />
-              <Field label="MC #" value={item.dotCdl.mcNumber} />
-              <Field label="CDL #" value={item.dotCdl.cdlNumber} />
-              <Field label="CDL state / class" value={[item.dotCdl.cdlState, item.dotCdl.cdlClass].filter(Boolean).join(" · ") || null} />
-              <Field label="FMCSA authority" value={item.dotCdl.fmcsaAuthority} />
-              <Field label="Operating status" value={item.dotCdl.dotOperatingStatus} />
-            </div>
-          </DocumentReviewSection>
-        )}
-
-        {item.uploadedDocuments.map((doc: AdminUploadedComplianceDocument) => (
-          <DocumentReviewSection
-            key={doc.docType}
-            title={`Uploaded: ${docTypeLabel(doc.docType)}`}
-            status={doc.status}
-            reviewNote={doc.reviewNote}
-            approveDisabled={doc.status === "verified"}
-            rejectDisabled={doc.status === "rejected"}
-            isPending={anyPending}
-            onSubmit={makeAct("doc", doc.docType)}
-          >
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="File" value={doc.fileName} />
-              {doc.objectPath && (
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">View</div>
-                  <a
-                    href={`/api/storage${doc.objectPath}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium text-primary underline"
-                  >
-                    Open document
-                  </a>
+        {(item.w9 || w9Uploads.length > 0) && (
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">W-9 Documents</h4>
+            {item.w9 && (
+              <DocumentReviewSection
+                title="W-9 (tax form)"
+                status={item.w9.status}
+                reviewNote={item.w9.reviewNote}
+                approveDisabled={item.w9.status === "verified"}
+                rejectDisabled={item.w9.status === "rejected"}
+                isPending={anyPending}
+                onSubmit={makeAct("w9")}
+              >
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <Field label="Legal name" value={item.w9.legalName} />
+                  <Field label="Business name" value={item.w9.businessName} />
+                  <Field label="Tax ID" value={`${item.w9.taxIdType?.toUpperCase() ?? "?"} ····${item.w9.taxIdLast4 ?? "????"}`} />
                 </div>
-              )}
-            </div>
-          </DocumentReviewSection>
+              </DocumentReviewSection>
+            )}
+            {w9Uploads.map((doc) => (
+              <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
+            ))}
+          </div>
+        )}
+
+        {(item.insurance || coiUploads.length > 0) && (
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Insurance / COI Documents</h4>
+            {item.insurance && (
+              <DocumentReviewSection
+                title="Insurance / bonding (form)"
+                status={item.insurance.status}
+                reviewNote={item.insurance.reviewNote}
+                approveDisabled={item.insurance.status === "verified"}
+                rejectDisabled={item.insurance.status === "rejected"}
+                isPending={anyPending}
+                onSubmit={makeAct("insurance")}
+              >
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <Field label="GL carrier" value={item.insurance.glCarrier} />
+                  <Field label="Policy #" value={item.insurance.glPolicyNumber} />
+                  <Field label="Coverage" value={`$${item.insurance.glCoverageAmount.toLocaleString()}`} />
+                  <Field label="Expires" value={item.insurance.glExpirationDate ? new Date(item.insurance.glExpirationDate).toLocaleDateString() : null} />
+                </div>
+              </DocumentReviewSection>
+            )}
+            {coiUploads.map((doc) => (
+              <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
+            ))}
+          </div>
+        )}
+
+        {(item.dotCdl || dotUploads.length > 0) && (
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">DOT Documents</h4>
+            {item.dotCdl && (
+              <DocumentReviewSection
+                title="DOT registration & authority"
+                status={item.dotCdl.status}
+                reviewNote={item.dotCdl.reviewNote}
+                approveDisabled={item.dotCdl.status === "verified"}
+                rejectDisabled={item.dotCdl.status === "rejected"}
+                isPending={anyPending}
+                onSubmit={makeAct("dotCdl")}
+              >
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <Field label="DOT #" value={item.dotCdl.dotNumber} />
+                  <Field label="MC #" value={item.dotCdl.mcNumber} />
+                  <Field label="FMCSA authority" value={item.dotCdl.fmcsaAuthority} />
+                  <Field label="Operating status" value={item.dotCdl.dotOperatingStatus} />
+                </div>
+              </DocumentReviewSection>
+            )}
+            {dotUploads.map((doc) => (
+              <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
+            ))}
+          </div>
+        )}
+
+        {(item.dotCdl || cdlUploads.length > 0) && (
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Documents</h4>
+            {item.dotCdl && (
+              <div className="border border-border p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold text-sm">CDL credentials</h4>
+                  <ReviewBadge status={item.dotCdl.status} />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <Field label="CDL #" value={item.dotCdl.cdlNumber} />
+                  <Field label="CDL state / class" value={[item.dotCdl.cdlState, item.dotCdl.cdlClass].filter(Boolean).join(" · ") || null} />
+                  <Field label="CDL expiry" value={item.dotCdl.cdlExpiry ? new Date(item.dotCdl.cdlExpiry).toLocaleDateString() : null} />
+                </div>
+                {item.dotCdl.reviewNote && item.dotCdl.status === "rejected" && (
+                  <p className="text-sm text-destructive">Rejection reason: {item.dotCdl.reviewNote}</p>
+                )}
+              </div>
+            )}
+            {cdlUploads.map((doc) => (
+              <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
+            ))}
+          </div>
+        )}
+
+        {otherUploads.map((doc: AdminUploadedComplianceDocument) => (
+          <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
         ))}
       </CardContent>
     </Card>

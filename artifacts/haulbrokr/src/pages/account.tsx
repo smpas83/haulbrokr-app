@@ -268,7 +268,9 @@ function W9Tab() {
           <Alert variant="destructive" className="mb-6 rounded-none">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
-            <AlertDescription>Your W-9 submission was rejected. Please review your information and resubmit.</AlertDescription>
+            <AlertDescription>
+              Your W-9 submission was rejected.{w9.reviewNote ? ` Reason: ${w9.reviewNote}` : " Please review your information and resubmit."}
+            </AlertDescription>
           </Alert>
         )}
         
@@ -583,7 +585,9 @@ function InsuranceTab() {
           <Alert variant="destructive" className="mb-6 rounded-none">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
-            <AlertDescription>Your insurance submission was rejected. Please review your information and resubmit.</AlertDescription>
+            <AlertDescription>
+              Your insurance submission was rejected.{ins.reviewNote ? ` Reason: ${ins.reviewNote}` : " Please review your information and resubmit."}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -1297,6 +1301,14 @@ function ComplianceTab() {
 
               <div className="flex items-center justify-between p-4 border-2 border-border bg-card">
                 <div className="flex flex-col">
+                  <span className="font-bold">DOT / CDL Compliance</span>
+                  <span className="text-sm text-muted-foreground">Carrier operating credentials</span>
+                </div>
+                <StatusBadge status={status.dotCdlStatus as any} />
+              </div>
+
+              <div className="flex items-center justify-between p-4 border-2 border-border bg-card">
+                <div className="flex flex-col">
                   <span className="font-bold">Payout Account</span>
                   <span className="text-sm text-muted-foreground">Bank account for receiving funds</span>
                 </div>
@@ -1375,7 +1387,8 @@ function DotCdlTab() {
 
   const statusColor = !record ? "border-gray-200 bg-gray-50" :
     record.status === "verified" ? "border-green-200 bg-green-50" :
-    record.status === "pending" ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-gray-50";
+    record.status === "pending" ? "border-amber-200 bg-amber-50" :
+    record.status === "rejected" ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50";
 
   return (
     <Card className="rounded-none border-2">
@@ -1385,7 +1398,16 @@ function DotCdlTab() {
             <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" />DOT / CDL Verification</CardTitle>
             <CardDescription>Verify your DOT number and CDL credentials to unlock more jobs</CardDescription>
           </div>
-          {record && <StatusBadge status={record.status === "verified" ? "verified" : record.status === "pending" ? "pending" : "not_submitted"} />}
+          {record && (
+            <StatusBadge
+              status={
+                record.status === "verified" ? "verified"
+                  : record.status === "pending" ? "pending"
+                  : record.status === "rejected" ? "rejected"
+                  : "not_submitted"
+              }
+            />
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -1394,6 +1416,15 @@ function DotCdlTab() {
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-green-800">Verified</AlertTitle>
             <AlertDescription className="text-green-700">Your DOT number and CDL are verified. You can bid on all job types.</AlertDescription>
+          </Alert>
+        )}
+        {record?.status === "rejected" && (
+          <Alert variant="destructive" className="rounded-none">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Action Required</AlertTitle>
+            <AlertDescription>
+              Your DOT/CDL submission was rejected.{record.reviewNote ? ` Reason: ${record.reviewNote}` : " Please update your credentials and resubmit."}
+            </AlertDescription>
           </Alert>
         )}
         {record?.status === "pending" && (

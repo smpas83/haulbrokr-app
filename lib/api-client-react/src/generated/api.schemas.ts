@@ -1069,6 +1069,16 @@ export const AccountStatusInsuranceStatus = {
   rejected: 'rejected',
 } as const;
 
+export type AccountStatusDotCdlStatus = typeof AccountStatusDotCdlStatus[keyof typeof AccountStatusDotCdlStatus];
+
+
+export const AccountStatusDotCdlStatus = {
+  not_submitted: 'not_submitted',
+  pending: 'pending',
+  verified: 'verified',
+  rejected: 'rejected',
+} as const;
+
 export type AccountStatusPaymentStatus = typeof AccountStatusPaymentStatus[keyof typeof AccountStatusPaymentStatus];
 
 
@@ -1091,10 +1101,65 @@ export interface AccountStatus {
   profileComplete: boolean;
   w9Status: AccountStatusW9Status;
   insuranceStatus: AccountStatusInsuranceStatus;
+  dotCdlStatus: AccountStatusDotCdlStatus;
   paymentStatus: AccountStatusPaymentStatus;
   payoutStatus: AccountStatusPayoutStatus;
   canBid: boolean;
   canPost: boolean;
+}
+
+export type OrganizationComplianceStatusW9Status = typeof OrganizationComplianceStatusW9Status[keyof typeof OrganizationComplianceStatusW9Status];
+
+
+export const OrganizationComplianceStatusW9Status = {
+  not_submitted: 'not_submitted',
+  pending: 'pending',
+  verified: 'verified',
+  rejected: 'rejected',
+} as const;
+
+export type OrganizationComplianceStatusInsuranceStatus = typeof OrganizationComplianceStatusInsuranceStatus[keyof typeof OrganizationComplianceStatusInsuranceStatus];
+
+
+export const OrganizationComplianceStatusInsuranceStatus = {
+  not_submitted: 'not_submitted',
+  pending: 'pending',
+  verified: 'verified',
+  rejected: 'rejected',
+} as const;
+
+export type OrganizationComplianceStatusDotCdlStatus = typeof OrganizationComplianceStatusDotCdlStatus[keyof typeof OrganizationComplianceStatusDotCdlStatus];
+
+
+export const OrganizationComplianceStatusDotCdlStatus = {
+  not_submitted: 'not_submitted',
+  pending: 'pending',
+  verified: 'verified',
+  rejected: 'rejected',
+} as const;
+
+export type OrganizationComplianceStatusPayoutStatus = typeof OrganizationComplianceStatusPayoutStatus[keyof typeof OrganizationComplianceStatusPayoutStatus];
+
+
+export const OrganizationComplianceStatusPayoutStatus = {
+  not_submitted: 'not_submitted',
+  pending: 'pending',
+  verified: 'verified',
+  rejected: 'rejected',
+} as const;
+
+export interface OrganizationComplianceStatus {
+  w9Status: OrganizationComplianceStatusW9Status;
+  insuranceStatus: OrganizationComplianceStatusInsuranceStatus;
+  dotCdlStatus: OrganizationComplianceStatusDotCdlStatus;
+  payoutStatus: OrganizationComplianceStatusPayoutStatus;
+  canBid: boolean;
+  /** @nullable */
+  w9ReviewNote?: string | null;
+  /** @nullable */
+  insuranceReviewNote?: string | null;
+  /** @nullable */
+  dotCdlReviewNote?: string | null;
 }
 
 export type ComplianceRecordFmcsaAuthority = typeof ComplianceRecordFmcsaAuthority[keyof typeof ComplianceRecordFmcsaAuthority];

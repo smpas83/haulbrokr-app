@@ -3,10 +3,12 @@ import { and, eq } from "drizzle-orm";
 import { db, profilesTable, organizationsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { isOrgManager } from "../lib/access";
+import { getCarrierComplianceSnapshot } from "../lib/adminComplianceBundle";
 import {
   ListOrgMembersResponse,
   UpdateOrgMemberRoleBody,
   UpdateOrgMemberRoleResponse,
+  GetOrganizationComplianceStatusResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -36,6 +38,21 @@ router.get("/organizations/me", requireAuth, async (req, res): Promise<void> => 
     return;
   }
   res.json(org);
+});
+
+router.get("/organizations/compliance-status", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = req.clerkId as string;
+  const profile = await loadProfile(clerkId);
+  if (!profile?.organizationId) {
+    res.status(404).json({ error: "No organization" });
+    return;
+  }
+  const snapshot = await getCarrierComplianceSnapshot(profile.organizationId);
+  if (!snapshot) {
+    res.status(404).json({ error: "Carrier compliance record not found" });
+    return;
+  }
+  res.json(GetOrganizationComplianceStatusResponse.parse(snapshot));
 });
 
 router.get("/organizations/members", requireAuth, async (req, res): Promise<void> => {

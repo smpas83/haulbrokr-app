@@ -205,18 +205,39 @@ export async function reviewProviderUploadedDoc(
   return rec ?? null;
 }
 
-export async function getProviderCanBid(profileId: number): Promise<boolean> {
+export async function getCarrierComplianceSnapshot(profileId: number) {
   const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, profileId));
-  if (!profile) return false;
+  if (!profile) return null;
+
   const [w9] = await db.select().from(w9SubmissionsTable).where(eq(w9SubmissionsTable.profileId, profileId));
   const [insurance] = await db.select().from(insuranceSubmissionsTable).where(eq(insuranceSubmissionsTable.profileId, profileId));
   const [dotCdl] = await db.select().from(dotCdlTable).where(eq(dotCdlTable.profileId, profileId));
   const [payout] = await db.select().from(payoutAccountsTable).where(eq(payoutAccountsTable.profileId, profileId));
-  return computeProviderCanBid({
-    role: profile.role,
-    w9Status: w9?.status ?? "not_submitted",
-    insuranceStatus: insurance?.status ?? "not_submitted",
-    dotCdlStatus: dotCdl?.status,
-    payoutStatus: payout?.status ?? "not_submitted",
-  });
+
+  const w9Status = w9?.status ?? "not_submitted";
+  const insuranceStatus = insurance?.status ?? "not_submitted";
+  const dotCdlStatus = dotCdl?.status ?? "not_submitted";
+  const payoutStatus = payout?.status ?? "not_submitted";
+
+  return {
+    w9Status,
+    insuranceStatus,
+    dotCdlStatus,
+    payoutStatus,
+    canBid: computeProviderCanBid({
+      role: profile.role,
+      w9Status,
+      insuranceStatus,
+      dotCdlStatus,
+      payoutStatus,
+    }),
+    w9ReviewNote: w9?.reviewNote ?? null,
+    insuranceReviewNote: insurance?.reviewNote ?? null,
+    dotCdlReviewNote: dotCdl?.reviewNote ?? null,
+  };
+}
+
+export async function getProviderCanBid(profileId: number): Promise<boolean> {
+  const snapshot = await getCarrierComplianceSnapshot(profileId);
+  return snapshot?.canBid ?? false;
 }

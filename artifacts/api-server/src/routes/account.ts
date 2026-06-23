@@ -59,12 +59,13 @@ router.get("/account/status", requireProfile, async (req, res): Promise<void> =>
   const insuranceStatus = insurance ? insurance.status : "not_submitted";
   const paymentStatus = payment ? "set" : "not_set";
   const payoutStatus = payout ? payout.status : "not_submitted";
+  const dotCdlStatus = dotCdl?.status ?? "not_submitted";
 
   const canBid = computeProviderCanBid({
     role: profile.role,
     w9Status,
     insuranceStatus,
-    dotCdlStatus: dotCdl?.status,
+    dotCdlStatus,
     payoutStatus,
   });
 
@@ -76,6 +77,7 @@ router.get("/account/status", requireProfile, async (req, res): Promise<void> =>
     profileComplete,
     w9Status,
     insuranceStatus,
+    dotCdlStatus,
     paymentStatus,
     payoutStatus,
     canBid,

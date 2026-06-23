@@ -90,6 +90,7 @@ import type {
   ListTrucksParams,
   OrgMember,
   OrgMembersResponse,
+  OrganizationComplianceStatus,
   PaymentConfirmation,
   PaymentMethod,
   PaymentMethodInput,
@@ -6711,6 +6712,83 @@ export function useGetMyOrganization<TData = Awaited<ReturnType<typeof getMyOrga
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetMyOrganizationQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetOrganizationComplianceStatusUrl = () => {
+
+
+
+
+  return `/api/organizations/compliance-status`
+}
+
+/**
+ * @summary Get hauling company compliance status for org members
+ */
+export const getOrganizationComplianceStatus = async ( options?: RequestInit): Promise<OrganizationComplianceStatus> => {
+
+  return customFetch<OrganizationComplianceStatus>(getGetOrganizationComplianceStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOrganizationComplianceStatusQueryKey = () => {
+    return [
+    `/api/organizations/compliance-status`
+    ] as const;
+    }
+
+
+export const getGetOrganizationComplianceStatusQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationComplianceStatus>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOrganizationComplianceStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOrganizationComplianceStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationComplianceStatus>>> = ({ signal }) => getOrganizationComplianceStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOrganizationComplianceStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetOrganizationComplianceStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getOrganizationComplianceStatus>>>
+export type GetOrganizationComplianceStatusQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get hauling company compliance status for org members
+ */
+
+export function useGetOrganizationComplianceStatus<TData = Awaited<ReturnType<typeof getOrganizationComplianceStatus>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOrganizationComplianceStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetOrganizationComplianceStatusQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

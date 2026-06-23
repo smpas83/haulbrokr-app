@@ -33,6 +33,18 @@ describe("computeProviderCanBid", () => {
   it("is false for non-provider roles", () => {
     expect(computeProviderCanBid({ ...base, role: "customer" })).toBe(false);
   });
+
+  it("is false when W-9 is rejected", () => {
+    expect(computeProviderCanBid({ ...base, w9Status: "rejected" })).toBe(false);
+  });
+
+  it("is false when insurance is rejected", () => {
+    expect(computeProviderCanBid({ ...base, insuranceStatus: "rejected" })).toBe(false);
+  });
+
+  it("is false when DOT/CDL is rejected", () => {
+    expect(computeProviderCanBid({ ...base, dotCdlStatus: "rejected" })).toBe(false);
+  });
 });
 
 describe("hasPendingComplianceReview", () => {

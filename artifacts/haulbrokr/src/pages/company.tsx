@@ -111,6 +111,62 @@ function InviteCodePanel({ canManage }: { canManage: boolean }) {
   );
 }
 
+function ComplianceStatusPanel() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["organization", "compliance-status"],
+    queryFn: () => rawFetch("/api/organizations/compliance-status"),
+  });
+
+  if (isLoading) return <Skeleton className="h-40 w-full rounded-none" />;
+  if (!data) return null;
+
+  const badge = (status: string) => {
+    if (status === "verified") return <Badge className="rounded-none bg-green-500 hover:bg-green-600">Verified</Badge>;
+    if (status === "pending") return <Badge className="rounded-none bg-amber-500 text-amber-950">Pending</Badge>;
+    if (status === "rejected") return <Badge variant="destructive" className="rounded-none">Rejected</Badge>;
+    return <Badge variant="secondary" className="rounded-none">Not submitted</Badge>;
+  };
+
+  return (
+    <div className="bg-card border-2 border-border">
+      <div className="p-5 border-b-2 border-border">
+        <h2 className="font-bold tracking-tight flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-muted-foreground" /> Carrier Compliance
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">Document verification status for your hauling company.</p>
+      </div>
+      <div className="p-5 space-y-3">
+        <div className="flex items-center justify-between p-3 border border-border">
+          <span className="font-medium">W-9</span>
+          {badge(data.w9Status)}
+        </div>
+        <div className="flex items-center justify-between p-3 border border-border">
+          <span className="font-medium">Insurance / COI</span>
+          {badge(data.insuranceStatus)}
+        </div>
+        <div className="flex items-center justify-between p-3 border border-border">
+          <span className="font-medium">DOT / CDL</span>
+          {badge(data.dotCdlStatus)}
+        </div>
+        {data.canBid ? (
+          <p className="text-sm text-green-700 font-medium">Company is eligible to bid on jobs.</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">Complete and pass compliance review before bidding.</p>
+        )}
+        {data.w9ReviewNote && data.w9Status === "rejected" && (
+          <p className="text-sm text-destructive">W-9: {data.w9ReviewNote}</p>
+        )}
+        {data.insuranceReviewNote && data.insuranceStatus === "rejected" && (
+          <p className="text-sm text-destructive">Insurance: {data.insuranceReviewNote}</p>
+        )}
+        {data.dotCdlReviewNote && data.dotCdlStatus === "rejected" && (
+          <p className="text-sm text-destructive">DOT/CDL: {data.dotCdlReviewNote}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function CompanyPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -137,7 +193,33 @@ export default function CompanyPage() {
     return <div className="flex items-center justify-center min-h-[40vh]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  if (!profile?.organizationId || !isOwner) {
+  const isProviderSide = profile?.role === "provider" || profile?.role === "driver";
+
+  if (!profile?.organizationId) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-20">
+        <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h2 className="text-xl font-bold">Company</h2>
+        <p className="text-muted-foreground mt-2">Join a company with an invite code to see team and compliance information.</p>
+      </div>
+    );
+  }
+
+  if (profile.role === "driver") {
+    return (
+      <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
+        <div>
+          <h1 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
+            <Building2 className="h-8 w-8 text-primary" /> Company
+          </h1>
+          <p className="text-muted-foreground mt-1">Your hauling company compliance status.</p>
+        </div>
+        <ComplianceStatusPanel />
+      </div>
+    );
+  }
+
+  if (!isOwner) {
     return (
       <div className="max-w-2xl mx-auto text-center py-20">
         <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -157,6 +239,8 @@ export default function CompanyPage() {
         </h1>
         <p className="text-muted-foreground mt-1">Manage your team, roles, and invite code.</p>
       </div>
+
+      {isProviderSide && <ComplianceStatusPanel />}
 
       <InviteCodePanel canManage={isOwner} />
 
