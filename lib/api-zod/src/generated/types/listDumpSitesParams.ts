@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * HaulBrokr API — Uber for dump trucks
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 1.0.0
  */
 import type { ListDumpSitesType } from './listDumpSitesType';
 

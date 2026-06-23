@@ -8,6 +8,8 @@ import {
   activityTable,
   jobsTable,
   binOrders,
+  w9SubmissionsTable,
+  insuranceSubmissionsTable,
 } from "@workspace/db";
 import { requireStaffOrProfile, attachStaffSession } from "../middlewares/staffAuth";
 import { attachClerkProfileIfPresent } from "../middlewares/requireAuth";
@@ -21,6 +23,14 @@ import {
 import { ReviewComplianceBody, ReviewCreditApplicationBody, UpdateStaffRoleBody } from "@workspace/api-zod";
 import { findStuckPayoutJobs, retryStuckPayout } from "../lib/payoutRetry";
 import { getUncachableResendClient } from "../lib/resendClient";
+import {
+  listProviderComplianceBundles,
+  reviewProviderW9,
+  reviewProviderInsurance,
+  reviewProviderUploadedDoc,
+  getProviderCanBid,
+  profileSummary,
+} from "../lib/adminComplianceBundle";
 
 const router: IRouter = Router();
 
@@ -35,7 +45,7 @@ router.use(attachClerkProfileIfPresent);
  */
 async function notifyApplicationReviewed(
   profileId: number,
-  kind: "carrier application" | "credit application",
+  kind: "carrier application" | "credit application" | "W-9" | "insurance certificate" | "DOT/CDL compliance" | "compliance document",
   approved: boolean,
   note: string | null,
 ): Promise<void> {
@@ -80,23 +90,11 @@ async function notifyApplicationReviewed(
   }
 }
 
-function profileSummary(p: any) {
-  return {
-    id: p.id,
-    companyName: p.companyName,
-    contactName: p.contactName ?? null,
-    email: p.email ?? null,
-    phone: p.phone ?? null,
-    city: p.city ?? null,
-    state: p.state ?? null,
-    role: p.role,
-  };
+function parseReviewAction(req: { body?: unknown }) {
+  return ReviewComplianceBody.safeParse(req.body);
 }
 
 // ── Admin access flag (used by the web app to gate the admin dashboard) ────────
-// Returns whether the caller is staff at all plus their resolved staff role and
-// the exact permission set, so the frontends can show only the tabs/actions the
-// role unlocks.
 router.get("/admin/access", async (req, res): Promise<void> => {
   const [staffRole, permissions] = await Promise.all([getStaffRole(req), getPermissions(req)]);
   res.json({
@@ -109,9 +107,6 @@ router.get("/admin/access", async (req, res): Promise<void> => {
 });
 
 // ── Platform command-center overview ──────────────────────────────────────────
-// Global, current-state KPIs across the whole platform. Gated by the "overview"
-// permission, which every staff role holds. Distinct from /dashboard/stats, which
-// is scoped to the calling customer/provider.
 router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview"), async (_req, res): Promise<void> => {
   const [
     [jobAgg],
@@ -119,7 +114,9 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
     [completedAgg],
     [carrierAgg],
     [customerAgg],
-    [complianceAgg],
+    [dotPendingAgg],
+    [w9PendingAgg],
+    [insurancePendingAgg],
     [creditAgg],
     [openBinAgg],
     stuckJobs,
@@ -153,6 +150,14 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
       .where(eq(dotCdlTable.status, "pending")),
     db
       .select({ count: sql<number>`count(*)` })
+      .from(w9SubmissionsTable)
+      .where(eq(w9SubmissionsTable.status, "pending")),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(insuranceSubmissionsTable)
+      .where(eq(insuranceSubmissionsTable.status, "pending")),
+    db
+      .select({ count: sql<number>`count(*)` })
       .from(creditApplicationsTable)
       .where(eq(creditApplicationsTable.status, "pending")),
     db
@@ -161,6 +166,11 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
       .where(notInArray(binOrders.status, ["picked_up", "cancelled"])),
     findStuckPayoutJobs(),
   ]);
+
+  const pendingCompliance =
+    Number(dotPendingAgg?.count ?? 0)
+    + Number(w9PendingAgg?.count ?? 0)
+    + Number(insurancePendingAgg?.count ?? 0);
 
   res.json({
     totalJobs: Number(jobAgg?.totalJobs ?? 0),
@@ -171,16 +181,13 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
     newCarriers: Number(carrierAgg?.count ?? 0),
     newCustomers: Number(customerAgg?.count ?? 0),
     stuckPayouts: stuckJobs.length,
-    pendingCompliance: Number(complianceAgg?.count ?? 0),
+    pendingCompliance,
     pendingCredit: Number(creditAgg?.count ?? 0),
     openBinOrders: Number(openBinAgg?.count ?? 0),
   });
 });
 
 // ── Staff team management ─────────────────────────────────────────────────────
-// List every HaulBrokr staff member (profiles with a non-null staffRole). Gated
-// by "view_staff" (held by CEO + the manage roles) so the CEO can see the roster
-// read-only; only the "manage_staff" roles (CFO/CTO/IT) can edit via PATCH below.
 router.get("/admin/staff", requireStaffOrProfile, requirePermission("view_staff"), async (_req, res): Promise<void> => {
   const rows = await db
     .select()
@@ -190,7 +197,6 @@ router.get("/admin/staff", requireStaffOrProfile, requirePermission("view_staff"
   res.json(rows.map((p) => ({ ...profileSummary(p), staffRole: p.staffRole })));
 });
 
-// Assign (or clear, with staffRole: null) a profile's staff role.
 router.patch("/admin/staff/:profileId", requireStaffOrProfile, requirePermission("manage_staff"), async (req, res): Promise<void> => {
   const parsed = UpdateStaffRoleBody.safeParse(req.body);
   if (!parsed.success) {
@@ -221,34 +227,81 @@ router.patch("/admin/staff/:profileId", requireStaffOrProfile, requirePermission
 
 // ── Carrier compliance review ─────────────────────────────────────────────────
 router.get("/admin/compliance", requireStaffOrProfile, requirePermission("compliance"), async (_req, res): Promise<void> => {
-  const rows = await db
-    .select({ rec: dotCdlTable, profile: profilesTable })
-    .from(dotCdlTable)
-    .innerJoin(profilesTable, eq(dotCdlTable.profileId, profilesTable.id))
-    .orderBy(desc(dotCdlTable.submittedAt));
-  res.json(
-    rows.map(({ rec, profile }) => ({
-      id: rec.id,
-      profileId: rec.profileId,
-      dotNumber: rec.dotNumber,
-      mcNumber: rec.mcNumber,
-      cdlNumber: rec.cdlNumber,
-      cdlState: rec.cdlState,
-      cdlClass: rec.cdlClass,
-      cdlExpiry: rec.cdlExpiry,
-      dotVerified: rec.dotVerified,
-      cdlVerified: rec.cdlVerified,
-      fmcsaAuthority: rec.fmcsaAuthority,
-      insuranceActive: rec.insuranceActive,
-      dotOperatingStatus: rec.dotOperatingStatus,
-      notSuspended: rec.notSuspended,
-      safetyRating: rec.safetyRating,
-      status: rec.status,
-      reviewNote: rec.reviewNote,
-      submittedAt: rec.submittedAt,
-      profile: profileSummary(profile),
-    })),
-  );
+  const bundles = await listProviderComplianceBundles();
+  res.json(bundles);
+});
+
+router.patch("/admin/compliance/:profileId/w9", requireStaffOrProfile, requirePermission("compliance"), async (req, res): Promise<void> => {
+  const parsed = parseReviewAction(req);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const profileId = Number(req.params.profileId);
+  if (!Number.isInteger(profileId)) {
+    res.status(400).json({ error: "Invalid profileId" });
+    return;
+  }
+  const approved = parsed.data.action === "approve";
+  const note = parsed.data.note?.trim() || null;
+  const rec = await reviewProviderW9(profileId, approved, note);
+  if (!rec) {
+    res.status(404).json({ error: "No W-9 submission for that carrier." });
+    return;
+  }
+  await notifyApplicationReviewed(profileId, "W-9", approved, note);
+  res.json({ ...rec, canBid: await getProviderCanBid(profileId) });
+});
+
+router.patch("/admin/compliance/:profileId/insurance", requireStaffOrProfile, requirePermission("compliance"), async (req, res): Promise<void> => {
+  const parsed = parseReviewAction(req);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const profileId = Number(req.params.profileId);
+  if (!Number.isInteger(profileId)) {
+    res.status(400).json({ error: "Invalid profileId" });
+    return;
+  }
+  const approved = parsed.data.action === "approve";
+  const note = parsed.data.note?.trim() || null;
+  const rec = await reviewProviderInsurance(profileId, approved, note);
+  if (!rec) {
+    res.status(404).json({ error: "No insurance submission for that carrier." });
+    return;
+  }
+  await notifyApplicationReviewed(profileId, "insurance certificate", approved, note);
+  res.json({
+    ...rec,
+    glCoverageAmount: parseFloat(rec.glCoverageAmount),
+    autoCoverageAmount: rec.autoCoverageAmount ? parseFloat(rec.autoCoverageAmount) : null,
+    bondAmount: rec.bondAmount ? parseFloat(rec.bondAmount) : null,
+    canBid: await getProviderCanBid(profileId),
+  });
+});
+
+router.patch("/admin/compliance/:profileId/documents/:docType", requireStaffOrProfile, requirePermission("compliance"), async (req, res): Promise<void> => {
+  const parsed = parseReviewAction(req);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const profileId = Number(req.params.profileId);
+  const docType = String(req.params.docType ?? "");
+  if (!Number.isInteger(profileId)) {
+    res.status(400).json({ error: "Invalid profileId" });
+    return;
+  }
+  const approved = parsed.data.action === "approve";
+  const note = parsed.data.note?.trim() || null;
+  const rec = await reviewProviderUploadedDoc(profileId, docType, approved, note);
+  if (!rec) {
+    res.status(404).json({ error: "No uploaded document of that type for that carrier." });
+    return;
+  }
+  await notifyApplicationReviewed(profileId, "compliance document", approved, note);
+  res.json({ ...rec, canBid: await getProviderCanBid(profileId) });
 });
 
 router.patch("/admin/compliance/:profileId", requireStaffOrProfile, requirePermission("compliance"), async (req, res): Promise<void> => {
@@ -300,8 +353,8 @@ router.patch("/admin/compliance/:profileId", requireStaffOrProfile, requirePermi
     res.status(404).json({ error: "No compliance record for that carrier." });
     return;
   }
-  await notifyApplicationReviewed(profileId, "carrier application", approved, note);
-  res.json(rec);
+  await notifyApplicationReviewed(profileId, "DOT/CDL compliance", approved, note);
+  res.json({ ...rec, canBid: await getProviderCanBid(profileId) });
 });
 
 // ── Customer credit-application review ─────────────────────────────────────────

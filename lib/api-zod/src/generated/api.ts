@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * HaulBrokr API — Uber for dump trucks
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 1.0.0
  */
 import * as zod from 'zod';
 
@@ -781,6 +781,7 @@ export const GetW9Response = zod.object({
   "signatureFullName": zod.string(),
   "agreedToTerms": zod.string(),
   "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "reviewNote": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -835,6 +836,7 @@ export const UpdateW9Response = zod.object({
   "signatureFullName": zod.string(),
   "agreedToTerms": zod.string(),
   "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "reviewNote": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -861,6 +863,7 @@ export const GetInsuranceResponse = zod.object({
   "bondExpirationDate": zod.coerce.date().nullish(),
   "certificateHolderName": zod.string().nullish(),
   "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "reviewNote": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -927,6 +930,7 @@ export const UpdateInsuranceResponse = zod.object({
   "bondExpirationDate": zod.coerce.date().nullish(),
   "certificateHolderName": zod.string().nullish(),
   "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "reviewNote": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -1322,24 +1326,7 @@ export const GetAdminOverviewResponse = zod.object({
  * @summary List carrier compliance records for admin review
  */
 export const ListAdminComplianceResponseItem = zod.object({
-  "id": zod.number(),
   "profileId": zod.number(),
-  "dotNumber": zod.string().nullish(),
-  "mcNumber": zod.string().nullish(),
-  "cdlNumber": zod.string().nullish(),
-  "cdlState": zod.string().nullish(),
-  "cdlClass": zod.string().nullish(),
-  "cdlExpiry": zod.coerce.date().nullish(),
-  "dotVerified": zod.boolean().optional(),
-  "cdlVerified": zod.boolean().optional(),
-  "fmcsaAuthority": zod.string().optional(),
-  "insuranceActive": zod.string().optional(),
-  "dotOperatingStatus": zod.string().optional(),
-  "notSuspended": zod.string().optional(),
-  "safetyRating": zod.string().nullish(),
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish(),
-  "submittedAt": zod.coerce.date().nullish(),
   "profile": zod.object({
   "id": zod.number(),
   "companyName": zod.string(),
@@ -1349,13 +1336,154 @@ export const ListAdminComplianceResponseItem = zod.object({
   "city": zod.string().nullish(),
   "state": zod.string().nullish(),
   "role": zod.string()
-})
+}),
+  "canBid": zod.boolean(),
+  "hasPendingReview": zod.boolean(),
+  "payoutStatus": zod.string(),
+  "w9": zod.union([zod.object({
+  "status": zod.string(),
+  "reviewNote": zod.string().nullish(),
+  "submittedAt": zod.coerce.date().optional(),
+  "legalName": zod.string().optional(),
+  "businessName": zod.string().nullish(),
+  "taxIdType": zod.string().optional(),
+  "taxIdLast4": zod.string().optional()
+}),zod.null()]).optional(),
+  "insurance": zod.union([zod.object({
+  "status": zod.string(),
+  "reviewNote": zod.string().nullish(),
+  "submittedAt": zod.coerce.date().optional(),
+  "glCarrier": zod.string(),
+  "glPolicyNumber": zod.string(),
+  "glCoverageAmount": zod.number(),
+  "glExpirationDate": zod.coerce.date()
+}),zod.null()]).optional(),
+  "dotCdl": zod.union([zod.object({
+  "id": zod.number(),
+  "status": zod.string(),
+  "reviewNote": zod.string().nullish(),
+  "submittedAt": zod.coerce.date().nullish(),
+  "dotNumber": zod.string().nullish(),
+  "mcNumber": zod.string().nullish(),
+  "cdlNumber": zod.string().nullish(),
+  "cdlState": zod.string().nullish(),
+  "cdlClass": zod.string().nullish(),
+  "cdlExpiry": zod.coerce.date().nullish(),
+  "dotVerified": zod.boolean(),
+  "cdlVerified": zod.boolean(),
+  "fmcsaAuthority": zod.string().optional(),
+  "insuranceActive": zod.string().optional(),
+  "dotOperatingStatus": zod.string().optional(),
+  "notSuspended": zod.string().optional(),
+  "safetyRating": zod.string().nullish()
+}),zod.null()]).optional(),
+  "uploadedDocuments": zod.array(zod.object({
+  "docType": zod.string(),
+  "status": zod.string(),
+  "reviewNote": zod.string().nullish(),
+  "fileName": zod.string().nullish(),
+  "objectPath": zod.string().nullish(),
+  "mimeType": zod.string().nullish(),
+  "uploadedAt": zod.coerce.date().nullish()
+}))
 })
 export const ListAdminComplianceResponse = zod.array(ListAdminComplianceResponseItem)
 
 
 /**
- * @summary Approve or reject a carrier's compliance record
+ * @summary Approve or reject a carrier's W-9 submission
+ */
+export const ReviewProviderW9Params = zod.object({
+  "profileId": zod.coerce.number()
+})
+
+export const ReviewProviderW9Body = zod.object({
+  "action": zod.enum(['approve', 'reject']),
+  "note": zod.string().optional().describe('Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.')
+})
+
+export const ReviewProviderW9Response = zod.object({
+  "id": zod.number(),
+  "profileId": zod.number(),
+  "legalName": zod.string(),
+  "businessName": zod.string().nullish(),
+  "businessType": zod.enum(['sole_proprietor', 'single_member_llc', 'multi_member_llc', 'partnership', 'c_corporation', 's_corporation', 'other']),
+  "taxIdType": zod.enum(['ein', 'ssn']),
+  "taxIdLast4": zod.string(),
+  "address": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "zip": zod.string(),
+  "signatureFullName": zod.string(),
+  "agreedToTerms": zod.string(),
+  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "reviewNote": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Approve or reject a carrier's insurance / COI submission
+ */
+export const ReviewProviderInsuranceParams = zod.object({
+  "profileId": zod.coerce.number()
+})
+
+export const ReviewProviderInsuranceBody = zod.object({
+  "action": zod.enum(['approve', 'reject']),
+  "note": zod.string().optional().describe('Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.')
+})
+
+export const ReviewProviderInsuranceResponse = zod.object({
+  "id": zod.number(),
+  "profileId": zod.number(),
+  "glCarrier": zod.string(),
+  "glPolicyNumber": zod.string(),
+  "glCoverageAmount": zod.number(),
+  "glExpirationDate": zod.coerce.date(),
+  "autoCarrier": zod.string().nullish(),
+  "autoPolicyNumber": zod.string().nullish(),
+  "autoCoverageAmount": zod.number().nullish(),
+  "autoExpirationDate": zod.coerce.date().nullish(),
+  "wcCarrier": zod.string().nullish(),
+  "wcPolicyNumber": zod.string().nullish(),
+  "wcExpirationDate": zod.coerce.date().nullish(),
+  "bondCompany": zod.string().nullish(),
+  "bondAmount": zod.number().nullish(),
+  "bondExpirationDate": zod.coerce.date().nullish(),
+  "certificateHolderName": zod.string().nullish(),
+  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
+  "reviewNote": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Approve or reject an uploaded compliance document
+ */
+export const ReviewProviderComplianceDocumentParams = zod.object({
+  "profileId": zod.coerce.number(),
+  "docType": zod.coerce.string()
+})
+
+export const ReviewProviderComplianceDocumentBody = zod.object({
+  "action": zod.enum(['approve', 'reject']),
+  "note": zod.string().optional().describe('Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.')
+})
+
+export const ReviewProviderComplianceDocumentResponse = zod.object({
+  "docType": zod.string(),
+  "status": zod.string(),
+  "reviewNote": zod.string().nullish(),
+  "fileName": zod.string().nullish(),
+  "objectPath": zod.string().nullish(),
+  "mimeType": zod.string().nullish(),
+  "uploadedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Approve or reject a carrier's DOT/CDL compliance record
  */
 export const ReviewComplianceParams = zod.object({
   "profileId": zod.coerce.number()
@@ -1512,7 +1640,7 @@ export const UpdateStaffRoleParams = zod.object({
 })
 
 export const UpdateStaffRoleBody = zod.object({
-  "staffRole": zod.union([zod.literal('ceo'),zod.literal('president'),zod.literal('cto'),zod.literal('cfo'),zod.literal('accounting'),zod.literal('it'),zod.literal('programmer'),zod.literal(null)]).nullable().describe('The staff role to assign, or null to remove staff access.')
+  "staffRole": zod.union([zod.literal('ceo'),zod.literal('cto'),zod.literal('cfo'),zod.literal('accounting'),zod.literal('it'),zod.literal(null)]).nullable().describe('The staff role to assign, or null to remove staff access.')
 })
 
 export const UpdateStaffRoleResponse = zod.object({
@@ -2074,6 +2202,306 @@ export const CreateProjectAssignmentBody = zod.object({
 export const RemoveProjectAssignmentParams = zod.object({
   "id": zod.coerce.number(),
   "profileId": zod.coerce.number()
+})
+
+
+/**
+ * @summary Get the authenticated user's organization
+ */
+export const GetMyOrganizationResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Rotate organization invite code (owner only)
+ */
+export const RotateOrganizationInviteCodeResponse = zod.object({
+  "inviteCode": zod.string().optional()
+})
+
+
+/**
+ * @summary List customer projects
+ */
+export const ListProjectsResponseItem = zod.object({
+
+}).passthrough()
+export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
+
+
+/**
+ * @summary Create a project
+ */
+export const CreateProjectBody = zod.object({
+  "name": zod.string(),
+  "description": zod.string().optional(),
+  "siteAddress": zod.string().optional(),
+  "totalBudget": zod.number().optional()
+})
+
+
+/**
+ * @summary Get project by id
+ */
+export const GetProjectParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetProjectResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Update project
+ */
+export const UpdateProjectParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateProjectBody = zod.object({
+
+}).passthrough()
+
+export const UpdateProjectResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Delete project
+ */
+export const DeleteProjectParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary List provider factoring requests
+ */
+export const ListFactoringRequestsResponseItem = zod.object({
+
+}).passthrough()
+export const ListFactoringRequestsResponse = zod.array(ListFactoringRequestsResponseItem)
+
+
+/**
+ * @summary Request invoice factoring advance
+ */
+export const CreateFactoringRequestBody = zod.object({
+  "jobId": zod.number()
+})
+
+
+/**
+ * @summary Staff approve and fund factoring request
+ */
+export const ApproveFactoringRequestParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ApproveFactoringRequestResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary QuickBooks connection status
+ */
+export const GetQuickBooksStatusResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Connect QuickBooks (simulated)
+ */
+export const ConnectQuickBooksBody = zod.object({
+  "companyName": zod.string()
+})
+
+export const ConnectQuickBooksResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Disconnect QuickBooks
+ */
+export const DisconnectQuickBooksResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Sync invoices to QuickBooks (simulated)
+ */
+export const SyncQuickBooksResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary List load tickets for a job
+ */
+export const ListJobTicketsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListJobTicketsResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Create a load ticket
+ */
+export const CreateJobTicketParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Clock in on a ticket
+ */
+export const ClockInTicketParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ClockInTicketResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Clock out on a ticket
+ */
+export const ClockOutTicketParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ClockOutTicketResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Issue QR verification token for ticket
+ */
+export const IssueTicketQrParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const IssueTicketQrResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Verify ticket via QR token
+ */
+export const VerifyTicketQrBody = zod.object({
+  "token": zod.string()
+})
+
+export const VerifyTicketQrResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary List delivery evidence for a job
+ */
+export const ListJobEvidenceParams = zod.object({
+  "jobId": zod.coerce.number()
+})
+
+export const ListJobEvidenceResponseItem = zod.object({
+
+}).passthrough()
+export const ListJobEvidenceResponse = zod.array(ListJobEvidenceResponseItem)
+
+
+/**
+ * @summary Upload delivery evidence
+ */
+export const CreateJobEvidenceParams = zod.object({
+  "jobId": zod.coerce.number()
+})
+
+export const CreateJobEvidenceBody = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Bin catalog and pricing
+ */
+export const ListBinCatalogResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary List user's bin orders
+ */
+export const ListBinOrdersResponseItem = zod.object({
+
+}).passthrough()
+export const ListBinOrdersResponse = zod.array(ListBinOrdersResponseItem)
+
+
+/**
+ * @summary Create bin order
+ */
+export const CreateBinOrderBody = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Get bin order
+ */
+export const GetBinOrderParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetBinOrderResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary List driver documents
+ */
+export const ListDriverDocsResponseItem = zod.object({
+
+}).passthrough()
+export const ListDriverDocsResponse = zod.array(ListDriverDocsResponseItem)
+
+
+/**
+ * @summary Upsert a driver document
+ */
+export const UpsertDriverDocParams = zod.object({
+  "docType": zod.coerce.string()
+})
+
+export const UpsertDriverDocBody = zod.object({
+
+}).passthrough()
+
+export const UpsertDriverDocResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Delete a driver document
+ */
+export const DeleteDriverDocParams = zod.object({
+  "docType": zod.coerce.string()
 })
 
 

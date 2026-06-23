@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * HaulBrokr API — Uber for dump trucks
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 1.0.0
  */
 export interface HealthStatus {
   status: string;
@@ -718,6 +718,8 @@ export interface W9Submission {
   signatureFullName: string;
   agreedToTerms: string;
   status: W9SubmissionStatus;
+  /** @nullable */
+  reviewNote?: string | null;
   createdAt: string;
 }
 
@@ -796,6 +798,8 @@ export interface InsuranceSubmission {
   /** @nullable */
   certificateHolderName?: string | null;
   status: InsuranceSubmissionStatus;
+  /** @nullable */
+  reviewNote?: string | null;
   createdAt: string;
 }
 
@@ -1481,6 +1485,85 @@ export interface AdminComplianceItem {
   profile: AdminProfileSummary;
 }
 
+export interface AdminProviderComplianceW9 {
+  status: string;
+  /** @nullable */
+  reviewNote?: string | null;
+  submittedAt?: string;
+  legalName?: string;
+  /** @nullable */
+  businessName?: string | null;
+  taxIdType?: string;
+  taxIdLast4?: string;
+}
+
+export interface AdminProviderComplianceInsurance {
+  status: string;
+  /** @nullable */
+  reviewNote?: string | null;
+  submittedAt?: string;
+  glCarrier: string;
+  glPolicyNumber: string;
+  glCoverageAmount: number;
+  glExpirationDate: string;
+}
+
+export interface AdminProviderComplianceDotCdl {
+  id: number;
+  status: string;
+  /** @nullable */
+  reviewNote?: string | null;
+  /** @nullable */
+  submittedAt?: string | null;
+  /** @nullable */
+  dotNumber?: string | null;
+  /** @nullable */
+  mcNumber?: string | null;
+  /** @nullable */
+  cdlNumber?: string | null;
+  /** @nullable */
+  cdlState?: string | null;
+  /** @nullable */
+  cdlClass?: string | null;
+  /** @nullable */
+  cdlExpiry?: string | null;
+  dotVerified: boolean;
+  cdlVerified: boolean;
+  fmcsaAuthority?: string;
+  insuranceActive?: string;
+  dotOperatingStatus?: string;
+  notSuspended?: string;
+  /** @nullable */
+  safetyRating?: string | null;
+}
+
+export interface AdminUploadedComplianceDocument {
+  docType: string;
+  status: string;
+  /** @nullable */
+  reviewNote?: string | null;
+  /** @nullable */
+  fileName?: string | null;
+  /** @nullable */
+  objectPath?: string | null;
+  /** @nullable */
+  mimeType?: string | null;
+  /** @nullable */
+  uploadedAt?: string | null;
+}
+
+export interface AdminProviderCompliance {
+  profileId: number;
+  profile: AdminProfileSummary;
+  canBid: boolean;
+  hasPendingReview: boolean;
+  payoutStatus: string;
+  w9?: AdminProviderComplianceW9 | null;
+  insurance?: AdminProviderComplianceInsurance | null;
+  dotCdl?: AdminProviderComplianceDotCdl | null;
+  uploadedDocuments: AdminUploadedComplianceDocument[];
+}
+
 export interface AdminCreditApplicationItem {
   id: number;
   profileId: number;
@@ -1736,4 +1819,87 @@ export const ListDumpSitesType = {
   hazardous_waste: 'hazardous_waste',
   compost: 'compost',
 } as const;
+
+export type GetMyOrganization200 = { [key: string]: unknown };
+
+export type RotateOrganizationInviteCode200 = {
+  inviteCode?: string;
+};
+
+export type ListProjects200Item = { [key: string]: unknown };
+
+export type CreateProjectBody = {
+  name: string;
+  description?: string;
+  siteAddress?: string;
+  totalBudget?: number;
+};
+
+export type CreateProject201 = { [key: string]: unknown };
+
+export type GetProject200 = { [key: string]: unknown };
+
+export type UpdateProjectBody = { [key: string]: unknown };
+
+export type UpdateProject200 = { [key: string]: unknown };
+
+export type ListFactoringRequests200Item = { [key: string]: unknown };
+
+export type CreateFactoringRequestBody = {
+  jobId: number;
+};
+
+export type CreateFactoringRequest201 = { [key: string]: unknown };
+
+export type ApproveFactoringRequest200 = { [key: string]: unknown };
+
+export type GetQuickBooksStatus200 = { [key: string]: unknown };
+
+export type ConnectQuickBooksBody = {
+  companyName: string;
+};
+
+export type ConnectQuickBooks200 = { [key: string]: unknown };
+
+export type DisconnectQuickBooks200 = { [key: string]: unknown };
+
+export type SyncQuickBooks200 = { [key: string]: unknown };
+
+export type ListJobTickets200 = { [key: string]: unknown };
+
+export type CreateJobTicket201 = { [key: string]: unknown };
+
+export type ClockInTicket200 = { [key: string]: unknown };
+
+export type ClockOutTicket200 = { [key: string]: unknown };
+
+export type IssueTicketQr200 = { [key: string]: unknown };
+
+export type VerifyTicketQrBody = {
+  token: string;
+};
+
+export type VerifyTicketQr200 = { [key: string]: unknown };
+
+export type ListJobEvidence200Item = { [key: string]: unknown };
+
+export type CreateJobEvidenceBody = { [key: string]: unknown };
+
+export type CreateJobEvidence201 = { [key: string]: unknown };
+
+export type ListBinCatalog200 = { [key: string]: unknown };
+
+export type ListBinOrders200Item = { [key: string]: unknown };
+
+export type CreateBinOrderBody = { [key: string]: unknown };
+
+export type CreateBinOrder201 = { [key: string]: unknown };
+
+export type GetBinOrder200 = { [key: string]: unknown };
+
+export type ListDriverDocs200Item = { [key: string]: unknown };
+
+export type UpsertDriverDocBody = { [key: string]: unknown };
+
+export type UpsertDriverDoc200 = { [key: string]: unknown };
 

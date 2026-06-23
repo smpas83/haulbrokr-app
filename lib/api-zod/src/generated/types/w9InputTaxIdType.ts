@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * HaulBrokr API — Uber for dump trucks
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 1.0.0
  */
 
 export type W9InputTaxIdType = typeof W9InputTaxIdType[keyof typeof W9InputTaxIdType];

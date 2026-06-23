@@ -10,11 +10,13 @@ import {
   useGetAdminAccess,
   useGetAdminOverview, getGetAdminOverviewQueryKey,
   useListAdminCompliance, useReviewCompliance, getListAdminComplianceQueryKey,
+  useReviewProviderW9, useReviewProviderInsurance, useReviewProviderComplianceDocument,
   useListAdminCreditApplications, useReviewCreditApplication, getListAdminCreditApplicationsQueryKey,
   useListStuckPayouts, useRetryStuckPayout, useResetStuckPayoutFailures, getListStuckPayoutsQueryKey,
   useListAdminStaff, useUpdateStaffRole, getListAdminStaffQueryKey,
   useListAdminBinOrders, useAdvanceBinOrderStatus, getListAdminBinOrdersQueryKey,
-  type AdminComplianceItem, type AdminCreditApplicationItem, type StuckPayoutItem,
+  type AdminProviderCompliance, type AdminUploadedComplianceDocument,
+  type AdminCreditApplicationItem, type StuckPayoutItem,
   type StaffMember, type BinOrder, type AdvanceBinOrderInput, type AdminOverview,
   type UpdateStaffRoleInput,
 } from "@workspace/api-client-react";
@@ -137,23 +139,81 @@ function Field({ label, value }: { label: string; value?: ReactNode }) {
   );
 }
 
-function ComplianceCard({ item }: { item: AdminComplianceItem }) {
+function docTypeLabel(docType: string) {
+  return docType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function DocumentReviewSection({
+  title,
+  status,
+  reviewNote,
+  approveDisabled,
+  rejectDisabled,
+  isPending,
+  onSubmit,
+  children,
+}: {
+  title: string;
+  status: string;
+  reviewNote?: string | null;
+  approveDisabled: boolean;
+  rejectDisabled: boolean;
+  isPending: boolean;
+  onSubmit: (action: "approve" | "reject", note?: string) => void;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="border border-border p-4 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="font-semibold text-sm">{title}</h4>
+        <ReviewBadge status={status} />
+      </div>
+      {children}
+      <ReviewActions
+        approveLabel="Approve"
+        approveIcon={<ShieldCheck className="w-4 h-4 mr-1" />}
+        approveDisabled={approveDisabled}
+        rejectDisabled={rejectDisabled}
+        isPending={isPending}
+        reviewNote={reviewNote}
+        status={status}
+        onSubmit={onSubmit}
+      />
+    </div>
+  );
+}
+
+function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const review = useReviewCompliance();
+  const reviewDotCdl = useReviewCompliance();
+  const reviewW9 = useReviewProviderW9();
+  const reviewInsurance = useReviewProviderInsurance();
+  const reviewDoc = useReviewProviderComplianceDocument();
 
-  function act(action: "approve" | "reject", note?: string) {
-    review.mutate(
-      { profileId: item.profileId, data: { action, ...(note ? { note } : {}) } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListAdminComplianceQueryKey() });
-          toast({ title: action === "approve" ? "Carrier approved" : "Carrier rejected" });
-        },
-        onError: () => toast({ title: "Action failed", variant: "destructive" }),
-      },
-    );
-  }
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: getListAdminComplianceQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetAdminOverviewQueryKey() });
+  };
+
+  const makeAct = (
+    kind: "w9" | "insurance" | "dotCdl" | "doc",
+    docType?: string,
+  ) => (action: "approve" | "reject", note?: string) => {
+    const data = { action, ...(note ? { note } : {}) };
+    const onSuccess = () => {
+      invalidate();
+      const labels = { w9: "W-9", insurance: "Insurance", dotCdl: "DOT/CDL", doc: docTypeLabel(docType ?? "document") };
+      toast({ title: action === "approve" ? `${labels[kind]} approved` : `${labels[kind]} rejected` });
+    };
+    const onError = () => toast({ title: "Action failed", variant: "destructive" });
+    if (kind === "w9") reviewW9.mutate({ profileId: item.profileId, data }, { onSuccess, onError });
+    else if (kind === "insurance") reviewInsurance.mutate({ profileId: item.profileId, data }, { onSuccess, onError });
+    else if (kind === "doc") reviewDoc.mutate({ profileId: item.profileId, docType: docType!, data }, { onSuccess, onError });
+    else reviewDotCdl.mutate({ profileId: item.profileId, data }, { onSuccess, onError });
+  };
+
+  const anyPending = reviewDotCdl.isPending || reviewW9.isPending || reviewInsurance.isPending || reviewDoc.isPending;
 
   return (
     <Card className="rounded-none border-2">
@@ -164,32 +224,109 @@ function ComplianceCard({ item }: { item: AdminComplianceItem }) {
           </CardTitle>
           <CardDescription>
             {item.profile.contactName || "—"}
+            {item.profile.email ? ` · ${item.profile.email}` : ""}
             {item.profile.city ? ` · ${item.profile.city}, ${item.profile.state ?? ""}` : ""}
           </CardDescription>
         </div>
-        <ReviewBadge status={item.status} />
+        <div className="flex flex-col items-end gap-2">
+          {item.canBid ? (
+            <Badge className="bg-green-500 hover:bg-green-600 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1" /> Can bid</Badge>
+          ) : (
+            <Badge variant="secondary" className="rounded-none">Not eligible to bid</Badge>
+          )}
+          {item.hasPendingReview && (
+            <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none"><Clock className="w-3 h-3 mr-1" /> Review needed</Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Field label="DOT #" value={item.dotNumber} />
-          <Field label="MC #" value={item.mcNumber} />
-          <Field label="CDL #" value={item.cdlNumber} />
-          <Field label="CDL State / Class" value={[item.cdlState, item.cdlClass].filter(Boolean).join(" · ") || null} />
-          <Field label="FMCSA Authority" value={item.fmcsaAuthority} />
-          <Field label="Insurance" value={item.insuranceActive} />
-          <Field label="Operating Status" value={item.dotOperatingStatus} />
-          <Field label="Not Suspended" value={item.notSuspended} />
-        </div>
-        <ReviewActions
-          approveLabel="Approve"
-          approveIcon={<ShieldCheck className="w-4 h-4 mr-1" />}
-          approveDisabled={item.status === "verified"}
-          rejectDisabled={item.status === "rejected"}
-          isPending={review.isPending}
-          reviewNote={item.reviewNote}
-          status={item.status}
-          onSubmit={act}
-        />
+        {item.w9 && (
+          <DocumentReviewSection
+            title="W-9 (tax form)"
+            status={item.w9.status}
+            reviewNote={item.w9.reviewNote}
+            approveDisabled={item.w9.status === "verified"}
+            rejectDisabled={item.w9.status === "rejected"}
+            isPending={anyPending}
+            onSubmit={makeAct("w9")}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <Field label="Legal name" value={item.w9.legalName} />
+              <Field label="Business name" value={item.w9.businessName} />
+              <Field label="Tax ID" value={`${item.w9.taxIdType?.toUpperCase() ?? "?"} ····${item.w9.taxIdLast4 ?? "????"}`} />
+            </div>
+          </DocumentReviewSection>
+        )}
+
+        {item.insurance && (
+          <DocumentReviewSection
+            title="Insurance / COI (form)"
+            status={item.insurance.status}
+            reviewNote={item.insurance.reviewNote}
+            approveDisabled={item.insurance.status === "verified"}
+            rejectDisabled={item.insurance.status === "rejected"}
+            isPending={anyPending}
+            onSubmit={makeAct("insurance")}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <Field label="GL carrier" value={item.insurance.glCarrier} />
+              <Field label="Policy #" value={item.insurance.glPolicyNumber} />
+              <Field label="Coverage" value={`$${item.insurance.glCoverageAmount.toLocaleString()}`} />
+              <Field label="Expires" value={item.insurance.glExpirationDate ? new Date(item.insurance.glExpirationDate).toLocaleDateString() : null} />
+            </div>
+          </DocumentReviewSection>
+        )}
+
+        {item.dotCdl && (
+          <DocumentReviewSection
+            title="DOT / CDL compliance"
+            status={item.dotCdl.status}
+            reviewNote={item.dotCdl.reviewNote}
+            approveDisabled={item.dotCdl.status === "verified"}
+            rejectDisabled={item.dotCdl.status === "rejected"}
+            isPending={anyPending}
+            onSubmit={makeAct("dotCdl")}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Field label="DOT #" value={item.dotCdl.dotNumber} />
+              <Field label="MC #" value={item.dotCdl.mcNumber} />
+              <Field label="CDL #" value={item.dotCdl.cdlNumber} />
+              <Field label="CDL state / class" value={[item.dotCdl.cdlState, item.dotCdl.cdlClass].filter(Boolean).join(" · ") || null} />
+              <Field label="FMCSA authority" value={item.dotCdl.fmcsaAuthority} />
+              <Field label="Operating status" value={item.dotCdl.dotOperatingStatus} />
+            </div>
+          </DocumentReviewSection>
+        )}
+
+        {item.uploadedDocuments.map((doc: AdminUploadedComplianceDocument) => (
+          <DocumentReviewSection
+            key={doc.docType}
+            title={`Uploaded: ${docTypeLabel(doc.docType)}`}
+            status={doc.status}
+            reviewNote={doc.reviewNote}
+            approveDisabled={doc.status === "verified"}
+            rejectDisabled={doc.status === "rejected"}
+            isPending={anyPending}
+            onSubmit={makeAct("doc", doc.docType)}
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="File" value={doc.fileName} />
+              {doc.objectPath && (
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">View</div>
+                  <a
+                    href={`/api/storage${doc.objectPath}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-primary underline"
+                  >
+                    Open document
+                  </a>
+                </div>
+              )}
+            </div>
+          </DocumentReviewSection>
+        ))}
       </CardContent>
     </Card>
   );
@@ -856,7 +993,7 @@ export default function AdminPage() {
   const creditItems = credit.data ?? [];
   const payoutItems = payouts.data ?? [];
   const binItems = binOrders.data ?? [];
-  const pendingCompliance = complianceItems.filter((i) => i.status === "pending" || i.status === "not_submitted").length;
+  const pendingCompliance = complianceItems.filter((i) => i.hasPendingReview).length;
   const pendingCredit = creditItems.filter((i) => i.status === "pending").length;
   // Orders still needing a staff action (anything not yet terminal).
   const openBins = binItems.filter((o) => o.status !== "picked_up" && o.status !== "cancelled").length;
@@ -958,7 +1095,7 @@ export default function AdminPage() {
             ) : complianceItems.length === 0 ? (
               <EmptyState label="No carrier compliance records submitted yet." />
             ) : (
-              complianceItems.map((item) => <ComplianceCard key={item.id} item={item} />)
+              complianceItems.map((item) => <ProviderComplianceCard key={item.profileId} item={item} />)
             )}
           </TabsContent>
         )}

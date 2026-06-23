@@ -35,6 +35,7 @@ export const w9SubmissionsTable = pgTable("w9_submissions", {
   signatureFullName: text("signature_full_name").notNull(),
   agreedToTerms: text("agreed_to_terms").notNull().default("false"),
   status: verificationStatusEnum("status").notNull().default("pending"),
+  reviewNote: text("review_note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

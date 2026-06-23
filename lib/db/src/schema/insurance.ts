@@ -23,6 +23,7 @@ export const insuranceSubmissionsTable = pgTable("insurance_submissions", {
   bondExpirationDate: timestamp("bond_expiration_date", { withTimezone: true }),
   certificateHolderName: text("certificate_holder_name"),
   status: verificationStatusEnum("insurance_status").notNull().default("pending"),
+  reviewNote: text("review_note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

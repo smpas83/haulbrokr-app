@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * HaulBrokr API — Uber for dump trucks
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 1.0.0
  */
 import type { InsuranceSubmissionStatus } from './insuranceSubmissionStatus';
 
@@ -37,5 +37,7 @@ export interface InsuranceSubmission {
   /** @nullable */
   certificateHolderName?: string | null;
   status: InsuranceSubmissionStatus;
+  /** @nullable */
+  reviewNote?: string | null;
   createdAt: Date;
 }

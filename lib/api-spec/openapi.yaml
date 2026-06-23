@@ -998,13 +998,93 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/AdminComplianceItem"
+                  $ref: "#/components/schemas/AdminProviderCompliance"
+
+  /admin/compliance/{profileId}/w9:
+    patch:
+      operationId: reviewProviderW9
+      tags: [admin]
+      summary: Approve or reject a carrier's W-9 submission
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminReviewInput"
+      responses:
+        "200":
+          description: Updated W-9 submission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/W9Submission"
+
+  /admin/compliance/{profileId}/insurance:
+    patch:
+      operationId: reviewProviderInsurance
+      tags: [admin]
+      summary: Approve or reject a carrier's insurance / COI submission
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminReviewInput"
+      responses:
+        "200":
+          description: Updated insurance submission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceSubmission"
+
+  /admin/compliance/{profileId}/documents/{docType}:
+    patch:
+      operationId: reviewProviderComplianceDocument
+      tags: [admin]
+      summary: Approve or reject an uploaded compliance document
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: docType
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminReviewInput"
+      responses:
+        "200":
+          description: Updated uploaded document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUploadedComplianceDocument"
 
   /admin/compliance/{profileId}:
     patch:
       operationId: reviewCompliance
       tags: [admin]
-      summary: Approve or reject a carrier's compliance record
+      summary: Approve or reject a carrier's DOT/CDL compliance record
       parameters:
         - name: profileId
           in: path
@@ -2790,6 +2870,8 @@ components:
         status:
           type: string
           enum: [not_submitted, pending, verified, rejected]
+        reviewNote:
+          type: ["string", "null"]
         createdAt:
           type: string
           format: date-time
@@ -2869,6 +2951,8 @@ components:
         status:
           type: string
           enum: [not_submitted, pending, verified, rejected]
+        reviewNote:
+          type: ["string", "null"]
         createdAt:
           type: string
           format: date-time
@@ -3639,6 +3723,139 @@ components:
           format: date-time
         profile:
           $ref: "#/components/schemas/AdminProfileSummary"
+
+    AdminProviderComplianceW9:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+        reviewNote:
+          type: ["string", "null"]
+        submittedAt:
+          type: string
+          format: date-time
+        legalName:
+          type: string
+        businessName:
+          type: ["string", "null"]
+        taxIdType:
+          type: string
+        taxIdLast4:
+          type: string
+
+    AdminProviderComplianceInsurance:
+      type: object
+      required: [status, glCarrier, glPolicyNumber, glCoverageAmount, glExpirationDate]
+      properties:
+        status:
+          type: string
+        reviewNote:
+          type: ["string", "null"]
+        submittedAt:
+          type: string
+          format: date-time
+        glCarrier:
+          type: string
+        glPolicyNumber:
+          type: string
+        glCoverageAmount:
+          type: number
+        glExpirationDate:
+          type: string
+          format: date-time
+
+    AdminProviderComplianceDotCdl:
+      type: object
+      required: [id, status, dotVerified, cdlVerified]
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        reviewNote:
+          type: ["string", "null"]
+        submittedAt:
+          type: ["string", "null"]
+          format: date-time
+        dotNumber:
+          type: ["string", "null"]
+        mcNumber:
+          type: ["string", "null"]
+        cdlNumber:
+          type: ["string", "null"]
+        cdlState:
+          type: ["string", "null"]
+        cdlClass:
+          type: ["string", "null"]
+        cdlExpiry:
+          type: ["string", "null"]
+          format: date-time
+        dotVerified:
+          type: boolean
+        cdlVerified:
+          type: boolean
+        fmcsaAuthority:
+          type: string
+        insuranceActive:
+          type: string
+        dotOperatingStatus:
+          type: string
+        notSuspended:
+          type: string
+        safetyRating:
+          type: ["string", "null"]
+
+    AdminUploadedComplianceDocument:
+      type: object
+      required: [docType, status]
+      properties:
+        docType:
+          type: string
+        status:
+          type: string
+        reviewNote:
+          type: ["string", "null"]
+        fileName:
+          type: ["string", "null"]
+        objectPath:
+          type: ["string", "null"]
+        mimeType:
+          type: ["string", "null"]
+        uploadedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    AdminProviderCompliance:
+      type: object
+      required: [profileId, profile, canBid, hasPendingReview, payoutStatus, uploadedDocuments]
+      properties:
+        profileId:
+          type: integer
+        profile:
+          $ref: "#/components/schemas/AdminProfileSummary"
+        canBid:
+          type: boolean
+        hasPendingReview:
+          type: boolean
+        payoutStatus:
+          type: string
+        w9:
+          oneOf:
+            - $ref: "#/components/schemas/AdminProviderComplianceW9"
+            - type: "null"
+        insurance:
+          oneOf:
+            - $ref: "#/components/schemas/AdminProviderComplianceInsurance"
+            - type: "null"
+        dotCdl:
+          oneOf:
+            - $ref: "#/components/schemas/AdminProviderComplianceDotCdl"
+            - type: "null"
+        uploadedDocuments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUploadedComplianceDocument"
 
     AdminCreditApplicationItem:
       type: object

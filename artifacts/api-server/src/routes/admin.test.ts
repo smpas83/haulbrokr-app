@@ -65,6 +65,10 @@ vi.mock("@workspace/db", () => {
     activityTable: makeTable("activity"),
     jobsTable: makeTable("jobs"),
     binOrders: makeTable("binOrders"),
+    w9SubmissionsTable: makeTable("w9Submissions"),
+    insuranceSubmissionsTable: makeTable("insuranceSubmissions"),
+    driverDocumentsTable: makeTable("driverDocuments"),
+    payoutAccountsTable: makeTable("payoutAccounts"),
   };
 });
 
@@ -119,7 +123,7 @@ beforeEach(() => {
 });
 
 describe("PATCH /admin/compliance/:profileId", () => {
-  it("approves: clears the review note and notifies the carrier", async () => {
+  it("approves DOT/CDL: clears the review note and notifies the carrier", async () => {
     const res = await request(makeApp())
       .patch(`/admin/compliance/${APPLICANT_ID}`)
       .send({ action: "approve" });
@@ -134,7 +138,7 @@ describe("PATCH /admin/compliance/:profileId", () => {
     });
   });
 
-  it("rejects: stores the reason and notifies the carrier with it", async () => {
+  it("rejects DOT/CDL: stores the reason and notifies the carrier with it", async () => {
     const res = await request(makeApp())
       .patch(`/admin/compliance/${APPLICANT_ID}`)
       .send({ action: "reject", note: "Insurance certificate expired." });
@@ -156,6 +160,52 @@ describe("PATCH /admin/compliance/:profileId", () => {
       .patch(`/admin/compliance/${APPLICANT_ID}`)
       .send({ action: "maybe" });
     expect(res.status).toBe(400);
+  });
+});
+
+describe("PATCH /admin/compliance/:profileId/w9", () => {
+  it("approves a W-9 submission", async () => {
+    const res = await request(makeApp())
+      .patch(`/admin/compliance/${APPLICANT_ID}/w9`)
+      .send({ action: "approve" });
+    expect(res.status).toBe(200);
+    expect(h.updates[0]).toMatchObject({ status: "verified", reviewNote: null });
+    expect(h.inserts[0].description).toContain("W-9");
+  });
+
+  it("rejects a W-9 with a stored reason", async () => {
+    const res = await request(makeApp())
+      .patch(`/admin/compliance/${APPLICANT_ID}/w9`)
+      .send({ action: "reject", note: "Name mismatch." });
+    expect(res.status).toBe(200);
+    expect(h.updates[0]).toMatchObject({ status: "rejected", reviewNote: "Name mismatch." });
+  });
+});
+
+describe("PATCH /admin/compliance/:profileId/insurance", () => {
+  it("approves an insurance submission", async () => {
+    const res = await request(makeApp())
+      .patch(`/admin/compliance/${APPLICANT_ID}/insurance`)
+      .send({ action: "approve" });
+    expect(res.status).toBe(200);
+    expect(h.updates[0]).toMatchObject({ status: "verified" });
+  });
+});
+
+describe("PATCH /admin/compliance/:profileId/documents/:docType", () => {
+  it("approves an uploaded compliance document", async () => {
+    const res = await request(makeApp())
+      .patch(`/admin/compliance/${APPLICANT_ID}/documents/coi`)
+      .send({ action: "approve" });
+    expect(res.status).toBe(200);
+    expect(h.updates[0]).toMatchObject({ status: "verified", reviewNote: null });
+  });
+
+  it("rejects an invalid doc type with 404", async () => {
+    const res = await request(makeApp())
+      .patch(`/admin/compliance/${APPLICANT_ID}/documents/not_a_real_type`)
+      .send({ action: "approve" });
+    expect(res.status).toBe(404);
   });
 });
 
@@ -454,7 +504,7 @@ describe("GET /admin/overview", () => {
     expect(res.body.completedJobs).toBe(4);
     expect(res.body.newCarriers).toBe(4);
     expect(res.body.newCustomers).toBe(4);
-    expect(res.body.pendingCompliance).toBe(4);
+    expect(res.body.pendingCompliance).toBe(12);
     expect(res.body.pendingCredit).toBe(4);
     expect(res.body.openBinOrders).toBe(4);
   });

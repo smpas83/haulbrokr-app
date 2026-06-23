@@ -12,6 +12,7 @@ import {
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { hasPermission } from "../middlewares/requireAdmin";
+import { computeProviderCanBid } from "../lib/providerCompliance";
 import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
 import {
   GetW9Response,
@@ -50,6 +51,7 @@ router.get("/account/status", requireProfile, async (req, res): Promise<void> =>
   const [insurance] = await db.select().from(insuranceSubmissionsTable).where(eq(insuranceSubmissionsTable.profileId, profile.id));
   const [payment] = await db.select().from(paymentMethodsTable).where(eq(paymentMethodsTable.profileId, profile.id));
   const [payout] = await db.select().from(payoutAccountsTable).where(eq(payoutAccountsTable.profileId, profile.id));
+  const [dotCdl] = await db.select().from(dotCdlTable).where(eq(dotCdlTable.profileId, profile.id));
 
   const profileComplete = !!(profile.companyName && profile.contactName && profile.phone && profile.city && profile.state);
 
@@ -58,10 +60,13 @@ router.get("/account/status", requireProfile, async (req, res): Promise<void> =>
   const paymentStatus = payment ? "set" : "not_set";
   const payoutStatus = payout ? payout.status : "not_submitted";
 
-  const canBid = profile.role === "provider" &&
-    w9Status === "verified" &&
-    insuranceStatus === "verified" &&
-    payoutStatus !== "not_submitted";
+  const canBid = computeProviderCanBid({
+    role: profile.role,
+    w9Status,
+    insuranceStatus,
+    dotCdlStatus: dotCdl?.status,
+    payoutStatus,
+  });
 
   const canPost = profile.role === "customer" &&
     profileComplete &&

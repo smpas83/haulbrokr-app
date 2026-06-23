@@ -406,3 +406,59 @@ describe("POST /account/payment-method/verify-microdeposits", () => {
     expect(h.updates).toHaveLength(0);
   });
 });
+
+describe("GET /account/status canBid", () => {
+  it("is true only when W-9, insurance, DOT/CDL are verified and payout is on file", async () => {
+    h.profile = { id: PROFILE_ID, role: "provider", companyName: "Acme", contactName: "Pat", phone: "1", city: "LA", state: "CA" };
+    const { w9SubmissionsTable, insuranceSubmissionsTable, dotCdlTable, payoutAccountsTable, paymentMethodsTable } = await import("@workspace/db");
+    h.rows.set(w9SubmissionsTable, [{ status: "verified" }]);
+    h.rows.set(insuranceSubmissionsTable, [{ status: "verified" }]);
+    h.rows.set(dotCdlTable, [{ status: "verified" }]);
+    h.rows.set(payoutAccountsTable, [{ status: "pending" }]);
+    h.rows.set(paymentMethodsTable, [{ id: 1 }]);
+
+    const res = await request(makeApp()).get("/account/status");
+    expect(res.status).toBe(200);
+    expect(res.body.canBid).toBe(true);
+  });
+
+  it("is false when DOT/CDL is not verified", async () => {
+    h.profile = { id: PROFILE_ID, role: "provider", companyName: "Acme", contactName: "Pat", phone: "1", city: "LA", state: "CA" };
+    const { w9SubmissionsTable, insuranceSubmissionsTable, dotCdlTable, payoutAccountsTable } = await import("@workspace/db");
+    h.rows.set(w9SubmissionsTable, [{ status: "verified" }]);
+    h.rows.set(insuranceSubmissionsTable, [{ status: "verified" }]);
+    h.rows.set(dotCdlTable, [{ status: "pending" }]);
+    h.rows.set(payoutAccountsTable, [{ status: "pending" }]);
+
+    const res = await request(makeApp()).get("/account/status");
+    expect(res.body.canBid).toBe(false);
+  });
+});
+
+describe("GET /account/status canBid", () => {
+  it("is true only when W-9, insurance, DOT/CDL are verified and payout is on file", async () => {
+    h.profile = { id: PROFILE_ID, role: "provider", companyName: "Acme", contactName: "Pat", phone: "1", city: "LA", state: "CA" };
+    const { w9SubmissionsTable, insuranceSubmissionsTable, dotCdlTable, payoutAccountsTable, paymentMethodsTable } = await import("@workspace/db");
+    h.rows.set(w9SubmissionsTable, [{ status: "verified" }]);
+    h.rows.set(insuranceSubmissionsTable, [{ status: "verified" }]);
+    h.rows.set(dotCdlTable, [{ status: "verified" }]);
+    h.rows.set(payoutAccountsTable, [{ status: "pending" }]);
+    h.rows.set(paymentMethodsTable, [{ id: 1 }]);
+
+    const res = await request(makeApp()).get("/account/status");
+    expect(res.status).toBe(200);
+    expect(res.body.canBid).toBe(true);
+  });
+
+  it("is false when DOT/CDL is not verified", async () => {
+    h.profile = { id: PROFILE_ID, role: "provider", companyName: "Acme", contactName: "Pat", phone: "1", city: "LA", state: "CA" };
+    const { w9SubmissionsTable, insuranceSubmissionsTable, dotCdlTable, payoutAccountsTable } = await import("@workspace/db");
+    h.rows.set(w9SubmissionsTable, [{ status: "verified" }]);
+    h.rows.set(insuranceSubmissionsTable, [{ status: "verified" }]);
+    h.rows.set(dotCdlTable, [{ status: "pending" }]);
+    h.rows.set(payoutAccountsTable, [{ status: "pending" }]);
+
+    const res = await request(makeApp()).get("/account/status");
+    expect(res.body.canBid).toBe(false);
+  });
+});

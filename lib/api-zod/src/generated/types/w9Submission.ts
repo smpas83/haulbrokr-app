@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * HaulBrokr API — Uber for dump trucks
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 1.0.0
  */
 import type { W9SubmissionBusinessType } from './w9SubmissionBusinessType';
 import type { W9SubmissionStatus } from './w9SubmissionStatus';
@@ -25,5 +25,7 @@ export interface W9Submission {
   signatureFullName: string;
   agreedToTerms: string;
   status: W9SubmissionStatus;
+  /** @nullable */
+  reviewNote?: string | null;
   createdAt: Date;
 }

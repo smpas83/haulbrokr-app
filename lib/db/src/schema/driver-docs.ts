@@ -47,6 +47,7 @@ export const driverDocumentsTable = pgTable("driver_documents", {
   docNumber: text("doc_number"),
   expiry: timestamp("expiry", { withTimezone: true }),
   notes: text("notes"),
+  reviewNote: text("review_note"),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }),
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
   rejectedAt: timestamp("rejected_at", { withTimezone: true }),

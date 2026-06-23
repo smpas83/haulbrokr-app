@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { db, driverDocumentsTable } from "@workspace/db";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
+import { hasPermission } from "../middlewares/requireAdmin";
 import {
   issueUploadToken,
   verifyUploadToken,
@@ -227,7 +228,7 @@ router.get("/storage/objects/*path", requireProfile, async (req: Request, res: R
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
     const objectPath = `/objects/${wildcardPath}`;
 
-    // ACL: caller must own a driver_documents row that references this object.
+    // ACL: caller must own the document, or staff with compliance permission.
     const profile = getRequestProfile(req);
     const [owned] = await db.select({ id: driverDocumentsTable.id })
       .from(driverDocumentsTable)
@@ -235,9 +236,19 @@ router.get("/storage/objects/*path", requireProfile, async (req: Request, res: R
         eq(driverDocumentsTable.profileId, profile.id),
         eq(driverDocumentsTable.objectPath, objectPath),
       ));
-    if (!owned) {
+    const staffCanView = !owned && (await hasPermission(req, "compliance"));
+    if (!owned && !staffCanView) {
       res.status(403).json({ error: "Forbidden" });
       return;
+    }
+    if (staffCanView) {
+      const [doc] = await db.select({ id: driverDocumentsTable.id })
+        .from(driverDocumentsTable)
+        .where(eq(driverDocumentsTable.objectPath, objectPath));
+      if (!doc) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
     }
 
     const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
