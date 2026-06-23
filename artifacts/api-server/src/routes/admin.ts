@@ -131,7 +131,7 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
     db
       .select({ count: sql<number>`count(*)` })
       .from(jobsTable)
-      .where(sql`${jobsTable.status} in ('active', 'in_progress')`),
+      .where(sql`${jobsTable.status} in ('active', 'awarded', 'accepted', 'in_progress')`),
     db
       .select({ count: sql<number>`count(*)` })
       .from(jobsTable)

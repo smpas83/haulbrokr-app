@@ -7,7 +7,7 @@ import {
   Receipt, Wallet, ArrowRight, UserCheck, AlertTriangle, ShieldCheck, ListChecks, AlertCircle, CreditCard
 } from "lucide-react";
 import { 
-  useGetJob, useUpdateJob, useGetMyProfile, getGetJobQueryKey,
+  useGetJob, useUpdateJob, useAcceptJob, useDeclineJob, useGetMyProfile, getGetJobQueryKey,
   useChargeJob, useReleaseJobPayment, useConfirmJobPayment, getJobPaymentConfirmation,
   useCreateJobCheckoutSession, useVerifyJobCheckout,
   useGetPaymentMethod, useSetPaymentMethod, useUpdatePaymentMethod, getGetPaymentMethodQueryKey,
@@ -858,9 +858,41 @@ export default function JobDetailPage() {
   });
 
   const updateJob = useUpdateJob();
+  const acceptJob = useAcceptJob();
+  const declineJob = useDeclineJob();
 
   const isCustomer = profile?.role === "customer";
   const isProvider = profile?.role === "provider";
+
+  const refreshJob = () => queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
+
+  const handleAcceptAward = () => {
+    acceptJob.mutate({ id }, {
+      onSuccess: () => {
+        toast({ title: "Job accepted. You can start when ready." });
+        refreshJob();
+      },
+      onError: (err) => toast({
+        title: "Failed to accept job",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      }),
+    });
+  };
+
+  const handleDeclineAward = () => {
+    declineJob.mutate({ id }, {
+      onSuccess: () => {
+        toast({ title: "Job declined." });
+        refreshJob();
+      },
+      onError: (err) => toast({
+        title: "Failed to decline job",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      }),
+    });
+  };
 
   const handleUpdateStatus = (newStatus: "in_progress" | "completed") => {
     updateJob.mutate(
@@ -868,7 +900,7 @@ export default function JobDetailPage() {
       {
         onSuccess: () => {
           toast({ title: `Job marked as ${newStatus.replace('_', ' ')}` });
-          queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
+          refreshJob();
         },
         onError: (err) => {
           toast({ 
@@ -883,7 +915,11 @@ export default function JobDetailPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "awarded": return "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800";
+      case "accepted":
       case "active": return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
+      case "declined":
+      case "cancelled": return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800";
       case "in_progress": return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800";
       case "completed": return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
       default: return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
@@ -946,7 +982,27 @@ export default function JobDetailPage() {
               <Navigation className="h-4 w-4" /> Dispatch Controls
             </div>
             <div className="flex gap-3">
-              {job.status === "active" && (
+              {job.status === "awarded" && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={handleDeclineAward}
+                    disabled={declineJob.isPending || acceptJob.isPending}
+                    className="font-bold rounded-none border-2"
+                  >
+                    Decline Award
+                  </Button>
+                  <Button
+                    onClick={handleAcceptAward}
+                    disabled={declineJob.isPending || acceptJob.isPending}
+                    className="font-bold rounded-none bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {acceptJob.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                    Accept Job
+                  </Button>
+                </>
+              )}
+              {(job.status === "accepted" || job.status === "active") && (
                 <Button 
                   onClick={() => handleUpdateStatus("in_progress")}
                   disabled={updateJob.isPending}
@@ -1078,7 +1134,7 @@ export default function JobDetailPage() {
           </div>
         </div>
 
-        {isProvider && (job.status === "active" || job.status === "in_progress") && (
+        {isProvider && (job.status === "accepted" || job.status === "active" || job.status === "in_progress") && (
           <AssignDriverPanel job={job} />
         )}
 

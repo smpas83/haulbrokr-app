@@ -1718,6 +1718,146 @@ export const useUpdateJob = <TError = ErrorType<unknown>,
       return useMutation(getUpdateJobMutationOptions(options));
     }
 
+export const getAcceptJobUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/accept`
+}
+
+/**
+ * @summary Provider accepts an awarded job
+ */
+export const acceptJob = async (id: number, options?: RequestInit): Promise<Job> => {
+
+  return customFetch<Job>(getAcceptJobUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getAcceptJobMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptJob>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acceptJob>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['acceptJob'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptJob>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  acceptJob(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcceptJobMutationResult = NonNullable<Awaited<ReturnType<typeof acceptJob>>>
+
+    export type AcceptJobMutationError = ErrorType<void>
+
+    /**
+ * @summary Provider accepts an awarded job
+ */
+export const useAcceptJob = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptJob>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof acceptJob>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getAcceptJobMutationOptions(options));
+    }
+
+export const getDeclineJobUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/decline`
+}
+
+/**
+ * @summary Provider declines an awarded job
+ */
+export const declineJob = async (id: number, options?: RequestInit): Promise<Job> => {
+
+  return customFetch<Job>(getDeclineJobUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getDeclineJobMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof declineJob>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof declineJob>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['declineJob'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof declineJob>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  declineJob(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeclineJobMutationResult = NonNullable<Awaited<ReturnType<typeof declineJob>>>
+
+    export type DeclineJobMutationError = ErrorType<void>
+
+    /**
+ * @summary Provider declines an awarded job
+ */
+export const useDeclineJob = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof declineJob>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof declineJob>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeclineJobMutationOptions(options));
+    }
+
 export const getGetJobRatingUrl = (id: number,) => {
 
 

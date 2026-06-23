@@ -11,7 +11,9 @@ export type JobRequestStatus = typeof JobRequestStatus[keyof typeof JobRequestSt
 
 export const JobRequestStatus = {
   open: 'open',
+  bid_received: 'bid_received',
   bidding: 'bidding',
+  awarded: 'awarded',
   accepted: 'accepted',
   in_progress: 'in_progress',
   completed: 'completed',

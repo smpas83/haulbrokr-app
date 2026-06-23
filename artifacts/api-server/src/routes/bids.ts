@@ -97,7 +97,7 @@ router.post("/requests/:requestId/bids", requireProfile, async (req, res): Promi
     estimatedHours: parsed.data.estimatedHours != null ? String(parsed.data.estimatedHours) : undefined,
   }).returning();
 
-  await db.update(requestsTable).set({ status: "bidding" }).where(eq(requestsTable.id, pathParams.data.requestId));
+  await db.update(requestsTable).set({ status: "bid_received" }).where(eq(requestsTable.id, pathParams.data.requestId));
 
   await db.insert(activityTable).values({
     profileId: profile.id,
@@ -208,6 +208,68 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
     }
   }
 
+  if (parsed.data.status === "accepted") {
+    if (!["open", "bid_received", "bidding"].includes(request.status)) {
+      res.status(400).json({ error: "Request is not open for awarding" });
+      return;
+    }
+    if (existingBid.status !== "pending") {
+      res.status(400).json({ error: "Bid is not pending" });
+      return;
+    }
+
+    const [provider] = await db.select().from(profilesTable).where(eq(profilesTable.id, existingBid.providerId));
+
+    await db.insert(jobsTable).values({
+      requestId: request.id,
+      bidId: existingBid.id,
+      customerId: request.customerId,
+      providerId: existingBid.providerId,
+      ratePerHour: existingBid.ratePerHour,
+      trucksAssigned: existingBid.trucksOffered,
+      status: "awarded",
+      materialType: request.materialType,
+      pickupAddress: request.pickupAddress,
+      deliveryAddress: request.deliveryAddress,
+      scheduledDate: request.scheduledDate,
+    });
+
+    await db.update(requestsTable).set({ status: "awarded" }).where(eq(requestsTable.id, request.id));
+    await db
+      .update(bidsTable)
+      .set({ status: "rejected" })
+      .where(and(eq(bidsTable.requestId, request.id), eq(bidsTable.status, "pending")));
+    const [bid] = await db
+      .update(bidsTable)
+      .set({ status: "awarded" })
+      .where(eq(bidsTable.id, existingBid.id))
+      .returning();
+
+    if (provider) {
+      await db.insert(activityTable).values({
+        profileId: profile.id,
+        type: "bid_awarded",
+        description: `Awarded job to ${provider.companyName} at $${existingBid.ratePerHour}/hr — awaiting hauler acceptance`,
+        relatedId: existingBid.id,
+      });
+      await db.insert(activityTable).values({
+        profileId: existingBid.providerId,
+        type: "bid_awarded",
+        description: `You were awarded a job at $${existingBid.ratePerHour}/hr — accept or decline to proceed`,
+        relatedId: existingBid.id,
+      });
+    }
+
+    const [providerAfter] = await db.select().from(profilesTable).where(eq(profilesTable.id, bid!.providerId));
+    res.json(UpdateBidResponse.parse({
+      ...bid!,
+      ratePerHour: parseFloat(bid!.ratePerHour),
+      estimatedHours: bid!.estimatedHours ? parseFloat(bid!.estimatedHours) : null,
+      providerCompany: providerAfter?.companyName ?? "",
+    }));
+    return;
+  }
+
   const [bid] = await db
     .update(bidsTable)
     .set(parsed.data)
@@ -217,37 +279,6 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
   if (!bid) {
     res.status(404).json({ error: "Bid not found" });
     return;
-  }
-
-  if (parsed.data.status === "accepted") {
-    const [provider] = await db.select().from(profilesTable).where(eq(profilesTable.id, bid.providerId));
-
-    if (request && provider) {
-      await db.insert(jobsTable).values({
-        requestId: request.id,
-        bidId: bid.id,
-        customerId: request.customerId,
-        providerId: bid.providerId,
-        ratePerHour: bid.ratePerHour,
-        trucksAssigned: bid.trucksOffered,
-        status: "active",
-        materialType: request.materialType,
-        pickupAddress: request.pickupAddress,
-        deliveryAddress: request.deliveryAddress,
-        scheduledDate: request.scheduledDate,
-      });
-
-      await db.update(requestsTable).set({ status: "accepted" }).where(eq(requestsTable.id, request.id));
-      await db.update(bidsTable).set({ status: "rejected" }).where(and(eq(bidsTable.requestId, request.id), eq(bidsTable.id, bid.id)));
-      await db.update(bidsTable).set({ status: "accepted" }).where(eq(bidsTable.id, bid.id));
-
-      await db.insert(activityTable).values({
-        profileId: profile.id,
-        type: "bid_accepted",
-        description: `Accepted bid from ${provider.companyName} at $${bid.ratePerHour}/hr`,
-        relatedId: bid.id,
-      });
-    }
   }
 
   const [provider] = await db.select().from(profilesTable).where(eq(profilesTable.id, bid.providerId));

@@ -5,6 +5,7 @@ import {
   jobsTable,
   profilesTable,
   requestsTable,
+  bidsTable,
   activityTable,
   paymentMethodsTable,
   creditApplicationsTable,
@@ -46,6 +47,10 @@ import {
   ApproveJobCompletionResponse,
   FlagJobCompletionBody,
   FlagJobCompletionResponse,
+  AcceptJobParams,
+  AcceptJobResponse,
+  DeclineJobParams,
+  DeclineJobResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -341,6 +346,120 @@ router.get("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   res.json(GetJobResponse.parse(serializeJob(job, customerCompany, providerCompany)));
 });
 
+router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const params = AcceptJobParams.safeParse({ id: parseInt(raw, 10) });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const job = await loadJobIfMember(params.data.id, profile);
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  if (profile.role === "provider" && job.providerId !== profile.id) {
+    res.status(403).json({ error: "Only the awarded hauler may accept this job" });
+    return;
+  }
+  if (job.status !== "awarded") {
+    res.status(400).json({ error: "Job is not awaiting hauler acceptance" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(jobsTable)
+    .set({ status: "accepted" })
+    .where(and(eq(jobsTable.id, job.id), eq(jobsTable.providerId, profile.id)))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  await db.update(requestsTable).set({ status: "accepted" }).where(eq(requestsTable.id, job.requestId));
+  await db.update(bidsTable).set({ status: "accepted" }).where(eq(bidsTable.id, job.bidId));
+
+  await db.insert(activityTable).values({
+    profileId: profile.id,
+    type: "job_accepted",
+    description: `Accepted awarded job #${job.id} — ${job.materialType} delivery`,
+    relatedId: job.id,
+  });
+  await db.insert(activityTable).values({
+    profileId: job.customerId,
+    type: "job_accepted",
+    description: `Hauler accepted job #${job.id} — ${job.materialType} delivery`,
+    relatedId: job.id,
+  });
+
+  const { customerCompany, providerCompany } = await companiesFor(updated);
+  res.json(AcceptJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+});
+
+router.post("/jobs/:id/decline", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const params = DeclineJobParams.safeParse({ id: parseInt(raw, 10) });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const job = await loadJobIfMember(params.data.id, profile);
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  if (profile.role === "provider" && job.providerId !== profile.id) {
+    res.status(403).json({ error: "Only the awarded hauler may decline this job" });
+    return;
+  }
+  if (job.status !== "awarded") {
+    res.status(400).json({ error: "Job is not awaiting hauler acceptance" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(jobsTable)
+    .set({ status: "declined" })
+    .where(and(eq(jobsTable.id, job.id), eq(jobsTable.providerId, profile.id)))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  await db.update(bidsTable).set({ status: "rejected" }).where(eq(bidsTable.id, job.bidId));
+
+  const pendingBids = await db
+    .select({ id: bidsTable.id })
+    .from(bidsTable)
+    .where(and(eq(bidsTable.requestId, job.requestId), eq(bidsTable.status, "pending")));
+  const nextRequestStatus = pendingBids.length > 0 ? "bid_received" : "open";
+  await db.update(requestsTable).set({ status: nextRequestStatus }).where(eq(requestsTable.id, job.requestId));
+
+  await db.insert(activityTable).values({
+    profileId: profile.id,
+    type: "job_declined",
+    description: `Declined awarded job #${job.id} — ${job.materialType} delivery`,
+    relatedId: job.id,
+  });
+  await db.insert(activityTable).values({
+    profileId: job.customerId,
+    type: "job_declined",
+    description: `Hauler declined job #${job.id} — ${job.materialType} delivery`,
+    relatedId: job.id,
+  });
+
+  const { customerCompany, providerCompany } = await companiesFor(updated);
+  res.json(DeclineJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+});
+
 router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -355,6 +474,17 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     return;
   }
 
+  const existingJob = await loadJobIfMember(params.data.id, profile);
+  if (!existingJob) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  if (parsed.data.status === "in_progress" && !["accepted", "active"].includes(existingJob.status)) {
+    res.status(400).json({ error: "Job must be accepted before starting" });
+    return;
+  }
+
   const updates: Record<string, any> = { ...parsed.data };
   if (parsed.data.totalHours !== undefined) updates.totalHours = String(parsed.data.totalHours);
 
@@ -362,19 +492,16 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     updates.startedAt = new Date();
   } else if (parsed.data.status === "completed") {
     updates.completedAt = new Date();
-    const [existingJob] = await db.select().from(jobsTable).where(eq(jobsTable.id, params.data.id));
-    if (existingJob) {
-      const hours = parsed.data.totalHours ?? (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
-      if (hours != null) {
-        const rate = parseFloat(existingJob.ratePerHour);
-        const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_FEE_RATE;
-        const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
-        updates.totalHours = String(hours);
-        updates.totalAmount = String(base);
-        updates.customerTotalAmount = String(gross);
-        updates.platformFeeAmount = String(fee);
-        updates.providerNetAmount = String(base);
-      }
+    const hours = parsed.data.totalHours ?? (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
+    if (hours != null) {
+      const rate = parseFloat(existingJob.ratePerHour);
+      const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_FEE_RATE;
+      const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
+      updates.totalHours = String(hours);
+      updates.totalAmount = String(base);
+      updates.customerTotalAmount = String(gross);
+      updates.platformFeeAmount = String(fee);
+      updates.providerNetAmount = String(base);
     }
   }
 

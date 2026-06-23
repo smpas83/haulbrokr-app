@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
 import { requestsTable } from "./requests";
 
-export const bidStatusEnum = pgEnum("bid_status", ["pending", "accepted", "rejected", "withdrawn"]);
+export const bidStatusEnum = pgEnum("bid_status", ["pending", "awarded", "accepted", "rejected", "withdrawn"]);
 
 export const bidsTable = pgTable("bids", {
   id: serial("id").primaryKey(),

@@ -12,7 +12,10 @@ export type ActivityItemType = typeof ActivityItemType[keyof typeof ActivityItem
 export const ActivityItemType = {
   request_posted: 'request_posted',
   bid_placed: 'bid_placed',
+  bid_awarded: 'bid_awarded',
   bid_accepted: 'bid_accepted',
+  job_accepted: 'job_accepted',
+  job_declined: 'job_declined',
   job_started: 'job_started',
   job_completed: 'job_completed',
   payment_failed: 'payment_failed',

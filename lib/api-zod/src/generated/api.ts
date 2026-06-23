@@ -269,7 +269,7 @@ export const DeleteTruckParams = zod.object({
  * @summary List job requests
  */
 export const ListRequestsQueryParams = zod.object({
-  "status": zod.enum(['open', 'bidding', 'accepted', 'in_progress', 'completed', 'cancelled']).optional(),
+  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']).optional(),
   "mine": zod.coerce.boolean().optional()
 })
 
@@ -282,7 +282,7 @@ export const ListRequestsResponseItem = zod.object({
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
   "scheduledDate": zod.coerce.date(),
-  "status": zod.enum(['open', 'bidding', 'accepted', 'in_progress', 'completed', 'cancelled']),
+  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']),
   "trucksNeeded": zod.number(),
   "budgetPerHour": zod.number().nullish(),
   "notes": zod.string().nullish(),
@@ -323,7 +323,7 @@ export const GetRequestResponse = zod.object({
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
   "scheduledDate": zod.coerce.date(),
-  "status": zod.enum(['open', 'bidding', 'accepted', 'in_progress', 'completed', 'cancelled']),
+  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']),
   "trucksNeeded": zod.number(),
   "budgetPerHour": zod.number().nullish(),
   "notes": zod.string().nullish(),
@@ -340,7 +340,7 @@ export const UpdateRequestParams = zod.object({
 })
 
 export const UpdateRequestBody = zod.object({
-  "status": zod.enum(['open', 'bidding', 'accepted', 'in_progress', 'completed', 'cancelled']).optional(),
+  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']).optional(),
   "materialType": zod.enum(['dirt', 'gravel', 'sand', 'concrete', 'asphalt', 'demolition', 'topsoil', 'fill', 'other']).optional(),
   "quantityTons": zod.number().optional(),
   "pickupAddress": zod.string().optional(),
@@ -360,7 +360,7 @@ export const UpdateRequestResponse = zod.object({
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
   "scheduledDate": zod.coerce.date(),
-  "status": zod.enum(['open', 'bidding', 'accepted', 'in_progress', 'completed', 'cancelled']),
+  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']),
   "trucksNeeded": zod.number(),
   "budgetPerHour": zod.number().nullish(),
   "notes": zod.string().nullish(),
@@ -393,7 +393,7 @@ export const ListBidsResponseItem = zod.object({
   "trucksOffered": zod.number(),
   "estimatedHours": zod.number().nullish(),
   "message": zod.string().nullish(),
-  "status": zod.enum(['pending', 'accepted', 'rejected', 'withdrawn']),
+  "status": zod.enum(['pending', 'awarded', 'accepted', 'rejected', 'withdrawn']),
   "createdAt": zod.coerce.date()
 })
 export const ListBidsResponse = zod.array(ListBidsResponseItem)
@@ -430,7 +430,7 @@ export const GetBidResponse = zod.object({
   "trucksOffered": zod.number(),
   "estimatedHours": zod.number().nullish(),
   "message": zod.string().nullish(),
-  "status": zod.enum(['pending', 'accepted', 'rejected', 'withdrawn']),
+  "status": zod.enum(['pending', 'awarded', 'accepted', 'rejected', 'withdrawn']),
   "createdAt": zod.coerce.date()
 })
 
@@ -455,7 +455,7 @@ export const UpdateBidResponse = zod.object({
   "trucksOffered": zod.number(),
   "estimatedHours": zod.number().nullish(),
   "message": zod.string().nullish(),
-  "status": zod.enum(['pending', 'accepted', 'rejected', 'withdrawn']),
+  "status": zod.enum(['pending', 'awarded', 'accepted', 'rejected', 'withdrawn']),
   "createdAt": zod.coerce.date()
 })
 
@@ -464,7 +464,7 @@ export const UpdateBidResponse = zod.object({
  * @summary List active and completed jobs for the current user
  */
 export const ListJobsQueryParams = zod.object({
-  "status": zod.enum(['active', 'in_progress', 'completed']).optional()
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']).optional()
 })
 
 export const ListJobsResponseItem = zod.object({
@@ -477,7 +477,7 @@ export const ListJobsResponseItem = zod.object({
   "providerCompany": zod.string(),
   "ratePerHour": zod.number(),
   "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'in_progress', 'completed']),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
   "materialType": zod.string(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
@@ -523,7 +523,7 @@ export const GetJobResponse = zod.object({
   "providerCompany": zod.string(),
   "ratePerHour": zod.number(),
   "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'in_progress', 'completed']),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
   "materialType": zod.string(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
@@ -574,7 +574,97 @@ export const UpdateJobResponse = zod.object({
   "providerCompany": zod.string(),
   "ratePerHour": zod.number(),
   "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'in_progress', 'completed']),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
+  "materialType": zod.string(),
+  "pickupAddress": zod.string(),
+  "deliveryAddress": zod.string(),
+  "scheduledDate": zod.coerce.date(),
+  "startedAt": zod.coerce.date().nullish(),
+  "completedAt": zod.coerce.date().nullish(),
+  "totalHours": zod.number().nullish(),
+  "totalAmount": zod.number().nullish(),
+  "platformFeeRate": zod.number().nullish(),
+  "platformFeeAmount": zod.number().nullish(),
+  "customerTotalAmount": zod.number().nullish(),
+  "providerNetAmount": zod.number().nullish(),
+  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentDueDate": zod.coerce.date().nullish(),
+  "invoicedAt": zod.coerce.date().nullish(),
+  "paidAt": zod.coerce.date().nullish(),
+  "releasedAt": zod.coerce.date().nullish(),
+  "projectId": zod.number().nullish(),
+  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
+  "approvedByProfileId": zod.number().nullish(),
+  "completionApprovedAt": zod.coerce.date().nullish(),
+  "flagReason": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Provider accepts an awarded job
+ */
+export const AcceptJobParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AcceptJobResponse = zod.object({
+  "id": zod.number(),
+  "requestId": zod.number(),
+  "bidId": zod.number(),
+  "customerId": zod.number(),
+  "customerCompany": zod.string(),
+  "providerId": zod.number(),
+  "providerCompany": zod.string(),
+  "ratePerHour": zod.number(),
+  "trucksAssigned": zod.number(),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
+  "materialType": zod.string(),
+  "pickupAddress": zod.string(),
+  "deliveryAddress": zod.string(),
+  "scheduledDate": zod.coerce.date(),
+  "startedAt": zod.coerce.date().nullish(),
+  "completedAt": zod.coerce.date().nullish(),
+  "totalHours": zod.number().nullish(),
+  "totalAmount": zod.number().nullish(),
+  "platformFeeRate": zod.number().nullish(),
+  "platformFeeAmount": zod.number().nullish(),
+  "customerTotalAmount": zod.number().nullish(),
+  "providerNetAmount": zod.number().nullish(),
+  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentDueDate": zod.coerce.date().nullish(),
+  "invoicedAt": zod.coerce.date().nullish(),
+  "paidAt": zod.coerce.date().nullish(),
+  "releasedAt": zod.coerce.date().nullish(),
+  "projectId": zod.number().nullish(),
+  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
+  "approvedByProfileId": zod.number().nullish(),
+  "completionApprovedAt": zod.coerce.date().nullish(),
+  "flagReason": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Provider declines an awarded job
+ */
+export const DeclineJobParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeclineJobResponse = zod.object({
+  "id": zod.number(),
+  "requestId": zod.number(),
+  "bidId": zod.number(),
+  "customerId": zod.number(),
+  "customerCompany": zod.string(),
+  "providerId": zod.number(),
+  "providerCompany": zod.string(),
+  "ratePerHour": zod.number(),
+  "trucksAssigned": zod.number(),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
   "materialType": zod.string(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
@@ -687,7 +777,7 @@ export const GetDashboardStatsResponse = zod.object({
  */
 export const GetDashboardActivityResponseItem = zod.object({
   "id": zod.number(),
-  "type": zod.enum(['request_posted', 'bid_placed', 'bid_accepted', 'job_started', 'job_completed', 'payment_failed', 'payment_requires_action', 'application_approved', 'application_rejected', 'payout_delayed', 'payout_stuck_alert', 'bin_confirmed', 'bin_delivered', 'bin_picked_up', 'bin_cancelled']),
+  "type": zod.enum(['request_posted', 'bid_placed', 'bid_awarded', 'bid_accepted', 'job_accepted', 'job_declined', 'job_started', 'job_completed', 'payment_failed', 'payment_requires_action', 'application_approved', 'application_rejected', 'payout_delayed', 'payout_stuck_alert', 'bin_confirmed', 'bin_delivered', 'bin_picked_up', 'bin_cancelled']),
   "description": zod.string(),
   "relatedId": zod.number().nullish(),
   "relatedBinOrderId": zod.string().nullish(),
@@ -1746,7 +1836,7 @@ export const ChargeJobResponse = zod.object({
   "providerCompany": zod.string(),
   "ratePerHour": zod.number(),
   "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'in_progress', 'completed']),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
   "materialType": zod.string(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
@@ -1791,7 +1881,7 @@ export const ReleaseJobPaymentResponse = zod.object({
   "providerCompany": zod.string(),
   "ratePerHour": zod.number(),
   "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'in_progress', 'completed']),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
   "materialType": zod.string(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
@@ -1850,7 +1940,7 @@ export const ConfirmJobPaymentResponse = zod.object({
   "providerCompany": zod.string(),
   "ratePerHour": zod.number(),
   "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'in_progress', 'completed']),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
   "materialType": zod.string(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
@@ -1915,7 +2005,7 @@ export const VerifyJobCheckoutResponse = zod.object({
   "providerCompany": zod.string(),
   "ratePerHour": zod.number(),
   "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'in_progress', 'completed']),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
   "materialType": zod.string(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
@@ -2055,7 +2145,7 @@ export const ApproveJobCompletionResponse = zod.object({
   "providerCompany": zod.string(),
   "ratePerHour": zod.number(),
   "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'in_progress', 'completed']),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
   "materialType": zod.string(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
@@ -2104,7 +2194,7 @@ export const FlagJobCompletionResponse = zod.object({
   "providerCompany": zod.string(),
   "ratePerHour": zod.number(),
   "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'in_progress', 'completed']),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
   "materialType": zod.string(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),

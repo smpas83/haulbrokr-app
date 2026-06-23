@@ -16,7 +16,12 @@ router.get("/dashboard/stats", requireProfile, async (req, res): Promise<void> =
     const [openResult] = await db.select({ count: sql<number>`count(*)` }).from(requestsTable)
       .where(and(eq(requestsTable.customerId, profile.id), eq(requestsTable.status, "open")));
     const [activeResult] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable)
-      .where(and(eq(jobsTable.customerId, profile.id), or(eq(jobsTable.status, "active"), eq(jobsTable.status, "in_progress"))));
+      .where(and(eq(jobsTable.customerId, profile.id), or(
+        eq(jobsTable.status, "active"),
+        eq(jobsTable.status, "awarded"),
+        eq(jobsTable.status, "accepted"),
+        eq(jobsTable.status, "in_progress"),
+      )));
     const [completedResult] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable)
       .where(and(eq(jobsTable.customerId, profile.id), eq(jobsTable.status, "completed")));
     const [spentResult] = await db.select({ total: sql<number>`coalesce(sum(total_amount), 0)` }).from(jobsTable)
@@ -37,7 +42,12 @@ router.get("/dashboard/stats", requireProfile, async (req, res): Promise<void> =
     const [totalBidsResult] = await db.select({ count: sql<number>`count(*)` }).from(bidsTable)
       .where(eq(bidsTable.providerId, profile.id));
     const [activeResult] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable)
-      .where(and(eq(jobsTable.providerId, profile.id), or(eq(jobsTable.status, "active"), eq(jobsTable.status, "in_progress"))));
+      .where(and(eq(jobsTable.providerId, profile.id), or(
+        eq(jobsTable.status, "active"),
+        eq(jobsTable.status, "awarded"),
+        eq(jobsTable.status, "accepted"),
+        eq(jobsTable.status, "in_progress"),
+      )));
     const [completedResult] = await db.select({ count: sql<number>`count(*)` }).from(jobsTable)
       .where(and(eq(jobsTable.providerId, profile.id), eq(jobsTable.status, "completed")));
     const [revenueResult] = await db.select({ total: sql<number>`coalesce(sum(total_amount), 0)` }).from(jobsTable)

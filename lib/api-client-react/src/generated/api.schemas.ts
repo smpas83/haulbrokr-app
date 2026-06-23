@@ -332,7 +332,9 @@ export type JobRequestStatus = typeof JobRequestStatus[keyof typeof JobRequestSt
 
 export const JobRequestStatus = {
   open: 'open',
+  bid_received: 'bid_received',
   bidding: 'bidding',
+  awarded: 'awarded',
   accepted: 'accepted',
   in_progress: 'in_progress',
   completed: 'completed',
@@ -389,7 +391,9 @@ export type JobRequestUpdateStatus = typeof JobRequestUpdateStatus[keyof typeof 
 
 export const JobRequestUpdateStatus = {
   open: 'open',
+  bid_received: 'bid_received',
   bidding: 'bidding',
+  awarded: 'awarded',
   accepted: 'accepted',
   in_progress: 'in_progress',
   completed: 'completed',
@@ -428,6 +432,7 @@ export type BidStatus = typeof BidStatus[keyof typeof BidStatus];
 
 export const BidStatus = {
   pending: 'pending',
+  awarded: 'awarded',
   accepted: 'accepted',
   rejected: 'rejected',
   withdrawn: 'withdrawn',
@@ -473,6 +478,10 @@ export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
 
 export const JobStatus = {
   active: 'active',
+  awarded: 'awarded',
+  accepted: 'accepted',
+  declined: 'declined',
+  cancelled: 'cancelled',
   in_progress: 'in_progress',
   completed: 'completed',
 } as const;
@@ -586,7 +595,10 @@ export type ActivityItemType = typeof ActivityItemType[keyof typeof ActivityItem
 export const ActivityItemType = {
   request_posted: 'request_posted',
   bid_placed: 'bid_placed',
+  bid_awarded: 'bid_awarded',
   bid_accepted: 'bid_accepted',
+  job_accepted: 'job_accepted',
+  job_declined: 'job_declined',
   job_started: 'job_started',
   job_completed: 'job_completed',
   payment_failed: 'payment_failed',
@@ -1778,7 +1790,9 @@ export type ListRequestsStatus = typeof ListRequestsStatus[keyof typeof ListRequ
 
 export const ListRequestsStatus = {
   open: 'open',
+  bid_received: 'bid_received',
   bidding: 'bidding',
+  awarded: 'awarded',
   accepted: 'accepted',
   in_progress: 'in_progress',
   completed: 'completed',
@@ -1794,6 +1808,10 @@ export type ListJobsStatus = typeof ListJobsStatus[keyof typeof ListJobsStatus];
 
 export const ListJobsStatus = {
   active: 'active',
+  awarded: 'awarded',
+  accepted: 'accepted',
+  declined: 'declined',
+  cancelled: 'cancelled',
   in_progress: 'in_progress',
   completed: 'completed',
 } as const;

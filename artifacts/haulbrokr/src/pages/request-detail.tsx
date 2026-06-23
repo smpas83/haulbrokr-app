@@ -57,7 +57,8 @@ export default function RequestDetailPage() {
   
   // A provider has already bid if they have a bid in the list
   const existingBid = bids?.find(b => b.providerId === profile?.id);
-  const canBid = isProvider && request?.status === "open" && !existingBid;
+  const requestOpenForBids = request?.status === "open" || request?.status === "bid_received" || request?.status === "bidding";
+  const canBid = isProvider && requestOpenForBids && !existingBid;
 
   const form = useForm<z.infer<typeof bidSchema>>({
     resolver: zodResolver(bidSchema),
@@ -98,24 +99,23 @@ export default function RequestDetailPage() {
     );
   };
 
-  const handleAcceptBid = (bidId: number) => {
+  const handleAwardBid = (bidId: number) => {
     updateBid.mutate(
       { id: bidId, data: { status: "accepted" } },
       {
         onSuccess: () => {
-          toast({ title: "Bid accepted. Job created." });
+          toast({ title: "Bid awarded. Awaiting hauler acceptance." });
           queryClient.invalidateQueries({ queryKey: getGetRequestQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getListBidsQueryKey(id) });
-          // We could redirect to the job here
         },
         onError: (err) => {
-          toast({ 
-            title: "Failed to accept bid", 
+          toast({
+            title: "Failed to award bid",
             description: err instanceof Error ? err.message : "Unknown error",
-            variant: "destructive"
+            variant: "destructive",
           });
-        }
-      }
+        },
+      },
     );
   };
 
@@ -341,7 +341,7 @@ export default function RequestDetailPage() {
                 Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-none" />)
               ) : bids && bids.length > 0 ? (
                 bids.map((bid) => (
-                  <div key={bid.id} className={`border-2 p-4 bg-card ${bid.status === 'accepted' ? 'border-primary shadow-md' : 'border-border'}`}>
+                  <div key={bid.id} className={`border-2 p-4 bg-card ${bid.status === 'awarded' || bid.status === 'accepted' ? 'border-primary shadow-md' : 'border-border'}`}>
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <p className="font-bold text-lg">{bid.providerCompany}</p>
@@ -350,7 +350,7 @@ export default function RequestDetailPage() {
                       <div className="text-right">
                         <p className="font-black text-xl">${bid.ratePerHour}<span className="text-sm text-muted-foreground font-medium">/hr</span></p>
                         <Badge variant="outline" className={`rounded-none mt-1 uppercase text-[10px] font-bold ${
-                          bid.status === 'accepted' ? 'bg-primary/20 text-primary border-primary' : 
+                          bid.status === 'awarded' || bid.status === 'accepted' ? 'bg-primary/20 text-primary border-primary' : 
                           bid.status === 'rejected' ? 'bg-destructive/10 text-destructive border-destructive/20' : 
                           'bg-secondary text-secondary-foreground border-secondary-foreground/20'
                         }`}>
@@ -370,7 +370,7 @@ export default function RequestDetailPage() {
                       <p className="text-sm text-muted-foreground italic mb-4">"{bid.message}"</p>
                     )}
                     
-                    {isCustomer && request.status === "open" && bid.status === "pending" && (
+                    {isCustomer && requestOpenForBids && bid.status === "pending" && (
                       <div className="flex gap-2 pt-3 border-t border-border">
                         <Button 
                           size="sm" 
@@ -384,11 +384,11 @@ export default function RequestDetailPage() {
                         <Button 
                           size="sm" 
                           className="flex-1 rounded-none font-bold"
-                          onClick={() => handleAcceptBid(bid.id)}
+                          onClick={() => handleAwardBid(bid.id)}
                           disabled={updateBid.isPending}
-                          data-testid={`btn-accept-bid-${bid.id}`}
+                          data-testid={`btn-award-bid-${bid.id}`}
                         >
-                          Accept Bid
+                          Award Bid
                         </Button>
                       </div>
                     )}

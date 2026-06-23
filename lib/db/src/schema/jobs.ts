@@ -6,7 +6,15 @@ import { requestsTable } from "./requests";
 import { bidsTable } from "./bids";
 import { projectsTable } from "./projects";
 
-export const jobStatusEnum = pgEnum("job_status", ["active", "in_progress", "completed"]);
+export const jobStatusEnum = pgEnum("job_status", [
+  "active",
+  "awarded",
+  "accepted",
+  "declined",
+  "cancelled",
+  "in_progress",
+  "completed",
+]);
 
 export const jobCompletionApprovalEnum = pgEnum("job_completion_approval", ["pending", "approved", "flagged"]);
 

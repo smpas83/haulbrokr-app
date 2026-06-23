@@ -204,7 +204,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [open, bidding, accepted, in_progress, completed, cancelled]
+            enum: [open, bid_received, bidding, awarded, accepted, in_progress, completed, cancelled]
         - name: mine
           in: query
           schema:
@@ -393,7 +393,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [active, in_progress, completed]
+            enum: [active, awarded, accepted, declined, cancelled, in_progress, completed]
       responses:
         "200":
           description: List of jobs
@@ -447,6 +447,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Job"
+
+  /jobs/{id}/accept:
+    post:
+      operationId: acceptJob
+      tags: [jobs]
+      summary: Provider accepts an awarded job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job accepted by hauler
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Job is not awaiting acceptance
+        "403":
+          description: Only the awarded provider may accept
+        "404":
+          description: Job not found
+
+  /jobs/{id}/decline:
+    post:
+      operationId: declineJob
+      tags: [jobs]
+      summary: Provider declines an awarded job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job declined by hauler
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "400":
+          description: Job is not awaiting acceptance
+        "403":
+          description: Only the awarded provider may decline
+        "404":
+          description: Job not found
 
   # ── Ratings ───────────────────────────────────────────────────────────────────
   /jobs/{id}/rating:
@@ -2515,7 +2565,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [open, bidding, accepted, in_progress, completed, cancelled]
+          enum: [open, bid_received, bidding, awarded, accepted, in_progress, completed, cancelled]
         trucksNeeded:
           type: integer
         budgetPerHour:
@@ -2556,7 +2606,7 @@ components:
       properties:
         status:
           type: string
-          enum: [open, bidding, accepted, in_progress, completed, cancelled]
+          enum: [open, bid_received, bidding, awarded, accepted, in_progress, completed, cancelled]
         materialType:
           type: string
           enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
@@ -2599,7 +2649,7 @@ components:
           type: ["string", "null"]
         status:
           type: string
-          enum: [pending, accepted, rejected, withdrawn]
+          enum: [pending, awarded, accepted, rejected, withdrawn]
         createdAt:
           type: string
           format: date-time
@@ -2650,7 +2700,7 @@ components:
           type: integer
         status:
           type: string
-          enum: [active, in_progress, completed]
+          enum: [active, awarded, accepted, declined, cancelled, in_progress, completed]
         materialType:
           type: string
         pickupAddress:
@@ -2751,7 +2801,7 @@ components:
           type: integer
         type:
           type: string
-          enum: [request_posted, bid_placed, bid_accepted, job_started, job_completed, payment_failed, payment_requires_action, application_approved, application_rejected, payout_delayed, payout_stuck_alert, bin_confirmed, bin_delivered, bin_picked_up, bin_cancelled]
+          enum: [request_posted, bid_placed, bid_awarded, bid_accepted, job_accepted, job_declined, job_started, job_completed, payment_failed, payment_requires_action, application_approved, application_rejected, payout_delayed, payout_stuck_alert, bin_confirmed, bin_delivered, bin_picked_up, bin_cancelled]
         description:
           type: string
         relatedId:

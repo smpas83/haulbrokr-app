@@ -11,6 +11,10 @@ export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
 
 export const JobStatus = {
   active: 'active',
+  awarded: 'awarded',
+  accepted: 'accepted',
+  declined: 'declined',
+  cancelled: 'cancelled',
   in_progress: 'in_progress',
   completed: 'completed',
 } as const;

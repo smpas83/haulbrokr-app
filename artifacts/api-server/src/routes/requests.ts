@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, or, sql } from "drizzle-orm";
 import { db, requestsTable, profilesTable, bidsTable, activityTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
@@ -36,7 +36,11 @@ router.get("/requests", requireProfile, async (req, res): Promise<void> => {
     if (params.success && params.data.status) {
       conditions.push(eq(requestsTable.status, params.data.status as any));
     } else {
-      conditions.push(eq(requestsTable.status, "open"));
+      conditions.push(or(
+        eq(requestsTable.status, "open"),
+        eq(requestsTable.status, "bid_received"),
+        eq(requestsTable.status, "bidding"),
+      )!);
     }
     rows = await db.select().from(requestsTable).where(and(...conditions)).orderBy(sql`${requestsTable.createdAt} desc`);
   }

@@ -11,6 +11,7 @@ export type BidStatus = typeof BidStatus[keyof typeof BidStatus];
 
 export const BidStatus = {
   pending: 'pending',
+  awarded: 'awarded',
   accepted: 'accepted',
   rejected: 'rejected',
   withdrawn: 'withdrawn',

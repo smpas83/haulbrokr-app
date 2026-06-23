@@ -5,7 +5,16 @@ import { profilesTable } from "./profiles";
 import { projectsTable } from "./projects";
 
 export const materialTypeEnum = pgEnum("material_type", ["dirt", "gravel", "sand", "concrete", "asphalt", "demolition", "topsoil", "fill", "other"]);
-export const requestStatusEnum = pgEnum("request_status", ["open", "bidding", "accepted", "in_progress", "completed", "cancelled"]);
+export const requestStatusEnum = pgEnum("request_status", [
+  "open",
+  "bid_received",
+  "bidding",
+  "awarded",
+  "accepted",
+  "in_progress",
+  "completed",
+  "cancelled",
+]);
 
 export const requestsTable = pgTable("requests", {
   id: serial("id").primaryKey(),
