@@ -8,12 +8,15 @@ import {
   type Job,
   type Profile,
 } from "@workspace/db";
-import { CUSTOMER_SIDE } from "./access";
+import { CUSTOMER_SIDE, DRIVER_SIDE } from "./access";
 
 export type JobInvoiceData = {
   invoiceNumber: string;
-  issueDate: string;
+  invoiceDate: string;
   dueDate: string;
+  paymentStatus: string;
+  customerName: string;
+  haulingCompanyName: string;
   customer: {
     companyName: string;
     contactName: string | null;
@@ -27,6 +30,7 @@ export type JobInvoiceData = {
     id: number;
     materialType: string;
     truckType: string;
+    quantityTons: string | null;
     quantityLabel: string;
     pickupAddress: string;
     deliveryAddress: string;
@@ -41,6 +45,23 @@ export type JobInvoiceData = {
   customerTotalAmount: number;
   workAmount: number;
 };
+
+/** Completed jobs and net-terms invoiced jobs may download a PDF invoice. */
+export function jobIsInvoiceEligible(job: Pick<Job, "status" | "paymentStatus">): boolean {
+  return job.status === "completed" || job.paymentStatus === "invoiced";
+}
+
+export function formatPaymentStatusLabel(status: Job["paymentStatus"]): string {
+  const labels: Record<Job["paymentStatus"], string> = {
+    unpaid: "Unpaid",
+    invoiced: "Invoiced",
+    paid: "Paid",
+    released: "Released",
+    failed: "Failed",
+    requires_action: "Requires action",
+  };
+  return labels[status] ?? status;
+}
 
 export function formatInvoiceNumber(jobId: number, referenceDate: Date): string {
   return `INV-${referenceDate.getFullYear()}-${String(jobId).padStart(4, "0")}`;
@@ -111,6 +132,8 @@ function formatAddress(profile: Profile | undefined): string | null {
 export async function canDownloadJobInvoice(job: Job, profile: Profile): Promise<boolean> {
   if (profile.staffRole) return true;
   if (job.customerId === profile.id) return true;
+  if (job.providerId === profile.id) return true;
+
   if (profile.organizationId && CUSTOMER_SIDE.has(profile.role)) {
     const [customer] = await db
       .select()
@@ -118,6 +141,15 @@ export async function canDownloadJobInvoice(job: Job, profile: Profile): Promise
       .where(eq(profilesTable.id, job.customerId));
     if (customer?.organizationId === profile.organizationId) return true;
   }
+
+  if (profile.organizationId && DRIVER_SIDE.has(profile.role)) {
+    const [provider] = await db
+      .select()
+      .from(profilesTable)
+      .where(eq(profilesTable.id, job.providerId));
+    if (provider?.organizationId === profile.organizationId) return true;
+  }
+
   return false;
 }
 
@@ -142,8 +174,11 @@ export async function loadJobInvoiceData(jobId: number): Promise<JobInvoiceData 
 
   return {
     invoiceNumber: formatInvoiceNumber(job.id, issueDate),
-    issueDate: formatDate(issueDate),
+    invoiceDate: formatDate(issueDate),
     dueDate: formatDate(resolveDueDate(job)),
+    paymentStatus: formatPaymentStatusLabel(job.paymentStatus),
+    customerName: customer?.companyName ?? "Customer",
+    haulingCompanyName: provider?.companyName ?? "Provider",
     customer: {
       companyName: customer?.companyName ?? "Customer",
       contactName: customer?.contactName ?? null,
@@ -157,6 +192,7 @@ export async function loadJobInvoiceData(jobId: number): Promise<JobInvoiceData 
       id: job.id,
       materialType: formatMaterialLabel(job.materialType),
       truckType: formatTruckTypeLabel(job.truckType),
+      quantityTons: tons != null && Number.isFinite(tons) ? `${tons.toLocaleString("en-US")} tons` : null,
       quantityLabel: quantityParts.length ? quantityParts.join(" · ") : `${job.trucksAssigned} truck(s)`,
       pickupAddress: job.pickupAddress,
       deliveryAddress: job.deliveryAddress,
@@ -227,14 +263,14 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
   y -= 24;
 
   drawLabelValue(page, "INVOICE NUMBER", data.invoiceNumber, margin, y, font, bold);
-  drawLabelValue(page, "ISSUE DATE", data.issueDate, margin + 180, y, font, bold);
+  drawLabelValue(page, "INVOICE DATE", data.invoiceDate, margin + 180, y, font, bold);
   drawLabelValue(page, "DUE DATE", data.dueDate, width - margin - 140, y, font, bold);
   y -= 48;
   drawLine(page, y, margin, width);
   y -= 28;
 
   page.drawText("CUSTOMER", { x: margin, y, size: 9, font: bold, color: rgb(0.45, 0.45, 0.45) });
-  page.drawText("HAULER", { x: width / 2 + 8, y, size: 9, font: bold, color: rgb(0.45, 0.45, 0.45) });
+  page.drawText("HAULING COMPANY", { x: width / 2 + 8, y, size: 9, font: bold, color: rgb(0.45, 0.45, 0.45) });
   y -= 16;
   page.drawText(data.customer.companyName, { x: margin, y, size: 12, font: bold });
   page.drawText(data.hauler.companyName, { x: width / 2 + 8, y, size: 12, font: bold });
@@ -257,13 +293,13 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
   y -= 20;
 
   const detailRows: Array<[string, string]> = [
-    ["Job #", String(data.job.id)],
-    ["Material", data.job.materialType],
+    ["Job ID", String(data.job.id)],
+    ["Material type", data.job.materialType],
     ["Truck type", data.job.truckType],
-    ["Quantity", data.job.quantityLabel],
-    ["Scheduled", data.job.scheduledDate],
-    ["Pickup", data.job.pickupAddress],
-    ["Delivery", data.job.deliveryAddress],
+    ["Quantity / tons", data.job.quantityTons ?? data.job.quantityLabel],
+    ["Pickup address", data.job.pickupAddress],
+    ["Delivery address", data.job.deliveryAddress],
+    ["Payment status", data.paymentStatus],
   ];
   for (const [label, value] of detailRows) {
     page.drawText(label, { x: margin, y, size: 10, font, color: rgb(0.45, 0.45, 0.45) });
@@ -286,10 +322,9 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
 
   const feePct = `${Math.round(data.platformFeeRate * 1000) / 10}%`;
   const summaryRows: Array<[string, string]> = [
-    ["Work value (provider net)", formatUsd(data.workAmount)],
     [`Platform fee (${feePct})`, formatUsd(data.platformFeeAmount)],
-    ["Provider net payout", formatUsd(data.providerNetAmount)],
-    ["Customer total due", formatUsd(data.customerTotalAmount)],
+    ["Provider net amount", formatUsd(data.providerNetAmount)],
+    ["Customer total amount", formatUsd(data.customerTotalAmount)],
   ];
   for (const [label, value] of summaryRows) {
     page.drawText(label, { x: margin, y, size: 10, font });

@@ -15,7 +15,7 @@ import {
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isAdmin } from "../middlewares/requireAdmin";
-import { buildJobInvoicePdf, canDownloadJobInvoice } from "../lib/jobInvoice";
+import { buildJobInvoicePdf, canDownloadJobInvoice, jobIsInvoiceEligible } from "../lib/jobInvoice";
 import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
 import { checkProviderPayoutReadiness } from "../lib/payoutStatus";
 import { settleConfirmedPayout } from "../lib/payoutRetry";
@@ -351,8 +351,8 @@ router.get("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
 });
 
 /**
- * GET /jobs/:id/invoice — download a PDF invoice for a completed job.
- * Available to the customer (or their org) and HaulBrokr staff admins.
+ * GET /jobs/:id/invoice — download a PDF invoice for a completed or invoiced job.
+ * Available to the customer, assigned hauling company, and HaulBrokr staff admins.
  */
 router.get("/jobs/:id/invoice", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
@@ -368,8 +368,8 @@ router.get("/jobs/:id/invoice", requireProfile, async (req, res): Promise<void> 
     res.status(404).json({ error: "Job not found" });
     return;
   }
-  if (job.status !== "completed") {
-    res.status(400).json({ error: "Invoices are available only for completed jobs." });
+  if (!jobIsInvoiceEligible(job)) {
+    res.status(400).json({ error: "Invoices are available only for completed or invoiced jobs." });
     return;
   }
 
