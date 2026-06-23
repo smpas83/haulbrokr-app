@@ -186,10 +186,13 @@ describe("POST /requests", () => {
       .post("/requests")
       .send({
         materialType: "gravel",
+        truckType: "dump_truck",
         quantityTons: 40,
         pickupAddress: "123 Quarry Rd",
         deliveryAddress: "456 Site Ln",
-        scheduledDate: "2026-07-01",
+        scheduledDate: "2026-07-01T12:00:00.000Z",
+        startTime: "07:00",
+        estimatedHours: 6,
         trucksNeeded: 2,
       });
     expect(res.status).toBe(201);

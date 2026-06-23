@@ -34,6 +34,18 @@ const bidSchema = z.object({
   message: z.string().optional(),
 });
 
+function formatTruckType(value: string) {
+  return value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatStartTime(value: string) {
+  const [h, m] = value.split(":").map(Number);
+  if (Number.isNaN(h)) return value;
+  const d = new Date();
+  d.setHours(h, m ?? 0, 0, 0);
+  return format(d, "h:mm a");
+}
+
 export default function RequestDetailPage() {
   const params = useParams();
   const id = Number(params.id);
@@ -171,6 +183,7 @@ export default function RequestDetailPage() {
           </div>
           <p className="text-xl font-medium text-muted-foreground">
             {request.quantityTons} Tons of <span className="capitalize">{request.materialType}</span>
+            {" · "}{formatTruckType(request.truckType)}
           </p>
         </div>
 
@@ -184,8 +197,15 @@ export default function RequestDetailPage() {
             <DialogContent className="sm:max-w-[500px] border-2 rounded-none p-0">
               <div className="bg-primary/10 border-b-2 border-border p-6">
                 <DialogTitle className="text-2xl font-bold">Submit Bid</DialogTitle>
-                <DialogDescription className="text-foreground/80 mt-2 font-medium">
-                  You are bidding on {request.quantityTons} tons of {request.materialType} for {request.customerCompany}.
+                <DialogDescription className="text-foreground/80 mt-2 font-medium space-y-2">
+                  <p>You are bidding on {request.quantityTons} tons of {request.materialType} for {request.customerCompany}.</p>
+                  <div className="text-sm bg-muted/50 border border-border p-3 space-y-1 not-italic">
+                    <p><strong>Truck:</strong> {formatTruckType(request.truckType)} · <strong>Trucks needed:</strong> {request.trucksNeeded}</p>
+                    <p><strong>When:</strong> {format(new Date(request.scheduledDate), "MMM d, yyyy")} at {formatStartTime(request.startTime)} · ~{request.estimatedHours}h</p>
+                    <p><strong>Pickup:</strong> {request.pickupAddress}</p>
+                    <p><strong>Drop-off:</strong> {request.deliveryAddress}</p>
+                    {request.notes && <p><strong>Notes:</strong> {request.notes}</p>}
+                  </div>
                 </DialogDescription>
               </div>
               <div className="p-6">
@@ -276,10 +296,31 @@ export default function RequestDetailPage() {
               </div>
               
               <div>
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Scheduled Date</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Material</p>
+                <p className="font-medium capitalize">{request.materialType}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Truck Type</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-primary" />
+                  {formatTruckType(request.truckType)}
+                </p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Job Date</p>
                 <p className="font-medium flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
                   {format(new Date(request.scheduledDate), "EEEE, MMMM d, yyyy")}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Start Time</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  {formatStartTime(request.startTime)}
                 </p>
               </div>
               
@@ -288,6 +329,14 @@ export default function RequestDetailPage() {
                 <p className="font-medium flex items-center gap-2">
                   <Truck className="h-4 w-4 text-primary" />
                   {request.trucksNeeded} Truck{request.trucksNeeded > 1 ? 's' : ''}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Estimated Hours</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  ~{request.estimatedHours} hours
                 </p>
               </div>
               

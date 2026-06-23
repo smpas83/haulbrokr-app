@@ -5,6 +5,7 @@ import { profilesTable } from "./profiles";
 import { requestsTable } from "./requests";
 import { bidsTable } from "./bids";
 import { projectsTable } from "./projects";
+import { truckTypeEnum } from "./trucks";
 
 export const jobStatusEnum = pgEnum("job_status", [
   "active",
@@ -33,9 +34,12 @@ export const jobsTable = pgTable("jobs", {
   trucksAssigned: integer("trucks_assigned").notNull().default(1),
   status: jobStatusEnum("status").notNull().default("active"),
   materialType: text("material_type").notNull(),
+  truckType: truckTypeEnum("truck_type").notNull().default("dump_truck"),
   pickupAddress: text("pickup_address").notNull(),
   deliveryAddress: text("delivery_address").notNull(),
   scheduledDate: timestamp("scheduled_date", { withTimezone: true }).notNull(),
+  startTime: text("start_time").notNull().default("08:00"),
+  estimatedHours: numeric("estimated_hours", { precision: 8, scale: 2 }).notNull().default("8"),
   startedAt: timestamp("started_at", { withTimezone: true }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   totalHours: numeric("total_hours", { precision: 8, scale: 2 }),

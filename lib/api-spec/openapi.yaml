@@ -2558,7 +2558,7 @@ components:
     # ── Job Request ────────────────────────────────────────────────────────────
     JobRequest:
       type: object
-      required: [id, customerId, customerCompany, materialType, quantityTons, pickupAddress, deliveryAddress, scheduledDate, status, trucksNeeded, createdAt]
+      required: [id, customerId, customerCompany, materialType, truckType, quantityTons, pickupAddress, deliveryAddress, scheduledDate, startTime, estimatedHours, status, trucksNeeded, createdAt]
       properties:
         id:
           type: integer
@@ -2569,6 +2569,9 @@ components:
         materialType:
           type: string
           enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
+        truckType:
+          type: string
+          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
         quantityTons:
           type: number
         pickupAddress:
@@ -2578,6 +2581,11 @@ components:
         scheduledDate:
           type: string
           format: date-time
+        startTime:
+          type: string
+          description: Local start time in HH:mm (24-hour) format
+        estimatedHours:
+          type: number
         status:
           type: string
           enum: [open, bid_received, bidding, awarded, accepted, in_progress, completed, cancelled]
@@ -2595,11 +2603,14 @@ components:
 
     JobRequestInput:
       type: object
-      required: [materialType, quantityTons, pickupAddress, deliveryAddress, scheduledDate, trucksNeeded]
+      required: [materialType, truckType, quantityTons, pickupAddress, deliveryAddress, scheduledDate, startTime, estimatedHours, trucksNeeded]
       properties:
         materialType:
           type: string
           enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
+        truckType:
+          type: string
+          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
         quantityTons:
           type: number
         pickupAddress:
@@ -2609,6 +2620,13 @@ components:
         scheduledDate:
           type: string
           format: date-time
+        startTime:
+          type: string
+          pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+          description: Local start time in HH:mm (24-hour) format
+        estimatedHours:
+          type: number
+          minimum: 0.5
         trucksNeeded:
           type: integer
         budgetPerHour:
@@ -2625,6 +2643,9 @@ components:
         materialType:
           type: string
           enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
+        truckType:
+          type: string
+          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
         quantityTons:
           type: number
         pickupAddress:
@@ -2634,6 +2655,11 @@ components:
         scheduledDate:
           type: string
           format: date-time
+        startTime:
+          type: string
+          pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+        estimatedHours:
+          type: number
         trucksNeeded:
           type: integer
         budgetPerHour:
@@ -2693,7 +2719,7 @@ components:
     # ── Job ───────────────────────────────────────────────────────────────────
     Job:
       type: object
-      required: [id, requestId, bidId, customerId, customerCompany, providerId, providerCompany, ratePerHour, trucksAssigned, status, materialType, pickupAddress, deliveryAddress, scheduledDate, createdAt]
+      required: [id, requestId, bidId, customerId, customerCompany, providerId, providerCompany, ratePerHour, trucksAssigned, status, materialType, truckType, pickupAddress, deliveryAddress, scheduledDate, startTime, estimatedHours, createdAt]
       properties:
         id:
           type: integer
@@ -2718,6 +2744,9 @@ components:
           enum: [active, awarded, accepted, declined, cancelled, in_progress, completed]
         materialType:
           type: string
+        truckType:
+          type: string
+          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
         pickupAddress:
           type: string
         deliveryAddress:
@@ -2725,6 +2754,10 @@ components:
         scheduledDate:
           type: string
           format: date-time
+        startTime:
+          type: string
+        estimatedHours:
+          type: number
         startedAt:
           type: ["string", "null"]
           format: date-time

@@ -13,6 +13,7 @@ import {
   useListDumpSiteStates,
   useListDumpSites,
   JobRequestInputMaterialType,
+  JobRequestInputTruckType,
   DumpSite,
 } from "@workspace/api-client-react";
 
@@ -247,12 +248,17 @@ const formSchema = z.object({
   materialType: z.nativeEnum(JobRequestInputMaterialType, {
     required_error: "Please select a material type.",
   }),
+  truckType: z.nativeEnum(JobRequestInputTruckType, {
+    required_error: "Please select a truck type.",
+  }),
   quantityTons: z.coerce.number().positive("Quantity must be positive."),
   pickupAddress: z.string().min(5, "Pickup address is required."),
   deliveryAddress: z.string().min(5, "Delivery address is required."),
   scheduledDate: z.date({
     required_error: "A scheduled date is required.",
   }),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm format (e.g. 07:30)."),
+  estimatedHours: z.coerce.number().min(0.5, "Must be at least 0.5 hours."),
   trucksNeeded: z.coerce.number().int().positive("Must request at least 1 truck."),
   budgetPerHour: z.coerce.number().positive().optional().or(z.literal("")),
   notes: z.string().optional(),
@@ -317,9 +323,12 @@ export default function NewRequestPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       materialType: undefined,
+      truckType: undefined,
       quantityTons: "" as any,
       pickupAddress: "",
       deliveryAddress: "",
+      startTime: "07:00",
+      estimatedHours: "" as any,
       trucksNeeded: 1,
       budgetPerHour: "" as any,
       notes: "",
@@ -379,6 +388,31 @@ export default function NewRequestPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
+                    name="truckType"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Truck Type <span className="text-destructive">*</span></FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-12 border-2 rounded-none focus:ring-primary">
+                              <SelectValue placeholder="Select truck type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="border-2 rounded-none max-h-[240px]">
+                            {Object.values(JobRequestInputTruckType).map((type) => (
+                              <SelectItem key={type} value={type} className="capitalize">
+                                {type.replace(/_/g, " ")}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="materialType"
                     render={({ field }) => (
                       <FormItem>
@@ -410,6 +444,37 @@ export default function NewRequestPage() {
                         <FormLabel>Quantity (Tons) <span className="text-destructive">*</span></FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="1000" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Time <span className="text-destructive">*</span></FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                        </FormControl>
+                        <FormDescription>Local time trucks should arrive on site.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="estimatedHours"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estimated Hours <span className="text-destructive">*</span></FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0.5" step="0.5" placeholder="8" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

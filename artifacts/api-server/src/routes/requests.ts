@@ -16,6 +16,21 @@ import {
 
 const router: IRouter = Router();
 
+function serializeRequest(
+  r: typeof requestsTable.$inferSelect,
+  customerCompany: string,
+  bidCount: number,
+) {
+  return {
+    ...r,
+    quantityTons: parseFloat(r.quantityTons),
+    estimatedHours: parseFloat(r.estimatedHours),
+    budgetPerHour: r.budgetPerHour ? parseFloat(r.budgetPerHour) : null,
+    customerCompany,
+    bidCount,
+  };
+}
+
 router.get("/requests", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
   const params = ListRequestsQueryParams.safeParse(req.query);
@@ -48,13 +63,7 @@ router.get("/requests", requireProfile, async (req, res): Promise<void> => {
   const enriched = await Promise.all(rows.map(async (r) => {
     const [customer] = await db.select().from(profilesTable).where(eq(profilesTable.id, r.customerId));
     const bidCountResult = await db.select({ count: sql<number>`count(*)` }).from(bidsTable).where(eq(bidsTable.requestId, r.id));
-    return {
-      ...r,
-      quantityTons: parseFloat(r.quantityTons),
-      budgetPerHour: r.budgetPerHour ? parseFloat(r.budgetPerHour) : null,
-      customerCompany: customer?.companyName ?? "",
-      bidCount: Number(bidCountResult[0]?.count ?? 0),
-    };
+    return serializeRequest(r, customer?.companyName ?? "", Number(bidCountResult[0]?.count ?? 0));
   }));
 
   res.json(ListRequestsResponse.parse(enriched));
@@ -75,6 +84,7 @@ router.post("/requests", requireProfile, async (req, res): Promise<void> => {
     ...parsed.data,
     customerId: profile.id,
     quantityTons: String(parsed.data.quantityTons),
+    estimatedHours: String(parsed.data.estimatedHours),
     budgetPerHour: parsed.data.budgetPerHour != null ? String(parsed.data.budgetPerHour) : undefined,
   }).returning();
   await db.insert(activityTable).values({
@@ -83,13 +93,7 @@ router.post("/requests", requireProfile, async (req, res): Promise<void> => {
     description: `Posted a request for ${request.materialType} — ${request.pickupAddress}`,
     relatedId: request.id,
   });
-  res.status(201).json({
-    ...request,
-    quantityTons: parseFloat(request.quantityTons),
-    budgetPerHour: request.budgetPerHour ? parseFloat(request.budgetPerHour) : null,
-    customerCompany: profile.companyName,
-    bidCount: 0,
-  });
+  res.status(201).json(serializeRequest(request, profile.companyName, 0));
 });
 
 router.get("/requests/:id", requireProfile, async (req, res): Promise<void> => {
@@ -110,8 +114,11 @@ router.get("/requests/:id", requireProfile, async (req, res): Promise<void> => {
   // see open/bidding requests or ones they have a bid on; all others are denied.
   const isCustomerSide = profile.role === "customer" || profile.role === "supervisor";
   const isProviderSide = profile.role === "provider" || profile.role === "driver";
+  const isStaff = !!profile.staffRole;
 
-  if (isCustomerSide) {
+  if (isStaff) {
+    // Staff may view any request for support and admin review.
+  } else if (isCustomerSide) {
     let allowed = request.customerId === profile.id;
     if (!allowed && profile.organizationId) {
       const [customerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.id, request.customerId));
@@ -141,13 +148,11 @@ router.get("/requests/:id", requireProfile, async (req, res): Promise<void> => {
 
   const [customer] = await db.select().from(profilesTable).where(eq(profilesTable.id, request.customerId));
   const bidCountResult = await db.select({ count: sql<number>`count(*)` }).from(bidsTable).where(eq(bidsTable.requestId, request.id));
-  res.json(GetRequestResponse.parse({
-    ...request,
-    quantityTons: parseFloat(request.quantityTons),
-    budgetPerHour: request.budgetPerHour ? parseFloat(request.budgetPerHour) : null,
-    customerCompany: customer?.companyName ?? "",
-    bidCount: Number(bidCountResult[0]?.count ?? 0),
-  }));
+  res.json(GetRequestResponse.parse(serializeRequest(
+    request,
+    customer?.companyName ?? "",
+    Number(bidCountResult[0]?.count ?? 0),
+  )));
 });
 
 router.patch("/requests/:id", requireProfile, async (req, res): Promise<void> => {
@@ -168,6 +173,7 @@ router.patch("/requests/:id", requireProfile, async (req, res): Promise<void> =>
     .set({
       ...parsed.data,
       quantityTons: parsed.data.quantityTons != null ? String(parsed.data.quantityTons) : undefined,
+      estimatedHours: parsed.data.estimatedHours != null ? String(parsed.data.estimatedHours) : undefined,
       budgetPerHour: parsed.data.budgetPerHour != null ? String(parsed.data.budgetPerHour) : undefined,
     })
     .where(and(eq(requestsTable.id, params.data.id), eq(requestsTable.customerId, profile.id)))
@@ -177,13 +183,11 @@ router.patch("/requests/:id", requireProfile, async (req, res): Promise<void> =>
     return;
   }
   const bidCountResult = await db.select({ count: sql<number>`count(*)` }).from(bidsTable).where(eq(bidsTable.requestId, request.id));
-  res.json(UpdateRequestResponse.parse({
-    ...request,
-    quantityTons: parseFloat(request.quantityTons),
-    budgetPerHour: request.budgetPerHour ? parseFloat(request.budgetPerHour) : null,
-    customerCompany: profile.companyName,
-    bidCount: Number(bidCountResult[0]?.count ?? 0),
-  }));
+  res.json(UpdateRequestResponse.parse(serializeRequest(
+    request,
+    profile.companyName,
+    Number(bidCountResult[0]?.count ?? 0),
+  )));
 });
 
 router.delete("/requests/:id", requireProfile, async (req, res): Promise<void> => {

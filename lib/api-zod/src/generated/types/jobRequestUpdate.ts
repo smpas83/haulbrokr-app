@@ -7,14 +7,19 @@
  */
 import type { JobRequestUpdateMaterialType } from './jobRequestUpdateMaterialType';
 import type { JobRequestUpdateStatus } from './jobRequestUpdateStatus';
+import type { JobRequestUpdateTruckType } from './jobRequestUpdateTruckType';
 
 export interface JobRequestUpdate {
   status?: JobRequestUpdateStatus;
   materialType?: JobRequestUpdateMaterialType;
+  truckType?: JobRequestUpdateTruckType;
   quantityTons?: number;
   pickupAddress?: string;
   deliveryAddress?: string;
   scheduledDate?: Date;
+  /** @pattern ^([01]\d|2[0-3]):[0-5]\d$ */
+  startTime?: string;
+  estimatedHours?: number;
   trucksNeeded?: number;
   budgetPerHour?: number;
   notes?: string;

@@ -247,9 +247,13 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       trucksAssigned: existingBid.trucksOffered,
       status: "awarded",
       materialType: request.materialType,
+      truckType: request.truckType,
       pickupAddress: request.pickupAddress,
       deliveryAddress: request.deliveryAddress,
       scheduledDate: request.scheduledDate,
+      startTime: request.startTime,
+      estimatedHours: request.estimatedHours,
+      notes: request.notes,
     });
 
     await db.update(requestsTable).set({ status: "awarded" }).where(eq(requestsTable.id, request.id));

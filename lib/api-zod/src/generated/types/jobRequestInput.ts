@@ -6,13 +6,22 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { JobRequestInputMaterialType } from './jobRequestInputMaterialType';
+import type { JobRequestInputTruckType } from './jobRequestInputTruckType';
 
 export interface JobRequestInput {
   materialType: JobRequestInputMaterialType;
+  truckType: JobRequestInputTruckType;
   quantityTons: number;
   pickupAddress: string;
   deliveryAddress: string;
   scheduledDate: Date;
+  /**
+     * Local start time in HH:mm (24-hour) format
+     * @pattern ^([01]\d|2[0-3]):[0-5]\d$
+     */
+  startTime: string;
+  /** @minimum 0.5 */
+  estimatedHours: number;
   trucksNeeded: number;
   budgetPerHour?: number;
   notes?: string;

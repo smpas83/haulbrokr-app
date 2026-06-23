@@ -7,16 +7,21 @@
  */
 import type { JobRequestMaterialType } from './jobRequestMaterialType';
 import type { JobRequestStatus } from './jobRequestStatus';
+import type { JobRequestTruckType } from './jobRequestTruckType';
 
 export interface JobRequest {
   id: number;
   customerId: number;
   customerCompany: string;
   materialType: JobRequestMaterialType;
+  truckType: JobRequestTruckType;
   quantityTons: number;
   pickupAddress: string;
   deliveryAddress: string;
   scheduledDate: Date;
+  /** Local start time in HH:mm (24-hour) format */
+  startTime: string;
+  estimatedHours: number;
   status: JobRequestStatus;
   trucksNeeded: number;
   /** @nullable */

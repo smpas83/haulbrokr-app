@@ -8,6 +8,7 @@
 import type { JobCompletionApproval } from './jobCompletionApproval';
 import type { JobPaymentStatus } from './jobPaymentStatus';
 import type { JobStatus } from './jobStatus';
+import type { JobTruckType } from './jobTruckType';
 
 export interface Job {
   id: number;
@@ -21,9 +22,12 @@ export interface Job {
   trucksAssigned: number;
   status: JobStatus;
   materialType: string;
+  truckType: JobTruckType;
   pickupAddress: string;
   deliveryAddress: string;
   scheduledDate: Date;
+  startTime: string;
+  estimatedHours: number;
   /** @nullable */
   startedAt?: Date | null;
   /** @nullable */

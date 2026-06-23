@@ -119,8 +119,9 @@ beforeAll(async () => {
     customerId: customerOwner.id, name: `${TAG} Site`, siteAddress: "1 Dirt Rd",
   }).returning();
   [request_] = await db.insert(requestsTable).values({
-    customerId: customerOwner.id, materialType: "dirt", quantityTons: "100",
+    customerId: customerOwner.id, materialType: "dirt", truckType: "dump_truck", quantityTons: "100",
     pickupAddress: "1 Pit Rd", deliveryAddress: "1 Dirt Rd", scheduledDate: new Date(),
+    startTime: "08:00", estimatedHours: "8",
     projectId: project.id, status: "accepted",
   }).returning();
   [bid] = await db.insert(bidsTable).values({
@@ -128,8 +129,9 @@ beforeAll(async () => {
   }).returning();
   [job] = await db.insert(jobsTable).values({
     requestId: request_.id, bidId: bid.id, customerId: customerOwner.id, providerId: providerOwner.id,
-    projectId: project.id, ratePerHour: "100", materialType: "dirt",
+    projectId: project.id, ratePerHour: "100", materialType: "dirt", truckType: "dump_truck",
     pickupAddress: "1 Pit Rd", deliveryAddress: "1 Dirt Rd", scheduledDate: new Date(),
+    startTime: "08:00", estimatedHours: "8",
     status: "completed",
   }).returning();
 });
@@ -217,8 +219,9 @@ describe("Company/team full flow", () => {
     // Throwaway job + ticket on it, then try to attach that ticket to our job.
     const [otherJob] = await db.insert(jobsTable).values({
       requestId: request_.id, bidId: bid.id, customerId: customerOwner.id, providerId: providerOwner.id,
-      projectId: project.id, ratePerHour: "100", materialType: "dirt",
+      projectId: project.id, ratePerHour: "100", materialType: "dirt", truckType: "dump_truck",
       pickupAddress: "1 Pit Rd", deliveryAddress: "1 Dirt Rd", scheduledDate: new Date(),
+      startTime: "08:00", estimatedHours: "8",
       status: "in_progress",
     }).returning();
     const [otherTicket] = await db.insert(ticketsTable).values({

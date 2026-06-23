@@ -327,6 +327,26 @@ export const JobRequestMaterialType = {
   other: 'other',
 } as const;
 
+export type JobRequestTruckType = typeof JobRequestTruckType[keyof typeof JobRequestTruckType];
+
+
+export const JobRequestTruckType = {
+  standard: 'standard',
+  articulated: 'articulated',
+  side_dump: 'side_dump',
+  bottom_dump: 'bottom_dump',
+  transfer: 'transfer',
+  dump_truck: 'dump_truck',
+  super_10: 'super_10',
+  end_dump: 'end_dump',
+  belly_dump: 'belly_dump',
+  lowboy: 'lowboy',
+  water_truck: 'water_truck',
+  excavator: 'excavator',
+  dozer: 'dozer',
+  skid_steer: 'skid_steer',
+} as const;
+
 export type JobRequestStatus = typeof JobRequestStatus[keyof typeof JobRequestStatus];
 
 
@@ -346,10 +366,14 @@ export interface JobRequest {
   customerId: number;
   customerCompany: string;
   materialType: JobRequestMaterialType;
+  truckType: JobRequestTruckType;
   quantityTons: number;
   pickupAddress: string;
   deliveryAddress: string;
   scheduledDate: string;
+  /** Local start time in HH:mm (24-hour) format */
+  startTime: string;
+  estimatedHours: number;
   status: JobRequestStatus;
   trucksNeeded: number;
   /** @nullable */
@@ -375,12 +399,40 @@ export const JobRequestInputMaterialType = {
   other: 'other',
 } as const;
 
+export type JobRequestInputTruckType = typeof JobRequestInputTruckType[keyof typeof JobRequestInputTruckType];
+
+
+export const JobRequestInputTruckType = {
+  standard: 'standard',
+  articulated: 'articulated',
+  side_dump: 'side_dump',
+  bottom_dump: 'bottom_dump',
+  transfer: 'transfer',
+  dump_truck: 'dump_truck',
+  super_10: 'super_10',
+  end_dump: 'end_dump',
+  belly_dump: 'belly_dump',
+  lowboy: 'lowboy',
+  water_truck: 'water_truck',
+  excavator: 'excavator',
+  dozer: 'dozer',
+  skid_steer: 'skid_steer',
+} as const;
+
 export interface JobRequestInput {
   materialType: JobRequestInputMaterialType;
+  truckType: JobRequestInputTruckType;
   quantityTons: number;
   pickupAddress: string;
   deliveryAddress: string;
   scheduledDate: string;
+  /**
+     * Local start time in HH:mm (24-hour) format
+     * @pattern ^([01]\d|2[0-3]):[0-5]\d$
+     */
+  startTime: string;
+  /** @minimum 0.5 */
+  estimatedHours: number;
   trucksNeeded: number;
   budgetPerHour?: number;
   notes?: string;
@@ -415,13 +467,37 @@ export const JobRequestUpdateMaterialType = {
   other: 'other',
 } as const;
 
+export type JobRequestUpdateTruckType = typeof JobRequestUpdateTruckType[keyof typeof JobRequestUpdateTruckType];
+
+
+export const JobRequestUpdateTruckType = {
+  standard: 'standard',
+  articulated: 'articulated',
+  side_dump: 'side_dump',
+  bottom_dump: 'bottom_dump',
+  transfer: 'transfer',
+  dump_truck: 'dump_truck',
+  super_10: 'super_10',
+  end_dump: 'end_dump',
+  belly_dump: 'belly_dump',
+  lowboy: 'lowboy',
+  water_truck: 'water_truck',
+  excavator: 'excavator',
+  dozer: 'dozer',
+  skid_steer: 'skid_steer',
+} as const;
+
 export interface JobRequestUpdate {
   status?: JobRequestUpdateStatus;
   materialType?: JobRequestUpdateMaterialType;
+  truckType?: JobRequestUpdateTruckType;
   quantityTons?: number;
   pickupAddress?: string;
   deliveryAddress?: string;
   scheduledDate?: string;
+  /** @pattern ^([01]\d|2[0-3]):[0-5]\d$ */
+  startTime?: string;
+  estimatedHours?: number;
   trucksNeeded?: number;
   budgetPerHour?: number;
   notes?: string;
@@ -486,6 +562,26 @@ export const JobStatus = {
   completed: 'completed',
 } as const;
 
+export type JobTruckType = typeof JobTruckType[keyof typeof JobTruckType];
+
+
+export const JobTruckType = {
+  standard: 'standard',
+  articulated: 'articulated',
+  side_dump: 'side_dump',
+  bottom_dump: 'bottom_dump',
+  transfer: 'transfer',
+  dump_truck: 'dump_truck',
+  super_10: 'super_10',
+  end_dump: 'end_dump',
+  belly_dump: 'belly_dump',
+  lowboy: 'lowboy',
+  water_truck: 'water_truck',
+  excavator: 'excavator',
+  dozer: 'dozer',
+  skid_steer: 'skid_steer',
+} as const;
+
 export type JobPaymentStatus = typeof JobPaymentStatus[keyof typeof JobPaymentStatus];
 
 
@@ -522,9 +618,12 @@ export interface Job {
   trucksAssigned: number;
   status: JobStatus;
   materialType: string;
+  truckType: JobTruckType;
   pickupAddress: string;
   deliveryAddress: string;
   scheduledDate: string;
+  startTime: string;
+  estimatedHours: number;
   /** @nullable */
   startedAt?: string | null;
   /** @nullable */

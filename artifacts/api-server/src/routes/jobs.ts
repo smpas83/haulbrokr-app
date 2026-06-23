@@ -66,6 +66,7 @@ function serializeJob(j: any, customerCompany: string, providerCompany: string) 
   return {
     ...j,
     ratePerHour: parseFloat(j.ratePerHour),
+    estimatedHours: parseFloat(j.estimatedHours),
     totalHours: num(j.totalHours),
     totalAmount: num(j.totalAmount),
     platformFeeRate: num(j.platformFeeRate),

@@ -48,6 +48,18 @@ async function apiFetch(path: string, options?: RequestInit) {
   return res.json();
 }
 
+function formatTruckType(value: string) {
+  return value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatStartTime(value: string) {
+  const [h, m] = value.split(":").map(Number);
+  if (Number.isNaN(h)) return value;
+  const d = new Date();
+  d.setHours(h, m ?? 0, 0, 0);
+  return format(d, "h:mm a");
+}
+
 function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean }) {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -1254,8 +1266,24 @@ export default function JobDetailPage() {
                   <p className="font-bold">{format(new Date(job.scheduledDate), "MMM d, yyyy")}</p>
                 </div>
                 <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Start Time</p>
+                  <p className="font-bold">{job.startTime ? formatStartTime(job.startTime) : "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Material</p>
+                  <p className="font-bold capitalize">{job.materialType}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Truck Type</p>
+                  <p className="font-bold">{job.truckType ? formatTruckType(job.truckType) : "—"}</p>
+                </div>
+                <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Committed Trucks</p>
                   <p className="font-bold">{job.trucksAssigned} Trucks</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Estimated Hours</p>
+                  <p className="font-bold">~{job.estimatedHours} hours</p>
                 </div>
                 {job.startedAt && (
                   <div>
