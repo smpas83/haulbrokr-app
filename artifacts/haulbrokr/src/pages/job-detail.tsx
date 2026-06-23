@@ -41,11 +41,45 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { storagePublicUrl, uploadFileToStorage } from "@/lib/storageUpload";
 
 async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...options?.headers } });
+  const url = path.startsWith("/api") ? path : `/api${path.startsWith("/") ? path : `/${path}`}`;
+  const res = await fetch(url, { ...options, headers: { "Content-Type": "application/json", ...options?.headers } });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Request failed"); }
   return res.json();
+}
+
+function PhotoFileInput({
+  id,
+  label,
+  file,
+  onFileChange,
+  disabled,
+}: {
+  id: string;
+  label: string;
+  file: File | null;
+  onFileChange: (file: File | null) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div>
+      <Label htmlFor={id} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</Label>
+      <div className="mt-1 flex items-center gap-2">
+        <Input
+          id={id}
+          type="file"
+          accept="image/*"
+          className="rounded-none"
+          disabled={disabled}
+          onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
+        />
+        {file && <span className="text-xs text-muted-foreground truncate">{file.name}</span>}
+      </div>
+    </div>
+  );
 }
 
 function formatTruckType(value: string) {
@@ -63,7 +97,8 @@ function formatStartTime(value: string) {
 function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean }) {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [form, setForm] = useState({ photoUrl: "", photoCaption: "", siteNotes: "" });
+  const [form, setForm] = useState({ photoCaption: "", siteNotes: "" });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   const { data: evidence = [], isLoading } = useQuery({
@@ -73,11 +108,22 @@ function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean
   });
 
   const submit = useMutation({
-    mutationFn: () => apiFetch(`/jobs/${jobId}/evidence`, { method: "POST", body: JSON.stringify(form) }),
+    mutationFn: async () => {
+      let photoUrl: string | undefined;
+      if (photoFile) {
+        const { objectPath } = await uploadFileToStorage(photoFile);
+        photoUrl = storagePublicUrl(objectPath);
+      }
+      return apiFetch(`/jobs/${jobId}/evidence`, {
+        method: "POST",
+        body: JSON.stringify({ ...form, photoUrl }),
+      });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["evidence", jobId] });
       toast({ title: "Evidence submitted" });
-      setForm({ photoUrl: "", photoCaption: "", siteNotes: "" });
+      setForm({ photoCaption: "", siteNotes: "" });
+      setPhotoFile(null);
       setShowForm(false);
     },
     onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
@@ -98,10 +144,13 @@ function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean
 
       {showForm && canUpload && (
         <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
-          <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Photo URL</Label>
-            <Input className="rounded-none mt-1" value={form.photoUrl} onChange={e => setForm(f => ({ ...f, photoUrl: e.target.value }))} placeholder="https://..." />
-          </div>
+          <PhotoFileInput
+            id={`evidence-photo-${jobId}`}
+            label="Delivery Photo"
+            file={photoFile}
+            onFileChange={setPhotoFile}
+            disabled={submit.isPending}
+          />
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Photo Caption</Label>
             <Input className="rounded-none mt-1" value={form.photoCaption} onChange={e => setForm(f => ({ ...f, photoCaption: e.target.value }))} placeholder="Load dumped at designated zone" />
@@ -110,7 +159,7 @@ function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Site Notes (visible to customer)</Label>
             <Input className="rounded-none mt-1" value={form.siteNotes} onChange={e => setForm(f => ({ ...f, siteNotes: e.target.value }))} placeholder="Gate code is 1234. Foreman on site." />
           </div>
-          <Button size="sm" className="rounded-none font-bold w-full" disabled={submit.isPending} onClick={() => submit.mutate()}>
+          <Button size="sm" className="rounded-none font-bold w-full" disabled={submit.isPending || !photoFile} onClick={() => submit.mutate()}>
             {submit.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null} Submit Evidence
           </Button>
         </div>
@@ -686,8 +735,10 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
   const qc = useQueryClient();
   const { data: profile } = useGetMyProfile();
   const updateJob = useUpdateJob();
-  const [ticketForm, setTicketForm] = useState({ weightTons: "", photoUrl: "", notes: "" });
-  const [photoForm, setPhotoForm] = useState({ photoUrl: "", photoCaption: "" });
+  const [ticketForm, setTicketForm] = useState({ weightTons: "", notes: "" });
+  const [ticketFile, setTicketFile] = useState<File | null>(null);
+  const [photoForm, setPhotoForm] = useState({ photoCaption: "" });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   const { data: ticketData } = useQuery({
     queryKey: ["tickets", job.id],
@@ -710,30 +761,46 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
   });
 
   const uploadTicket = useMutation({
-    mutationFn: () => apiFetch(`/jobs/${job.id}/tickets`, {
-      method: "POST",
-      body: JSON.stringify({
-        weightTons: ticketForm.weightTons ? Number(ticketForm.weightTons) : undefined,
-        photoUrl: ticketForm.photoUrl || undefined,
-        notes: ticketForm.notes || undefined,
-      }),
-    }),
+    mutationFn: async () => {
+      let photoUrl: string | undefined;
+      if (ticketFile) {
+        const { objectPath } = await uploadFileToStorage(ticketFile);
+        photoUrl = storagePublicUrl(objectPath);
+      }
+      return apiFetch(`/jobs/${job.id}/tickets`, {
+        method: "POST",
+        body: JSON.stringify({
+          weightTons: ticketForm.weightTons ? Number(ticketForm.weightTons) : undefined,
+          photoUrl,
+          notes: ticketForm.notes || undefined,
+        }),
+      });
+    },
     onSuccess: () => {
       toast({ title: "Haul ticket uploaded" });
-      setTicketForm({ weightTons: "", photoUrl: "", notes: "" });
+      setTicketForm({ weightTons: "", notes: "" });
+      setTicketFile(null);
       refresh();
     },
     onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
   });
 
   const uploadPhoto = useMutation({
-    mutationFn: () => apiFetch(`/jobs/${job.id}/evidence`, {
-      method: "POST",
-      body: JSON.stringify(photoForm),
-    }),
+    mutationFn: async () => {
+      if (!photoFile) throw new Error("Choose a photo to upload");
+      const { objectPath } = await uploadFileToStorage(photoFile);
+      return apiFetch(`/jobs/${job.id}/evidence`, {
+        method: "POST",
+        body: JSON.stringify({
+          photoUrl: storagePublicUrl(objectPath),
+          photoCaption: photoForm.photoCaption || undefined,
+        }),
+      });
+    },
     onSuccess: () => {
       toast({ title: "Photo uploaded" });
-      setPhotoForm({ photoUrl: "", photoCaption: "" });
+      setPhotoForm({ photoCaption: "" });
+      setPhotoFile(null);
       refresh();
     },
     onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
@@ -756,7 +823,14 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
   if (!myTicket) {
     return (
       <div className="border-t-2 border-border p-6 md:p-8">
-        <p className="text-sm text-muted-foreground">You have not been assigned to this job yet.</p>
+        <Alert className="border-amber-500/80 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle>Driver assignment required before check-in</AlertTitle>
+          <AlertDescription>
+            Your dispatcher must assign you to this job and create a load ticket before you can check in,
+            upload haul tickets, or submit field photos. Contact your fleet manager if you expected to be on this load.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -794,17 +868,29 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
         <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Upload Haul Ticket</p>
           <Input className="rounded-none" placeholder="Weight (tons)" value={ticketForm.weightTons} onChange={(e) => setTicketForm((f) => ({ ...f, weightTons: e.target.value }))} />
-          <Input className="rounded-none" placeholder="Ticket photo URL" value={ticketForm.photoUrl} onChange={(e) => setTicketForm((f) => ({ ...f, photoUrl: e.target.value }))} />
+          <PhotoFileInput
+            id={`ticket-photo-${job.id}`}
+            label="Ticket Photo"
+            file={ticketFile}
+            onFileChange={setTicketFile}
+            disabled={uploadTicket.isPending}
+          />
           <Input className="rounded-none" placeholder="Notes" value={ticketForm.notes} onChange={(e) => setTicketForm((f) => ({ ...f, notes: e.target.value }))} />
-          <Button size="sm" className="rounded-none font-bold w-full" disabled={uploadTicket.isPending} onClick={() => uploadTicket.mutate()}>
+          <Button size="sm" className="rounded-none font-bold w-full" disabled={uploadTicket.isPending || !ticketFile} onClick={() => uploadTicket.mutate()}>
             {uploadTicket.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null} Submit Ticket
           </Button>
         </div>
         <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Upload Job Photo</p>
-          <Input className="rounded-none" placeholder="Photo URL" value={photoForm.photoUrl} onChange={(e) => setPhotoForm((f) => ({ ...f, photoUrl: e.target.value }))} />
+          <PhotoFileInput
+            id={`job-photo-${job.id}`}
+            label="Job Photo"
+            file={photoFile}
+            onFileChange={setPhotoFile}
+            disabled={uploadPhoto.isPending}
+          />
           <Input className="rounded-none" placeholder="Caption" value={photoForm.photoCaption} onChange={(e) => setPhotoForm((f) => ({ ...f, photoCaption: e.target.value }))} />
-          <Button size="sm" className="rounded-none font-bold w-full" disabled={uploadPhoto.isPending} onClick={() => uploadPhoto.mutate()}>
+          <Button size="sm" className="rounded-none font-bold w-full" disabled={uploadPhoto.isPending || !photoFile} onClick={() => uploadPhoto.mutate()}>
             {uploadPhoto.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null} Submit Photo
           </Button>
         </div>
@@ -854,12 +940,20 @@ function AssignDriverPanel({ job }: { job: Job }) {
 
   const { data: membersResp } = useListOrgMembers();
   const { data: trucks } = useListTrucks();
+  const { data: ticketData } = useQuery({
+    queryKey: ["tickets", job.id],
+    queryFn: () => apiFetch(`/jobs/${job.id}/tickets`),
+    enabled: !!job.id,
+  });
+  const assignedTickets = (ticketData?.tickets ?? []) as any[];
   const drivers = (membersResp?.members ?? []).filter(m => m.role === "driver");
+  const needsAssignment = assignedTickets.length === 0;
 
   const assign = useAssignJob({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(job.id) });
+        queryClient.invalidateQueries({ queryKey: ["tickets", job.id] });
         toast({ title: "Driver assigned", description: "A load ticket has been created." });
         setDriverId("");
         setTruckId("");
@@ -881,6 +975,21 @@ function AssignDriverPanel({ job }: { job: Job }) {
 
   return (
     <div className="border-t-2 border-border p-6 md:p-8 space-y-4">
+      {needsAssignment ? (
+        <Alert className="border-amber-500/80 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle>Assign a driver before field check-in</AlertTitle>
+          <AlertDescription>
+            Drivers cannot check in or upload tickets until you assign them here and a load ticket is created.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert className="border-green-600/40 bg-green-50 text-green-950 dark:bg-green-950/30 dark:text-green-100">
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <AlertTitle>{assignedTickets.length} driver{assignedTickets.length === 1 ? "" : "s"} assigned</AlertTitle>
+          <AlertDescription>Assigned drivers can check in and upload haul tickets from the field.</AlertDescription>
+        </Alert>
+      )}
       <h3 className="font-bold text-lg flex items-center gap-2">
         <UserCheck className="h-5 w-5 text-muted-foreground" /> Dispatch Driver & Truck
       </h3>
@@ -889,7 +998,9 @@ function AssignDriverPanel({ job }: { job: Job }) {
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Driver</Label>
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Driver <span className="text-destructive">*</span>
+          </Label>
           <Select value={driverId} onValueChange={setDriverId}>
             <SelectTrigger className="rounded-none border-2 mt-1">
               <SelectValue placeholder={drivers.length === 0 ? "No drivers available" : "Select driver..."} />

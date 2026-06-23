@@ -2,7 +2,8 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Building2, Truck, Loader2 } from "lucide-react";
+import { Building2, Truck, Loader2, User } from "lucide-react";
+import { buildCreateProfilePayload } from "@/lib/onboardingPayload";
 import { useCreateProfile, useGetMyProfile } from "@workspace/api-client-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,10 +34,11 @@ const emailOptional = z
   .or(z.literal(""));
 
 const formSchema = z.object({
-  role: z.enum(["customer", "provider"], {
+  role: z.enum(["customer", "provider", "driver"], {
     required_error: "Please select a role.",
   }),
-  companyName: z.string().min(2, "Company name must be at least 2 characters."),
+  inviteCode: z.string().optional(),
+  companyName: z.string().optional(),
   contactName: z.string().optional(),
   phone: z.string().optional(),
   email: emailOptional,
@@ -59,12 +61,25 @@ const formSchema = z.object({
   apContactName: z.string().optional(),
   apEmail: emailOptional,
   paymentTerms: z.enum(["due_on_receipt", "net_15", "net_30", "prepaid"]).optional(),
+}).superRefine((data, ctx) => {
+  if (data.role === "driver") {
+    if (!data.inviteCode?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter the invite code your manager shared with you.",
+        path: ["inviteCode"],
+      });
+    }
+  } else if (!data.companyName || data.companyName.trim().length < 2) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Company name must be at least 2 characters.",
+      path: ["companyName"],
+    });
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-const num = (v?: string) => (v && v.trim() !== "" ? Number(v) : undefined);
-const str = (v?: string) => (v && v.trim() !== "" ? v.trim() : undefined);
 
 const EQUIPMENT_TYPES: { value: string; label: string }[] = [
   { value: "standard", label: "Standard Dump" },
@@ -94,6 +109,7 @@ export default function OnboardingPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       role: undefined,
+      inviteCode: "",
       companyName: "",
       contactName: "",
       phone: "",
@@ -125,41 +141,8 @@ export default function OnboardingPage() {
   }
 
   function onSubmit(values: FormValues) {
-    const base: Record<string, unknown> = {
-      role: values.role,
-      companyName: values.companyName,
-      contactName: str(values.contactName),
-      phone: str(values.phone),
-      email: str(values.email),
-      address: str(values.address),
-      city: str(values.city),
-      state: str(values.state),
-      zip: str(values.zip),
-    };
-
-    if (values.role === "provider") {
-      Object.assign(base, {
-        dba: str(values.dba),
-        website: str(values.website),
-        mcNumber: str(values.mcNumber),
-        capacityTons: num(values.capacityTons),
-        capacityYards: num(values.capacityYards),
-        countiesServed: str(values.countiesServed),
-        hourlyRate: num(values.hourlyRate),
-        minimumHours: num(values.minimumHours),
-        equipmentTypes: values.equipmentTypes?.length ? values.equipmentTypes.join(",") : undefined,
-      });
-    } else {
-      Object.assign(base, {
-        billingEinLast4: str(values.billingEinLast4),
-        apContactName: str(values.apContactName),
-        apEmail: str(values.apEmail),
-        paymentTerms: values.paymentTerms,
-      });
-    }
-
     createProfile.mutate(
-      { data: base as never },
+      { data: buildCreateProfilePayload(values) as never },
       {
         onSuccess: () => {
           toast({ title: "Profile created successfully" });
@@ -178,6 +161,7 @@ export default function OnboardingPage() {
 
   const selectedRole = form.watch("role");
   const isProvider = selectedRole === "provider";
+  const isDriver = selectedRole === "driver";
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
@@ -200,7 +184,7 @@ export default function OnboardingPage() {
                 name="role"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div
                         className={`border-2 p-6 rounded-xl cursor-pointer transition-all duration-200 ${
                           field.value === "customer"
@@ -230,6 +214,21 @@ export default function OnboardingPage() {
                           I operate a fleet of dump trucks and want to find active hauling jobs.
                         </p>
                       </div>
+
+                      <div
+                        className={`border-2 p-6 rounded-xl cursor-pointer transition-all duration-200 ${
+                          field.value === "driver"
+                            ? "border-primary bg-primary/5 shadow-md"
+                            : "border-border hover:border-primary/30 hover:bg-muted"
+                        }`}
+                        onClick={() => field.onChange("driver")}
+                      >
+                        <User className={`w-8 h-8 mb-4 ${field.value === "driver" ? "text-primary" : "text-muted-foreground"}`} />
+                        <h3 className="font-bold text-lg mb-2">I&apos;m a driver</h3>
+                        <p className="text-sm text-muted-foreground">
+                          I drive for a hauling company and need to check in, upload tickets, and report status.
+                        </p>
+                      </div>
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -238,6 +237,64 @@ export default function OnboardingPage() {
 
               {selectedRole && (
                 <div className="space-y-8 pt-4 border-t border-border animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  {isDriver ? (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Join Your Team</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Enter the invite code from your dispatcher or fleet manager. You&apos;ll be linked to their company automatically.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="inviteCode"
+                          render={({ field }) => (
+                            <FormItem className="md:col-span-2">
+                              <FormLabel>
+                                Invite Code <span className="text-destructive">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="ABC123"
+                                  {...field}
+                                  className="h-12 bg-background font-mono uppercase tracking-widest"
+                                  onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                />
+                              </FormControl>
+                              <FormDescription>Ask your manager for the 6-character code from the Company page.</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="contactName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Your Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Jane Doe" {...field} className="h-12 bg-background" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="(555) 123-4567" {...field} className="h-12 bg-background" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                  <>
                   {/* Company details (shared) */}
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Company Details</h3>
@@ -594,6 +651,8 @@ export default function OnboardingPage() {
                         />
                       </div>
                     </div>
+                  )}
+                  </>
                   )}
                 </div>
               )}
