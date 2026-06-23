@@ -1,11 +1,12 @@
 /**
  * Seed HaulBrokr staff admin accounts (username + password).
  *
- * Usage (after db push):
- *   STAFF_DEFAULT_PASSWORD='your-secure-password' pnpm --filter @workspace/api-server run seed-staff
+ * Easiest: ./scripts/seed-staff-easy.sh
  *
- * Default password (dev only): HaulBrokr-Staff-2026!
+ * Or put DATABASE_URL + STAFF_DEFAULT_PASSWORD in repo-root `.env`, then:
+ *   pnpm --filter @workspace/api-server run seed-staff
  */
+import "../src/load-env.js";
 import { eq } from "drizzle-orm";
 import { db, staffUsersTable } from "@workspace/db";
 import { hashStaffPassword } from "../src/lib/staffPassword";
@@ -20,27 +21,64 @@ type SeedRole =
   | "programmer";
 
 function assertValidDatabaseUrl(): void {
-  const url = process.env.DATABASE_URL ?? "";
+  let url = (process.env.DATABASE_URL ?? "").trim();
   if (!url) {
     throw new Error(
-      "DATABASE_URL is not set. Export your Neon pooled URL before running seed-staff."
+      "DATABASE_URL is not set.\n\n" +
+        "Run:  ./scripts/seed-staff-easy.sh\n\n" +
+        "Or create haulbrokr-source-4/.env with:\n" +
+        "  DATABASE_URL=postgresql://...(copy from Neon Connect button)\n" +
+        "  STAFF_DEFAULT_PASSWORD=YourPassword123!"
     );
   }
-  if (url.includes("...")) {
+
+  // Common copy/paste mistakes from Render/Neon dashboards
+  url = url.replace(/^DATABASE_URL\s*=\s*/i, "");
+  url = url.replace(/^['"]|['"]$/g, "");
+  process.env.DATABASE_URL = url;
+
+  if (
+    url.includes("ep-xxxxx") ||
+    url.includes("@ep-xxx.") ||
+    url.includes("USER:PASS") ||
+    url.includes("YOUR_REAL_PASSWORD") ||
+    url.includes("YOUR_PASSWORD") ||
+    url.includes("paste_key_here")
+  ) {
     throw new Error(
-      "DATABASE_URL contains '...' — that is a documentation placeholder, not a real URL. " +
-        "Copy the full connection string from Neon Dashboard → Connect → Pooled connection."
+      "DATABASE_URL still contains placeholder text.\n" +
+        "Run: ./scripts/seed-staff-easy.sh\n" +
+        "Or run: unset DATABASE_URL && pnpm --filter @workspace/api-server run seed-staff"
     );
   }
+  if (!url.startsWith("postgres://") && !url.startsWith("postgresql://")) {
+    throw new Error(
+      "DATABASE_URL must start with postgres:// or postgresql://\n" +
+        `Got: ${url.slice(0, 40)}...`
+    );
+  }
+
   try {
     const normalized = url.replace(/^postgres:/, "postgresql:");
     const host = new URL(normalized).hostname;
     if (!host.includes(".")) {
       throw new Error(`DATABASE_URL hostname looks invalid: ${host}`);
     }
-  } catch {
+    if (host.includes("xxxxx") || host.startsWith("ep-xxx.")) {
+      throw new Error(
+        `DATABASE_URL hostname "${host}" is a documentation example, not your real Neon host.\n` +
+          "Neon → Connect → copy connection string (host looks like ep-damp-boat-aftkv449....neon.tech)"
+      );
+    }
+    console.log(`Connecting to database: ${host}`);
+  } catch (err) {
+    const hint =
+      err instanceof Error && err.message.includes("hostname")
+        ? err.message
+        : "If your Neon password has special characters (@ # / :), URL-encode them or reset the password in Neon.";
     throw new Error(
-      "DATABASE_URL is not a valid postgres URL. Use Neon pooled postgres:// or postgresql:// URL."
+      `DATABASE_URL is not a valid postgres URL.\n${hint}\n` +
+        "Paste only the connection string — no 'DATABASE_URL=' prefix, no extra quotes."
     );
   }
 }
@@ -91,10 +129,12 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log("\nStaff accounts ready. Log in at https://<domain>/admin/login");
-  console.log("Username = role name (ceo, president, cto, cfo, accounting, it, programmer)");
-  if (!process.env.STAFF_DEFAULT_PASSWORD) {
-    console.log("Default password: HaulBrokr-Staff-2026! (set STAFF_DEFAULT_PASSWORD to override)");
+  console.log("\nStaff accounts ready. Log in at https://haulbrokr.com/admin/login");
+  console.log("Username: ceo");
+  if (process.env.STAFF_DEFAULT_PASSWORD) {
+    console.log("Password: (value of STAFF_DEFAULT_PASSWORD in your .env)");
+  } else {
+    console.log("Password: HaulBrokr-Staff-2026!");
   }
 }
 

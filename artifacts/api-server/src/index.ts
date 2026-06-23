@@ -1,3 +1,4 @@
+import "./load-env.js";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startPayoutRetryScheduler } from "./lib/payoutRetryScheduler";
