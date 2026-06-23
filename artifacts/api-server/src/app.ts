@@ -11,6 +11,7 @@ import {
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import healthRouter from "./routes/health";
+import stripeWebhooksRouter from "./routes/stripe-webhooks";
 import { errorHandler } from "./middlewares/errorHandler";
 import { logger } from "./lib/logger";
 
@@ -40,6 +41,14 @@ app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
 app.use(cors({ credentials: true, origin: true }));
 app.use(cookieParser());
+
+// Stripe webhooks require the raw body for signature verification — mount before express.json().
+app.use(
+  "/api/webhooks/stripe",
+  express.raw({ type: "application/json" }),
+  stripeWebhooksRouter,
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
