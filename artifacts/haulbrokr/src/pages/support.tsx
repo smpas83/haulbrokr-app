@@ -65,12 +65,12 @@ export default function SupportPage() {
             </div>
           </a>
           <div className="flex items-center gap-4">
-            <a href="/sign-in">
-              <Button variant="ghost" className="font-semibold text-foreground hover:text-primary">Log in</Button>
-            </a>
-            <a href="/sign-up">
-              <Button className="font-semibold">Get Started</Button>
-            </a>
+            <Button asChild variant="ghost" className="font-semibold text-foreground hover:text-primary">
+              <a href="/sign-in">Log in</a>
+            </Button>
+            <Button asChild className="font-semibold">
+              <a href="/sign-up">Get Started</a>
+            </Button>
           </div>
         </div>
       </header>

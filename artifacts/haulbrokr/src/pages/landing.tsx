@@ -1,4 +1,3 @@
-import { Link } from "wouter";
 import {
   ArrowRight,
   Search,
@@ -100,19 +99,19 @@ export default function LandingPage() {
             <img src={logo} alt="HaulBrokr" className="h-8 sm:h-10 w-auto" width="400" height="225" />
           </picture>
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/sign-in">
-              <Button
-                variant="ghost"
-                className="font-semibold text-white hover:text-[#F2611F] bg-transparent"
-              >
-                Log in
-              </Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button className="font-bold bg-[#F2611F] text-white border-[#F2611F] hover:bg-[#d9530f]">
-                Get Started
-              </Button>
-            </Link>
+            <Button
+              asChild
+              variant="ghost"
+              className="font-semibold text-white hover:text-[#F2611F] bg-transparent"
+            >
+              <a href="/sign-in">Log in</a>
+            </Button>
+            <Button
+              asChild
+              className="font-bold bg-[#F2611F] text-white border-[#F2611F] hover:bg-[#d9530f]"
+            >
+              <a href="/sign-up">Get Started</a>
+            </Button>
           </div>
         </div>
       </header>
@@ -155,25 +154,27 @@ export default function LandingPage() {
                 move dirt faster, easier, and smarter.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/sign-up">
-                  <Button
-                    size="lg"
-                    className="h-14 px-8 text-base font-bold w-full sm:w-auto bg-[#F2611F] text-white border-[#F2611F] hover:bg-[#d9530f] shadow-lg shadow-[#F2611F]/20"
-                  >
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-14 px-8 text-base font-bold w-full sm:w-auto bg-[#F2611F] text-white border-[#F2611F] hover:bg-[#d9530f] shadow-lg shadow-[#F2611F]/20"
+                >
+                  <a href="/sign-up">
                     <Search className="mr-2 h-5 w-5" />
                     Find Trucks Now
-                  </Button>
-                </Link>
-                <Link href="/sign-up">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="h-14 px-8 text-base font-bold w-full sm:w-auto bg-transparent border-2 border-white/30 text-white hover:border-white hover:bg-white/5"
-                  >
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-14 px-8 text-base font-bold w-full sm:w-auto bg-transparent border-2 border-white/30 text-white hover:border-white hover:bg-white/5"
+                >
+                  <a href="/sign-up">
                     Join as a Driver
                     <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
+                  </a>
+                </Button>
               </div>
             </div>
           </div>
@@ -378,24 +379,24 @@ export default function LandingPage() {
                 dirt smarter with HaulBrokr.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-end">
-                <Link href="/sign-up">
-                  <Button
-                    size="lg"
-                    className="h-14 px-8 text-base font-bold w-full sm:w-auto bg-[#F2611F] text-white border-[#F2611F] hover:bg-[#d9530f] shadow-lg shadow-[#F2611F]/20"
-                  >
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-14 px-8 text-base font-bold w-full sm:w-auto bg-[#F2611F] text-white border-[#F2611F] hover:bg-[#d9530f] shadow-lg shadow-[#F2611F]/20"
+                >
+                  <a href="/sign-up">
                     <Search className="mr-2 h-5 w-5" />
                     Find Trucks
-                  </Button>
-                </Link>
-                <Link href="/sign-up">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="h-14 px-8 text-base font-bold w-full sm:w-auto bg-transparent border-2 border-white/30 text-white hover:border-white hover:bg-white/5"
-                  >
-                    Join as a Driver
-                  </Button>
-                </Link>
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-14 px-8 text-base font-bold w-full sm:w-auto bg-transparent border-2 border-white/30 text-white hover:border-white hover:bg-white/5"
+                >
+                  <a href="/sign-up">Join as a Driver</a>
+                </Button>
               </div>
             </div>
           </div>
@@ -411,12 +412,12 @@ export default function LandingPage() {
               <img src={logo} alt="HaulBrokr" className="h-9 w-auto" width="400" height="225" />
             </picture>
             <div className="flex items-center gap-6 text-sm font-semibold text-white/60">
-              <Link href="/support">
-                <span className="hover:text-[#F2611F] cursor-pointer">Support</span>
-              </Link>
-              <Link href="/privacy">
-                <span className="hover:text-[#F2611F] cursor-pointer">Privacy</span>
-              </Link>
+              <a href="/support" className="hover:text-[#F2611F]">
+                Support
+              </a>
+              <a href="/privacy" className="hover:text-[#F2611F]">
+                Privacy
+              </a>
               <a href="mailto:info@haulbrokr.com" className="hover:text-[#F2611F]">
                 Contact
               </a>
