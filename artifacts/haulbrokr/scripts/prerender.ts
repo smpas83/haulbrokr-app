@@ -101,7 +101,7 @@ Object.defineProperty(global, "document", {
 import { createServer } from "vite";
 import { renderToStaticMarkup } from "react-dom/server";
 import React from "react";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -109,6 +109,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, "..");
 const distDir = path.join(root, "dist/public");
+const assetsDir = path.join(distDir, "assets");
 
 const routes: Array<{ component: string; outputFile: string; route: string }> = [
   { component: "landing", outputFile: "index.html", route: "/" },
@@ -140,6 +141,27 @@ const vite = await createServer({
 
 let exitCode = 0;
 
+function builtAssetUrl(sourceFileName: string) {
+  if (!existsSync(assetsDir)) {
+    return null;
+  }
+
+  const ext = path.extname(sourceFileName);
+  const baseName = path.basename(sourceFileName, ext);
+  const builtName = readdirSync(assetsDir).find((fileName) => {
+    return fileName.startsWith(`${baseName}-`) && fileName.endsWith(ext);
+  });
+
+  return builtName ? `/assets/${builtName}` : null;
+}
+
+function rewriteDevAssetUrls(html: string) {
+  return html.replace(
+    /\/src\/assets\/([A-Za-z0-9._-]+\.(?:png|jpe?g|webp|svg|gif))/g,
+    (match, fileName: string) => builtAssetUrl(fileName) ?? match,
+  );
+}
+
 for (const { component, outputFile, route } of routes) {
   const htmlFilePath = path.join(distDir, outputFile);
 
@@ -159,7 +181,7 @@ for (const { component, outputFile, route } of routes) {
     let template = readFileSync(htmlFilePath, "utf-8");
     template = template.replace(
       '<div id="root"></div>',
-      `<div id="root">${appHtml}</div>`,
+      `<div id="root">${rewriteDevAssetUrls(appHtml)}</div>`,
     );
     writeFileSync(htmlFilePath, template, "utf-8");
 

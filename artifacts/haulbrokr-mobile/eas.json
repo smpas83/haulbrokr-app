@@ -27,6 +27,10 @@
         "appleId": "smpas83@yahoo.com",
         "ascAppId": "6769841431",
         "appleTeamId": "B7Z55AHC9L"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
       }
     }
   }

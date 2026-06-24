@@ -52,6 +52,7 @@ Thumbs.db
 *.pem
 *.key
 secrets.json
+google-service-account.json
 
 # Logs
 *.log
