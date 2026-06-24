@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { apiFetch } from "@/lib/apiFetch";
 
 function ForemanAssignments({ projectId }: { projectId: number }) {
   const { toast } = useToast();
@@ -108,12 +109,6 @@ function ForemanAssignments({ projectId }: { projectId: number }) {
       )}
     </div>
   );
-}
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...options?.headers } });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Request failed"); }
-  return res.json();
 }
 
 const STATUS_COLORS: Record<string, string> = {

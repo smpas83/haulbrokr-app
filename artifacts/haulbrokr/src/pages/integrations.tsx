@@ -9,12 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...options?.headers } });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Request failed"); }
-  return res.json();
-}
+import { apiFetch } from "@/lib/apiFetch";
 
 function QuickBooksCard() {
   const { toast } = useToast();

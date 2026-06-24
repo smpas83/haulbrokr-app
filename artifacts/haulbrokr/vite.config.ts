@@ -58,6 +58,7 @@ const knownSpaRoutes = new Set([
   "/projects",
   "/factoring",
   "/integrations",
+  "/mobile-payment",
   "/admin",
 ]);
 
@@ -75,6 +76,7 @@ const knownSpaPrefixes = [
   "/projects/",
   "/factoring/",
   "/integrations/",
+  "/mobile-payment/",
   "/admin/",
 ];
 

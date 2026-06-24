@@ -11,12 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useGetMyProfile } from "@workspace/api-client-react";
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...options?.headers } });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Request failed"); }
-  return res.json();
-}
+import { apiFetch } from "@/lib/apiFetch";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300",
