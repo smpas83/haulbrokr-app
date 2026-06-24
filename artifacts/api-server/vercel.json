@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "echo 'HaulBrokr API deploys to Render via render.yaml; skipping Vercel API preview.' && exit 0"
+}
