@@ -34,6 +34,7 @@ const runtime = require("../scripts/check-web-runtime.js") as {
       env?: NodeJS.ProcessEnv;
       executablePath?: string;
       puppeteer?: unknown;
+      routes?: { name: string; path: string }[];
       navTimeoutMs?: number;
       renderTimeoutMs?: number;
       pollMs?: number;
@@ -321,6 +322,7 @@ describe.skipIf(!chromiumExecutable)("checkWebRuntime (headless Chromium)", () =
   function run(dir: string): Promise<void> {
     return runtime.checkWebRuntime(dir, {
       executablePath: chromiumExecutable as string,
+      routes: [{ name: "Fixture route (/)", path: "/" }],
       // Keep the no-render case from waiting the full 30s default.
       navTimeoutMs: 15_000,
       renderTimeoutMs: 3_000,

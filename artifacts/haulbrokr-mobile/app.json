@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HaulBrokr",
-    "slug": "haulbrokr-mobile",
+    "slug": "dumpbroker-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon-v2.png",
@@ -17,10 +17,10 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.haulbrokr.mobile",
       "buildNumber": "1",
+      "usesAppleSignIn": true,
       "icon": "./assets/images/app-icon-ios.png",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "HaulBrokr uses your location to show nearby jobs and calculate distances.",
-        "NSLocationAlwaysUsageDescription": "HaulBrokr uses your location to notify you of nearby haul opportunities.",
         "NSCameraUsageDescription": "HaulBrokr uses the camera to upload photos for job documentation.",
         "NSPhotoLibraryUsageDescription": "HaulBrokr accesses your photo library to attach images to jobs.",
         "ITSAppUsesNonExemptEncryption": false
@@ -53,6 +53,24 @@
       "expo-font",
       "expo-web-browser",
       "expo-localization",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "HaulBrokr uses the camera to scan tickets and upload job documentation."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "HaulBrokr accesses your photo library to attach job photos and compliance documents."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "HaulBrokr uses your location to show nearby jobs and calculate distances."
+        }
+      ],
       [
         "expo-build-properties",
         {
