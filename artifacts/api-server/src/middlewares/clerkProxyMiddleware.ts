@@ -27,9 +27,7 @@ const CLERK_FAPI = "https://frontend-api.clerk.dev";
 export const CLERK_PROXY_PATH = "/api/__clerk";
 
 /**
- * Returns the first effective public hostname for the given request,
- * preferring x-forwarded-host over the Host header so callers behind a
- * proxy see the original client-facing host.
+ * Returns the first effective public hostname for the given request.
  *
  * x-forwarded-host can take three shapes:
  *   - undefined (no proxy involved)
@@ -42,6 +40,10 @@ export const CLERK_PROXY_PATH = "/api/__clerk";
  * (clerkMiddleware callback) and this proxy middleware agree on which
  * hostname is canonical — otherwise multi-domain/custom-domain flows
  * break.
+ *
+ * Vercel external rewrites can arrive at Render with Host set to the Render
+ * service instead of haulbrokr.com. Browser-originated Clerk proxy calls still
+ * include Origin/Referer, so prefer those before falling back to Host.
  */
 export function getClerkProxyHost(req: {
   headers: IncomingHttpHeaders;
@@ -49,7 +51,24 @@ export function getClerkProxyHost(req: {
   const forwarded = req.headers["x-forwarded-host"];
   const raw = Array.isArray(forwarded) ? forwarded[0] : forwarded;
   const firstHop = raw?.split(",")[0]?.trim();
-  return firstHop || req.headers.host?.trim() || undefined;
+  return (
+    firstHop ||
+    hostFromUrlHeader(req.headers.origin) ||
+    hostFromUrlHeader(req.headers.referer) ||
+    req.headers.host?.trim() ||
+    undefined
+  );
+}
+
+function hostFromUrlHeader(value: string | string[] | undefined): string | undefined {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return undefined;
+
+  try {
+    return new URL(raw).host;
+  } catch {
+    return undefined;
+  }
 }
 
 export function clerkProxyMiddleware(): RequestHandler {
