@@ -281,9 +281,6 @@ importers:
       '@stripe/stripe-js':
         specifier: ^9.8.0
         version: 9.8.0
-      internal:
-        specifier: link:@clerk/react/internal
-        version: link:@clerk/react/internal
     devDependencies:
       '@hookform/resolvers':
         specifier: ^3.10.0
@@ -1896,7 +1893,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@54.0.23':
     resolution: {integrity: sha512-km0h72SFfQCmVycH/JtPFTVy69w6Lx1cHNDmfLfQqgKFYeeHTjx7LVDP4POHCtNxFP2UeRazrygJhlh4zz498g==}
