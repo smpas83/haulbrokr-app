@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
-import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
@@ -36,10 +35,7 @@ const NotFoundPage = lazy(() => import("@/pages/not-found"));
 const queryClient = new QueryClient();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL || undefined;
-const usesSameOriginClerkProxy = clerkProxyUrl?.startsWith("/") ?? false;
-const clerkPubKey = usesSameOriginClerkProxy
-  ? publishableKeyFromHost(window.location.hostname)
-  : publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || "/" : path;
