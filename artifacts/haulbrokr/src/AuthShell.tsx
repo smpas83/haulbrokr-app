@@ -36,7 +36,7 @@ const NotFoundPage = lazy(() => import("@/pages/not-found"));
 const queryClient = new QueryClient();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL || undefined;
-const usesSameOriginClerkProxy = clerkProxyUrl.startsWith("/");
+const usesSameOriginClerkProxy = clerkProxyUrl?.startsWith("/") ?? false;
 const clerkPubKey = usesSameOriginClerkProxy
   ? publishableKeyFromHost(window.location.hostname)
   : publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
