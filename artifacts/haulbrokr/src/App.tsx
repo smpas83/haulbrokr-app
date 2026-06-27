@@ -2,7 +2,6 @@ import { lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter } from 'wouter';
 import { Loader2 } from "lucide-react";
 
-import LandingPage from "./pages/landing";
 import SupportPage from "./pages/support";
 import PrivacyPage from "./pages/privacy";
 
@@ -21,7 +20,6 @@ function AppLoader() {
 function PublicRouter() {
   return (
     <Switch>
-      <Route path="/" component={LandingPage} />
       <Route path="/support" component={SupportPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route>
