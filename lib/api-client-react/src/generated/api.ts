@@ -45,6 +45,9 @@ import type {
   ConnectQuickBooksBody,
   CreateBinOrder201,
   CreateBinOrderBody,
+  CreateDriverEvent201,
+  CreateDriverEvent422,
+  CreateDriverEventBody,
   CreateFactoringRequest201,
   CreateFactoringRequestBody,
   CreateJobEvidence201,
@@ -8840,5 +8843,77 @@ export const useDeleteDriverDoc = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteDriverDocMutationOptions(options));
+    }
+
+export const getCreateDriverEventUrl = (jobId: number,) => {
+
+
+
+
+  return `/api/jobs/${jobId}/driver-events`
+}
+
+/**
+ * @summary Submit a driver check-in, check-out, pickup, or delivery event
+ */
+export const createDriverEvent = async (jobId: number,
+    createDriverEventBody: CreateDriverEventBody, options?: RequestInit): Promise<CreateDriverEvent201> => {
+
+  return customFetch<CreateDriverEvent201>(getCreateDriverEventUrl(jobId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createDriverEventBody,)
+  }
+);}
+
+
+
+
+export const getCreateDriverEventMutationOptions = <TError = ErrorType<CreateDriverEvent422>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDriverEvent>>, TError,{jobId: number;data: BodyType<CreateDriverEventBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDriverEvent>>, TError,{jobId: number;data: BodyType<CreateDriverEventBody>}, TContext> => {
+
+const mutationKey = ['createDriverEvent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDriverEvent>>, {jobId: number;data: BodyType<CreateDriverEventBody>}> = (props) => {
+          const {jobId,data} = props ?? {};
+
+          return  createDriverEvent(jobId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDriverEventMutationResult = NonNullable<Awaited<ReturnType<typeof createDriverEvent>>>
+    export type CreateDriverEventMutationBody = BodyType<CreateDriverEventBody>
+    export type CreateDriverEventMutationError = ErrorType<CreateDriverEvent422>
+
+    /**
+ * @summary Submit a driver check-in, check-out, pickup, or delivery event
+ */
+export const useCreateDriverEvent = <TError = ErrorType<CreateDriverEvent422>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDriverEvent>>, TError,{jobId: number;data: BodyType<CreateDriverEventBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDriverEvent>>,
+        TError,
+        {jobId: number;data: BodyType<CreateDriverEventBody>},
+        TContext
+      > => {
+      return useMutation(getCreateDriverEventMutationOptions(options));
     }
 

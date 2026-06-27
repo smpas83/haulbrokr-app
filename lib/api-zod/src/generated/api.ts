@@ -2667,3 +2667,26 @@ export const DeleteDriverDocParams = zod.object({
 })
 
 
+/**
+ * @summary Submit a driver check-in, check-out, pickup, or delivery event
+ */
+export const CreateDriverEventParams = zod.object({
+  "jobId": zod.coerce.number()
+})
+
+export const CreateDriverEventBody = zod.object({
+  "eventType": zod.enum(['checkin', 'checkout', 'pickup', 'delivery']),
+  "gps": zod.object({
+  "lat": zod.number().optional(),
+  "long": zod.number().optional()
+}).optional(),
+  "gpsConfirmed": zod.boolean().optional(),
+  "weightTons": zod.number().optional(),
+  "loadNumber": zod.number().optional(),
+  "files": zod.array(zod.object({
+  "role": zod.string(),
+  "url": zod.string()
+})).optional()
+})
+
+

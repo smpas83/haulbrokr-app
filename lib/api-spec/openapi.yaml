@@ -2277,6 +2277,58 @@ paths:
       responses:
         "204":
           description: Deleted
+  /jobs/{jobId}/driver-events:
+    post:
+      operationId: createDriverEvent
+      tags: [evidence]
+      summary: Submit a driver check-in, check-out, pickup, or delivery event
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventType]
+              properties:
+                eventType:
+                  type: string
+                  enum: [checkin, checkout, pickup, delivery]
+                gps:
+                  type: object
+                  properties:
+                    lat: { type: number }
+                    long: { type: number }
+                gpsConfirmed: { type: boolean }
+                weightTons: { type: number }
+                loadNumber: { type: integer }
+                files:
+                  type: array
+                  items:
+                    type: object
+                    required: [role, url]
+                    properties:
+                      role: { type: string }
+                      url: { type: string }
+      responses:
+        "201":
+          description: Event stored
+          content:
+            application/json:
+              schema:
+                type: object
+        "422":
+          description: Missing required items
+          content:
+            application/json:
+              schema:
+                type: object
+
 components:
   schemas:
     HealthStatus:

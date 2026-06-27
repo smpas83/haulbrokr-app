@@ -2093,3 +2093,36 @@ export type UpsertDriverDocBody = { [key: string]: unknown };
 
 export type UpsertDriverDoc200 = { [key: string]: unknown };
 
+export type CreateDriverEventBodyEventType = typeof CreateDriverEventBodyEventType[keyof typeof CreateDriverEventBodyEventType];
+
+
+export const CreateDriverEventBodyEventType = {
+  checkin: 'checkin',
+  checkout: 'checkout',
+  pickup: 'pickup',
+  delivery: 'delivery',
+} as const;
+
+export type CreateDriverEventBodyGps = {
+  lat?: number;
+  long?: number;
+};
+
+export type CreateDriverEventBodyFilesItem = {
+  role: string;
+  url: string;
+};
+
+export type CreateDriverEventBody = {
+  eventType: CreateDriverEventBodyEventType;
+  gps?: CreateDriverEventBodyGps;
+  gpsConfirmed?: boolean;
+  weightTons?: number;
+  loadNumber?: number;
+  files?: CreateDriverEventBodyFilesItem[];
+};
+
+export type CreateDriverEvent201 = { [key: string]: unknown };
+
+export type CreateDriverEvent422 = { [key: string]: unknown };
+
