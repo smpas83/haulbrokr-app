@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VendorDocuments } from "@/components/documents";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -1648,6 +1649,7 @@ export default function AccountPage() {
           {isProvider && <TabsTrigger value="insurance" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Insurance</TabsTrigger>}
           {isProvider && <TabsTrigger value="payout" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payout Account</TabsTrigger>}
           {isProvider && <TabsTrigger value="dotcdl" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">DOT / CDL</TabsTrigger>}
+          {isProvider && <TabsTrigger value="documents" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
           {isCustomer && <TabsTrigger value="payment" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payment Method</TabsTrigger>}
           {isCustomer && <TabsTrigger value="credit" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Credit Application</TabsTrigger>}
         </TabsList>
@@ -1658,6 +1660,7 @@ export default function AccountPage() {
         {isProvider && <TabsContent value="insurance" className="mt-0"><InsuranceTab /></TabsContent>}
         {isProvider && <TabsContent value="payout" className="mt-0"><PayoutAccountTab /></TabsContent>}
         {isProvider && <TabsContent value="dotcdl" className="mt-0"><DotCdlTab /></TabsContent>}
+        {isProvider && <TabsContent value="documents" className="mt-0"><VendorDocuments /></TabsContent>}
         {isCustomer && <TabsContent value="payment" className="mt-0"><PaymentMethodTab /></TabsContent>}
         {isCustomer && <TabsContent value="credit" className="mt-0"><CreditApplicationTab /></TabsContent>}
       </Tabs>
