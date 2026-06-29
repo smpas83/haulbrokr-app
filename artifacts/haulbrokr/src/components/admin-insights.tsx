@@ -62,7 +62,11 @@ const loc = (city?: string | null, state?: string | null) =>
 // CSV export helpers — turn an array of flat row objects into a downloadable file.
 function toCSV(rows: Record<string, any>[]): string {
   if (!rows.length) return "";
-  const cols = Array.from(rows.reduce((set, r) => { Object.keys(r).forEach((k) => set.add(k)); return set; }, new Set<string>()));
+  const set = new Set<string>();
+  for (const r of rows) {
+    for (const k of Object.keys(r)) set.add(k);
+  }
+  const cols = Array.from(set);
   const esc = (v: any) => {
     if (v === null || v === undefined) return "";
     const s = String(v);
