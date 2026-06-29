@@ -619,9 +619,9 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
               {/* Compliance documents */}
               <div>
                 <div className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                  Documents ({d.documents.length})
+                  Documents ({(d.documents ?? []).length})
                 </div>
-                {d.documents.length === 0 ? (
+                {(d.documents ?? []).length === 0 ? (
                   <div className="text-sm text-muted-foreground py-4 text-center border rounded-none">No documents uploaded.</div>
                 ) : (
                   <table className="w-full text-sm">
@@ -629,7 +629,7 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
                       <tr><th className="text-left py-2">Document</th><th className="text-left">Expiry</th><th className="text-left pl-3">Status</th><th className="text-right pr-1">File</th></tr>
                     </thead>
                     <tbody>
-                      {d.documents.map((doc) => {
+                      {(d.documents ?? []).map((doc) => {
                         const href = docHref(doc.objectPath);
                         return (
                           <tr key={doc.id} className="border-b last:border-0">
@@ -781,8 +781,8 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
       </Section>
 
       <Section title="Compliance documents">
-        <MetricCard icon={<FileStack className="w-3.5 h-3.5" />} label="Pending review" value={d.documentsPending.toLocaleString()} hint="Uploaded, awaiting approval" onClick={() => setDrill({ kind: "documents", status: "uploaded", title: "Documents pending review" })} />
-        <MetricCard icon={<XCircle className="w-3.5 h-3.5" />} label="Expired" value={d.documentsExpired.toLocaleString()} hint="Past expiry date" accent={d.documentsExpired > 0} onClick={() => setDrill({ kind: "documents", status: "expired", title: "Expired documents" })} />
+        <MetricCard icon={<FileStack className="w-3.5 h-3.5" />} label="Pending review" value={(d.documentsPending ?? 0).toLocaleString()} hint="Uploaded, awaiting approval" onClick={() => setDrill({ kind: "documents", status: "uploaded", title: "Documents pending review" })} />
+        <MetricCard icon={<XCircle className="w-3.5 h-3.5" />} label="Expired" value={(d.documentsExpired ?? 0).toLocaleString()} hint="Past expiry date" accent={(d.documentsExpired ?? 0) > 0} onClick={() => setDrill({ kind: "documents", status: "expired", title: "Expired documents" })} />
         <MetricCard icon={<PackageCheck className="w-3.5 h-3.5" />} label="Verified" value="View" hint="All approved documents" onClick={() => setDrill({ kind: "documents", status: "verified", title: "Verified documents" })} />
         <MetricCard icon={<ClipboardList className="w-3.5 h-3.5" />} label="All documents" value="View" hint="Every uploaded file" onClick={() => setDrill({ kind: "documents", status: "", title: "All documents" })} />
       </Section>
