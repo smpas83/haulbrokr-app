@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, profilesTable, organizationsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
+import { computeDocumentStatus } from "../lib/documentStatus";
 
 const router: IRouter = Router();
 
@@ -53,6 +54,19 @@ router.get("/profiles/me", requireAuth, async (req, res): Promise<void> => {
     organization = org ?? null;
   }
   res.json({ ...profile, organization });
+});
+
+// GET /profiles/me/document-status -> required-document checklist + completeness
+// for the signed-in user. Drives the in-app reminder banner and the gate.
+router.get("/profiles/me/document-status", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = req.clerkId as string;
+  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.clerkId, clerkId));
+  if (!profile) {
+    res.status(404).json({ error: "Profile not found" });
+    return;
+  }
+  const status = await computeDocumentStatus(profile);
+  res.json(status);
 });
 
 router.patch("/profiles/me", requireAuth, async (req, res): Promise<void> => {
