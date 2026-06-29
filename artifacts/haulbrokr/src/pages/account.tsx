@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { VendorDocuments } from "@/components/documents";
+import { AccountDocuments } from "@/components/documents";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -1622,6 +1622,7 @@ function CreditApplicationTab() {
 
 export default function AccountPage() {
   const { data: profile, isLoading } = useGetMyProfile();
+  const initialTab = typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("tab") ?? "status") : "status";
 
   if (isLoading) {
     return (
@@ -1641,7 +1642,7 @@ export default function AccountPage() {
         <p className="text-muted-foreground">Manage your profile, compliance, and billing information.</p>
       </div>
 
-      <Tabs defaultValue="status" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="flex flex-wrap h-auto rounded-none justify-start gap-2 bg-transparent p-0 mb-6">
           <TabsTrigger value="status" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Status</TabsTrigger>
           <TabsTrigger value="profile" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Profile</TabsTrigger>
@@ -1649,7 +1650,7 @@ export default function AccountPage() {
           {isProvider && <TabsTrigger value="insurance" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Insurance</TabsTrigger>}
           {isProvider && <TabsTrigger value="payout" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payout Account</TabsTrigger>}
           {isProvider && <TabsTrigger value="dotcdl" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">DOT / CDL</TabsTrigger>}
-          {isProvider && <TabsTrigger value="documents" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
+          {(isProvider || isCustomer) && <TabsTrigger value="documents" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
           {isCustomer && <TabsTrigger value="payment" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payment Method</TabsTrigger>}
           {isCustomer && <TabsTrigger value="credit" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Credit Application</TabsTrigger>}
         </TabsList>
@@ -1660,7 +1661,7 @@ export default function AccountPage() {
         {isProvider && <TabsContent value="insurance" className="mt-0"><InsuranceTab /></TabsContent>}
         {isProvider && <TabsContent value="payout" className="mt-0"><PayoutAccountTab /></TabsContent>}
         {isProvider && <TabsContent value="dotcdl" className="mt-0"><DotCdlTab /></TabsContent>}
-        {isProvider && <TabsContent value="documents" className="mt-0"><VendorDocuments /></TabsContent>}
+        {(isProvider || isCustomer) && <TabsContent value="documents" className="mt-0"><AccountDocuments /></TabsContent>}
         {isCustomer && <TabsContent value="payment" className="mt-0"><PaymentMethodTab /></TabsContent>}
         {isCustomer && <TabsContent value="credit" className="mt-0"><CreditApplicationTab /></TabsContent>}
       </Tabs>

@@ -10,6 +10,7 @@ export const DRIVER_DOC_TYPES = [
   "drug_test",
   "mvr",
   "ssn_card",
+  "cos",
   "w9",
   "coi",
   "dot_authority",
