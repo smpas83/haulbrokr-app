@@ -12,6 +12,7 @@ import {
   binOrders,
   w9SubmissionsTable,
   insuranceSubmissionsTable,
+  driverDocumentsTable,
 } from "@workspace/db";
 import { requireStaffOrProfile, attachStaffSession } from "../middlewares/staffAuth";
 import { attachClerkProfileIfPresent } from "../middlewares/requireAuth";
@@ -127,6 +128,8 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
     [insurancePendingAgg],
     [creditAgg],
     [openBinAgg],
+    [docsPendingAgg],
+    [docsExpiredAgg],
     stuckJobs,
   ] = await Promise.all([
     db
@@ -200,6 +203,14 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
       .select({ count: sql<number>`count(*)` })
       .from(binOrders)
       .where(notInArray(binOrders.status, ["picked_up", "cancelled"])),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(driverDocumentsTable)
+      .where(eq(driverDocumentsTable.status, "uploaded")),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(driverDocumentsTable)
+      .where(sql`${driverDocumentsTable.expiry} is not null and ${driverDocumentsTable.expiry} < now()`),
     findStuckPayoutJobs(),
   ]);
 
@@ -245,6 +256,8 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
     pendingCompliance,
     pendingCredit: Number(creditAgg?.count ?? 0),
     openBinOrders: Number(openBinAgg?.count ?? 0),
+    documentsPending: Number(docsPendingAgg?.count ?? 0),
+    documentsExpired: Number(docsExpiredAgg?.count ?? 0),
   });
 });
 
@@ -543,6 +556,26 @@ router.get("/admin/profile/:id", requireStaffOrProfile, requirePermission("overv
     .orderBy(desc(jobsTable.createdAt))
     .limit(200);
 
+  // Uploaded compliance documents for this profile (W-9, COI, DOT authority, CDL, etc.).
+  const documents = await db
+    .select({
+      id: driverDocumentsTable.id,
+      docType: driverDocumentsTable.docType,
+      status: driverDocumentsTable.status,
+      fileName: driverDocumentsTable.fileName,
+      objectPath: driverDocumentsTable.objectPath,
+      docNumber: driverDocumentsTable.docNumber,
+      expiry: driverDocumentsTable.expiry,
+      reviewNote: driverDocumentsTable.reviewNote,
+      uploadedAt: driverDocumentsTable.uploadedAt,
+      verifiedAt: driverDocumentsTable.verifiedAt,
+      updatedAt: driverDocumentsTable.updatedAt,
+    })
+    .from(driverDocumentsTable)
+    .where(eq(driverDocumentsTable.profileId, id))
+    .orderBy(desc(driverDocumentsTable.updatedAt))
+    .limit(200);
+
   const totals = jobs.reduce(
     (acc, j) => {
       acc.jobs += 1;
@@ -584,6 +617,7 @@ router.get("/admin/profile/:id", requireStaffOrProfile, requirePermission("overv
       providerEarned: isProvider ? totals.providerNet : 0,
     },
     jobs,
+    documents,
   });
 });
 
@@ -649,6 +683,65 @@ router.get("/admin/job/:id", requireStaffOrProfile, requirePermission("overview"
 });
 
 //  Staff team management 
+// ── Documents drill-down ─────────────────────────────────────────────────────
+// GET /admin/documents?status=&type=&q= -> uploaded compliance docs across all
+// profiles, joined to the owning company. Staff-only (overview permission).
+router.get("/admin/documents", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const status = typeof req.query.status === "string" ? req.query.status : "";
+  const type = typeof req.query.type === "string" ? req.query.type : "";
+  const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  const limit = Math.min(Number(req.query.limit) || 500, 1000);
+
+  const conds = [] as any[];
+  if (["missing", "uploaded", "verified", "rejected"].includes(status)) {
+    conds.push(eq(driverDocumentsTable.status, status));
+  }
+  if (status === "expired") {
+    conds.push(sql`${driverDocumentsTable.expiry} is not null and ${driverDocumentsTable.expiry} < now()`);
+  }
+  if (type) conds.push(eq(driverDocumentsTable.docType, type));
+  if (q) {
+    conds.push(
+      or(
+        ilike(profilesTable.companyName, `%${q}%`),
+        ilike(profilesTable.contactName, `%${q}%`),
+        ilike(profilesTable.email, `%${q}%`),
+        ilike(driverDocumentsTable.docType, `%${q}%`),
+        ilike(driverDocumentsTable.fileName, `%${q}%`),
+      ),
+    );
+  }
+
+  const rows = await db
+    .select({
+      id: driverDocumentsTable.id,
+      profileId: driverDocumentsTable.profileId,
+      docType: driverDocumentsTable.docType,
+      status: driverDocumentsTable.status,
+      fileName: driverDocumentsTable.fileName,
+      objectPath: driverDocumentsTable.objectPath,
+      docNumber: driverDocumentsTable.docNumber,
+      expiry: driverDocumentsTable.expiry,
+      reviewNote: driverDocumentsTable.reviewNote,
+      uploadedAt: driverDocumentsTable.uploadedAt,
+      verifiedAt: driverDocumentsTable.verifiedAt,
+      updatedAt: driverDocumentsTable.updatedAt,
+      companyName: profilesTable.companyName,
+      contactName: profilesTable.contactName,
+      email: profilesTable.email,
+      role: profilesTable.role,
+      city: profilesTable.city,
+      state: profilesTable.state,
+    })
+    .from(driverDocumentsTable)
+    .leftJoin(profilesTable, eq(profilesTable.id, driverDocumentsTable.profileId))
+    .where(conds.length ? and(...conds) : sql`true`)
+    .orderBy(desc(driverDocumentsTable.updatedAt))
+    .limit(limit);
+
+  res.json(rows);
+});
+
 router.get("/admin/staff", requireStaffOrProfile, requirePermission("view_staff"), async (_req, res): Promise<void> => {
   const rows = await db
     .select()
