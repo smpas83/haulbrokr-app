@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, isNotNull, sql, and, notInArray } from "drizzle-orm";
+import { eq, desc, isNotNull, sql, and, notInArray, inArray, ilike, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import {
   db,
   dotCdlTable,
@@ -7,6 +8,7 @@ import {
   profilesTable,
   activityTable,
   jobsTable,
+  requestsTable,
   binOrders,
   w9SubmissionsTable,
   insuranceSubmissionsTable,
@@ -51,7 +53,7 @@ async function notifyApplicationReviewed(
 ): Promise<void> {
   try {
     const description = approved
-      ? `Good news — your ${kind} was approved.`
+      ? `Good news â your ${kind} was approved.`
       : `Your ${kind} was not approved${note ? `: ${note}` : "."}`;
     await db.insert(activityTable).values({
       profileId,
@@ -63,7 +65,7 @@ async function notifyApplicationReviewed(
     console.error("Failed to record application review notification", err);
   }
 
-  // Best-effort email — never block the admin review action.
+  // Best-effort email â never block the admin review action.
   try {
     const [profile] = await db
       .select({ email: profilesTable.email, contactName: profilesTable.contactName })
@@ -76,8 +78,8 @@ async function notifyApplicationReviewed(
       ? `HaulBrokr: ${kind} approved`
       : `HaulBrokr: ${kind} update`;
     const body = approved
-      ? `Hi ${profile.contactName ?? "there"},\n\nGood news — your ${kind} has been approved. You can sign in to HaulBrokr to continue.\n\n— HaulBrokr`
-      : `Hi ${profile.contactName ?? "there"},\n\nYour ${kind} was not approved.${note ? `\n\nReason: ${note}` : ""}\n\nSign in to review your account and resubmit if needed.\n\n— HaulBrokr`;
+      ? `Hi ${profile.contactName ?? "there"},\n\nGood news â your ${kind} has been approved. You can sign in to HaulBrokr to continue.\n\nâ HaulBrokr`
+      : `Hi ${profile.contactName ?? "there"},\n\nYour ${kind} was not approved.${note ? `\n\nReason: ${note}` : ""}\n\nSign in to review your account and resubmit if needed.\n\nâ HaulBrokr`;
 
     await client.emails.send({
       from: fromEmail,
@@ -94,7 +96,7 @@ function parseReviewAction(req: { body?: unknown }) {
   return ReviewComplianceBody.safeParse(req.body);
 }
 
-// ── Admin access flag (used by the web app to gate the admin dashboard) ────────
+// ââ Admin access flag (used by the web app to gate the admin dashboard) ââââââââ
 router.get("/admin/access", async (req, res): Promise<void> => {
   const [staffRole, permissions] = await Promise.all([getStaffRole(req), getPermissions(req)]);
   res.json({
@@ -106,7 +108,7 @@ router.get("/admin/access", async (req, res): Promise<void> => {
   });
 });
 
-// ── Platform command-center overview ──────────────────────────────────────────
+// ââ Platform command-center overview ââââââââââââââââââââââââââââââââââââââââââ
 router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview"), async (_req, res): Promise<void> => {
   const [
     [jobAgg],
@@ -114,6 +116,12 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
     [completedAgg],
     [carrierAgg],
     [customerAgg],
+    [driverAgg],
+    [supervisorAgg],
+    [requestsAgg],
+    [openRequestsAgg],
+    statusRows,
+    [realisedAgg],
     [dotPendingAgg],
     [w9PendingAgg],
     [insurancePendingAgg],
@@ -144,6 +152,34 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
       .select({ count: sql<number>`count(*)` })
       .from(profilesTable)
       .where(eq(profilesTable.role, "customer")),
+    // Drivers and supervisors are first-class user roles too.
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(profilesTable)
+      .where(eq(profilesTable.role, "driver")),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(profilesTable)
+      .where(eq(profilesTable.role, "supervisor")),
+    // Job posts (customer requests) — total and still-open.
+    db.select({ count: sql<number>`count(*)` }).from(requestsTable),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(requestsTable)
+      .where(sql`${requestsTable.status} in ('open', 'bid_received', 'bidding')`),
+    // Per-status job breakdown for accepted vs in-progress vs cancelled.
+    db
+      .select({ status: jobsTable.status, count: sql<number>`count(*)` })
+      .from(jobsTable)
+      .groupBy(jobsTable.status),
+    // Realised profit: broker fees on jobs whose payment has been released.
+    db
+      .select({
+        releasedProfit: sql<number>`coalesce(sum(coalesce(${jobsTable.platformFeeAmount}, 0)), 0)`,
+        releasedGmv: sql<number>`coalesce(sum(coalesce(${jobsTable.customerTotalAmount}, ${jobsTable.totalAmount}, 0)), 0)`,
+      })
+      .from(jobsTable)
+      .where(eq(jobsTable.paymentStatus, "released")),
     db
       .select({ count: sql<number>`count(*)` })
       .from(dotCdlTable)
@@ -172,14 +208,39 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
     + Number(w9PendingAgg?.count ?? 0)
     + Number(insurancePendingAgg?.count ?? 0);
 
+  // Build a status -> count map from the grouped job rows.
+  const statusCount = (s: string) =>
+    Number(statusRows.find((r) => r.status === s)?.count ?? 0);
+  const acceptedJobs = statusCount("awarded") + statusCount("accepted");
+  const inProgressJobs = statusCount("in_progress") + statusCount("active");
+  const cancelledJobs = statusCount("cancelled") + statusCount("declined");
+
+  const totalJobs = Number(jobAgg?.totalJobs ?? 0);
+  const completedJobs = Number(completedAgg?.count ?? 0);
+  const gmv = Number(jobAgg?.gmv ?? 0);
+
   res.json({
-    totalJobs: Number(jobAgg?.totalJobs ?? 0),
-    gmv: Number(jobAgg?.gmv ?? 0),
+    // Money
+    gmv,
     brokerFees: Number(jobAgg?.brokerFees ?? 0),
+    realisedProfit: Number(realisedAgg?.releasedProfit ?? 0),
+    realisedGmv: Number(realisedAgg?.releasedGmv ?? 0),
+    avgJobValue: completedJobs > 0 ? gmv / Math.max(totalJobs, 1) : 0,
+    // Jobs funnel
+    requestsPosted: Number(requestsAgg?.count ?? 0),
+    openRequests: Number(openRequestsAgg?.count ?? 0),
+    totalJobs,
+    acceptedJobs,
     activeJobs: Number(activeAgg?.count ?? 0),
-    completedJobs: Number(completedAgg?.count ?? 0),
+    inProgressJobs,
+    completedJobs,
+    cancelledJobs,
+    // People
     newCarriers: Number(carrierAgg?.count ?? 0),
     newCustomers: Number(customerAgg?.count ?? 0),
+    drivers: Number(driverAgg?.count ?? 0),
+    supervisors: Number(supervisorAgg?.count ?? 0),
+    // Review queues
     stuckPayouts: stuckJobs.length,
     pendingCompliance,
     pendingCredit: Number(creditAgg?.count ?? 0),
@@ -187,7 +248,159 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
   });
 });
 
-// ── Staff team management ─────────────────────────────────────────────────────
+// ── Drill-down lists (names, locations, amounts) ─────────────────────────
+// All three endpoints are read-only and reuse the "overview" permission so any
+// staff member who can see the dashboard can drill into the underlying records.
+
+const JOB_STATUS_GROUPS: Record<string, string[]> = {
+  accepted: ["awarded", "accepted"],
+  in_progress: ["in_progress", "active"],
+  active: ["active", "awarded", "accepted", "in_progress"],
+  completed: ["completed"],
+  cancelled: ["cancelled", "declined"],
+};
+
+// GET /admin/jobs?status=&q=&limit=  -> brokered jobs with customer + carrier names
+router.get("/admin/jobs", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const statusKey = typeof req.query.status === "string" ? req.query.status : "";
+  const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  const limit = Math.min(Number(req.query.limit) || 100, 500);
+
+  const cust = alias(profilesTable, "cust");
+  const prov = alias(profilesTable, "prov");
+
+  const conds = [] as any[];
+  const group = JOB_STATUS_GROUPS[statusKey];
+  if (group) conds.push(inArray(jobsTable.status, group as any));
+
+  const rows = await db
+    .select({
+      id: jobsTable.id,
+      status: jobsTable.status,
+      paymentStatus: jobsTable.paymentStatus,
+      materialType: jobsTable.materialType,
+      truckType: jobsTable.truckType,
+      pickupAddress: jobsTable.pickupAddress,
+      deliveryAddress: jobsTable.deliveryAddress,
+      scheduledDate: jobsTable.scheduledDate,
+      gmv: sql<number>`coalesce(${jobsTable.customerTotalAmount}, ${jobsTable.totalAmount}, 0)`,
+      brokerFee: sql<number>`coalesce(${jobsTable.platformFeeAmount}, 0)`,
+      providerNet: sql<number>`coalesce(${jobsTable.providerNetAmount}, 0)`,
+      customerId: jobsTable.customerId,
+      providerId: jobsTable.providerId,
+      customerName: cust.companyName,
+      customerCity: cust.city,
+      customerState: cust.state,
+      providerName: prov.companyName,
+      providerCity: prov.city,
+      providerState: prov.state,
+      createdAt: jobsTable.createdAt,
+    })
+    .from(jobsTable)
+    .leftJoin(cust, eq(cust.id, jobsTable.customerId))
+    .leftJoin(prov, eq(prov.id, jobsTable.providerId))
+    .where(conds.length ? and(...conds) : sql`true`)
+    .orderBy(desc(jobsTable.createdAt))
+    .limit(limit);
+
+  const filtered = q
+    ? rows.filter((r) =>
+        [r.customerName, r.providerName, r.materialType, r.pickupAddress, r.deliveryAddress]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q.toLowerCase())),
+      )
+    : rows;
+
+  res.json(filtered.map((r) => ({
+    ...r,
+    gmv: Number(r.gmv),
+    brokerFee: Number(r.brokerFee),
+    providerNet: Number(r.providerNet),
+  })));
+});
+
+// GET /admin/requests?status=&q=&limit= -> customer job posts
+router.get("/admin/requests", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const statusKey = typeof req.query.status === "string" ? req.query.status : "";
+  const limit = Math.min(Number(req.query.limit) || 100, 500);
+  const conds = [] as any[];
+  if (statusKey === "open") {
+    conds.push(inArray(requestsTable.status, ["open", "bid_received", "bidding"] as any));
+  } else if (statusKey) {
+    conds.push(eq(requestsTable.status, statusKey as any));
+  }
+
+  const rcust = alias(profilesTable, "rcust");
+
+  const rows = await db
+    .select({
+      id: requestsTable.id,
+      status: requestsTable.status,
+      materialType: requestsTable.materialType,
+      truckType: requestsTable.truckType,
+      quantityTons: requestsTable.quantityTons,
+      pickupAddress: requestsTable.pickupAddress,
+      deliveryAddress: requestsTable.deliveryAddress,
+      budgetPerHour: requestsTable.budgetPerHour,
+      scheduledDate: requestsTable.scheduledDate,
+      trucksNeeded: requestsTable.trucksNeeded,
+      customerId: requestsTable.customerId,
+      customerName: rcust.companyName,
+      customerCity: rcust.city,
+      customerState: rcust.state,
+      createdAt: requestsTable.createdAt,
+    })
+    .from(requestsTable)
+    .leftJoin(rcust, eq(rcust.id, requestsTable.customerId))
+    .where(conds.length ? and(...conds) : sql`true`)
+    .orderBy(desc(requestsTable.createdAt))
+    .limit(limit);
+
+  res.json(rows);
+});
+
+// GET /admin/people?role=customer|provider|driver|supervisor&q=&limit=
+router.get("/admin/people", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const role = typeof req.query.role === "string" ? req.query.role : "";
+  const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  const limit = Math.min(Number(req.query.limit) || 200, 500);
+
+  const validRoles = ["customer", "provider", "driver", "supervisor"];
+  const conds = [] as any[];
+  if (validRoles.includes(role)) conds.push(eq(profilesTable.role, role as any));
+  if (q) {
+    conds.push(
+      or(
+        ilike(profilesTable.companyName, `%${q}%`),
+        ilike(profilesTable.contactName, `%${q}%`),
+        ilike(profilesTable.email, `%${q}%`),
+        ilike(profilesTable.city, `%${q}%`),
+      ),
+    );
+  }
+
+  const rows = await db
+    .select({
+      id: profilesTable.id,
+      role: profilesTable.role,
+      companyName: profilesTable.companyName,
+      contactName: profilesTable.contactName,
+      email: profilesTable.email,
+      phone: profilesTable.phone,
+      city: profilesTable.city,
+      state: profilesTable.state,
+      mcNumber: profilesTable.mcNumber,
+      createdAt: profilesTable.createdAt,
+    })
+    .from(profilesTable)
+    .where(conds.length ? and(...conds) : sql`true`)
+    .orderBy(desc(profilesTable.createdAt))
+    .limit(limit);
+
+  res.json(rows);
+});
+
+// ââ Staff team management âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 router.get("/admin/staff", requireStaffOrProfile, requirePermission("view_staff"), async (_req, res): Promise<void> => {
   const rows = await db
     .select()
@@ -225,7 +438,7 @@ router.patch("/admin/staff/:profileId", requireStaffOrProfile, requirePermission
   res.json({ ...profileSummary(rec), staffRole: rec.staffRole });
 });
 
-// ── Carrier compliance review ─────────────────────────────────────────────────
+// ââ Carrier compliance review âââââââââââââââââââââââââââââââââââââââââââââââââ
 router.get("/admin/compliance", requireStaffOrProfile, requirePermission("compliance"), async (_req, res): Promise<void> => {
   const bundles = await listProviderComplianceBundles();
   res.json(bundles);
@@ -357,7 +570,7 @@ router.patch("/admin/compliance/:profileId", requireStaffOrProfile, requirePermi
   res.json({ ...rec, canBid: await getProviderCanBid(profileId) });
 });
 
-// ── Customer credit-application review ─────────────────────────────────────────
+// ââ Customer credit-application review âââââââââââââââââââââââââââââââââââââââââ
 router.get("/admin/credit-applications", requireStaffOrProfile, requirePermission("credit"), async (_req, res): Promise<void> => {
   const rows = await db
     .select({ rec: creditApplicationsTable, profile: profilesTable })
@@ -407,7 +620,7 @@ router.patch("/admin/credit-applications/:profileId", requireStaffOrProfile, req
   res.json({ ...rec, estimatedMonthlySpend: rec.estimatedMonthlySpend ? parseFloat(rec.estimatedMonthlySpend) : null });
 });
 
-// ── Stuck provider payouts ────────────────────────────────────────────────────
+// ââ Stuck provider payouts ââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // Jobs parked in `requires_action` whose customer charge already succeeded but
 // whose provider transfer never completed. The background sweep resolves these
 // automatically; these endpoints let an admin see what's outstanding and nudge
@@ -460,7 +673,7 @@ router.post("/admin/stuck-payouts/:id/retry", requireStaffOrProfile, requirePerm
 // underlying problem (e.g. the provider fixed their Stripe Connect account).
 // This zeroes the consecutive failure counter and clears the alert timestamp so
 // the most-failed-first sort and "Alerted" badges stay meaningful. It does NOT
-// attempt a transfer — that's what /retry is for.
+// attempt a transfer â that's what /retry is for.
 router.post("/admin/stuck-payouts/:id/reset-failures", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
   const jobId = Number(req.params.id);
   if (!Number.isInteger(jobId)) {
