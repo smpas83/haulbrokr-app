@@ -11,14 +11,14 @@ import {
 import {
   DollarSign, TrendingUp, Banknote, Briefcase, Activity, PackageCheck,
   ClipboardList, FileStack, XCircle, Truck, Users, UserCog, HardHat,
-  MapPin, ArrowRight, Search,
+  MapPin, ArrowRight, Search, ChevronRight, Building2, Phone, Mail, Globe, Loader2,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend,
 } from "recharts";
 
-// ââ Types returned by the expanded /admin endpoints ââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Types returned by the expanded /admin endpoints Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 export interface AdminOverviewV2 {
   gmv: number; brokerFees: number; realisedProfit: number; realisedGmv: number; avgJobValue: number;
   requestsPosted: number; openRequests: number; totalJobs: number; acceptedJobs: number;
@@ -49,8 +49,8 @@ interface PersonRow {
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n || 0);
 const loc = (city?: string | null, state?: string | null) =>
-  [city, state].filter(Boolean).join(", ") || "â";
-const dateFmt = (s?: string) => (s ? new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "â");
+  [city, state].filter(Boolean).join(", ") || "Ã¢ÂÂ";
+const dateFmt = (s?: string) => (s ? new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Ã¢ÂÂ");
 
 type Drill =
   | { kind: "jobs"; status: string; title: string }
@@ -58,7 +58,7 @@ type Drill =
   | { kind: "people"; role: string; title: string }
   | null;
 
-// ââ Clickable metric card ââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Clickable metric card Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function MetricCard({
   icon, label, value, hint, accent, onClick,
 }: {
@@ -94,9 +94,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-// ââ Drill-down dialog ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Drill-down dialog Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) {
   const [q, setQ] = useState("");
+  const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
   const open = !!drill;
 
   const jobs = useQuery({
@@ -129,7 +130,7 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
         </DialogHeader>
         <div className="relative mb-2">
           <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, location, materialâ¦" className="pl-8 rounded-none" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, location, materialÃ¢ÂÂ¦" className="pl-8 rounded-none" />
         </div>
         <div className="overflow-auto flex-1 -mx-1 px-1">
           {loading ? (
@@ -142,10 +143,10 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
               <tbody>
                 {(jobs.data ?? []).filter((r) => match(r.customerName, r.providerName, r.materialType, r.pickupAddress, r.deliveryAddress)).map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
-                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} Â· {String(r.truckType).replace(/_/g, " ")}</div></td>
-                    <td><div>{r.customerName ?? "â"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
-                    <td><div>{r.providerName ?? "â"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.providerCity, r.providerState)}</div></td>
-                    <td className="text-xs max-w-[200px]"><div className="truncate" title={r.pickupAddress}>â {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>â {r.deliveryAddress}</div></td>
+                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} ÃÂ· {String(r.truckType).replace(/_/g, " ")}</div></td>
+                    <td><div>{r.customerName ?? "Ã¢ÂÂ"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
+                    <td><div>{r.providerName ?? "Ã¢ÂÂ"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.providerCity, r.providerState)}</div></td>
+                    <td className="text-xs max-w-[200px]"><div className="truncate" title={r.pickupAddress}>Ã¢ÂÂ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>Ã¢ÂÂ {r.deliveryAddress}</div></td>
                     <td className="text-right tabular-nums">{money(r.gmv)}</td>
                     <td className="text-right tabular-nums text-primary font-medium">{money(r.brokerFee)}</td>
                     <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
@@ -161,10 +162,10 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
               <tbody>
                 {(requests.data ?? []).filter((r) => match(r.customerName, r.materialType, r.pickupAddress, r.deliveryAddress)).map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
-                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} Â· {r.quantityTons} tons Â· {r.trucksNeeded} trucks</div></td>
-                    <td><div>{r.customerName ?? "â"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
-                    <td className="text-xs max-w-[220px]"><div className="truncate" title={r.pickupAddress}>â {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>â {r.deliveryAddress}</div></td>
-                    <td className="text-right tabular-nums">{r.budgetPerHour ? money(Number(r.budgetPerHour)) : "â"}</td>
+                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} ÃÂ· {r.quantityTons} tons ÃÂ· {r.trucksNeeded} trucks</div></td>
+                    <td><div>{r.customerName ?? "Ã¢ÂÂ"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
+                    <td className="text-xs max-w-[220px]"><div className="truncate" title={r.pickupAddress}>Ã¢ÂÂ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>Ã¢ÂÂ {r.deliveryAddress}</div></td>
+                    <td className="text-right tabular-nums">{r.budgetPerHour ? money(Number(r.budgetPerHour)) : "Ã¢ÂÂ"}</td>
                     <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
                   </tr>
                 ))}
@@ -173,28 +174,30 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
           ) : drill?.kind === "people" ? (
             <table className="w-full text-sm">
               <thead className="text-xs uppercase text-muted-foreground border-b">
-                <tr><th className="text-left py-2">Company</th><th className="text-left">Contact</th><th className="text-left">Location</th><th className="text-left">Email</th><th className="text-left">Phone</th></tr>
+                <tr><th className="text-left py-2">Company</th><th className="text-left">Contact</th><th className="text-left">Location</th><th className="text-left">Email</th><th className="text-left">Phone</th><th></th></tr>
               </thead>
               <tbody>
                 {(people.data ?? []).filter((r) => match(r.companyName, r.contactName, r.email, r.city)).map((r) => (
-                  <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
+                  <tr key={r.id} onClick={() => setSelectedPersonId(r.id)} className="border-b last:border-0 hover:bg-muted/60 cursor-pointer">
                     <td className="py-2 font-medium">{r.companyName}{r.mcNumber ? <div className="text-xs text-muted-foreground">MC# {r.mcNumber}</div> : null}</td>
-                    <td>{r.contactName ?? "â"}</td>
+                    <td>{r.contactName ?? "Ã¢ÂÂ"}</td>
                     <td><div className="text-xs flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.city, r.state)}</div></td>
-                    <td className="text-xs">{r.email ?? "â"}</td>
-                    <td className="text-xs">{r.phone ?? "â"}</td>
+                    <td className="text-xs">{r.email ?? "Ã¢ÂÂ"}</td>
+                    <td className="text-xs">{r.phone ?? "Ã¢ÂÂ"}</td>
+                    <td className="text-right pr-1"><ChevronRight className="w-4 h-4 text-muted-foreground inline" /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           ) : null}
         </div>
+        <PersonDetail id={selectedPersonId} onClose={() => setSelectedPersonId(null)} />
       </DialogContent>
     </Dialog>
   );
 }
 
-// ââ Main insights dashboard ââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Main insights dashboard Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 interface TimeseriesPoint {
   bucket: string; label: string; jobs: number; gmv: number; brokerFees: number;
   completed: number; customers: number; providers: number; drivers: number;
@@ -327,6 +330,133 @@ function AdminCharts({ enabled, overview }: { enabled: boolean; overview: AdminO
   );
 }
 
+interface ProfileDetailResp {
+  profile: {
+    id: number; role: string; companyName: string; dba: string | null; contactName: string | null;
+    email: string | null; phone: string | null; website: string | null; address: string | null;
+    city: string | null; state: string | null; zip: string | null; mcNumber: string | null;
+    capacityTons: string | null; hourlyRate: string | null; equipmentTypes: string | null;
+    paymentTerms: string | null; createdAt: string;
+  };
+  totals: { jobs: number; completed: number; gmv: number; brokerFee: number; providerEarned: number };
+  jobs: Array<{
+    id: number; status: string; paymentStatus: string; materialType: string;
+    pickupAddress: string; deliveryAddress: string; scheduledDate: string; completedAt: string | null;
+    gmv: number; brokerFee: number; providerNet: number; otherName: string | null; createdAt: string;
+  }>;
+}
+
+const money2 = (n: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n || 0);
+
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="border rounded-none p-3">
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-lg font-bold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function Field({ icon, label, value }: { icon?: React.ReactNode; label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-2 text-sm">
+      {icon ? <span className="text-muted-foreground mt-0.5">{icon}</span> : null}
+      <span className="text-muted-foreground w-24 shrink-0">{label}</span>
+      <span className="font-medium break-all">{value}</span>
+    </div>
+  );
+}
+
+function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void }) {
+  const detail = useQuery({
+    queryKey: ["admin-profile", id],
+    queryFn: () => apiFetch<ProfileDetailResp>(`/admin/profile/${id}`),
+    enabled: id !== null,
+  });
+  const d = detail.data;
+  const p = d?.profile;
+  const isProvider = p?.role === "provider";
+
+  return (
+    <Dialog open={id !== null} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl rounded-none max-h-[88vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            {p?.companyName ?? (detail.isLoading ? "Loading…" : "Details")}
+            {p?.role ? <Badge variant="outline" className="rounded-none capitalize">{p.role}</Badge> : null}
+          </DialogTitle>
+          <DialogDescription>{p?.dba ? `DBA: ${p.dba}` : "Full profile and job history."}</DialogDescription>
+        </DialogHeader>
+
+        <div className="overflow-auto flex-1 space-y-5 -mx-1 px-1">
+          {detail.isLoading ? (
+            <div className="flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading details…</div>
+          ) : !d ? (
+            <div className="text-sm text-muted-foreground py-8 text-center">Couldn't load this profile.</div>
+          ) : (
+            <>
+              {/* Totals */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Stat label="Total jobs" value={d.totals.jobs} />
+                <Stat label="Completed" value={d.totals.completed} />
+                <Stat label="Lifetime GMV" value={money2(d.totals.gmv)} />
+                {isProvider
+                  ? <Stat label="Carrier earned" value={money2(d.totals.providerEarned)} />
+                  : <Stat label="Broker fees" value={money2(d.totals.brokerFee)} />}
+              </div>
+
+              {/* Contact + company info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 border rounded-none p-4">
+                <Field icon={<Users className="w-4 h-4" />} label="Contact" value={p?.contactName} />
+                <Field icon={<Mail className="w-4 h-4" />} label="Email" value={p?.email} />
+                <Field icon={<Phone className="w-4 h-4" />} label="Phone" value={p?.phone} />
+                <Field icon={<Globe className="w-4 h-4" />} label="Website" value={p?.website} />
+                <Field icon={<MapPin className="w-4 h-4" />} label="Address" value={[p?.address, loc(p?.city, p?.state), p?.zip].filter(Boolean).join(", ") || null} />
+                <Field label="MC #" value={p?.mcNumber} />
+                {isProvider ? <Field label="Capacity" value={p?.capacityTons ? `${p.capacityTons} tons` : null} /> : null}
+                {isProvider ? <Field label="Hourly rate" value={p?.hourlyRate ? money2(Number(p.hourlyRate)) + "/hr" : null} /> : null}
+                {isProvider ? <Field label="Equipment" value={p?.equipmentTypes} /> : null}
+                <Field label="Payment terms" value={p?.paymentTerms} />
+                <Field label="Joined" value={p?.createdAt ? dateFmt(p.createdAt) : null} />
+              </div>
+
+              {/* Job history */}
+              <div>
+                <div className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                  Job history ({d.jobs.length})
+                </div>
+                {d.jobs.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-4 text-center border rounded-none">No jobs yet.</div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="text-xs uppercase text-muted-foreground border-b">
+                      <tr><th className="text-left py-2">Job</th><th className="text-left">{isProvider ? "Customer" : "Carrier"}</th><th className="text-left">Route</th><th className="text-right">GMV</th><th className="text-left pl-3">Status</th></tr>
+                    </thead>
+                    <tbody>
+                      {d.jobs.map((j) => (
+                        <tr key={j.id} className="border-b last:border-0">
+                          <td className="py-2 font-medium">#{j.id}<div className="text-xs text-muted-foreground capitalize">{j.materialType}</div></td>
+                          <td>{j.otherName ?? "—"}</td>
+                          <td className="text-xs max-w-[200px]"><div className="truncate" title={j.pickupAddress}>↑ {j.pickupAddress}</div><div className="truncate" title={j.deliveryAddress}>↓ {j.deliveryAddress}</div></td>
+                          <td className="text-right tabular-nums">{money2(j.gmv)}</td>
+                          <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(j.status).replace(/_/g, " ")}</Badge></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function AdminInsights({ enabled }: { enabled: boolean }) {
   const [drill, setDrill] = useState<Drill>(null);
   const overview = useQuery({
@@ -348,7 +478,7 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
         <MetricCard accent icon={<DollarSign className="w-3.5 h-3.5" />} label="GMV (billed)" value={money(d.gmv)} hint="Total customer-billed" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (GMV)" })} />
         <MetricCard accent icon={<TrendingUp className="w-3.5 h-3.5" />} label="Broker-fee revenue" value={money(d.brokerFees)} hint="15% platform fee on all jobs" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (broker fees)" })} />
         <MetricCard accent icon={<Banknote className="w-3.5 h-3.5" />} label="Profit realised" value={money(d.realisedProfit)} hint="Broker fees on paid-out jobs" onClick={() => setDrill({ kind: "jobs", status: "completed", title: "Completed jobs" })} />
-        <MetricCard icon={<Activity className="w-3.5 h-3.5" />} label="Avg job value" value={money(d.avgJobValue)} hint="GMV Ã· total jobs" />
+        <MetricCard icon={<Activity className="w-3.5 h-3.5" />} label="Avg job value" value={money(d.avgJobValue)} hint="GMV ÃÂ· total jobs" />
       </Section>
 
       <Section title="Jobs funnel">

@@ -53,7 +53,7 @@ async function notifyApplicationReviewed(
 ): Promise<void> {
   try {
     const description = approved
-      ? `Good news Ã¢ÂÂ your ${kind} was approved.`
+      ? `Good news ÃÂ¢ÃÂÃÂ your ${kind} was approved.`
       : `Your ${kind} was not approved${note ? `: ${note}` : "."}`;
     await db.insert(activityTable).values({
       profileId,
@@ -65,7 +65,7 @@ async function notifyApplicationReviewed(
     console.error("Failed to record application review notification", err);
   }
 
-  // Best-effort email Ã¢ÂÂ never block the admin review action.
+  // Best-effort email ÃÂ¢ÃÂÃÂ never block the admin review action.
   try {
     const [profile] = await db
       .select({ email: profilesTable.email, contactName: profilesTable.contactName })
@@ -78,8 +78,8 @@ async function notifyApplicationReviewed(
       ? `HaulBrokr: ${kind} approved`
       : `HaulBrokr: ${kind} update`;
     const body = approved
-      ? `Hi ${profile.contactName ?? "there"},\n\nGood news Ã¢ÂÂ your ${kind} has been approved. You can sign in to HaulBrokr to continue.\n\nÃ¢ÂÂ HaulBrokr`
-      : `Hi ${profile.contactName ?? "there"},\n\nYour ${kind} was not approved.${note ? `\n\nReason: ${note}` : ""}\n\nSign in to review your account and resubmit if needed.\n\nÃ¢ÂÂ HaulBrokr`;
+      ? `Hi ${profile.contactName ?? "there"},\n\nGood news ÃÂ¢ÃÂÃÂ your ${kind} has been approved. You can sign in to HaulBrokr to continue.\n\nÃÂ¢ÃÂÃÂ HaulBrokr`
+      : `Hi ${profile.contactName ?? "there"},\n\nYour ${kind} was not approved.${note ? `\n\nReason: ${note}` : ""}\n\nSign in to review your account and resubmit if needed.\n\nÃÂ¢ÃÂÃÂ HaulBrokr`;
 
     await client.emails.send({
       from: fromEmail,
@@ -96,7 +96,7 @@ function parseReviewAction(req: { body?: unknown }) {
   return ReviewComplianceBody.safeParse(req.body);
 }
 
-// Ã¢ÂÂÃ¢ÂÂ Admin access flag (used by the web app to gate the admin dashboard) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Admin access flag (used by the web app to gate the admin dashboard) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 router.get("/admin/access", async (req, res): Promise<void> => {
   const [staffRole, permissions] = await Promise.all([getStaffRole(req), getPermissions(req)]);
   res.json({
@@ -108,7 +108,7 @@ router.get("/admin/access", async (req, res): Promise<void> => {
   });
 });
 
-// Ã¢ÂÂÃ¢ÂÂ Platform command-center overview Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Platform command-center overview ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview"), async (_req, res): Promise<void> => {
   const [
     [jobAgg],
@@ -161,7 +161,7 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
       .select({ count: sql<number>`count(*)` })
       .from(profilesTable)
       .where(eq(profilesTable.role, "supervisor")),
-    // Job posts (customer requests) â total and still-open.
+    // Job posts (customer requests) Ã¢ÂÂ total and still-open.
     db.select({ count: sql<number>`count(*)` }).from(requestsTable),
     db
       .select({ count: sql<number>`count(*)` })
@@ -248,7 +248,7 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
   });
 });
 
-// ââ Drill-down lists (names, locations, amounts) âââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Drill-down lists (names, locations, amounts) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 // All three endpoints are read-only and reuse the "overview" permission so any
 // staff member who can see the dashboard can drill into the underlying records.
 
@@ -400,7 +400,7 @@ router.get("/admin/people", requireStaffOrProfile, requirePermission("overview")
   res.json(rows);
 });
 
-// ── Time series for charts ────────────────────────────────────
+// ââ Time series for charts ââââââââââââââââââââââââââââââââââââ
 // GET /admin/timeseries?months=6  -> monthly buckets of money + jobs + signups.
 router.get("/admin/timeseries", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
   const months = Math.min(Math.max(Number(req.query.months) || 6, 1), 24);
@@ -476,7 +476,94 @@ router.get("/admin/timeseries", requireStaffOrProfile, requirePermission("overvi
   res.json({ months, series });
 });
 
-// Ã¢ÂÂÃ¢ÂÂ Staff team management Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ── Single profile detail (everything about one person/company) ────────
+// GET /admin/profile/:id -> full profile + their jobs (as customer or carrier) + totals.
+router.get("/admin/profile/:id", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid profile id" });
+    return;
+  }
+
+  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, id)).limit(1);
+  if (!profile) {
+    res.status(404).json({ error: "Profile not found" });
+    return;
+  }
+
+  const isProvider = profile.role === "provider";
+  const jobCol = isProvider ? jobsTable.providerId : jobsTable.customerId;
+
+  // The other party on each job (carrier sees customer, customer sees carrier).
+  const other = alias(profilesTable, "other");
+
+  const jobs = await db
+    .select({
+      id: jobsTable.id,
+      status: jobsTable.status,
+      paymentStatus: jobsTable.paymentStatus,
+      materialType: jobsTable.materialType,
+      pickupAddress: jobsTable.pickupAddress,
+      deliveryAddress: jobsTable.deliveryAddress,
+      scheduledDate: jobsTable.scheduledDate,
+      completedAt: jobsTable.completedAt,
+      gmv: sql<number>`coalesce(${jobsTable.customerTotalAmount}, ${jobsTable.totalAmount}, 0)`,
+      brokerFee: sql<number>`coalesce(${jobsTable.platformFeeAmount}, 0)`,
+      providerNet: sql<number>`coalesce(${jobsTable.providerNetAmount}, 0)`,
+      otherName: other.companyName,
+      createdAt: jobsTable.createdAt,
+    })
+    .from(jobsTable)
+    .leftJoin(other, eq(other.id, isProvider ? jobsTable.customerId : jobsTable.providerId))
+    .where(eq(jobCol, id))
+    .orderBy(desc(jobsTable.createdAt))
+    .limit(200);
+
+  const totals = jobs.reduce(
+    (acc, j) => {
+      acc.jobs += 1;
+      acc.gmv += Number(j.gmv);
+      acc.brokerFee += Number(j.brokerFee);
+      acc.providerNet += Number(j.providerNet);
+      if (j.status === "completed") acc.completed += 1;
+      return acc;
+    },
+    { jobs: 0, completed: 0, gmv: 0, brokerFee: 0, providerNet: 0 },
+  );
+
+  res.json({
+    profile: {
+      id: profile.id,
+      role: profile.role,
+      companyName: profile.companyName,
+      dba: profile.dba ?? null,
+      contactName: profile.contactName,
+      email: profile.email,
+      phone: profile.phone,
+      website: profile.website ?? null,
+      address: profile.address ?? null,
+      city: profile.city,
+      state: profile.state,
+      zip: profile.zip ?? null,
+      mcNumber: profile.mcNumber ?? null,
+      capacityTons: profile.capacityTons ?? null,
+      hourlyRate: profile.hourlyRate ?? null,
+      equipmentTypes: profile.equipmentTypes ?? null,
+      paymentTerms: profile.paymentTerms ?? null,
+      createdAt: profile.createdAt,
+    },
+    totals: {
+      jobs: totals.jobs,
+      completed: totals.completed,
+      gmv: totals.gmv,
+      brokerFee: totals.brokerFee,
+      providerEarned: isProvider ? totals.providerNet : 0,
+    },
+    jobs,
+  });
+});
+
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Staff team management ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 router.get("/admin/staff", requireStaffOrProfile, requirePermission("view_staff"), async (_req, res): Promise<void> => {
   const rows = await db
     .select()
@@ -514,7 +601,7 @@ router.patch("/admin/staff/:profileId", requireStaffOrProfile, requirePermission
   res.json({ ...profileSummary(rec), staffRole: rec.staffRole });
 });
 
-// Ã¢ÂÂÃ¢ÂÂ Carrier compliance review Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Carrier compliance review ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 router.get("/admin/compliance", requireStaffOrProfile, requirePermission("compliance"), async (_req, res): Promise<void> => {
   const bundles = await listProviderComplianceBundles();
   res.json(bundles);
@@ -646,7 +733,7 @@ router.patch("/admin/compliance/:profileId", requireStaffOrProfile, requirePermi
   res.json({ ...rec, canBid: await getProviderCanBid(profileId) });
 });
 
-// Ã¢ÂÂÃ¢ÂÂ Customer credit-application review Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Customer credit-application review ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 router.get("/admin/credit-applications", requireStaffOrProfile, requirePermission("credit"), async (_req, res): Promise<void> => {
   const rows = await db
     .select({ rec: creditApplicationsTable, profile: profilesTable })
@@ -696,7 +783,7 @@ router.patch("/admin/credit-applications/:profileId", requireStaffOrProfile, req
   res.json({ ...rec, estimatedMonthlySpend: rec.estimatedMonthlySpend ? parseFloat(rec.estimatedMonthlySpend) : null });
 });
 
-// Ã¢ÂÂÃ¢ÂÂ Stuck provider payouts Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Stuck provider payouts ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 // Jobs parked in `requires_action` whose customer charge already succeeded but
 // whose provider transfer never completed. The background sweep resolves these
 // automatically; these endpoints let an admin see what's outstanding and nudge
@@ -749,7 +836,7 @@ router.post("/admin/stuck-payouts/:id/retry", requireStaffOrProfile, requirePerm
 // underlying problem (e.g. the provider fixed their Stripe Connect account).
 // This zeroes the consecutive failure counter and clears the alert timestamp so
 // the most-failed-first sort and "Alerted" badges stay meaningful. It does NOT
-// attempt a transfer Ã¢ÂÂ that's what /retry is for.
+// attempt a transfer ÃÂ¢ÃÂÃÂ that's what /retry is for.
 router.post("/admin/stuck-payouts/:id/reset-failures", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
   const jobId = Number(req.params.id);
   if (!Number.isInteger(jobId)) {
