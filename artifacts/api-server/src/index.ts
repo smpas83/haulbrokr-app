@@ -4,6 +4,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { startPayoutRetryScheduler } from "./lib/payoutRetryScheduler";
 import { startOrphanUploadCleaner } from "./lib/orphanUploadCleaner";
+import { startDocReminderScheduler } from "./lib/docReminderScheduler";
 
 validateProductionEnv();
 
@@ -30,4 +31,5 @@ app.listen(port, (err) => {
   logger.info({ port }, "Server listening");
   startPayoutRetryScheduler();
   startOrphanUploadCleaner();
+  startDocReminderScheduler();
 });
