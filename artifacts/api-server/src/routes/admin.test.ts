@@ -51,6 +51,7 @@ vi.mock("@workspace/db", () => {
         p.where = () => makeChain();
         p.leftJoin = () => makeChain();
         p.innerJoin = () => makeChain();
+        p.groupBy = () => Promise.resolve(h.selectRows);
         p.orderBy = () => Promise.resolve(h.selectRows);
         return p;
       };
