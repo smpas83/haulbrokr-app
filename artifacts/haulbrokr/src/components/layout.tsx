@@ -10,6 +10,7 @@ import { useGetMyProfile, useGetAdminAccess } from "@workspace/api-client-react"
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { DocumentGateBanner } from "@/components/documents";
 
 interface NavItem {
   href: string;
@@ -163,6 +164,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </header>
 
         <div className="flex-1 overflow-auto p-4 md:p-8 pb-24 md:pb-8">
+          <DocumentGateBanner />
           {children}
         </div>
 
