@@ -99,6 +99,17 @@ export function Layout({ children }: { children: ReactNode }) {
   const isCustomer = profile?.role === "customer";
   const isProvider = profile?.role === "provider";
 
+  // HAULBROKR staff are identified by an @haulbrokr.com email address. Admin
+  // surfaces are reserved for staff only, so we require BOTH the backend admin
+  // grant AND a verified @haulbrokr.com email before exposing them. This makes
+  // sure customers and vendors can never see admin tooling even if the backend
+  // admin check is ever misconfigured.
+  const STAFF_EMAIL_DOMAIN = "@haulbrokr.com";
+  const isStaffEmail = (user?.emailAddresses ?? []).some(
+    (e: any) => e?.emailAddress?.toLowerCase().endsWith(STAFF_EMAIL_DOMAIN)
+  );
+  const isStaff = !!adminAccess?.isAdmin && isStaffEmail;
+
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
     { href: "/requests", label: isCustomer ? "My Requests" : "Job Board", icon: ClipboardList, show: true },
@@ -108,8 +119,9 @@ export function Layout({ children }: { children: ReactNode }) {
     { href: "/company", label: "Company", icon: Building2, show: isCustomer || isProvider },
     { href: "/factoring", label: "Get Paid Early", icon: DollarSign, show: isProvider },
     { href: "/bins", label: "Bin Rental", icon: Trash2, show: true },
-    { href: "/integrations", label: "Integrations", icon: Plug, show: true },
-    { href: "/admin", label: "Admin", icon: ShieldCheck, show: !!adminAccess?.isAdmin },
+    // Integrations and Admin are staff-only (HAULBROKR employees).
+    { href: "/integrations", label: "Integrations", icon: Plug, show: isStaff },
+    { href: "/admin", label: "Admin", icon: ShieldCheck, show: isStaff },
     { href: "/account", label: "Account", icon: Settings, show: true },
   ];
 
