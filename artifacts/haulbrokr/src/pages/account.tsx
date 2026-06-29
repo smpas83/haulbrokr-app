@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { 
   Loader2, CheckCircle2, AlertCircle, Clock, ShieldAlert,
-  CreditCard, Banknote, HelpCircle, ShieldCheck, FileText
+  CreditCard, Banknote, HelpCircle, ShieldCheck, FileText, ArrowRight
 } from "lucide-react";
 import {
   useGetMyProfile, useUpdateMyProfile, getGetMyProfileQueryKey,
@@ -1324,7 +1324,14 @@ function ComplianceTab() {
                 <span className="font-bold">Payment Method</span>
                 <span className="text-sm text-muted-foreground">Billing source for accepted bids</span>
               </div>
-              <StatusBadge status={status.paymentStatus === "set" ? "verified" : "not_set"} text={status.paymentStatus === "set" ? "Set" : "Not Set"} />
+              {status.paymentStatus === "set" ? (
+                <StatusBadge status="verified" text="Set" />
+              ) : (
+                <a href="?tab=payment" className="inline-flex items-center gap-2 rounded-none border-2 border-amber-400 px-3 py-1 text-sm font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-400/10">
+                  Set up
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              )}
             </div>
           )}
         </div>
