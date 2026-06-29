@@ -25,6 +25,7 @@ export interface AdminOverviewV2 {
   activeJobs: number; inProgressJobs: number; completedJobs: number; cancelledJobs: number;
   newCarriers: number; newCustomers: number; drivers: number; supervisors: number;
   stuckPayouts: number; pendingCompliance: number; pendingCredit: number; openBinOrders: number;
+  documentsPending: number; documentsExpired: number;
 }
 interface JobRow {
   id: number; status: string; paymentStatus: string; materialType: string; truckType: string;
@@ -44,6 +45,14 @@ interface RequestRow {
 interface PersonRow {
   id: number; role: string; companyName: string; contactName: string | null; email: string | null;
   phone: string | null; city: string | null; state: string | null; mcNumber: string | null; createdAt: string;
+}
+interface DocRow {
+  id: number; profileId: number; docType: string; status: string;
+  fileName: string | null; objectPath: string | null; docNumber: string | null;
+  expiry: string | null; reviewNote: string | null; uploadedAt: string | null;
+  verifiedAt: string | null; updatedAt: string | null;
+  companyName: string | null; contactName: string | null; email: string | null;
+  role: string | null; city: string | null; state: string | null;
 }
 
 const money = (n: number) =>
@@ -72,10 +81,51 @@ function downloadCSV(filename: string, rows: Record<string, any>[]) {
 
 const dateFmt = (s?: string) => (s ? new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
 
+// Document presentation helpers ─────────────────────────────────────────────
+const DOC_LABELS: Record<string, string> = {
+  w9: "W-9", coi: "Insurance (COI)", dot_authority: "DOT authority",
+  dot_medical_card: "DOT medical card", mc_authority: "MC authority",
+  cdl_front: "CDL (front)", cdl_back: "CDL (back)", dl_front: "Driver license (front)",
+  dl_back: "Driver license (back)", drug_test: "Drug test", mvr: "MVR",
+  ssn_card: "SSN card", background_check: "Background check", twic: "TWIC",
+  business_license: "Business license", vehicle_registration: "Vehicle registration",
+  equipment_list: "Equipment list", signed_carrier_agreement: "Carrier agreement",
+  voided_check: "Voided check", ach_authorization: "ACH authorization",
+  safety_rating: "Safety rating", bond: "Bond",
+  po_template: "PO template", tax_exempt_certificate: "Tax-exempt certificate",
+};
+const docLabel = (t: string) => DOC_LABELS[t] ?? t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+// objectPath is stored as "/objects/<...>"; the server streams it from
+// /api/storage/objects/<...> with the same BASE_URL prefix apiFetch uses.
+function docHref(objectPath: string | null): string | null {
+  if (!objectPath) return null;
+  const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+  const rel = objectPath.replace(/^\/objects\//, "");
+  return `${base}/api/storage/objects/${rel}`;
+}
+
+const isExpired = (expiry: string | null) => !!expiry && new Date(expiry).getTime() < Date.now();
+
+function DocStatusBadge({ status, expiry }: { status: string; expiry?: string | null }) {
+  if (isExpired(expiry ?? null) && status === "verified") {
+    return <Badge variant="outline" className="rounded-none border-amber-500 text-amber-600">Expired</Badge>;
+  }
+  const map: Record<string, string> = {
+    verified: "border-green-600 text-green-700",
+    uploaded: "border-blue-500 text-blue-600",
+    rejected: "border-red-500 text-red-600",
+    missing: "border-muted-foreground/40 text-muted-foreground",
+  };
+  const cls = map[status] ?? "border-muted-foreground/40 text-muted-foreground";
+  return <Badge variant="outline" className={`rounded-none capitalize ${cls}`}>{status}</Badge>;
+}
+
 type Drill =
   | { kind: "jobs"; status: string; title: string }
   | { kind: "requests"; status: string; title: string }
   | { kind: "people"; role: string; title: string }
+  | { kind: "documents"; status: string; docType?: string; title: string }
   | null;
 
 // ── Clickable metric card ────────────────────────────────────────────────────
@@ -136,8 +186,13 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
     queryFn: () => apiFetch<PersonRow[]>(`/admin/people?role=${encodeURIComponent((drill as any).role)}`),
     enabled: open && drill?.kind === "people",
   });
+  const documents = useQuery({
+    queryKey: ["admin-documents", drill && drill.kind === "documents" ? `${drill.status}|${drill.docType ?? ""}` : ""],
+    queryFn: () => apiFetch<DocRow[]>(`/admin/documents?status=${encodeURIComponent((drill as any).status)}&type=${encodeURIComponent((drill as any).docType ?? "")}`),
+    enabled: open && drill?.kind === "documents",
+  });
 
-  const loading = jobs.isLoading || requests.isLoading || people.isLoading;
+  const loading = jobs.isLoading || requests.isLoading || people.isLoading || documents.isLoading;
   const ql = q.trim().toLowerCase();
   const match = (...vals: (string | null | undefined)[]) =>
     !ql || vals.filter(Boolean).some((v) => String(v).toLowerCase().includes(ql));
@@ -149,6 +204,12 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
       ? (requests.data ?? []).filter((r) => match(r.customerName, r.materialType, r.pickupAddress, r.deliveryAddress))
       : drill?.kind === "people"
       ? (people.data ?? []).filter((r) => match(r.companyName, r.contactName, r.email, r.city))
+      : drill?.kind === "documents"
+      ? (documents.data ?? []).filter((r) => match(r.companyName, r.contactName, r.email, r.docType, r.fileName)).map((r) => ({
+          id: r.id, company: r.companyName, role: r.role, document: docLabel(r.docType),
+          status: r.status, fileName: r.fileName, docNumber: r.docNumber,
+          expiry: r.expiry ? dateFmt(r.expiry) : "", updated: r.updatedAt ? dateFmt(r.updatedAt) : "",
+        }))
       : [];
 
   const handleExport = () => {
@@ -237,6 +298,32 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
                     <td className="text-right pr-1"><ChevronRight className="w-4 h-4 text-muted-foreground inline" /></td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          ) : drill?.kind === "documents" ? (
+            <table className="w-full text-sm">
+              <thead className="text-xs uppercase text-muted-foreground border-b">
+                <tr><th className="text-left py-2">Document</th><th className="text-left">Company</th><th className="text-left">Expiry</th><th className="text-left pl-3">Status</th><th className="text-right pr-1">File</th></tr>
+              </thead>
+              <tbody>
+                {(documents.data ?? []).filter((r) => match(r.companyName, r.contactName, r.email, r.docType, r.fileName)).map((r) => {
+                  const href = docHref(r.objectPath);
+                  return (
+                    <tr key={r.id} onClick={() => setSelectedPersonId(r.profileId)} className="border-b last:border-0 hover:bg-muted/60 cursor-pointer">
+                      <td className="py-2 font-medium">{docLabel(r.docType)}{r.docNumber ? <div className="text-xs text-muted-foreground">#{r.docNumber}</div> : null}</td>
+                      <td><div>{r.companyName ?? "—"}</div><div className="text-xs text-muted-foreground capitalize">{r.role ?? ""}</div></td>
+                      <td className={`text-xs ${isExpired(r.expiry) ? "text-amber-600 font-medium" : ""}`}>{r.expiry ? dateFmt(r.expiry) : "—"}</td>
+                      <td className="pl-3"><DocStatusBadge status={r.status} expiry={r.expiry} /></td>
+                      <td className="text-right pr-1" onClick={(e) => e.stopPropagation()}>
+                        {href ? (
+                          <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                            <FileStack className="w-3.5 h-3.5" /> View
+                          </a>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           ) : null}
@@ -419,6 +506,11 @@ interface ProfileDetailResp {
     pickupAddress: string; deliveryAddress: string; scheduledDate: string; completedAt: string | null;
     gmv: number; brokerFee: number; providerNet: number; otherName: string | null; createdAt: string;
   }>;
+  documents: Array<{
+    id: number; docType: string; status: string; fileName: string | null; objectPath: string | null;
+    docNumber: string | null; expiry: string | null; reviewNote: string | null;
+    uploadedAt: string | null; verifiedAt: string | null; updatedAt: string | null;
+  }>;
 }
 
 const money2 = (n: number) =>
@@ -520,6 +612,40 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
                           <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(j.status).replace(/_/g, " ")}</Badge></td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+              {/* Compliance documents */}
+              <div>
+                <div className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                  Documents ({d.documents.length})
+                </div>
+                {d.documents.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-4 text-center border rounded-none">No documents uploaded.</div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="text-xs uppercase text-muted-foreground border-b">
+                      <tr><th className="text-left py-2">Document</th><th className="text-left">Expiry</th><th className="text-left pl-3">Status</th><th className="text-right pr-1">File</th></tr>
+                    </thead>
+                    <tbody>
+                      {d.documents.map((doc) => {
+                        const href = docHref(doc.objectPath);
+                        return (
+                          <tr key={doc.id} className="border-b last:border-0">
+                            <td className="py-2 font-medium">{docLabel(doc.docType)}{doc.docNumber ? <div className="text-xs text-muted-foreground">#{doc.docNumber}</div> : null}{doc.reviewNote ? <div className="text-xs text-muted-foreground italic">{doc.reviewNote}</div> : null}</td>
+                            <td className={`text-xs ${isExpired(doc.expiry) ? "text-amber-600 font-medium" : ""}`}>{doc.expiry ? dateFmt(doc.expiry) : "—"}</td>
+                            <td className="pl-3"><DocStatusBadge status={doc.status} expiry={doc.expiry} /></td>
+                            <td className="text-right pr-1">
+                              {href ? (
+                                <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                                  <FileStack className="w-3.5 h-3.5" /> View
+                                </a>
+                              ) : <span className="text-xs text-muted-foreground">—</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 )}
@@ -652,6 +778,13 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
         <MetricCard icon={<Truck className="w-3.5 h-3.5" />} label="Carriers (vendors)" value={d.newCarriers.toLocaleString()} hint="Provider accounts" onClick={() => setDrill({ kind: "people", role: "provider", title: "Carriers / vendors" })} />
         <MetricCard icon={<HardHat className="w-3.5 h-3.5" />} label="Drivers" value={d.drivers.toLocaleString()} hint="Driver accounts" onClick={() => setDrill({ kind: "people", role: "driver", title: "Drivers" })} />
         <MetricCard icon={<UserCog className="w-3.5 h-3.5" />} label="Supervisors" value={d.supervisors.toLocaleString()} hint="Site supervisors" onClick={() => setDrill({ kind: "people", role: "supervisor", title: "Supervisors" })} />
+      </Section>
+
+      <Section title="Compliance documents">
+        <MetricCard icon={<FileStack className="w-3.5 h-3.5" />} label="Pending review" value={d.documentsPending.toLocaleString()} hint="Uploaded, awaiting approval" onClick={() => setDrill({ kind: "documents", status: "uploaded", title: "Documents pending review" })} />
+        <MetricCard icon={<XCircle className="w-3.5 h-3.5" />} label="Expired" value={d.documentsExpired.toLocaleString()} hint="Past expiry date" accent={d.documentsExpired > 0} onClick={() => setDrill({ kind: "documents", status: "expired", title: "Expired documents" })} />
+        <MetricCard icon={<PackageCheck className="w-3.5 h-3.5" />} label="Verified" value="View" hint="All approved documents" onClick={() => setDrill({ kind: "documents", status: "verified", title: "Verified documents" })} />
+        <MetricCard icon={<ClipboardList className="w-3.5 h-3.5" />} label="All documents" value="View" hint="Every uploaded file" onClick={() => setDrill({ kind: "documents", status: "", title: "All documents" })} />
       </Section>
 
       {d.cancelledJobs > 0 && (
