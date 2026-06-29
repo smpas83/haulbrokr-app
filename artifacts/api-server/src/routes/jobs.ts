@@ -12,6 +12,7 @@ import {
   ticketsTable,
   trucksTable,
   jobStatusUpdatesTable,
+  driverDocumentsTable,
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isAdmin } from "../middlewares/requireAdmin";
@@ -348,6 +349,63 @@ router.get("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   }
   const { customerCompany, providerCompany } = await companiesFor(job);
   res.json(GetJobResponse.parse(serializeJob(job, customerCompany, providerCompany)));
+});
+
+/**
+ * GET /jobs/:id/carrier-documents — the awarded carrier's shareable compliance
+ * documents (COI / W-9 / DOT authority) for a job. Visible to the job's customer
+ * (and any job member / staff) once a carrier has been assigned. Only documents
+ * the customer needs to see are returned, and unverified files are flagged.
+ */
+const CUSTOMER_VISIBLE_DOC_TYPES = ["coi", "w9", "dot_authority"] as const;
+
+router.get("/jobs/:id/carrier-documents", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const params = GetJobParams.safeParse({ id: parseInt(raw, 10) });
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const job = await loadJobIfMember(params.data.id, profile);
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+  if (!job.providerId) {
+    // No carrier assigned yet — nothing to share.
+    res.json({ providerId: null, providerCompany: null, documents: [] });
+    return;
+  }
+
+  const [providerCompany] = await db
+    .select({ id: profilesTable.id, companyName: profilesTable.companyName, contactName: profilesTable.contactName })
+    .from(profilesTable)
+    .where(eq(profilesTable.id, job.providerId));
+
+  const docs = await db
+    .select({
+      docType: driverDocumentsTable.docType,
+      status: driverDocumentsTable.status,
+      fileName: driverDocumentsTable.fileName,
+      objectPath: driverDocumentsTable.objectPath,
+      expiry: driverDocumentsTable.expiry,
+      updatedAt: driverDocumentsTable.updatedAt,
+    })
+    .from(driverDocumentsTable)
+    .where(
+      and(
+        eq(driverDocumentsTable.profileId, job.providerId),
+        inArray(driverDocumentsTable.docType, CUSTOMER_VISIBLE_DOC_TYPES as unknown as string[]),
+      ),
+    );
+
+  res.json({
+    providerId: job.providerId,
+    providerCompany: providerCompany?.companyName ?? providerCompany?.contactName ?? null,
+    documents: docs,
+  });
 });
 
 /**
