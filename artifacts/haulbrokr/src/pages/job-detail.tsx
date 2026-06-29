@@ -20,6 +20,7 @@ import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CarrierDocuments } from "@/components/documents";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -1453,6 +1454,10 @@ export default function JobDetailPage() {
 
         {isProvider && (job.status === "accepted" || job.status === "active" || job.status === "in_progress") && (
           <AssignDriverPanel job={job} />
+        )}
+
+        {isCustomer && (job.status === "accepted" || job.status === "active" || job.status === "in_progress" || job.status === "completed") && (
+          <CarrierDocuments jobId={job.id} />
         )}
 
         {isDriver && <DriverFieldOpsPanel job={job} />}
