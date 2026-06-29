@@ -76,13 +76,16 @@ function isStaffRole(value: unknown): value is StaffRole {
 // never a self-serve hole in prod.
 function isAllowlistedSuperadmin(req: Request): boolean {
   const clerkId = req.clerkId;
+  if (!clerkId) return false;
   const allowlist = (process.env.ADMIN_USER_IDS ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-   // No allowlist configured → never auto-grant admin. Only an explicit
-  // ADMIN_USER_IDS entry or a real staff session (staffRole) grants access.
-  return false;
+  // Only an explicit ADMIN_USER_IDS entry bootstraps superadmin. With no
+  // allowlist configured we never auto-grant — access then comes solely from a
+  // real staff session (the profile's staffRole column).
+  if (allowlist.length === 0) return false;
+  return allowlist.includes(clerkId);
 }
 
 // Resolve the effective staff role for a request. Allowlisted/dev superadmins

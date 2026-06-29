@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Loader2, CheckCircle2, AlertCircle, Clock, ShieldAlert,
   ShieldCheck, CreditCard, Truck, Building2, X, Banknote, ArrowRight, RotateCcw,
@@ -23,6 +23,7 @@ import {
 } from "@workspace/api-client-react";
 
 import { useToast } from "@/hooks/use-toast";
+import { apiFetch } from "@/lib/apiFetch";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -595,7 +596,7 @@ const STAFF_ROLE_LABELS: Record<string, string> = {
 const STAFF_ROLE_OPTIONS = ["ceo", "president", "cfo", "cto", "accounting", "it", "programmer"] as const;
 
 function roleLabel(role?: string | null): string {
-  if (!role) return "â";
+  if (!role) return "\u2014";
   return STAFF_ROLE_LABELS[role] ?? role.toUpperCase();
 }
 
@@ -629,8 +630,8 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
             <UserCog className="w-4 h-4 text-primary" /> {member.companyName}
           </div>
           <div className="text-sm text-muted-foreground">
-            {member.contactName || "â"}
-            {member.email ? ` Â· ${member.email}` : ""}
+            {member.contactName || "\u2014"}
+            {member.email ? ` \u00b7 ${member.email}` : ""}
           </div>
         </div>
         {canManage ? (
@@ -668,6 +669,87 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
   );
 }
 
+interface StaffSearchResult {
+  id: number; role: string | null; staffRole: string | null;
+  companyName: string | null; contactName: string | null; email: string | null;
+  city: string | null; state: string | null;
+}
+
+// Search any user and grant them a staff role. Only rendered for manage_staff users.
+function AddStaffPanel() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [term, setTerm] = useState("");
+  const update = useUpdateStaffRole();
+
+  const search = useQuery({
+    queryKey: ["admin-staff-search", term],
+    queryFn: () => apiFetch<StaffSearchResult[]>(`/admin/staff/search?q=${encodeURIComponent(term)}`),
+    enabled: term.trim().length >= 2,
+  });
+
+  function assign(member: StaffSearchResult, staffRole: string) {
+    update.mutate(
+      { profileId: member.id, data: { staffRole: staffRole as UpdateStaffRoleInput["staffRole"] } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListAdminStaffQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ["admin-staff-search"] });
+          toast({ title: "Staff added", description: `${member.companyName ?? member.contactName ?? "User"} is now ${roleLabel(staffRole)}.` });
+        },
+        onError: () => toast({ title: "Couldn't assign role", variant: "destructive" }),
+      },
+    );
+  }
+
+  const results = search.data ?? [];
+  return (
+    <Card className="rounded-none border-2 border-dashed">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2"><UserPlus className="w-4 h-4 text-primary" /> Add a staff member</CardTitle>
+        <CardDescription>Search any registered user by name, company, or email, then assign them a staff role.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <input
+          type="text"
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          placeholder={"Search by name, company, or email\u2026"}
+          className="w-full border-2 rounded-none bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        {term.trim().length < 2 ? (
+          <p className="text-xs text-muted-foreground">Type at least 2 characters to search.</p>
+        ) : search.isLoading ? (
+          <Skeleton className="h-16 w-full" />
+        ) : results.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No users match “{term}”.</p>
+        ) : (
+          <div className="space-y-2">
+            {results.map((m) => (
+              <div key={m.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-2 p-3">
+                <div className="min-w-0">
+                  <div className="font-medium text-sm truncate">{m.companyName || m.contactName || "Unnamed"}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {m.contactName && m.companyName ? `${m.contactName} \u00b7 ` : ""}{m.email || ""}
+                    {m.staffRole ? ` \u00b7 currently ${roleLabel(m.staffRole)}` : ""}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {STAFF_ROLE_OPTIONS.map((role) => (
+                    <Button key={role} size="sm" variant={m.staffRole === role ? "default" : "outline"} className="rounded-none border-2" disabled={update.isPending} onClick={() => assign(m, role)}>
+                      {STAFF_ROLE_LABELS[role]}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function StaffPanel({ enabled, canManage }: { enabled: boolean; canManage: boolean }) {
   const staff = useListAdminStaff({ query: { enabled, queryKey: getListAdminStaffQueryKey() } });
   const members = staff.data ?? [];
@@ -685,6 +767,7 @@ function StaffPanel({ enabled, canManage }: { enabled: boolean; canManage: boole
           <>You can view the HaulBrokr team roster. Editing staff roles is reserved for CFO, CTO, and IT.</>
         )}
       </p>
+      {canManage && <AddStaffPanel />}
       {staff.isLoading ? (
         <Skeleton className="h-32 w-full" />
       ) : members.length === 0 ? (
