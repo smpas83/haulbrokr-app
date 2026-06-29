@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileText, ShieldCheck, Loader2, Eye, Trash2, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
+import { useGetMyProfile } from "@workspace/api-client-react";
 
 // ── Shared document model ────────────────────────────────────────────────────
 export interface DriverDoc {
@@ -39,6 +40,11 @@ const PROVIDER_DOC_SPECS: DocSpec[] = [
   { id: "bond", label: "Surety Bond", description: "Broker / carrier bond, if applicable", required: false },
 ];
 
+const CUSTOMER_DOC_SPECS: DocSpec[] = [
+  { id: "w9", label: "W-9 Tax Form", description: "Signed W-9 for billing & payments", required: true },
+  { id: "cos", label: "Certificate of Status (COS)", description: "State certificate of good standing", required: false },
+];
+
 const DOC_LABELS: Record<string, string> = Object.fromEntries(PROVIDER_DOC_SPECS.map((s) => [s.id, s.label]));
 const docLabel = (t: string) => DOC_LABELS[t] ?? t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -63,8 +69,10 @@ function StatusBadge({ status, expiry }: { status: string; expiry?: string | nul
 }
 
 // ── Vendor self-service upload list (Account page) ───────────────────────────
-export function VendorDocuments() {
+export function AccountDocuments() {
   const qc = useQueryClient();
+  const { data: profile } = useGetMyProfile();
+  const specs = (profile as any)?.role === "customer" ? CUSTOMER_DOC_SPECS : PROVIDER_DOC_SPECS;
   const { toast } = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -110,7 +118,7 @@ export function VendorDocuments() {
         <p className="text-sm text-muted-foreground">Upload your compliance documents. Customers can view your COI, W-9, and DOT authority once they award you a job.</p>
       </div>
       <div className="border divide-y">
-        {PROVIDER_DOC_SPECS.map((spec) => {
+        {specs.map((spec) => {
           const doc = byType[spec.id];
           const href = storageHref(doc?.objectPath ?? null);
           const uploading = busy === spec.id;
@@ -254,9 +262,12 @@ export function DocumentGateBanner() {
           : "Please upload your documents to keep your account active. "}
         <span className="text-muted-foreground">Outstanding: {data.missing.join(", ")}.</span>
       </div>
-      <Link href="/account">
+      <Link href="/account?tab=documents">
         <Button size="sm" className="rounded-none shrink-0">Upload documents</Button>
       </Link>
     </div>
   );
 }
+
+
+export const VendorDocuments = AccountDocuments;
