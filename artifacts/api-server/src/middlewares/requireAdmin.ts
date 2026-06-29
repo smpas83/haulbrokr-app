@@ -75,17 +75,24 @@ function isStaffRole(value: unknown): value is StaffRole {
 // outside production so the demo/dev flow can exercise the admin dashboard —
 // never a self-serve hole in prod.
 function isAllowlistedSuperadmin(req: Request): boolean {
-  const clerkId = req.clerkId;
-  if (!clerkId) return false;
   const allowlist = (process.env.ADMIN_USER_IDS ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  // Only an explicit ADMIN_USER_IDS entry bootstraps superadmin. With no
-  // allowlist configured we never auto-grant — access then comes solely from a
-  // real staff session (the profile's staffRole column).
-  if (allowlist.length === 0) return false;
-  return allowlist.includes(clerkId);
+
+  // When an explicit allowlist is configured, only those Clerk IDs bootstrap
+  // superadmin. This is the intended production path: set ADMIN_USER_IDS to the
+  // first admin's Clerk user ID, then assign the rest from the Team tab.
+  if (allowlist.length > 0) {
+    const clerkId = req.clerkId;
+    return !!clerkId && allowlist.includes(clerkId);
+  }
+
+  // No allowlist configured. Outside production we grant superadmin so the
+  // dev/test/demo flow can exercise the admin dashboard without seeding a
+  // staffRole first. In production with no allowlist we never auto-grant —
+  // access then comes solely from a real staff session (staffRole column).
+  return process.env.NODE_ENV !== "production";
 }
 
 // Resolve the effective staff role for a request. Allowlisted/dev superadmins
