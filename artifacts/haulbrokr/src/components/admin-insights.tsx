@@ -11,14 +11,14 @@ import {
 import {
   DollarSign, TrendingUp, Banknote, Briefcase, Activity, PackageCheck,
   ClipboardList, FileStack, XCircle, Truck, Users, UserCog, HardHat,
-  MapPin, ArrowRight, Search, ChevronRight, Building2, Phone, Mail, Globe, Loader2,
+  MapPin, ArrowRight, Search, ChevronRight, Building2, Phone, Mail, Globe, Loader2, Download, CalendarRange,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend,
 } from "recharts";
 
-// Ã¢ÂÂÃ¢ÂÂ Types returned by the expanded /admin endpoints Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// Types returned by the expanded /admin endpoints ──────────────────────────
 export interface AdminOverviewV2 {
   gmv: number; brokerFees: number; realisedProfit: number; realisedGmv: number; avgJobValue: number;
   requestsPosted: number; openRequests: number; totalJobs: number; acceptedJobs: number;
@@ -49,8 +49,28 @@ interface PersonRow {
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n || 0);
 const loc = (city?: string | null, state?: string | null) =>
-  [city, state].filter(Boolean).join(", ") || "Ã¢ÂÂ";
-const dateFmt = (s?: string) => (s ? new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Ã¢ÂÂ");
+  [city, state].filter(Boolean).join(", ") || "—";
+// CSV export helpers — turn an array of flat row objects into a downloadable file.
+function toCSV(rows: Record<string, any>[]): string {
+  if (!rows.length) return "";
+  const cols = Array.from(rows.reduce((set, r) => { Object.keys(r).forEach((k) => set.add(k)); return set; }, new Set<string>()));
+  const esc = (v: any) => {
+    if (v === null || v === undefined) return "";
+    const s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  return [cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\n");
+}
+function downloadCSV(filename: string, rows: Record<string, any>[]) {
+  const blob = new Blob([toCSV(rows)], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const dateFmt = (s?: string) => (s ? new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
 
 type Drill =
   | { kind: "jobs"; status: string; title: string }
@@ -58,7 +78,7 @@ type Drill =
   | { kind: "people"; role: string; title: string }
   | null;
 
-// Ã¢ÂÂÃ¢ÂÂ Clickable metric card Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ── Clickable metric card ────────────────────────────────────────────────────
 function MetricCard({
   icon, label, value, hint, accent, onClick,
 }: {
@@ -94,10 +114,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-// Ã¢ÂÂÃ¢ÂÂ Drill-down dialog Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ── Drill-down dialog ────────────────────────────────────────────────────────
 function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) {
   const [q, setQ] = useState("");
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const open = !!drill;
 
   const jobs = useQuery({
@@ -121,16 +142,45 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
   const match = (...vals: (string | null | undefined)[]) =>
     !ql || vals.filter(Boolean).some((v) => String(v).toLowerCase().includes(ql));
 
+  const activeRows: Record<string, any>[] =
+    drill?.kind === "jobs"
+      ? (jobs.data ?? []).filter((r) => match(r.customerName, r.providerName, r.materialType, r.pickupAddress, r.deliveryAddress))
+      : drill?.kind === "requests"
+      ? (requests.data ?? []).filter((r) => match(r.customerName, r.materialType, r.pickupAddress, r.deliveryAddress))
+      : drill?.kind === "people"
+      ? (people.data ?? []).filter((r) => match(r.companyName, r.contactName, r.email, r.city))
+      : [];
+
+  const handleExport = () => {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const base = (drill?.title ?? "export").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    downloadCSV(`haulbrokr-${base}-${stamp}.csv`, activeRows);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-4xl rounded-none max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>{drill?.title}</DialogTitle>
-          <DialogDescription>Live records from your platform database.</DialogDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <DialogTitle>{drill?.title}</DialogTitle>
+              <DialogDescription>
+                {loading ? "Loading…" : `${activeRows.length} record${activeRows.length === 1 ? "" : "s"} · live from your database`}
+              </DialogDescription>
+            </div>
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={loading || activeRows.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-none hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" /> Export CSV
+            </button>
+          </div>
         </DialogHeader>
         <div className="relative mb-2">
           <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, location, materialÃ¢ÂÂ¦" className="pl-8 rounded-none" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, location, material…" className="pl-8 rounded-none" />
         </div>
         <div className="overflow-auto flex-1 -mx-1 px-1">
           {loading ? (
@@ -142,11 +192,11 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
               </thead>
               <tbody>
                 {(jobs.data ?? []).filter((r) => match(r.customerName, r.providerName, r.materialType, r.pickupAddress, r.deliveryAddress)).map((r) => (
-                  <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
-                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} ÃÂ· {String(r.truckType).replace(/_/g, " ")}</div></td>
-                    <td><div>{r.customerName ?? "Ã¢ÂÂ"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
-                    <td><div>{r.providerName ?? "Ã¢ÂÂ"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.providerCity, r.providerState)}</div></td>
-                    <td className="text-xs max-w-[200px]"><div className="truncate" title={r.pickupAddress}>Ã¢ÂÂ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>Ã¢ÂÂ {r.deliveryAddress}</div></td>
+                  <tr key={r.id} onClick={() => setSelectedJobId(r.id)} className="border-b last:border-0 hover:bg-muted/60 cursor-pointer">
+                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} · {String(r.truckType).replace(/_/g, " ")}</div></td>
+                    <td><div>{r.customerName ?? "—"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
+                    <td><div>{r.providerName ?? "—"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.providerCity, r.providerState)}</div></td>
+                    <td className="text-xs max-w-[200px]"><div className="truncate" title={r.pickupAddress}>↑ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>↓ {r.deliveryAddress}</div></td>
                     <td className="text-right tabular-nums">{money(r.gmv)}</td>
                     <td className="text-right tabular-nums text-primary font-medium">{money(r.brokerFee)}</td>
                     <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
@@ -162,10 +212,10 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
               <tbody>
                 {(requests.data ?? []).filter((r) => match(r.customerName, r.materialType, r.pickupAddress, r.deliveryAddress)).map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
-                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} ÃÂ· {r.quantityTons} tons ÃÂ· {r.trucksNeeded} trucks</div></td>
-                    <td><div>{r.customerName ?? "Ã¢ÂÂ"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
-                    <td className="text-xs max-w-[220px]"><div className="truncate" title={r.pickupAddress}>Ã¢ÂÂ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>Ã¢ÂÂ {r.deliveryAddress}</div></td>
-                    <td className="text-right tabular-nums">{r.budgetPerHour ? money(Number(r.budgetPerHour)) : "Ã¢ÂÂ"}</td>
+                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} · {r.quantityTons} tons · {r.trucksNeeded} trucks</div></td>
+                    <td><div>{r.customerName ?? "—"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
+                    <td className="text-xs max-w-[220px]"><div className="truncate" title={r.pickupAddress}>↑ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>↓ {r.deliveryAddress}</div></td>
+                    <td className="text-right tabular-nums">{r.budgetPerHour ? money(Number(r.budgetPerHour)) : "—"}</td>
                     <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
                   </tr>
                 ))}
@@ -180,10 +230,10 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
                 {(people.data ?? []).filter((r) => match(r.companyName, r.contactName, r.email, r.city)).map((r) => (
                   <tr key={r.id} onClick={() => setSelectedPersonId(r.id)} className="border-b last:border-0 hover:bg-muted/60 cursor-pointer">
                     <td className="py-2 font-medium">{r.companyName}{r.mcNumber ? <div className="text-xs text-muted-foreground">MC# {r.mcNumber}</div> : null}</td>
-                    <td>{r.contactName ?? "Ã¢ÂÂ"}</td>
+                    <td>{r.contactName ?? "—"}</td>
                     <td><div className="text-xs flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.city, r.state)}</div></td>
-                    <td className="text-xs">{r.email ?? "Ã¢ÂÂ"}</td>
-                    <td className="text-xs">{r.phone ?? "Ã¢ÂÂ"}</td>
+                    <td className="text-xs">{r.email ?? "—"}</td>
+                    <td className="text-xs">{r.phone ?? "—"}</td>
                     <td className="text-right pr-1"><ChevronRight className="w-4 h-4 text-muted-foreground inline" /></td>
                   </tr>
                 ))}
@@ -192,12 +242,13 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
           ) : null}
         </div>
         <PersonDetail id={selectedPersonId} onClose={() => setSelectedPersonId(null)} />
+        <JobDetail id={selectedJobId} onClose={() => setSelectedJobId(null)} />
       </DialogContent>
     </Dialog>
   );
 }
 
-// Ã¢ÂÂÃ¢ÂÂ Main insights dashboard Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ── Main insights dashboard ──────────────────────────────────────────────────
 interface TimeseriesPoint {
   bucket: string; label: string; jobs: number; gmv: number; brokerFees: number;
   completed: number; customers: number; providers: number; drivers: number;
@@ -224,9 +275,17 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 
 function AdminCharts({ enabled, overview }: { enabled: boolean; overview: AdminOverviewV2 }) {
   const [months, setMonths] = useState(6);
+  const [custom, setCustom] = useState(false);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  const customActive = custom && !!from && !!to && from <= to;
+  const tsUrl = customActive
+    ? `/admin/timeseries?from=${from}&to=${to}`
+    : `/admin/timeseries?months=${months}`;
   const ts = useQuery({
-    queryKey: ["admin-timeseries", months],
-    queryFn: () => apiFetch<TimeseriesResp>(`/admin/timeseries?months=${months}`),
+    queryKey: ["admin-timeseries", customActive ? `${from}_${to}` : `m${months}`],
+    queryFn: () => apiFetch<TimeseriesResp>(tsUrl),
     enabled,
   });
 
@@ -249,19 +308,35 @@ function AdminCharts({ enabled, overview }: { enabled: boolean; overview: AdminO
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Trends</h2>
-        <div className="flex gap-1">
-          {[3, 6, 12].map((m) => (
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex gap-1">
+            {[3, 6, 12].map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => { setCustom(false); setMonths(m); }}
+                className={`px-3 py-1 text-xs border rounded-none ${!customActive && months === m ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
+              >
+                {m}m
+              </button>
+            ))}
             <button
-              key={m}
               type="button"
-              onClick={() => setMonths(m)}
-              className={`px-3 py-1 text-xs border rounded-none ${months === m ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
+              onClick={() => setCustom((c) => !c)}
+              className={`flex items-center gap-1 px-3 py-1 text-xs border rounded-none ${customActive ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
             >
-              {m}m
+              <CalendarRange className="w-3.5 h-3.5" /> Custom
             </button>
-          ))}
+          </div>
+          {custom && (
+            <div className="flex items-center gap-1 text-xs">
+              <Input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="h-8 rounded-none w-[140px]" />
+              <span className="text-muted-foreground">→</span>
+              <Input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="h-8 rounded-none w-[140px]" />
+            </div>
+          )}
         </div>
       </div>
 
@@ -457,6 +532,90 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
   );
 }
 
+interface JobDetailResp {
+  id: number; status: string; paymentStatus: string; materialType: string; truckType: string;
+  pickupAddress: string; deliveryAddress: string; scheduledDate: string; completedAt: string | null;
+  gmv: number; brokerFee: number; providerNet: number; createdAt: string;
+  customerId: number; providerId: number;
+  customerName: string | null; customerContact: string | null; customerEmail: string | null;
+  customerPhone: string | null; customerCity: string | null; customerState: string | null;
+  providerName: string | null; providerContact: string | null; providerEmail: string | null;
+  providerPhone: string | null; providerCity: string | null; providerState: string | null;
+}
+
+function PartyCard({ title, name, contact, email, phone, city, state }: {
+  title: string; name: string | null; contact: string | null; email: string | null;
+  phone: string | null; city: string | null; state: string | null;
+}) {
+  return (
+    <div className="border rounded-none p-4 space-y-1">
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{title}</div>
+      <div className="font-semibold">{name ?? "—"}</div>
+      {contact ? <div className="text-sm">{contact}</div> : null}
+      <div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(city, state)}</div>
+      {email ? <div className="text-xs flex items-center gap-1"><Mail className="w-3 h-3" />{email}</div> : null}
+      {phone ? <div className="text-xs flex items-center gap-1"><Phone className="w-3 h-3" />{phone}</div> : null}
+    </div>
+  );
+}
+
+function JobDetail({ id, onClose }: { id: number | null; onClose: () => void }) {
+  const detail = useQuery({
+    queryKey: ["admin-job", id],
+    queryFn: () => apiFetch<JobDetailResp>(`/admin/job/${id}`),
+    enabled: id !== null,
+  });
+  const j = detail.data;
+  const usd = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n || 0);
+
+  return (
+    <Dialog open={id !== null} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl rounded-none max-h-[88vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Briefcase className="w-5 h-5" />
+            {j ? `Job #${j.id}` : (detail.isLoading ? "Loading…" : "Job")}
+            {j?.status ? <Badge variant="outline" className="rounded-none capitalize">{String(j.status).replace(/_/g, " ")}</Badge> : null}
+          </DialogTitle>
+          <DialogDescription>{j ? `${j.materialType} · ${String(j.truckType).replace(/_/g, " ")}` : "Full job details."}</DialogDescription>
+        </DialogHeader>
+
+        {detail.isLoading ? (
+          <div className="flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading job…</div>
+        ) : !j ? (
+          <div className="text-sm text-muted-foreground py-8 text-center">Couldn't load this job.</div>
+        ) : (
+          <div className="space-y-5">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="border rounded-none p-3"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">GMV</div><div className="text-lg font-bold tabular-nums">{usd(j.gmv)}</div></div>
+              <div className="border rounded-none p-3"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">Broker fee</div><div className="text-lg font-bold tabular-nums text-primary">{usd(j.brokerFee)}</div></div>
+              <div className="border rounded-none p-3"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">Carrier net</div><div className="text-lg font-bold tabular-nums">{usd(j.providerNet)}</div></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <PartyCard title="Customer" name={j.customerName} contact={j.customerContact} email={j.customerEmail} phone={j.customerPhone} city={j.customerCity} state={j.customerState} />
+              <PartyCard title="Carrier" name={j.providerName} contact={j.providerContact} email={j.providerEmail} phone={j.providerPhone} city={j.providerCity} state={j.providerState} />
+            </div>
+
+            <div className="border rounded-none p-4 space-y-2">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Route</div>
+              <div className="text-sm flex items-start gap-2"><span className="text-muted-foreground">↑ Pickup</span><span className="font-medium">{j.pickupAddress}</span></div>
+              <div className="text-sm flex items-start gap-2"><span className="text-muted-foreground">↓ Drop</span><span className="font-medium">{j.deliveryAddress}</span></div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div><div className="text-xs text-muted-foreground">Payment</div><div className="font-medium capitalize">{String(j.paymentStatus).replace(/_/g, " ")}</div></div>
+              <div><div className="text-xs text-muted-foreground">Scheduled</div><div className="font-medium">{dateFmt(j.scheduledDate)}</div></div>
+              <div><div className="text-xs text-muted-foreground">Completed</div><div className="font-medium">{j.completedAt ? dateFmt(j.completedAt) : "—"}</div></div>
+              <div><div className="text-xs text-muted-foreground">Created</div><div className="font-medium">{dateFmt(j.createdAt)}</div></div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function AdminInsights({ enabled }: { enabled: boolean }) {
   const [drill, setDrill] = useState<Drill>(null);
   const overview = useQuery({
@@ -478,7 +637,7 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
         <MetricCard accent icon={<DollarSign className="w-3.5 h-3.5" />} label="GMV (billed)" value={money(d.gmv)} hint="Total customer-billed" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (GMV)" })} />
         <MetricCard accent icon={<TrendingUp className="w-3.5 h-3.5" />} label="Broker-fee revenue" value={money(d.brokerFees)} hint="15% platform fee on all jobs" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (broker fees)" })} />
         <MetricCard accent icon={<Banknote className="w-3.5 h-3.5" />} label="Profit realised" value={money(d.realisedProfit)} hint="Broker fees on paid-out jobs" onClick={() => setDrill({ kind: "jobs", status: "completed", title: "Completed jobs" })} />
-        <MetricCard icon={<Activity className="w-3.5 h-3.5" />} label="Avg job value" value={money(d.avgJobValue)} hint="GMV ÃÂ· total jobs" />
+        <MetricCard icon={<Activity className="w-3.5 h-3.5" />} label="Avg job value" value={money(d.avgJobValue)} hint="GMV · total jobs" />
       </Section>
 
       <Section title="Jobs funnel">
