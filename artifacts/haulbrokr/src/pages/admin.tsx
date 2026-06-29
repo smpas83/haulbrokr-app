@@ -6,6 +6,7 @@ import {
   Users, UserCog, Package, MapPin, Calendar, PackageCheck,
   LayoutDashboard, DollarSign, TrendingUp, Briefcase, Activity, UserPlus, Lock,
 } from "lucide-react";
+import { AdminInsights } from "@/components/admin-insights";
 import {
   useGetAdminAccess,
   useGetAdminOverview, getGetAdminOverviewQueryKey,
@@ -32,7 +33,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 /**
  * Approve / reject controls shared by the carrier and credit cards. Rejecting
- * reveals a reason box so the admin can explain why — that note is stored and
+ * reveals a reason box so the admin can explain why â that note is stored and
  * sent to the applicant. Any previously saved review note is shown above.
  */
 function ReviewActions({
@@ -68,7 +69,7 @@ function ReviewActions({
         <div className="space-y-2">
           <Textarea
             autoFocus
-            placeholder="Reason for rejection (shared with the applicant)…"
+            placeholder="Reason for rejection (shared with the applicant)â¦"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             className="rounded-none border-2 min-h-[72px]"
@@ -134,7 +135,7 @@ function Field({ label, value }: { label: string; value?: ReactNode }) {
   return (
     <div>
       <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="text-sm font-medium">{value === null || value === undefined || value === "" ? "—" : value}</div>
+      <div className="text-sm font-medium">{value === null || value === undefined || value === "" ? "â" : value}</div>
     </div>
   );
 }
@@ -280,9 +281,9 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
             <Truck className="w-4 h-4 text-primary" /> {item.profile.companyName}
           </CardTitle>
           <CardDescription>
-            {item.profile.contactName || "—"}
-            {item.profile.email ? ` · ${item.profile.email}` : ""}
-            {item.profile.city ? ` · ${item.profile.city}, ${item.profile.state ?? ""}` : ""}
+            {item.profile.contactName || "â"}
+            {item.profile.email ? ` Â· ${item.profile.email}` : ""}
+            {item.profile.city ? ` Â· ${item.profile.city}, ${item.profile.state ?? ""}` : ""}
           </CardDescription>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -313,7 +314,7 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <Field label="Legal name" value={item.w9.legalName} />
                   <Field label="Business name" value={item.w9.businessName} />
-                  <Field label="Tax ID" value={`${item.w9.taxIdType?.toUpperCase() ?? "?"} ····${item.w9.taxIdLast4 ?? "????"}`} />
+                  <Field label="Tax ID" value={`${item.w9.taxIdType?.toUpperCase() ?? "?"} Â·Â·Â·Â·${item.w9.taxIdLast4 ?? "????"}`} />
                 </div>
               </DocumentReviewSection>
             )}
@@ -388,7 +389,7 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <Field label="CDL #" value={item.dotCdl.cdlNumber} />
-                  <Field label="CDL state / class" value={[item.dotCdl.cdlState, item.dotCdl.cdlClass].filter(Boolean).join(" · ") || null} />
+                  <Field label="CDL state / class" value={[item.dotCdl.cdlState, item.dotCdl.cdlClass].filter(Boolean).join(" Â· ") || null} />
                   <Field label="CDL expiry" value={item.dotCdl.cdlExpiry ? new Date(item.dotCdl.cdlExpiry).toLocaleDateString() : null} />
                 </div>
                 {item.dotCdl.reviewNote && item.dotCdl.status === "rejected" && (
@@ -436,8 +437,8 @@ function CreditCard_({ item }: { item: AdminCreditApplicationItem }) {
             <Building2 className="w-4 h-4 text-primary" /> {item.profile.companyName}
           </CardTitle>
           <CardDescription>
-            {item.profile.contactName || "—"}
-            {item.profile.email ? ` · ${item.profile.email}` : ""}
+            {item.profile.contactName || "â"}
+            {item.profile.email ? ` Â· ${item.profile.email}` : ""}
           </CardDescription>
         </div>
         <ReviewBadge status={item.status} />
@@ -482,7 +483,7 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
         onSuccess: (result) => {
           queryClient.invalidateQueries({ queryKey: getListStuckPayoutsQueryKey() });
           if (result.outcome === "released") {
-            toast({ title: "Payout released", description: `Job #${item.id} — ${item.providerCompany} has been paid.` });
+            toast({ title: "Payout released", description: `Job #${item.id} â ${item.providerCompany} has been paid.` });
           } else {
             toast({ title: "Payout not released", description: result.message });
           }
@@ -499,7 +500,7 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListStuckPayoutsQueryKey() });
-          toast({ title: "Failures reset", description: `Job #${item.id} — failure count and alert cleared.` });
+          toast({ title: "Failures reset", description: `Job #${item.id} â failure count and alert cleared.` });
         },
         onError: () =>
           toast({ title: "Reset failed", description: "Couldn't clear the failure count. Try again shortly.", variant: "destructive" }),
@@ -512,7 +513,7 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Banknote className="w-4 h-4 text-primary" /> Job #{item.id} · {item.materialType}
+            <Banknote className="w-4 h-4 text-primary" /> Job #{item.id} Â· {item.materialType}
           </CardTitle>
           <CardDescription className="flex items-center gap-1.5">
             {item.customerCompany} <ArrowRight className="w-3 h-3" /> {item.providerCompany}
@@ -551,7 +552,7 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
         </div>
         <div className="pt-2 border-t">
           <p className="text-xs text-muted-foreground mb-3">
-            The customer's payment already went through — only the provider transfer is pending. Releasing
+            The customer's payment already went through â only the provider transfer is pending. Releasing
             retries the transfer; the customer is never re-charged.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -594,7 +595,7 @@ const STAFF_ROLE_LABELS: Record<string, string> = {
 const STAFF_ROLE_OPTIONS = ["ceo", "president", "cfo", "cto", "accounting", "it", "programmer"] as const;
 
 function roleLabel(role?: string | null): string {
-  if (!role) return "—";
+  if (!role) return "â";
   return STAFF_ROLE_LABELS[role] ?? role.toUpperCase();
 }
 
@@ -628,8 +629,8 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
             <UserCog className="w-4 h-4 text-primary" /> {member.companyName}
           </div>
           <div className="text-sm text-muted-foreground">
-            {member.contactName || "—"}
-            {member.email ? ` · ${member.email}` : ""}
+            {member.contactName || "â"}
+            {member.email ? ` Â· ${member.email}` : ""}
           </div>
         </div>
         {canManage ? (
@@ -697,7 +698,7 @@ function StaffPanel({ enabled, canManage }: { enabled: boolean; canManage: boole
 
 // Bin-order fulfilment lifecycle. Each non-terminal status exposes exactly one
 // forward move; this mirrors the server's ADVANCE_TRANSITIONS so the UI only ever
-// offers a valid next step (picked_up and cancelled are terminal → no action).
+// offers a valid next step (picked_up and cancelled are terminal â no action).
 const BIN_NEXT_ACTION: Record<
   string,
   { status: AdvanceBinOrderInput["status"]; label: string }
@@ -726,10 +727,10 @@ function BinStatusBadge({ displayStatus }: { displayStatus: string }) {
 }
 
 function formatBinDate(value?: string | null): string {
-  if (!value) return "—";
+  if (!value) return "â";
   const d = new Date(value);
   return Number.isNaN(d.getTime())
-    ? "—"
+    ? "â"
     : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
@@ -759,10 +760,10 @@ function BinOrderCard({ order }: { order: BinOrder }) {
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Package className="w-4 h-4 text-primary" />
-            {order.quantity > 1 ? `${order.quantity}× ` : ""}{order.binSizeLabel} {order.binTypeLabel}
+            {order.quantity > 1 ? `${order.quantity}Ã ` : ""}{order.binSizeLabel} {order.binTypeLabel}
           </CardTitle>
           <CardDescription className="flex items-center gap-1.5">
-            <Building2 className="w-3 h-3" /> {order.customerCompany || "Customer"} · {order.serviceType === "temporary" ? "Temporary" : "Permanent"}
+            <Building2 className="w-3 h-3" /> {order.customerCompany || "Customer"} Â· {order.serviceType === "temporary" ? "Temporary" : "Permanent"}
           </CardDescription>
         </div>
         <BinStatusBadge displayStatus={order.displayStatus} />
@@ -795,7 +796,7 @@ function BinOrderCard({ order }: { order: BinOrder }) {
           ) : (
             <p className="text-xs text-muted-foreground">
               {order.status === "picked_up"
-                ? "This order is complete — the bin has been hauled away."
+                ? "This order is complete â the bin has been hauled away."
                 : "This order was cancelled. No further action."}
             </p>
           )}
@@ -1096,7 +1097,7 @@ export default function AdminPage() {
           <p className="text-muted-foreground mt-1">
             Platform overview, carrier &amp; credit review, payouts, bin orders, and team management.
             {(access as { staffDisplayName?: string | null }).staffDisplayName
-              ? ` · Signed in as ${(access as { staffDisplayName?: string | null }).staffDisplayName}`
+              ? ` Â· Signed in as ${(access as { staffDisplayName?: string | null }).staffDisplayName}`
               : ""}
           </p>
         </div>
@@ -1162,7 +1163,7 @@ export default function AdminPage() {
 
         {canOverview && (
           <TabsContent value="overview" className="space-y-4 mt-4">
-            <OverviewPanel enabled={canOverview && activeTab === "overview"} onJump={setTab} canBins={canBins} />
+            <AdminInsights enabled={canOverview && activeTab === "overview"} />
           </TabsContent>
         )}
 
@@ -1195,7 +1196,7 @@ export default function AdminPage() {
             {payouts.isLoading ? (
               <Skeleton className="h-48 w-full" />
             ) : payoutItems.length === 0 ? (
-              <EmptyState label="No stuck payouts — all provider transfers are settled." />
+              <EmptyState label="No stuck payouts â all provider transfers are settled." />
             ) : (
               payoutItems.map((item) => <StuckPayoutCard key={item.id} item={item} />)
             )}
