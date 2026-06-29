@@ -67,12 +67,17 @@
     "zod-validation-error": "^3.4.0"
   },
   "dependencies": {
-    "expo-apple-authentication": "^56.0.4",
+    "expo-apple-authentication": "^8.0.8",
     "expo-build-properties": "~1.0.10",
     "expo-camera": "^17.0.10",
     "expo-clipboard": "^8.0.8",
     "expo-localization": "^17.0.9",
     "react-native-maps": "1.20.1",
     "react-native-qrcode-svg": "^6.3.21"
+  },
+  "expo": {
+    "doctor": {
+      "appConfigFieldsNotSyncedCheckEnabled": false
+    }
   }
 }

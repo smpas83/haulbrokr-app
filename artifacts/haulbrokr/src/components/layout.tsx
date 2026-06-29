@@ -127,7 +127,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const visibleNav = navItems.filter(i => i.show);
 
-  const handleSignOut = () => signOut({ redirectUrl: "/" });
+  const handleSignOut = () => signOut(() => { window.location.href = import.meta.env.BASE_URL; });
 
   return (
     <div className="flex min-h-screen bg-muted/30">

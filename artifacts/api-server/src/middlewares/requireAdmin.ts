@@ -80,8 +80,9 @@ function isAllowlistedSuperadmin(req: Request): boolean {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  if (allowlist.length > 0) return !!clerkId && allowlist.includes(clerkId);
-  return process.env.NODE_ENV !== "production";
+   // No allowlist configured → never auto-grant admin. Only an explicit
+  // ADMIN_USER_IDS entry or a real staff session (staffRole) grants access.
+  return false;
 }
 
 // Resolve the effective staff role for a request. Allowlisted/dev superadmins
