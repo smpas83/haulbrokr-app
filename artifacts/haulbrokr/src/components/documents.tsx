@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, ShieldCheck, Loader2, Eye, Trash2, AlertTriangle } from "lucide-react";
+import { Upload, FileText, ShieldCheck, Loader2, Eye, Trash2, AlertTriangle, UploadCloud } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Link } from "wouter";
 import { useGetMyProfile } from "@workspace/api-client-react";
 
@@ -18,6 +20,7 @@ export interface DriverDoc {
   fileName: string | null;
   objectPath: string | null;
   docNumber?: string | null;
+  reviewNote?: string | null;
   expiry: string | null;
   uploadedAt?: string | null;
   updatedAt?: string | null;
@@ -75,6 +78,7 @@ export function AccountDocuments() {
   const specs = (profile as any)?.role === "customer" ? CUSTOMER_DOC_SPECS : PROVIDER_DOC_SPECS;
   const { toast } = useToast();
   const [busy, setBusy] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const docsQuery = useQuery({
@@ -108,56 +112,127 @@ export function AccountDocuments() {
   }
 
   if (docsQuery.isLoading) {
-    return <div className="space-y-3">{[0,1,2].map((i) => <Skeleton key={i} className="h-16 w-full rounded-none" />)}</div>;
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-20 w-full rounded-none" />
+        {[0, 1, 2].map((i) => <Skeleton key={i} className="h-28 w-full rounded-none" />)}
+      </div>
+    );
+  }
+
+  const requiredSpecs = specs.filter((s) => s.required);
+  const verifiedCount = requiredSpecs.filter((s) => byType[s.id]?.status === "verified").length;
+  const pct = requiredSpecs.length ? Math.round((verifiedCount / requiredSpecs.length) * 100) : 100;
+  const allDone = verifiedCount === requiredSpecs.length;
+  const isCustomer = (profile as any)?.role === "customer";
+
+  function onDrop(e: React.DragEvent, docType: string) {
+    e.preventDefault();
+    setDragOver(null);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(docType, file);
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-semibold">Documents</h2>
-        <p className="text-sm text-muted-foreground">Upload your compliance documents. Customers can view your COI, W-9, and DOT authority once they award you a job.</p>
-      </div>
-      <div className="border divide-y">
+    <div className="space-y-6">
+      <Card className="rounded-none border-2 p-5">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center justify-center w-11 h-11 border-2 ${allDone ? "border-green-600 text-green-700" : "border-primary text-primary"}`}>
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">Documents</h2>
+              <p className="text-sm text-muted-foreground">
+                {isCustomer
+                  ? "Keep your account in good standing by uploading the required forms."
+                  : "Verified documents unlock bidding and faster payouts."}
+              </p>
+            </div>
+          </div>
+          <div className={`px-3 py-1 border-2 text-sm font-semibold whitespace-nowrap ${allDone ? "border-green-600 text-green-700 bg-green-50" : "border-primary/40 text-foreground"}`}>
+            {verifiedCount} / {requiredSpecs.length} verified
+          </div>
+        </div>
+        <div className="mt-4">
+          <Progress value={pct} className="h-2 rounded-none" />
+        </div>
+      </Card>
+
+      <div className="grid gap-3">
         {specs.map((spec) => {
           const doc = byType[spec.id];
           const href = storageHref(doc?.objectPath ?? null);
           const uploading = busy === spec.id;
+          const status = doc?.status ?? "missing";
+          const hasFile = !!doc?.objectPath;
+          const rejected = status === "rejected";
           return (
-            <div key={spec.id} className="flex items-center gap-3 p-3">
-              <FileText className="w-5 h-5 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm flex items-center gap-2">
-                  {spec.label}
-                  {spec.required && <span className="text-xs text-muted-foreground">(required)</span>}
+            <Card
+              key={spec.id}
+              className={`rounded-none border-2 p-4 transition-colors ${dragOver === spec.id ? "border-primary bg-primary/5" : rejected ? "border-red-300" : "hover:border-primary/40"}`}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(spec.id); }}
+              onDragLeave={() => setDragOver((d) => (d === spec.id ? null : d))}
+              onDrop={(e) => onDrop(e, spec.id)}
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex items-center justify-center w-11 h-11 border-2 border-muted-foreground/20 text-muted-foreground shrink-0">
+                  <FileText className="w-5 h-5" />
                 </div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {doc?.fileName ? doc.fileName : spec.description}
-                  {doc?.expiry ? ` · expires ${new Date(doc.expiry).toLocaleDateString()}` : ""}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">{spec.label}</span>
+                    {spec.required
+                      ? <span className="text-[10px] uppercase tracking-wider text-muted-foreground border px-1.5 py-0.5">Required</span>
+                      : <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 border px-1.5 py-0.5">Optional</span>}
+                    <StatusBadge status={status} expiry={doc?.expiry ?? null} />
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 truncate">
+                    {hasFile ? doc?.fileName : spec.description}
+                    {doc?.expiry ? ` · expires ${new Date(doc.expiry).toLocaleDateString()}` : ""}
+                  </div>
+                  {rejected && doc?.reviewNote && (
+                    <div className="mt-2 flex items-start gap-1.5 text-xs text-red-600">
+                      <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      <span>{doc.reviewNote}</span>
+                    </div>
+                  )}
+                  {!hasFile && (
+                    <div className="mt-3 border-2 border-dashed border-muted-foreground/25 p-3 text-center text-xs text-muted-foreground">
+                      <UploadCloud className="w-5 h-5 mx-auto mb-1 opacity-60" />
+                      Drag and drop a file here, or use the button. PDF, JPG, or PNG.
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <input
+                    ref={(el) => { inputs.current[spec.id] = el; }}
+                    type="file"
+                    className="hidden"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => { const fl = e.target.files?.[0]; if (fl) handleFile(spec.id, fl); e.target.value = ""; }}
+                  />
+                  <Button size="sm" variant={hasFile ? "outline" : "default"} className="rounded-none w-28 justify-center" disabled={uploading} onClick={() => inputs.current[spec.id]?.click()}>
+                    {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    <span className="ml-1">{hasFile ? "Replace" : "Upload"}</span>
+                  </Button>
+                  {href && (
+                    <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                      <Eye className="w-3.5 h-3.5" /> View file
+                    </a>
+                  )}
+                  {hasFile && (
+                    <button
+                      className="inline-flex items-center gap-1 text-muted-foreground hover:text-red-600 text-xs disabled:opacity-50"
+                      disabled={remove.isPending}
+                      onClick={() => remove.mutate(spec.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Remove
+                    </button>
+                  )}
                 </div>
               </div>
-              <StatusBadge status={doc?.status ?? "missing"} expiry={doc?.expiry ?? null} />
-              {href && (
-                <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
-                  <Eye className="w-3.5 h-3.5" /> View
-                </a>
-              )}
-              <input
-                ref={(el) => { inputs.current[spec.id] = el; }}
-                type="file"
-                className="hidden"
-                accept="image/*,application/pdf"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(spec.id, f); e.target.value = ""; }}
-              />
-              <Button size="sm" variant="outline" className="rounded-none" disabled={uploading} onClick={() => inputs.current[spec.id]?.click()}>
-                {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                <span className="ml-1">{doc?.objectPath ? "Replace" : "Upload"}</span>
-              </Button>
-              {doc?.objectPath && (
-                <Button size="sm" variant="ghost" className="rounded-none text-muted-foreground" disabled={remove.isPending} onClick={() => remove.mutate(spec.id)}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              )}
-            </div>
+            </Card>
           );
         })}
       </div>
