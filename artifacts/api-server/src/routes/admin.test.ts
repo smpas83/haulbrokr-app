@@ -53,6 +53,8 @@ vi.mock("@workspace/db", () => {
         p.innerJoin = () => makeChain();
         p.groupBy = () => Promise.resolve(h.selectRows);
         p.orderBy = () => Promise.resolve(h.selectRows);
+        p.limit = () => Promise.resolve(h.selectRows);
+        p.limit = () => Promise.resolve(h.selectRows);
         return p;
       };
       return { from: () => makeChain() };
@@ -65,6 +67,7 @@ vi.mock("@workspace/db", () => {
     profilesTable: makeTable("profiles"),
     activityTable: makeTable("activity"),
     jobsTable: makeTable("jobs"),
+    requestsTable: makeTable("requests"),
     binOrders: makeTable("binOrders"),
     w9SubmissionsTable: makeTable("w9Submissions"),
     insuranceSubmissionsTable: makeTable("insuranceSubmissions"),
