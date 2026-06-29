@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileText, ShieldCheck, Loader2, Eye, Trash2, AlertTriangle } from "lucide-react";
+import { Link } from "wouter";
 
 // ── Shared document model ────────────────────────────────────────────────────
 export interface DriverDoc {
@@ -210,6 +211,52 @@ export function CarrierDocuments({ jobId }: { jobId: number }) {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ── App-wide gate banner ─────────────────────────────────────────────────────
+interface DocStatusResp {
+  profileId: number;
+  role: string;
+  complete: boolean;
+  gated: boolean;
+  missing: string[];
+  items: { key: string; label: string; satisfied: boolean; status: string }[];
+}
+
+/**
+ * Persistent banner shown until the signed-in user's required documents are
+ * complete. Carriers see a hard-gate tone; customers see a softer reminder.
+ * Rendered app-wide from the main layout.
+ */
+export function DocumentGateBanner() {
+  const { data } = useQuery({
+    queryKey: ["my-document-status"],
+    queryFn: () => apiFetch<DocStatusResp>("/profiles/me/document-status"),
+    retry: false,
+    staleTime: 60_000,
+  });
+
+  if (!data || data.complete || data.missing.length === 0) return null;
+
+  const hard = data.gated; // carriers
+  return (
+    <div className={`mb-4 border-2 rounded-none p-3 flex flex-col sm:flex-row sm:items-center gap-2 ${hard ? "border-red-500 bg-red-50" : "border-amber-400 bg-amber-50"}`}>
+      <AlertTriangle className={`w-5 h-5 shrink-0 ${hard ? "text-red-600" : "text-amber-600"}`} />
+      <div className="flex-1 min-w-0 text-sm">
+        <span className="font-semibold">
+          {hard ? "Action required: " : "Reminder: "}
+        </span>
+        {hard
+          ? "Upload and verify your documents to start bidding and accepting jobs. "
+          : "Please upload your documents to keep your account active. "}
+        <span className="text-muted-foreground">Outstanding: {data.missing.join(", ")}.</span>
+      </div>
+      <Link href="/account">
+        <Button size="sm" className="rounded-none shrink-0">Upload documents</Button>
+      </Link>
     </div>
   );
 }
