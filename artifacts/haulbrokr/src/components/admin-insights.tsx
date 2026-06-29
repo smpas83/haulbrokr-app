@@ -13,8 +13,12 @@ import {
   ClipboardList, FileStack, XCircle, Truck, Users, UserCog, HardHat,
   MapPin, ArrowRight, Search,
 } from "lucide-react";
+import {
+  ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
+  PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend,
+} from "recharts";
 
-// ── Types returned by the expanded /admin endpoints ──────────────────────────
+// ââ Types returned by the expanded /admin endpoints ââââââââââââââââââââââââââ
 export interface AdminOverviewV2 {
   gmv: number; brokerFees: number; realisedProfit: number; realisedGmv: number; avgJobValue: number;
   requestsPosted: number; openRequests: number; totalJobs: number; acceptedJobs: number;
@@ -45,8 +49,8 @@ interface PersonRow {
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n || 0);
 const loc = (city?: string | null, state?: string | null) =>
-  [city, state].filter(Boolean).join(", ") || "—";
-const dateFmt = (s?: string) => (s ? new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
+  [city, state].filter(Boolean).join(", ") || "â";
+const dateFmt = (s?: string) => (s ? new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "â");
 
 type Drill =
   | { kind: "jobs"; status: string; title: string }
@@ -54,7 +58,7 @@ type Drill =
   | { kind: "people"; role: string; title: string }
   | null;
 
-// ── Clickable metric card ────────────────────────────────────────────────────
+// ââ Clickable metric card ââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function MetricCard({
   icon, label, value, hint, accent, onClick,
 }: {
@@ -90,7 +94,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-// ── Drill-down dialog ────────────────────────────────────────────────────────
+// ââ Drill-down dialog ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) {
   const [q, setQ] = useState("");
   const open = !!drill;
@@ -125,7 +129,7 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
         </DialogHeader>
         <div className="relative mb-2">
           <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, location, material…" className="pl-8 rounded-none" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, location, materialâ¦" className="pl-8 rounded-none" />
         </div>
         <div className="overflow-auto flex-1 -mx-1 px-1">
           {loading ? (
@@ -138,10 +142,10 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
               <tbody>
                 {(jobs.data ?? []).filter((r) => match(r.customerName, r.providerName, r.materialType, r.pickupAddress, r.deliveryAddress)).map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
-                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} · {String(r.truckType).replace(/_/g, " ")}</div></td>
-                    <td><div>{r.customerName ?? "—"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
-                    <td><div>{r.providerName ?? "—"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.providerCity, r.providerState)}</div></td>
-                    <td className="text-xs max-w-[200px]"><div className="truncate" title={r.pickupAddress}>↑ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>↓ {r.deliveryAddress}</div></td>
+                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} Â· {String(r.truckType).replace(/_/g, " ")}</div></td>
+                    <td><div>{r.customerName ?? "â"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
+                    <td><div>{r.providerName ?? "â"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.providerCity, r.providerState)}</div></td>
+                    <td className="text-xs max-w-[200px]"><div className="truncate" title={r.pickupAddress}>â {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>â {r.deliveryAddress}</div></td>
                     <td className="text-right tabular-nums">{money(r.gmv)}</td>
                     <td className="text-right tabular-nums text-primary font-medium">{money(r.brokerFee)}</td>
                     <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
@@ -157,10 +161,10 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
               <tbody>
                 {(requests.data ?? []).filter((r) => match(r.customerName, r.materialType, r.pickupAddress, r.deliveryAddress)).map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
-                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} · {r.quantityTons} tons · {r.trucksNeeded} trucks</div></td>
-                    <td><div>{r.customerName ?? "—"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
-                    <td className="text-xs max-w-[220px]"><div className="truncate" title={r.pickupAddress}>↑ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>↓ {r.deliveryAddress}</div></td>
-                    <td className="text-right tabular-nums">{r.budgetPerHour ? money(Number(r.budgetPerHour)) : "—"}</td>
+                    <td className="py-2 font-medium">#{r.id}<div className="text-xs text-muted-foreground capitalize">{r.materialType} Â· {r.quantityTons} tons Â· {r.trucksNeeded} trucks</div></td>
+                    <td><div>{r.customerName ?? "â"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
+                    <td className="text-xs max-w-[220px]"><div className="truncate" title={r.pickupAddress}>â {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>â {r.deliveryAddress}</div></td>
+                    <td className="text-right tabular-nums">{r.budgetPerHour ? money(Number(r.budgetPerHour)) : "â"}</td>
                     <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
                   </tr>
                 ))}
@@ -175,10 +179,10 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
                 {(people.data ?? []).filter((r) => match(r.companyName, r.contactName, r.email, r.city)).map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/40">
                     <td className="py-2 font-medium">{r.companyName}{r.mcNumber ? <div className="text-xs text-muted-foreground">MC# {r.mcNumber}</div> : null}</td>
-                    <td>{r.contactName ?? "—"}</td>
+                    <td>{r.contactName ?? "â"}</td>
                     <td><div className="text-xs flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.city, r.state)}</div></td>
-                    <td className="text-xs">{r.email ?? "—"}</td>
-                    <td className="text-xs">{r.phone ?? "—"}</td>
+                    <td className="text-xs">{r.email ?? "â"}</td>
+                    <td className="text-xs">{r.phone ?? "â"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -190,7 +194,139 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
   );
 }
 
-// ── Main insights dashboard ──────────────────────────────────────────────────
+// ââ Main insights dashboard ââââââââââââââââââââââââââââââââââââââââââââââââââ
+interface TimeseriesPoint {
+  bucket: string; label: string; jobs: number; gmv: number; brokerFees: number;
+  completed: number; customers: number; providers: number; drivers: number;
+}
+interface TimeseriesResp { months: number; series: TimeseriesPoint[]; }
+
+const COLORS = {
+  gmv: "#2563eb", broker: "#16a34a", jobs: "#f59e0b", completed: "#0ea5e9",
+  customers: "#6366f1", providers: "#ef4444", drivers: "#a855f7",
+};
+const STATUS_COLORS = ["#16a34a", "#f59e0b", "#0ea5e9", "#ef4444", "#94a3b8"];
+
+function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <Card className="rounded-none">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{title}</CardTitle>
+        {subtitle ? <p className="text-xs text-muted-foreground">{subtitle}</p> : null}
+      </CardHeader>
+      <CardContent className="h-64">{children}</CardContent>
+    </Card>
+  );
+}
+
+function AdminCharts({ enabled, overview }: { enabled: boolean; overview: AdminOverviewV2 }) {
+  const [months, setMonths] = useState(6);
+  const ts = useQuery({
+    queryKey: ["admin-timeseries", months],
+    queryFn: () => apiFetch<TimeseriesResp>(`/admin/timeseries?months=${months}`),
+    enabled,
+  });
+
+  const series = ts.data?.series ?? [];
+  const usd = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n || 0);
+
+  const statusData = [
+    { name: "Completed", value: overview.completedJobs, fill: STATUS_COLORS[0] },
+    { name: "Accepted", value: overview.acceptedJobs, fill: STATUS_COLORS[1] },
+    { name: "In progress", value: overview.inProgressJobs, fill: STATUS_COLORS[2] },
+    { name: "Cancelled", value: overview.cancelledJobs, fill: STATUS_COLORS[3] },
+  ].filter((s) => s.value > 0);
+
+  const peopleData = [
+    { name: "Customers", value: overview.newCustomers },
+    { name: "Carriers", value: overview.newCarriers },
+    { name: "Drivers", value: overview.drivers },
+    { name: "Supervisors", value: overview.supervisors },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Trends</h2>
+        <div className="flex gap-1">
+          {[3, 6, 12].map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMonths(m)}
+              className={`px-3 py-1 text-xs border rounded-none ${months === m ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
+            >
+              {m}m
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {ts.isLoading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}</div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ChartCard title="Revenue over time" subtitle="GMV billed and your 15% broker fee per month">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={series} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gGmv" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.gmv} stopOpacity={0.4} /><stop offset="95%" stopColor={COLORS.gmv} stopOpacity={0} /></linearGradient>
+                  <linearGradient id="gBroker" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={COLORS.broker} stopOpacity={0.5} /><stop offset="95%" stopColor={COLORS.broker} stopOpacity={0} /></linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="label" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => "$" + (v >= 1000 ? (v / 1000).toFixed(0) + "k" : v)} />
+                <RTooltip formatter={(v: number, n: string) => [usd(v), n === "gmv" ? "GMV" : "Broker fee"]} />
+                <Legend formatter={(v) => (v === "gmv" ? "GMV" : "Broker fee")} />
+                <Area type="monotone" dataKey="gmv" stroke={COLORS.gmv} fill="url(#gGmv)" strokeWidth={2} />
+                <Area type="monotone" dataKey="brokerFees" stroke={COLORS.broker} fill="url(#gBroker)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title="Jobs over time" subtitle="Jobs created vs hauls completed per month">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={series} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="label" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                <RTooltip />
+                <Legend formatter={(v) => (v === "jobs" ? "Created" : "Completed")} />
+                <Bar dataKey="jobs" fill={COLORS.jobs} radius={[2, 2, 0, 0]} />
+                <Bar dataKey="completed" fill={COLORS.completed} radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title="Job status mix" subtitle="Current distribution of all jobs">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={45} paddingAngle={2}>
+                  {statusData.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                </Pie>
+                <RTooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title="Network by role" subtitle="Accounts on the platform">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={peopleData} layout="vertical" margin={{ top: 8, right: 16, left: 20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <XAxis type="number" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" fontSize={11} tickLine={false} axisLine={false} width={80} />
+                <RTooltip />
+                <Bar dataKey="value" fill={COLORS.customers} radius={[0, 2, 2, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AdminInsights({ enabled }: { enabled: boolean }) {
   const [drill, setDrill] = useState<Drill>(null);
   const overview = useQuery({
@@ -207,11 +343,12 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
 
   return (
     <div className="space-y-6">
+      <AdminCharts enabled={enabled} overview={d} />
       <Section title="Money">
         <MetricCard accent icon={<DollarSign className="w-3.5 h-3.5" />} label="GMV (billed)" value={money(d.gmv)} hint="Total customer-billed" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (GMV)" })} />
         <MetricCard accent icon={<TrendingUp className="w-3.5 h-3.5" />} label="Broker-fee revenue" value={money(d.brokerFees)} hint="15% platform fee on all jobs" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (broker fees)" })} />
         <MetricCard accent icon={<Banknote className="w-3.5 h-3.5" />} label="Profit realised" value={money(d.realisedProfit)} hint="Broker fees on paid-out jobs" onClick={() => setDrill({ kind: "jobs", status: "completed", title: "Completed jobs" })} />
-        <MetricCard icon={<Activity className="w-3.5 h-3.5" />} label="Avg job value" value={money(d.avgJobValue)} hint="GMV ÷ total jobs" />
+        <MetricCard icon={<Activity className="w-3.5 h-3.5" />} label="Avg job value" value={money(d.avgJobValue)} hint="GMV Ã· total jobs" />
       </Section>
 
       <Section title="Jobs funnel">
