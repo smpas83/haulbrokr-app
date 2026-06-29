@@ -751,6 +751,38 @@ router.get("/admin/staff", requireStaffOrProfile, requirePermission("view_staff"
   res.json(rows.map((p) => ({ ...profileSummary(p), staffRole: p.staffRole })));
 });
 
+// GET /admin/staff/search?q= -> find any profile by name/email/company so a
+// manage_staff user can promote them. Returns the current staffRole too.
+router.get("/admin/staff/search", requireStaffOrProfile, requirePermission("manage_staff"), async (req, res): Promise<void> => {
+  const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  if (q.length < 2) {
+    res.json([]);
+    return;
+  }
+  const rows = await db
+    .select({
+      id: profilesTable.id,
+      role: profilesTable.role,
+      staffRole: profilesTable.staffRole,
+      companyName: profilesTable.companyName,
+      contactName: profilesTable.contactName,
+      email: profilesTable.email,
+      city: profilesTable.city,
+      state: profilesTable.state,
+    })
+    .from(profilesTable)
+    .where(
+      or(
+        ilike(profilesTable.companyName, `%${q}%`),
+        ilike(profilesTable.contactName, `%${q}%`),
+        ilike(profilesTable.email, `%${q}%`),
+      ),
+    )
+    .orderBy(desc(profilesTable.updatedAt))
+    .limit(25);
+  res.json(rows);
+});
+
 router.patch("/admin/staff/:profileId", requireStaffOrProfile, requirePermission("manage_staff"), async (req, res): Promise<void> => {
   const parsed = UpdateStaffRoleBody.safeParse(req.body);
   if (!parsed.success) {
