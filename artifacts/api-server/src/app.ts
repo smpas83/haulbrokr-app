@@ -40,6 +40,7 @@ app.use(
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
 app.use(cors({ credentials: true, origin: true }));
+app.options("*", cors({ credentials: true, origin: true }));
 app.use(cookieParser());
 
 // Stripe webhooks require the raw body for signature verification — mount before express.json().
