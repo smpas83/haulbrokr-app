@@ -1,11 +1,20 @@
-import { Router } from "express";
-import { requireAuth } from "../middlewares/requireAuth";
+import { Router, type Request, type Response } from "express";
+import { attachClerkProfileIfPresent, requireAuth } from "../middlewares/requireAuth";
 import { requirePermission } from "../middlewares/requireAdmin";
+import { attachStaffSession } from "../middlewares/staffAuth";
 import { db } from "@workspace/db";
 import { binOrders, profilesTable, activityTable } from "@workspace/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 const router = Router();
+const requireStaffOrClerkAuth = (req: Request, res: Response, next: () => void): void => {
+  if (req.staffUser) {
+    next();
+    return;
+  }
+  void requireAuth(req, res, next);
+};
+const requireBinAdmin = [attachStaffSession, attachClerkProfileIfPresent, requireStaffOrClerkAuth, requirePermission("bins")];
 
 // ── Bin catalog (server-side source of truth for sizes / pricing) ───────────
 // Each entry carries both the API enum codes (serviceType / binSize / binType)
@@ -136,7 +145,7 @@ const BIN_ORDER_STATUSES = [
 // operations staff use this to work the fulfillment queue and see which orders
 // need confirming, delivering, or picking up. Returns the same enriched shape as
 // GET /bin-orders.
-router.get("/admin/bin-orders", requireAuth, requirePermission("bins"), async (req, res) => {
+router.get("/admin/bin-orders", requireBinAdmin, async (req: Request, res: Response): Promise<void> => {
   const status = req.query.status as string | undefined;
 
   if (status !== undefined && !BIN_ORDER_STATUSES.includes(status as any)) {
@@ -361,7 +370,7 @@ async function notifyBinOrderStatusChanged(
 // provider, so HaulBrokr operations staff move them forward as the bin is dropped
 // off and hauled away. Customers use the cancel endpoint above. Each successful
 // transition notifies the customer in-app.
-router.patch("/bin-orders/:id/status", requireAuth, requirePermission("bins"), async (req, res) => {
+router.patch("/bin-orders/:id/status", requireBinAdmin, async (req: Request, res: Response): Promise<void> => {
   const id = req.params.id as string;
   const status = req.body?.status;
 

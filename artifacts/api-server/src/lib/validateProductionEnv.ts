@@ -52,6 +52,7 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   // Render (API host)
   { service: "render", variable: "PORT", required: true, description: "HTTP listen port (8080 on Render)." },
   { service: "render", variable: "NODE_ENV", required: true, description: "Must be production on Render." },
+  { service: "render", variable: "CORS_ALLOWED_ORIGINS", required: true, description: "Comma-separated https:// browser origins allowed for credentialed API requests." },
 
   // Vercel (web app — validated at build/runtime on Vercel, documented for ops)
   { service: "vercel", variable: "VITE_CLERK_PUBLISHABLE_KEY", required: true, description: "Clerk publishable key baked into the Vercel web build." },
@@ -258,6 +259,17 @@ function validateRender(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): v
 
   if (env.NODE_ENV !== "production") {
     pushInvalid(issues, "render", "NODE_ENV", 'NODE_ENV must be "production" on Render.');
+  }
+
+  const origins = envValue(env, "CORS_ALLOWED_ORIGINS");
+  if (!origins) {
+    pushMissing(issues, "render", "CORS_ALLOWED_ORIGINS");
+  } else {
+    for (const origin of origins.split(",").map((o) => o.trim()).filter(Boolean)) {
+      if (!looksLikeHttpsUrl(origin)) {
+        pushInvalid(issues, "render", "CORS_ALLOWED_ORIGINS", `CORS_ALLOWED_ORIGINS contains an invalid production origin: ${origin}`);
+      }
+    }
   }
 }
 

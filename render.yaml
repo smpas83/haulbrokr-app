@@ -10,8 +10,8 @@ services:
     name: haulbrokr-api
     runtime: docker
     dockerfilePath: ./Dockerfile
-    # Free = $0 (spins down after 15 min idle, ~1 min cold start). Starter = $7/mo always-on.
-    plan: free
+    # Production uses an always-on instance so API, webhook, and admin traffic do not cold-start.
+    plan: starter
     region: oregon
     healthCheckPath: /api/healthz
     envVars:
@@ -59,3 +59,5 @@ services:
         value: /haulbrokr/private
       - key: PUBLIC_OBJECT_SEARCH_PATHS
         value: /haulbrokr/public
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://haulbrokr.com,https://www.haulbrokr.com

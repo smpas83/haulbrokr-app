@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 
 import { Layout } from "./components/layout";
 import { Toaster } from "@/components/ui/toaster";
-import { useGetMyProfile } from "@workspace/api-client-react";
+import { useGetAdminAccess, useGetMyProfile } from "@workspace/api-client-react";
 import { SignInPage, SignUpPage } from "./pages/auth";
 import LandingPage from "./pages/landing";
 
@@ -33,7 +33,14 @@ const AdminPage = lazy(() => import("./pages/admin"));
 const AdminLoginPage = lazy(() => import("./pages/admin-login"));
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -131,6 +138,16 @@ function RequireProfile({ children }: { children: React.ReactNode }) {
   }
 
   return null;
+}
+
+function RequireAdminAccess() {
+  const { data: access, isLoading } = useGetAdminAccess();
+
+  if (isLoading) {
+    return <AppLoader />;
+  }
+
+  return access?.isAdmin ? <AdminPage /> : <Redirect to="/admin/login" />;
 }
 
 function AuthShellRoutes() {
@@ -261,9 +278,8 @@ function AuthShellRoutes() {
               <AdminLoginPage />
             </Route>
 
-                        <Route path="/admin">
-              <Show when="signed-in"><AdminPage /></Show>
-              <Show when="signed-out"><Redirect to="/admin/login" /></Show>
+            <Route path="/admin">
+              <RequireAdminAccess />
             </Route>
 
 

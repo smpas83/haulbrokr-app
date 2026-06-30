@@ -20,9 +20,10 @@ export DATABASE_URL=postgres://haulbrokr:haulbrokr@localhost:5432/haulbrokr?sslm
 | Database | Neon Postgres |
 | Mobile | EAS → App Store / Play Store |
 
-See [DEPLOY-VERCEL-RENDER.md](./DEPLOY-VERCEL-RENDER.md) for the full step-by-step checklist.
+See [DEPLOY-VERCEL-RENDER.md](./DEPLOY-VERCEL-RENDER.md) for deployment steps and [PRODUCTION_READINESS_CHECKLIST.md](./PRODUCTION_READINESS_CHECKLIST.md) for the final launch gate.
 
 ## Other docs
 
 - [HAULBROKR_AUDIT.md](./HAULBROKR_AUDIT.md) — architecture audit
+- [PRODUCTION_READINESS_CHECKLIST.md](./PRODUCTION_READINESS_CHECKLIST.md) — launch, rollback, and workflow verification
 - [MIGRATION_TO_CURSOR.md](../MIGRATION_TO_CURSOR.md) — local dev details

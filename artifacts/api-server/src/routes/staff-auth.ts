@@ -7,6 +7,9 @@ import { signStaffSession, STAFF_SESSION_COOKIE } from "../lib/staffSession";
 import { ROLE_PERMISSIONS, type StaffRole } from "../middlewares/requireAdmin";
 
 const router: IRouter = Router();
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_FAILURES = 5;
+const loginFailures = new Map<string, { count: number; windowStart: number }>();
 
 const LoginBody = z.object({
   username: z.string().trim().min(1).max(64),
@@ -29,6 +32,31 @@ function sessionCookieOptions(): {
   };
 }
 
+function loginLimitKey(req: { ip?: string }, username: string): string {
+  return `${req.ip ?? "unknown"}:${username}`;
+}
+
+function isLoginLimited(key: string): boolean {
+  const now = Date.now();
+  const entry = loginFailures.get(key);
+  if (!entry) return false;
+  if (now - entry.windowStart > LOGIN_WINDOW_MS) {
+    loginFailures.delete(key);
+    return false;
+  }
+  return entry.count >= LOGIN_MAX_FAILURES;
+}
+
+function recordLoginFailure(key: string): void {
+  const now = Date.now();
+  const entry = loginFailures.get(key);
+  if (!entry || now - entry.windowStart > LOGIN_WINDOW_MS) {
+    loginFailures.set(key, { count: 1, windowStart: now });
+    return;
+  }
+  entry.count += 1;
+}
+
 router.post("/admin/login", async (req, res): Promise<void> => {
   const parsed = LoginBody.safeParse(req.body);
   if (!parsed.success) {
@@ -36,19 +64,27 @@ router.post("/admin/login", async (req, res): Promise<void> => {
     return;
   }
   const username = parsed.data.username.toLowerCase();
+  const limitKey = loginLimitKey(req, username);
+  if (isLoginLimited(limitKey)) {
+    res.status(429).json({ error: "Too many failed login attempts. Try again later." });
+    return;
+  }
   const [user] = await db
     .select()
     .from(staffUsersTable)
     .where(eq(staffUsersTable.username, username));
   if (!user?.active) {
+    recordLoginFailure(limitKey);
     res.status(401).json({ error: "Invalid username or password." });
     return;
   }
   const ok = await verifyStaffPassword(parsed.data.password, user.passwordHash);
   if (!ok) {
+    recordLoginFailure(limitKey);
     res.status(401).json({ error: "Invalid username or password." });
     return;
   }
+  loginFailures.delete(limitKey);
   const staffRole = user.staffRole as StaffRole;
   const token = signStaffSession(user.id, staffRole);
   res.cookie(STAFF_SESSION_COOKIE, token, sessionCookieOptions());

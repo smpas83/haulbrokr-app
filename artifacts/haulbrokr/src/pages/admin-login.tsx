@@ -7,16 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-const STAFF_ROLES = [
-  { username: "ceo", label: "CEO" },
-  { username: "president", label: "President" },
-  { username: "cto", label: "CTO" },
-  { username: "cfo", label: "CFO" },
-  { username: "accounting", label: "Accounting" },
-  { username: "it", label: "IT" },
-  { username: "programmer", label: "Programmer" },
-];
-
 export default function AdminLoginPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -73,10 +63,9 @@ export default function AdminLoginPage() {
               <Input
                 id="username"
                 className="rounded-none border-2"
-                autoComplete="username"
+                autoComplete="off"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. ceo, cfo, it"
                 required
               />
             </div>
@@ -97,21 +86,6 @@ export default function AdminLoginPage() {
               Sign in
             </Button>
           </form>
-          <div className="mt-6 border-t pt-4">
-            <p className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">Staff roles</p>
-            <div className="flex flex-wrap gap-1">
-              {STAFF_ROLES.map((r) => (
-                <button
-                  key={r.username}
-                  type="button"
-                  className="text-xs px-2 py-1 border border-border rounded-none hover:bg-muted"
-                  onClick={() => setUsername(r.username)}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

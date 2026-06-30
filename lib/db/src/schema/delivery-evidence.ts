@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -13,7 +13,9 @@ export const deliveryEvidenceTable = pgTable("delivery_evidence", {
   siteNotes: text("site_notes"),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  index("delivery_evidence_job_idx").on(table.jobId),
+]);
 
 export const insertDeliveryEvidenceSchema = createInsertSchema(deliveryEvidenceTable).omit({ id: true, createdAt: true });
 export type InsertDeliveryEvidence = z.infer<typeof insertDeliveryEvidenceSchema>;
