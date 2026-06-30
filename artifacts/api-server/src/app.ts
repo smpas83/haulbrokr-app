@@ -11,6 +11,7 @@ import {
 } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import healthRouter from "./routes/health";
+import automationRouter from "./routes/automation";
 import stripeWebhooksRouter from "./routes/stripe-webhooks";
 import { errorHandler } from "./middlewares/errorHandler";
 import { logger } from "./lib/logger";
@@ -56,6 +57,7 @@ app.use(express.urlencoded({ extended: true }));
 // Health check must work without Clerk auth so deployment probes succeed
 // even when Clerk keys are absent/invalid. Mount it before clerkMiddleware.
 app.use("/api", healthRouter);
+app.use("/api", automationRouter);
 
 app.use(
   clerkMiddleware((req) => ({
