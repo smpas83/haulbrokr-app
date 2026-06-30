@@ -281,11 +281,18 @@ router.get("/jobs", requireProfile, async (req, res): Promise<void> => {
   }
 
   const jobs = await db.select().from(jobsTable).where(and(...conditions)).orderBy(sql`${jobsTable.createdAt} desc`);
+  const profileIds = Array.from(new Set(jobs.flatMap((j) => [j.customerId, j.providerId])));
+  const companies = profileIds.length
+    ? await db
+        .select({ id: profilesTable.id, companyName: profilesTable.companyName })
+        .from(profilesTable)
+        .where(inArray(profilesTable.id, profileIds))
+    : [];
+  const companyByProfile = new Map(companies.map((p) => [p.id, p.companyName]));
 
-  const enriched = await Promise.all(jobs.map(async (j) => {
-    const { customerCompany, providerCompany } = await companiesFor(j);
-    return serializeJob(j, customerCompany, providerCompany);
-  }));
+  const enriched = jobs.map((j) =>
+    serializeJob(j, companyByProfile.get(j.customerId) ?? "", companyByProfile.get(j.providerId) ?? ""),
+  );
 
   res.json(ListJobsResponse.parse(enriched));
 });

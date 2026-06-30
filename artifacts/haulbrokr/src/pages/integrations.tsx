@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { CheckCircle2, Link2, Link2Off, RefreshCw, Loader2, Plug, BookOpen, FileText, BarChart3 } from "lucide-react";
+import { CheckCircle2, Link2, Link2Off, RefreshCw, Loader2, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -138,18 +138,6 @@ function QuickBooksCard() {
   );
 }
 
-function ComingSoonCard({ name, description, icon: Icon, color }: { name: string; description: string; icon: any; color: string }) {
-  return (
-    <div className="bg-card border-2 border-dashed border-border p-5 opacity-60">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`${color} p-2 rounded`}><Icon className="h-5 w-5 text-white" /></div>
-        <div><h3 className="font-bold">{name}</h3><p className="text-xs text-muted-foreground">{description}</p></div>
-      </div>
-      <Badge variant="outline" className="rounded-none text-xs">Coming Soon</Badge>
-    </div>
-  );
-}
-
 export default function IntegrationsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
@@ -161,16 +149,6 @@ export default function IntegrationsPage() {
       <div className="space-y-4">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Accounting</p>
         <QuickBooksCard />
-      </div>
-
-      <div className="space-y-4">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Coming Soon</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ComingSoonCard name="Procore" description="Sync jobs with your construction projects" icon={BarChart3} color="bg-[#f47920]" />
-          <ComingSoonCard name="Sage 300" description="Enterprise ERP integration" icon={FileText} color="bg-[#0073a8]" />
-          <ComingSoonCard name="Relay Payments" description="Instant driver payments and fuel cards" icon={Plug} color="bg-[#6366f1]" />
-          <ComingSoonCard name="Stripe Connect" description="Custom payout routing for brokers" icon={CheckCircle2} color="bg-[#635bff]" />
-        </div>
       </div>
     </div>
   );

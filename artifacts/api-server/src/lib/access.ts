@@ -13,8 +13,6 @@ export async function loadJobIfMember(jobId: number, profile: Profile): Promise<
 
   if (job.customerId === profile.id || job.providerId === profile.id) return job;
 
-  if (profile.staffRole) return job;
-
   if (profile.organizationId) {
     const [customerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.customerId));
     const [providerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.providerId));

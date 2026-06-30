@@ -29,6 +29,7 @@ const VALID_PRODUCTION_ENV: Record<string, string> = {
   TICKET_QR_SECRET: "ticket-qr-secret-32-characters-minimum",
   STAFF_AUTH_SECRET: "staff-auth-secret-32-characters-min",
   ADMIN_USER_IDS: "user_admin_clerk_id",
+  CORS_ALLOWED_ORIGINS: "https://haulbrokr.com,https://www.haulbrokr.com",
 };
 
 describe("validateProductionEnv", () => {
@@ -66,6 +67,7 @@ describe("validateProductionEnv", () => {
     expect(variables).toContain("STRIPE_SECRET_KEY");
     expect(variables).toContain("RESEND_API_KEY");
     expect(variables).toContain("R2_BUCKET");
+    expect(variables).toContain("CORS_ALLOWED_ORIGINS");
     expect(variables).toContain("UPLOAD_TOKEN_SECRET");
     expect(variables).toContain("ADMIN_USER_IDS");
   });
@@ -92,6 +94,14 @@ describe("validateProductionEnv", () => {
       DATABASE_URL: "postgresql://user:pass@ep-xxxxx.neon.tech/neondb?sslmode=require",
     });
     expect(issues.some((issue) => issue.variable === "DATABASE_URL")).toBe(true);
+  });
+
+  it("rejects non-HTTPS production CORS origins", () => {
+    const issues = collectProductionEnvIssues({
+      ...VALID_PRODUCTION_ENV,
+      CORS_ALLOWED_ORIGINS: "https://haulbrokr.com,http://evil.test",
+    });
+    expect(issues.some((issue) => issue.variable === "CORS_ALLOWED_ORIGINS")).toBe(true);
   });
 
   it("throws a grouped error message on startup validation failure", () => {

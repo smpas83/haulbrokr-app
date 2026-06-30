@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { jobsTable } from "./jobs";
@@ -10,7 +10,9 @@ export const jobMessagesTable = pgTable("job_messages", {
   senderProfileId: integer("sender_profile_id").notNull().references(() => profilesTable.id),
   body: text("body").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  index("job_messages_job_created_at_idx").on(table.jobId, table.createdAt),
+]);
 
 export const insertJobMessageSchema = createInsertSchema(jobMessagesTable).omit({ id: true, createdAt: true });
 export type InsertJobMessage = z.infer<typeof insertJobMessageSchema>;

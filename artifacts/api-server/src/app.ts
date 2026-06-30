@@ -18,6 +18,41 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+const DEFAULT_ALLOWED_ORIGINS = new Set([
+  "https://haulbrokr.com",
+  "https://www.haulbrokr.com",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:8081",
+  "http://127.0.0.1:8081",
+]);
+
+function configuredAllowedOrigins(): Set<string> {
+  const configured = (process.env.CORS_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  return new Set([...DEFAULT_ALLOWED_ORIGINS, ...configured]);
+}
+
+function isAllowedCorsOrigin(origin: string | undefined): boolean {
+  if (!origin) return true;
+  return configuredAllowedOrigins().has(origin);
+}
+
+const corsOptions: cors.CorsOptions = {
+  credentials: true,
+  origin(origin, callback) {
+    if (isAllowedCorsOrigin(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error("CORS origin not allowed"), false);
+  },
+};
+
 app.use(
   pinoHttp({
     logger,
@@ -40,8 +75,8 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-app.use(cors({ credentials: true, origin: true }));
-app.options(/(.*)/, cors({ credentials: true, origin: true }));
+app.use(cors(corsOptions));
+app.options(/(.*)/, cors(corsOptions));
 app.use(cookieParser());
 
 // Stripe webhooks require the raw body for signature verification — mount before express.json().

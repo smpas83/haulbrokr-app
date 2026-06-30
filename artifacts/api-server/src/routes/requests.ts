@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, or, sql, inArray } from "drizzle-orm";
 import { db, requestsTable, profilesTable, bidsTable, activityTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
@@ -60,11 +60,28 @@ router.get("/requests", requireProfile, async (req, res): Promise<void> => {
     rows = await db.select().from(requestsTable).where(and(...conditions)).orderBy(sql`${requestsTable.createdAt} desc`);
   }
 
-  const enriched = await Promise.all(rows.map(async (r) => {
-    const [customer] = await db.select().from(profilesTable).where(eq(profilesTable.id, r.customerId));
-    const bidCountResult = await db.select({ count: sql<number>`count(*)` }).from(bidsTable).where(eq(bidsTable.requestId, r.id));
-    return serializeRequest(r, customer?.companyName ?? "", Number(bidCountResult[0]?.count ?? 0));
-  }));
+  const customerIds = Array.from(new Set(rows.map((r) => r.customerId)));
+  const requestIds = rows.map((r) => r.id);
+  const [customers, bidCounts] = await Promise.all([
+    customerIds.length
+      ? db
+          .select({ id: profilesTable.id, companyName: profilesTable.companyName })
+          .from(profilesTable)
+          .where(inArray(profilesTable.id, customerIds))
+      : [],
+    requestIds.length
+      ? db
+          .select({ requestId: bidsTable.requestId, count: sql<number>`count(*)` })
+          .from(bidsTable)
+          .where(inArray(bidsTable.requestId, requestIds))
+          .groupBy(bidsTable.requestId)
+      : [],
+  ]);
+  const companyById = new Map(customers.map((c) => [c.id, c.companyName]));
+  const bidCountByRequest = new Map(bidCounts.map((b) => [b.requestId, Number(b.count ?? 0)]));
+  const enriched = rows.map((r) =>
+    serializeRequest(r, companyById.get(r.customerId) ?? "", bidCountByRequest.get(r.id) ?? 0),
+  );
 
   res.json(ListRequestsResponse.parse(enriched));
 });

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { db, bidsTable, requestsTable, profilesTable, jobsTable, activityTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { getCarrierComplianceSnapshot } from "../lib/adminComplianceBundle";
@@ -57,14 +57,19 @@ router.get("/requests/:requestId/bids", requireProfile, async (req, res): Promis
     bids = await db.select().from(bidsTable).where(and(eq(bidsTable.requestId, params.data.requestId), eq(bidsTable.providerId, profile.id)));
   }
 
-  const enriched = await Promise.all(bids.map(async (b) => {
-    const [provider] = await db.select().from(profilesTable).where(eq(profilesTable.id, b.providerId));
-    return {
-      ...b,
-      ratePerHour: parseFloat(b.ratePerHour),
-      estimatedHours: b.estimatedHours ? parseFloat(b.estimatedHours) : null,
-      providerCompany: provider?.companyName ?? "",
-    };
+  const providerIds = Array.from(new Set(bids.map((b) => b.providerId)));
+  const providers = providerIds.length
+    ? await db
+        .select({ id: profilesTable.id, companyName: profilesTable.companyName })
+        .from(profilesTable)
+        .where(inArray(profilesTable.id, providerIds))
+    : [];
+  const companyByProvider = new Map(providers.map((p) => [p.id, p.companyName]));
+  const enriched = bids.map((b) => ({
+    ...b,
+    ratePerHour: parseFloat(b.ratePerHour),
+    estimatedHours: b.estimatedHours ? parseFloat(b.estimatedHours) : null,
+    providerCompany: companyByProvider.get(b.providerId) ?? "",
   }));
   res.json(ListBidsResponse.parse(enriched));
 });

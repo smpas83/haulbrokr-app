@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, pgEnum, integer, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, pgEnum, integer, numeric, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -62,7 +62,9 @@ export const profilesTable = pgTable("profiles", {
   lastDocReminderAt: timestamp("last_doc_reminder_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+}, (table) => [
+  index("profiles_organization_idx").on(table.organizationId),
+]);
 
 export const insertProfileSchema = createInsertSchema(profilesTable).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertProfile = z.infer<typeof insertProfileSchema>;

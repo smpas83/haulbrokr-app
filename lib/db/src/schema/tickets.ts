@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, numeric, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { jobsTable } from "./jobs";
@@ -32,7 +32,11 @@ export const ticketsTable = pgTable("tickets", {
   verifiedByProfileId: integer("verified_by_profile_id").references(() => profilesTable.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+}, (table) => [
+  index("tickets_job_load_number_idx").on(table.jobId, table.loadNumber),
+  index("tickets_job_driver_idx").on(table.jobId, table.driverProfileId),
+  index("tickets_qr_nonce_idx").on(table.qrNonce),
+]);
 
 export const insertTicketSchema = createInsertSchema(ticketsTable).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertTicket = z.infer<typeof insertTicketSchema>;

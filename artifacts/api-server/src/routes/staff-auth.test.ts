@@ -95,4 +95,21 @@ describe("staff admin login", () => {
     expect(res.status).toBe(200);
     expect(res.headers["set-cookie"]?.[0]).toMatch(/haulbrokr_staff=;/);
   });
+
+  it("rate limits repeated failed login attempts", async () => {
+    const app = await makeApp();
+
+    for (let i = 0; i < 5; i++) {
+      const res = await request(app)
+        .post("/admin/login")
+        .send({ username: "locked-user", password: "wrong-password" });
+      expect(res.status).toBe(401);
+    }
+
+    const locked = await request(app)
+      .post("/admin/login")
+      .send({ username: "locked-user", password: "wrong-password" });
+
+    expect(locked.status).toBe(429);
+  });
 });
