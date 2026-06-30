@@ -24,6 +24,7 @@ vi.mock("@workspace/db", () => {
   const profilesTable = makeTable("profiles");
   const activityTable = makeTable("activity");
   const jobStatusUpdatesTable = makeTable("job_status_updates");
+  const complianceDocumentsTable = makeTable("compliance_documents");
 
   const db = {
     select: () => ({
@@ -90,7 +91,7 @@ vi.mock("@workspace/db", () => {
     }),
   };
 
-  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable, jobStatusUpdatesTable };
+  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable, jobStatusUpdatesTable, complianceDocumentsTable };
 });
 
 vi.mock("../middlewares/requireAuth", () => ({

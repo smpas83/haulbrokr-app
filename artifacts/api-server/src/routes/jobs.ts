@@ -13,7 +13,9 @@ import {
   trucksTable,
   jobStatusUpdatesTable,
   driverDocumentsTable,
+  complianceDocumentsTable,
 } from "@workspace/db";
+import { expiredRequiredDocTypes } from "../lib/complianceDocuments";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isAdmin } from "../middlewares/requireAdmin";
 import { buildJobInvoicePdf, canDownloadJobInvoice, jobIsInvoiceEligible } from "../lib/jobInvoice";
@@ -491,6 +493,28 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
   }
   if (job.status !== "awarded") {
     res.status(400).json({ error: "Job is not awaiting hauler acceptance" });
+    return;
+  }
+
+  // Compliance gate: a carrier cannot accept (receive) a dispatch while a
+  // required compliance document has lapsed. Initial/missing compliance is
+  // enforced at bid time; here we specifically block EXPIRED required docs so a
+  // carrier whose insurance/authority lapsed after bidding can't take new work.
+  const carrierComplianceDocs = await db
+    .select()
+    .from(complianceDocumentsTable)
+    .where(
+      and(
+        eq(complianceDocumentsTable.profileId, job.providerId),
+        eq(complianceDocumentsTable.ownerType, "vendor"),
+        eq(complianceDocumentsTable.isCurrent, true),
+      ),
+    );
+  const expiredDocs = expiredRequiredDocTypes("vendor", carrierComplianceDocs);
+  if (expiredDocs.length > 0) {
+    res.status(403).json({
+      error: `Cannot accept this job — expired compliance documents: ${expiredDocs.join(", ")}. Upload current versions for review.`,
+    });
     return;
   }
 
