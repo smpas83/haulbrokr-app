@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, or, sql, inArray } from "drizzle-orm";
+import { z } from "zod";
 import {
   db,
   jobsTable,
@@ -23,6 +24,8 @@ import { settleConfirmedPayout } from "../lib/payoutRetry";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { computeBreakdown } from "../lib/jobSettlement";
+import { DRIVER_WORKFLOW_ACTIONS, transitionDriverWorkflow } from "../lib/driverWorkflow";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -60,6 +63,25 @@ import {
 const router: IRouter = Router();
 
 const DEFAULT_FEE_RATE = 0.15;
+
+export { computeBreakdown };
+
+const DriverWorkflowBody = z.object({
+  action: z.enum(DRIVER_WORKFLOW_ACTIONS),
+  ticketId: z.number().int().positive().optional(),
+  gps: z.object({
+    lat: z.number().optional(),
+    long: z.number().optional(),
+  }).optional(),
+  weightTons: z.union([z.number(), z.string()]).optional(),
+  totalHours: z.union([z.number(), z.string()]).optional(),
+  notes: z.string().optional(),
+  files: z.array(z.object({
+    role: z.string(),
+    url: z.string(),
+    caption: z.string().nullable().optional(),
+  })).optional(),
+});
 
 function num(v: string | null | undefined): number | null {
   return v == null ? null : parseFloat(v);
@@ -149,22 +171,6 @@ async function notifyPayoutDelayed(
   } catch (err) {
     console.error("Failed to record payout_delayed notification", err);
   }
-}
-
-/**
- * Broker-fee model: the customer is billed the work value PLUS a 15% broker fee.
- * HaulBrokr deducts that 15% from the customer's gross payment BEFORE the
- * provider/driver is paid, so the driver receives the full work value (net) and
- * HaulBrokr retains the fee.
- *   base  = ratePerHour * hours   (work value → provider net)
- *   fee   = base * feeRate        (HaulBrokr's retained profit)
- *   gross = base + fee            (what the customer pays)
- */
-export function computeBreakdown(ratePerHour: number, hours: number, feeRate: number) {
-  const base = Math.round(ratePerHour * hours * 100) / 100;
-  const fee = Math.round(base * feeRate * 100) / 100;
-  const gross = Math.round((base + fee) * 100) / 100;
-  return { base, fee, gross };
 }
 
 /**
@@ -1246,6 +1252,26 @@ router.post("/jobs/:id/assign", requireProfile, async (req, res): Promise<void> 
     ...ticket,
     weightTons: ticket.weightTons != null ? parseFloat(ticket.weightTons) : null,
   });
+});
+
+router.post("/jobs/:id/driver-workflow", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const jobId = parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
+
+  const parsed = DriverWorkflowBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const job = await loadJobIfMember(jobId, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+
+  const result = await transitionDriverWorkflow(job, profile, parsed.data);
+  if (!result.ok) {
+    res.status(result.status).json(result);
+    return;
+  }
+
+  res.status(200).json(result);
 });
 
 // ── Driver status-update timeline ───────────────────────────────────────────

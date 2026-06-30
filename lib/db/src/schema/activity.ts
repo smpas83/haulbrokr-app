@@ -14,6 +14,7 @@ export const activityTypeEnum = pgEnum("activity_type", [
   "job_completed",
   "delivery_evidence_submitted",
   "driver_event_rejected",
+  "driver_workflow_updated",
   "payment_failed",
   "payment_requires_action",
   "application_approved",

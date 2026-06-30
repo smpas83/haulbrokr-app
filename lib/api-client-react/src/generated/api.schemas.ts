@@ -2126,3 +2126,49 @@ export type CreateDriverEvent201 = { [key: string]: unknown };
 
 export type CreateDriverEvent422 = { [key: string]: unknown };
 
+export type CreateDriverWorkflowTransitionBodyAction = typeof CreateDriverWorkflowTransitionBodyAction[keyof typeof CreateDriverWorkflowTransitionBodyAction];
+
+
+export const CreateDriverWorkflowTransitionBodyAction = {
+  accept_job: 'accept_job',
+  decline_job: 'decline_job',
+  navigate_to_pickup: 'navigate_to_pickup',
+  check_in: 'check_in',
+  start_loading: 'start_loading',
+  upload_loading_photos: 'upload_loading_photos',
+  upload_scale_ticket: 'upload_scale_ticket',
+  leave_pickup: 'leave_pickup',
+  navigate_to_delivery: 'navigate_to_delivery',
+  arrive_delivery: 'arrive_delivery',
+  upload_delivery_photos: 'upload_delivery_photos',
+  upload_signed_ticket: 'upload_signed_ticket',
+  check_out: 'check_out',
+  complete_job: 'complete_job',
+} as const;
+
+export type CreateDriverWorkflowTransitionBodyGps = {
+  lat?: number;
+  long?: number;
+};
+
+export type CreateDriverWorkflowTransitionBodyFilesItem = {
+  role: string;
+  url: string;
+  /** @nullable */
+  caption?: string | null;
+};
+
+export type CreateDriverWorkflowTransitionBody = {
+  action: CreateDriverWorkflowTransitionBodyAction;
+  ticketId?: number;
+  gps?: CreateDriverWorkflowTransitionBodyGps;
+  weightTons?: number | string;
+  totalHours?: number | string;
+  notes?: string;
+  files?: CreateDriverWorkflowTransitionBodyFilesItem[];
+};
+
+export type CreateDriverWorkflowTransition200 = { [key: string]: unknown };
+
+export type CreateDriverWorkflowTransition409 = { [key: string]: unknown };
+

@@ -48,6 +48,9 @@ import type {
   CreateDriverEvent201,
   CreateDriverEvent422,
   CreateDriverEventBody,
+  CreateDriverWorkflowTransition200,
+  CreateDriverWorkflowTransition409,
+  CreateDriverWorkflowTransitionBody,
   CreateFactoringRequest201,
   CreateFactoringRequestBody,
   CreateJobEvidence201,
@@ -8915,5 +8918,77 @@ export const useCreateDriverEvent = <TError = ErrorType<CreateDriverEvent422>,
         TContext
       > => {
       return useMutation(getCreateDriverEventMutationOptions(options));
+    }
+
+export const getCreateDriverWorkflowTransitionUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/driver-workflow`
+}
+
+/**
+ * @summary Advance an assigned driver's production workflow
+ */
+export const createDriverWorkflowTransition = async (id: number,
+    createDriverWorkflowTransitionBody: CreateDriverWorkflowTransitionBody, options?: RequestInit): Promise<CreateDriverWorkflowTransition200> => {
+
+  return customFetch<CreateDriverWorkflowTransition200>(getCreateDriverWorkflowTransitionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createDriverWorkflowTransitionBody,)
+  }
+);}
+
+
+
+
+export const getCreateDriverWorkflowTransitionMutationOptions = <TError = ErrorType<CreateDriverWorkflowTransition409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDriverWorkflowTransition>>, TError,{id: number;data: BodyType<CreateDriverWorkflowTransitionBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDriverWorkflowTransition>>, TError,{id: number;data: BodyType<CreateDriverWorkflowTransitionBody>}, TContext> => {
+
+const mutationKey = ['createDriverWorkflowTransition'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDriverWorkflowTransition>>, {id: number;data: BodyType<CreateDriverWorkflowTransitionBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createDriverWorkflowTransition(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDriverWorkflowTransitionMutationResult = NonNullable<Awaited<ReturnType<typeof createDriverWorkflowTransition>>>
+    export type CreateDriverWorkflowTransitionMutationBody = BodyType<CreateDriverWorkflowTransitionBody>
+    export type CreateDriverWorkflowTransitionMutationError = ErrorType<CreateDriverWorkflowTransition409>
+
+    /**
+ * @summary Advance an assigned driver's production workflow
+ */
+export const useCreateDriverWorkflowTransition = <TError = ErrorType<CreateDriverWorkflowTransition409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDriverWorkflowTransition>>, TError,{id: number;data: BodyType<CreateDriverWorkflowTransitionBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDriverWorkflowTransition>>,
+        TError,
+        {id: number;data: BodyType<CreateDriverWorkflowTransitionBody>},
+        TContext
+      > => {
+      return useMutation(getCreateDriverWorkflowTransitionMutationOptions(options));
     }
 

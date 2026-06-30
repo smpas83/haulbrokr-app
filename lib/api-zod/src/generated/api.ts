@@ -2690,3 +2690,32 @@ export const CreateDriverEventBody = zod.object({
 })
 
 
+/**
+ * @summary Advance an assigned driver's production workflow
+ */
+export const CreateDriverWorkflowTransitionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateDriverWorkflowTransitionBody = zod.object({
+  "action": zod.enum(['accept_job', 'decline_job', 'navigate_to_pickup', 'check_in', 'start_loading', 'upload_loading_photos', 'upload_scale_ticket', 'leave_pickup', 'navigate_to_delivery', 'arrive_delivery', 'upload_delivery_photos', 'upload_signed_ticket', 'check_out', 'complete_job']),
+  "ticketId": zod.number().optional(),
+  "gps": zod.object({
+  "lat": zod.number().optional(),
+  "long": zod.number().optional()
+}).optional(),
+  "weightTons": zod.union([zod.number(),zod.string()]).optional(),
+  "totalHours": zod.union([zod.number(),zod.string()]).optional(),
+  "notes": zod.string().optional(),
+  "files": zod.array(zod.object({
+  "role": zod.string(),
+  "url": zod.string(),
+  "caption": zod.string().nullish()
+})).optional()
+})
+
+export const CreateDriverWorkflowTransitionResponse = zod.object({
+
+}).passthrough()
+
+

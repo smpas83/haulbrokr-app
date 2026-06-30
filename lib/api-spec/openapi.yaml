@@ -2329,6 +2329,83 @@ paths:
               schema:
                 type: object
 
+  /jobs/{id}/driver-workflow:
+    post:
+      operationId: createDriverWorkflowTransition
+      tags: [jobs]
+      summary: Advance an assigned driver's production workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - accept_job
+                    - decline_job
+                    - navigate_to_pickup
+                    - check_in
+                    - start_loading
+                    - upload_loading_photos
+                    - upload_scale_ticket
+                    - leave_pickup
+                    - navigate_to_delivery
+                    - arrive_delivery
+                    - upload_delivery_photos
+                    - upload_signed_ticket
+                    - check_out
+                    - complete_job
+                ticketId:
+                  type: integer
+                gps:
+                  type: object
+                  properties:
+                    lat: { type: number }
+                    long: { type: number }
+                weightTons:
+                  oneOf:
+                    - type: number
+                    - type: string
+                totalHours:
+                  oneOf:
+                    - type: number
+                    - type: string
+                notes:
+                  type: string
+                files:
+                  type: array
+                  items:
+                    type: object
+                    required: [role, url]
+                    properties:
+                      role: { type: string }
+                      url: { type: string }
+                      caption:
+                        type: ["string", "null"]
+      responses:
+        "200":
+          description: Workflow transition accepted
+          content:
+            application/json:
+              schema:
+                type: object
+        "409":
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                type: object
+
 components:
   schemas:
     HealthStatus:

@@ -8,6 +8,10 @@ import { profilesTable } from "./profiles";
 export const jobStatusUpdateTypeEnum = pgEnum("job_status_update_type", [
   "en_route", "arrived", "loading", "loaded", "dumping",
   "checked_in", "started", "ticket_uploaded", "photo_uploaded", "completed",
+  "driver_accepted", "driver_declined", "en_route_pickup", "left_pickup",
+  "en_route_delivery", "arrived_delivery", "loading_photos_uploaded",
+  "scale_ticket_uploaded", "delivery_photos_uploaded", "signed_ticket_uploaded",
+  "checked_out",
 ]);
 
 export const jobStatusUpdatesTable = pgTable("job_status_updates", {
