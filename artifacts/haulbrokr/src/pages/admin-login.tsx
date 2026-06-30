@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
               <Input
                 id="username"
                 className="rounded-none border-2"
-                autoComplete="username"
+                autoComplete="off"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
