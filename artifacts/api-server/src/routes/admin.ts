@@ -335,7 +335,7 @@ router.get("/admin/jobs", requireStaffOrProfile, requirePermission("overview"), 
   })));
 });
 
-router.get("/admin/dispatch", requireStaffOrProfile, requirePermission("overview"), async (_req, res): Promise<void> => {
+router.get("/admin/dispatch", requireStaffOrProfile, requirePermission("dispatch"), async (_req, res): Promise<void> => {
   const cust = alias(profilesTable, "dispatch_cust");
   const prov = alias(profilesTable, "dispatch_prov");
 
@@ -423,7 +423,7 @@ async function validateDispatchDriver(job: typeof jobsTable.$inferSelect, driver
   return ok ? driver : null;
 }
 
-router.post("/admin/jobs/:id/assign", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+router.post("/admin/jobs/:id/assign", requireStaffOrProfile, requirePermission("dispatch"), async (req, res): Promise<void> => {
   const jobId = Number(req.params.id);
   const driverProfileId = Number(req.body?.driverProfileId);
   const truckId = req.body?.truckId == null ? null : Number(req.body.truckId);
@@ -464,7 +464,7 @@ router.post("/admin/jobs/:id/assign", requireStaffOrProfile, requirePermission("
   res.status(201).json(ticket);
 });
 
-router.patch("/admin/assignments/:ticketId", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+router.patch("/admin/assignments/:ticketId", requireStaffOrProfile, requirePermission("dispatch"), async (req, res): Promise<void> => {
   const ticketId = Number(req.params.ticketId);
   const driverProfileId = Number(req.body?.driverProfileId);
   const truckId = req.body?.truckId == null ? null : Number(req.body.truckId);
@@ -512,7 +512,7 @@ router.patch("/admin/assignments/:ticketId", requireStaffOrProfile, requirePermi
   res.json(updated);
 });
 
-router.delete("/admin/assignments/:ticketId", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+router.delete("/admin/assignments/:ticketId", requireStaffOrProfile, requirePermission("dispatch"), async (req, res): Promise<void> => {
   const ticketId = Number(req.params.ticketId);
   if (!Number.isFinite(ticketId)) { res.status(400).json({ error: "Valid ticketId is required." }); return; }
   const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId));

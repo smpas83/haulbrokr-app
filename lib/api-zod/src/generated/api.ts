@@ -1643,7 +1643,7 @@ export const SubmitCreditApplicationResponse = zod.object({
 export const GetAdminAccessResponse = zod.object({
   "isAdmin": zod.boolean().describe('True when the caller has any staff role (at least one permission).'),
   "staffRole": zod.union([zod.literal('ap'),zod.literal('ar'),zod.literal('cfo'),zod.literal('cto'),zod.literal('ceo'),zod.literal('accounting'),zod.literal('it'),zod.literal(null)]).nullish().describe('The caller\'s resolved HaulBrokr staff role, or null if not staff.'),
-  "permissions": zod.array(zod.enum(['overview', 'payouts', 'credit', 'compliance', 'bins', 'view_staff', 'manage_staff'])).describe('The exact capabilities this staff role unlocks.')
+  "permissions": zod.array(zod.enum(['overview', 'dispatch', 'payouts', 'credit', 'compliance', 'bins', 'view_staff', 'manage_staff'])).describe('The exact capabilities this staff role unlocks.')
 })
 
 

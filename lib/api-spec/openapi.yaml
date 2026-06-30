@@ -3857,7 +3857,7 @@ components:
           type: array
           items:
             type: string
-            enum: [overview, payouts, credit, compliance, bins, view_staff, manage_staff]
+            enum: [overview, dispatch, payouts, credit, compliance, bins, view_staff, manage_staff]
           description: The exact capabilities this staff role unlocks.
 
     StaffMember:
