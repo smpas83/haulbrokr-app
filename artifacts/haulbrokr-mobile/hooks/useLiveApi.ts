@@ -277,7 +277,12 @@ export function useSubmitEvidence() {
 
 // ── Job status-update timeline (driver / foreman) ──────────────────────────
 export type JobStatusUpdateStatus =
-  | "en_route" | "arrived" | "loading" | "loaded" | "dumping" | "completed";
+  | "en_route" | "arrived" | "loading" | "loaded" | "dumping" | "completed"
+  | "checked_in" | "started" | "ticket_uploaded" | "photo_uploaded"
+  | "driver_accepted" | "driver_declined" | "en_route_pickup" | "left_pickup"
+  | "en_route_delivery" | "arrived_delivery" | "loading_photos_uploaded"
+  | "scale_ticket_uploaded" | "delivery_photos_uploaded" | "signed_ticket_uploaded"
+  | "checked_out";
 
 export type JobStatusUpdate = {
   id: number;
@@ -312,6 +317,47 @@ export function useCreateJobStatusUpdate() {
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["status-updates", vars.jobId] });
       qc.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+}
+
+export type DriverWorkflowAction =
+  | "accept_job"
+  | "decline_job"
+  | "navigate_to_pickup"
+  | "check_in"
+  | "start_loading"
+  | "upload_loading_photos"
+  | "upload_scale_ticket"
+  | "leave_pickup"
+  | "navigate_to_delivery"
+  | "arrive_delivery"
+  | "upload_delivery_photos"
+  | "upload_signed_ticket"
+  | "check_out"
+  | "complete_job";
+
+export function useDriverWorkflow() {
+  const { getToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      jobId: number;
+      action: DriverWorkflowAction;
+      ticketId?: number;
+      files?: { role: string; url: string; caption?: string | null }[];
+      weightTons?: number | string;
+      totalHours?: number | string;
+      notes?: string;
+    }) => {
+      const { jobId, ...body } = data;
+      return apiFetch(getToken, "POST", `/jobs/${jobId}/driver-workflow`, body);
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["jobs"] });
+      qc.invalidateQueries({ queryKey: ["tickets", vars.jobId] });
+      qc.invalidateQueries({ queryKey: ["status-updates", vars.jobId] });
+      qc.invalidateQueries({ queryKey: ["evidence", vars.jobId] });
     },
   });
 }

@@ -50,6 +50,10 @@ export interface Job {
   /** @nullable */
   invoicedAt?: Date | null;
   /** @nullable */
+  invoiceApprovedAt?: Date | null;
+  /** @nullable */
+  invoiceApprovedByProfileId?: number | null;
+  /** @nullable */
   paidAt?: Date | null;
   /** @nullable */
   releasedAt?: Date | null;

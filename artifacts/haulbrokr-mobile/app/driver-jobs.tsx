@@ -20,28 +20,38 @@ import { ACCENT } from "@/constants/theme";
 import { useColors } from "@/hooks/useColors";
 import {
   useLiveJobs,
-  useJobStatusUpdates,
-  useCreateJobStatusUpdate,
   useTickets,
   useCreateTicket,
-  useTicketClockIn,
-  useTicketClockOut,
   useUploadFile,
-  useSubmitEvidence,
+  useDriverWorkflow,
   useJobEvidence,
-  type JobStatusUpdateStatus,
+  type DriverWorkflowAction,
 } from "@/hooks/useLiveApi";
 
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 
-const STATUS_FLOW: { key: JobStatusUpdateStatus; label: string; icon: keyof typeof Feather.glyphMap }[] = [
-  { key: "en_route", label: "En route", icon: "navigation" },
-  { key: "arrived", label: "Arrived", icon: "map-pin" },
-  { key: "loading", label: "Loading", icon: "download" },
-  { key: "loaded", label: "Loaded", icon: "package" },
-  { key: "dumping", label: "Dumping", icon: "upload" },
-  { key: "completed", label: "Completed", icon: "check-circle" },
+const WORKFLOW_FLOW: {
+  state: string;
+  action: DriverWorkflowAction;
+  label: string;
+  icon: keyof typeof Feather.glyphMap;
+  photoRole?: string;
+}[] = [
+  { state: "accepted", action: "accept_job", label: "Accept Job", icon: "check" },
+  { state: "en_route_pickup", action: "navigate_to_pickup", label: "Navigate to Pickup", icon: "navigation" },
+  { state: "checked_in", action: "check_in", label: "Check In", icon: "map-pin" },
+  { state: "loading", action: "start_loading", label: "Start Loading", icon: "download" },
+  { state: "loading_photos_uploaded", action: "upload_loading_photos", label: "Upload Loading Photos", icon: "camera", photoRole: "loading_photo" },
+  { state: "scale_ticket_uploaded", action: "upload_scale_ticket", label: "Upload Scale Ticket", icon: "file-text", photoRole: "scale_ticket" },
+  { state: "left_pickup", action: "leave_pickup", label: "Leave Pickup", icon: "arrow-right" },
+  { state: "en_route_delivery", action: "navigate_to_delivery", label: "Navigate to Delivery", icon: "navigation" },
+  { state: "arrived_delivery", action: "arrive_delivery", label: "Arrive at Delivery", icon: "map-pin" },
+  { state: "delivery_photos_uploaded", action: "upload_delivery_photos", label: "Upload Delivery Photos", icon: "camera", photoRole: "delivery_photo" },
+  { state: "signed_ticket_uploaded", action: "upload_signed_ticket", label: "Upload Signed Ticket", icon: "edit-3", photoRole: "signed_ticket" },
+  { state: "checked_out", action: "check_out", label: "Check Out", icon: "log-out" },
+  { state: "completed", action: "complete_job", label: "Complete Job", icon: "check-circle" },
 ];
+type WorkflowStep = (typeof WORKFLOW_FLOW)[number];
 
 export default function DriverJobsScreen() {
   const colors = useColors();
@@ -54,7 +64,7 @@ export default function DriverJobsScreen() {
 
   const activeJobs: any[] = useMemo(() => {
     const all = (jobsQuery.data as any[]) ?? [];
-    return all.filter((j) => j.status === "active" || j.status === "in_progress");
+    return all.filter((j) => j.status === "active" || j.status === "accepted" || j.status === "in_progress");
   }, [jobsQuery.data]);
 
   return (
@@ -118,35 +128,61 @@ function DriverJobCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const updatesQuery = useJobStatusUpdates(expanded ? job.id : null);
   const ticketsQuery = useTickets(expanded ? job.id : null);
   const evidenceQuery = useJobEvidence(expanded ? job.id : null);
-  const createUpdate = useCreateJobStatusUpdate();
   const createTicket = useCreateTicket();
-  const clockIn = useTicketClockIn();
-  const clockOut = useTicketClockOut();
   const upload = useUploadFile();
-  const submitEvidence = useSubmitEvidence();
+  const workflow = useDriverWorkflow();
   const [busyProof, setBusyProof] = useState(false);
 
-  const updates: any[] = (updatesQuery.data as any[]) ?? [];
   const tickets: any[] = (ticketsQuery.data as any[]) ?? [];
   const evidence: any[] = (evidenceQuery.data as any[]) ?? [];
 
-  const reached = new Set(updates.map((u) => u.status));
-  const currentIdx = STATUS_FLOW.reduce((acc, s, i) => (reached.has(s.key) ? i : acc), -1);
-  const nextStep = STATUS_FLOW[currentIdx + 1];
+  const myTicket = tickets[0];
+  const currentState = myTicket?.workflowState ?? null;
+  const currentIdx = WORKFLOW_FLOW.findIndex((step) => step.state === currentState);
+  const nextStep = !myTicket || currentState === "declined" ? null : WORKFLOW_FLOW[currentIdx + 1] ?? WORKFLOW_FLOW[0];
 
-  const advance = () => {
+  const uploadWorkflowFile = async (step: WorkflowStep) => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    const result = perm.granted
+      ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 })
+      : await (async () => {
+          const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (!lib.granted) {
+            Alert.alert("Photos blocked", "Enable camera or photo access to upload this workflow item.");
+            return null;
+          }
+          return ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
+        })();
+    if (!result || result.canceled || !result.assets?.[0]) return null;
+    const asset = result.assets[0];
+    const filename = asset.fileName ?? `${step.photoRole}-${job.id}.jpg`;
+    const mimeType = asset.mimeType ?? "image/jpeg";
+    const { objectPath } = await upload.mutateAsync({ uri: asset.uri, name: filename, mimeType });
+    return {
+      role: step.photoRole ?? "workflow_photo",
+      url: `${API_BASE}/storage${objectPath}`,
+      caption: step.label,
+    };
+  };
+
+  const advance = async () => {
     if (!nextStep) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    createUpdate.mutate(
-      { jobId: job.id, status: nextStep.key },
-      {
-        onSuccess: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
-        onError: (err: any) => Alert.alert("Couldn't update status", err?.message ?? "Try again."),
-      },
-    );
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const file = nextStep.photoRole ? await uploadWorkflowFile(nextStep) : null;
+      if (nextStep.photoRole && !file) return;
+      await workflow.mutateAsync({
+        jobId: job.id,
+        ticketId: myTicket?.id,
+        action: nextStep.action,
+        ...(file ? { files: [file] } : {}),
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err: any) {
+      Alert.alert("Couldn't update status", err?.message ?? "Try again.");
+    }
   };
 
   const handleNewLoad = () => {
@@ -176,10 +212,11 @@ function DriverJobCard({
       const filename = asset.fileName ?? `proof-${job.id}.jpg`;
       const mimeType = asset.mimeType ?? "image/jpeg";
       const { objectPath } = await upload.mutateAsync({ uri: asset.uri, name: filename, mimeType });
-      await submitEvidence.mutateAsync({
+      await workflow.mutateAsync({
         jobId: job.id,
-        photoUrl: `${API_BASE}/storage${objectPath}`,
-        photoCaption: "Delivery proof",
+        ticketId: myTicket?.id,
+        action: "upload_delivery_photos",
+        files: [{ role: "delivery_photo", url: `${API_BASE}/storage${objectPath}`, caption: "Delivery proof" }],
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err: any) {
@@ -214,10 +251,10 @@ function DriverJobCard({
           {/* Status timeline */}
           <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>STATUS</Text>
           <View style={styles.timeline}>
-            {STATUS_FLOW.map((step, i) => {
+            {WORKFLOW_FLOW.map((step, i) => {
               const done = i <= currentIdx;
               return (
-                <View key={step.key} style={styles.timelineRow}>
+                <View key={step.state} style={styles.timelineRow}>
                   <View
                     style={[
                       styles.timelineDot,
@@ -242,10 +279,10 @@ function DriverJobCard({
           {nextStep ? (
             <Pressable
               onPress={advance}
-              disabled={createUpdate.isPending}
-              style={[styles.primaryBtn, { backgroundColor: colors.primary, opacity: createUpdate.isPending ? 0.6 : 1 }]}
+              disabled={workflow.isPending || upload.isPending}
+              style={[styles.primaryBtn, { backgroundColor: colors.primary, opacity: workflow.isPending || upload.isPending ? 0.6 : 1 }]}
             >
-              {createUpdate.isPending ? (
+              {workflow.isPending || upload.isPending ? (
                 <ActivityIndicator size="small" color={colors.primaryForeground} />
               ) : (
                 <>
@@ -259,7 +296,9 @@ function DriverJobCard({
           ) : (
             <View style={[styles.doneBanner, { backgroundColor: ACCENT.green + "15", borderColor: ACCENT.green + "40" }]}>
               <Feather name="check-circle" size={15} color={ACCENT.green} />
-              <Text style={[styles.doneBannerText, { color: ACCENT.green }]}>All status steps reported</Text>
+              <Text style={[styles.doneBannerText, { color: ACCENT.green }]}>
+                {currentState === "declined" ? "Assignment declined" : myTicket ? "All workflow steps complete" : "No assignment ticket yet"}
+              </Text>
             </View>
           )}
 
@@ -271,6 +310,7 @@ function DriverJobCard({
             tickets.map((t) => {
               const checkedIn = !!t.clockInAt;
               const checkedOut = !!t.clockOutAt;
+              const workflowLabel = String(t.workflowState ?? t.status ?? "pending").replace(/_/g, " ");
               return (
                 <View key={t.id} style={[styles.ticketRow, { borderColor: colors.border, backgroundColor: colors.background }]}>
                   <View style={{ flex: 1 }}>
@@ -278,26 +318,10 @@ function DriverJobCard({
                       Load #{t.loadNumber ?? t.id}
                     </Text>
                     <Text style={[styles.ticketMeta, { color: colors.mutedForeground }]}>
-                      {checkedOut ? "Checked out" : checkedIn ? "On site" : "Not checked in"}
+                      {workflowLabel}{checkedOut ? " - checked out" : checkedIn ? " - on site" : ""}
                     </Text>
                   </View>
-                  {!checkedIn ? (
-                    <Pressable
-                      onPress={() => clockIn.mutate(t.id, { onError: (e: any) => Alert.alert("Check-in failed", e?.message ?? "Try again.") })}
-                      style={[styles.smallBtn, { backgroundColor: ACCENT.green }]}
-                    >
-                      <Text style={styles.smallBtnText}>Check In</Text>
-                    </Pressable>
-                  ) : !checkedOut ? (
-                    <Pressable
-                      onPress={() => clockOut.mutate(t.id, { onError: (e: any) => Alert.alert("Check-out failed", e?.message ?? "Try again.") })}
-                      style={[styles.smallBtn, { backgroundColor: colors.primary }]}
-                    >
-                      <Text style={[styles.smallBtnText, { color: colors.primaryForeground }]}>Check Out</Text>
-                    </Pressable>
-                  ) : (
-                    <Feather name="check-circle" size={20} color={ACCENT.green} />
-                  )}
+                  <Feather name={t.workflowState === "completed" ? "check-circle" : "clock"} size={20} color={t.workflowState === "completed" ? ACCENT.green : colors.mutedForeground} />
                 </View>
               );
             })

@@ -177,6 +177,7 @@ beforeEach(() => {
     driverProfileId: 30,
     loadNumber: 1,
     status: "pending",
+    workflowState: "assigned",
     clockedInAt: null,
     clockedOutAt: null,
   }];
@@ -242,7 +243,7 @@ describe("Driver field operations workflow", () => {
   });
 
   it("unassigned driver cannot upload evidence or update job status", async () => {
-    h.tickets = [{ id: 1, jobId: 9, driverProfileId: 31, loadNumber: 1, status: "pending" }];
+    h.tickets = [{ id: 1, jobId: 9, driverProfileId: 31, loadNumber: 1, status: "pending", workflowState: "assigned" }];
     h.profile = { id: 30, role: "driver", companyName: "Haul Co" };
     const app = makeApp();
 
@@ -251,5 +252,53 @@ describe("Driver field operations workflow", () => {
 
     const complete = await request(app).patch("/jobs/9").send({ status: "completed" });
     expect(complete.status).toBe(403);
+  });
+
+  it("advances the production driver workflow and rejects skipped transitions", async () => {
+    const app = makeApp();
+
+    const skipped = await request(app)
+      .post("/jobs/9/driver-workflow")
+      .send({ action: "check_in", ticketId: 1 });
+    expect(skipped.status).toBe(409);
+    expect(h.tickets[0].workflowState).toBe("assigned");
+
+    const steps = [
+      { action: "accept_job" },
+      { action: "navigate_to_pickup" },
+      { action: "check_in" },
+      { action: "start_loading" },
+      { action: "upload_loading_photos", files: [{ role: "loading_photo", url: "https://example.com/loading.jpg" }] },
+      { action: "upload_scale_ticket", weightTons: 18, files: [{ role: "scale_ticket", url: "https://example.com/scale.jpg" }] },
+      { action: "leave_pickup" },
+      { action: "navigate_to_delivery" },
+      { action: "arrive_delivery" },
+      { action: "upload_delivery_photos", files: [{ role: "delivery_photo", url: "https://example.com/delivery.jpg" }] },
+      { action: "upload_signed_ticket", files: [{ role: "signed_ticket", url: "https://example.com/signed.jpg" }] },
+      { action: "check_out" },
+      { action: "complete_job", totalHours: 8 },
+    ];
+
+    for (const body of steps) {
+      const res = await request(app)
+        .post("/jobs/9/driver-workflow")
+        .send({ ticketId: 1, ...body });
+      expect(res.status, `${body.action} failed: ${JSON.stringify(res.body)}`).toBe(200);
+    }
+
+    expect(h.tickets[0].workflowState).toBe("completed");
+    expect(h.tickets[0].status).toBe("completed");
+    expect(h.jobs[0].status).toBe("completed");
+    expect(h.timeline.map((t) => t.status)).toEqual(expect.arrayContaining([
+      "driver_accepted",
+      "en_route_pickup",
+      "checked_in",
+      "loading",
+      "scale_ticket_uploaded",
+      "arrived_delivery",
+      "checked_out",
+      "completed",
+    ]));
+    expect(h.evidence).toHaveLength(4);
   });
 });

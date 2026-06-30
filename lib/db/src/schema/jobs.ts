@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { index, pgTable, text, serial, timestamp, integer, numeric, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -52,6 +52,8 @@ export const jobsTable = pgTable("jobs", {
   paymentStatus: jobPaymentStatusEnum("payment_status").notNull().default("unpaid"),
   paymentDueDate: timestamp("payment_due_date", { withTimezone: true }),
   invoicedAt: timestamp("invoiced_at", { withTimezone: true }),
+  invoiceApprovedAt: timestamp("invoice_approved_at", { withTimezone: true }),
+  invoiceApprovedByProfileId: integer("invoice_approved_by_profile_id").references(() => profilesTable.id),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   releasedAt: timestamp("released_at", { withTimezone: true }),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
@@ -76,7 +78,14 @@ export const jobsTable = pgTable("jobs", {
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+}, (table) => [
+  index("jobs_request_id_idx").on(table.requestId),
+  index("jobs_customer_id_idx").on(table.customerId),
+  index("jobs_provider_id_idx").on(table.providerId),
+  index("jobs_status_idx").on(table.status),
+  index("jobs_payment_status_idx").on(table.paymentStatus),
+  index("jobs_scheduled_date_idx").on(table.scheduledDate),
+]);
 
 export const insertJobSchema = createInsertSchema(jobsTable).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertJob = z.infer<typeof insertJobSchema>;

@@ -27,6 +27,7 @@ export type StaffRole =
   | "programmer";
 export type Permission =
   | "overview"
+  | "dispatch"
   | "payouts"
   | "credit"
   | "compliance"
@@ -36,6 +37,7 @@ export type Permission =
 
 // The finance/review scope shared by every role (Overview + the three review areas).
 const REVIEW_SCOPE: Permission[] = ["overview", "payouts", "credit", "compliance"];
+const OPS_SCOPE: Permission[] = ["dispatch", "bins"];
 
 // `bins` is bin-order fulfillment/operations — an operational, non-finance scope.
 // It is intentionally NOT held by the finance roles: Accounting (ap/ar/accounting)
@@ -47,15 +49,15 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
   ar: [...REVIEW_SCOPE],
   accounting: [...REVIEW_SCOPE],
   // CEO: full visibility incl. bins + read-only team roster, no staff edits.
-  ceo: [...REVIEW_SCOPE, "bins", "view_staff"],
+  ceo: [...REVIEW_SCOPE, ...OPS_SCOPE, "view_staff"],
   // President: executive visibility incl. bins + read-only team roster.
-  president: [...REVIEW_SCOPE, "bins", "view_staff"],
+  president: [...REVIEW_SCOPE, ...OPS_SCOPE, "view_staff"],
   // CFO: finance review + full staff management, but NO operational bins.
   cfo: [...REVIEW_SCOPE, "view_staff", "manage_staff"],
   // Technical superadmins: review scope + bins + full staff management.
-  cto: [...REVIEW_SCOPE, "bins", "view_staff", "manage_staff"],
-  it: [...REVIEW_SCOPE, "bins", "view_staff", "manage_staff"],
-  programmer: [...REVIEW_SCOPE, "bins", "view_staff", "manage_staff"],
+  cto: [...REVIEW_SCOPE, ...OPS_SCOPE, "view_staff", "manage_staff"],
+  it: [...REVIEW_SCOPE, ...OPS_SCOPE, "view_staff", "manage_staff"],
+  programmer: [...REVIEW_SCOPE, ...OPS_SCOPE, "view_staff", "manage_staff"],
 };
 
 export const STAFF_ROLES: StaffRole[] = [

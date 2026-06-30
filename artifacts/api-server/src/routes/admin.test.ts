@@ -406,22 +406,22 @@ describe("per-role permission gating", () => {
     expect(res.body.permissions.sort()).toEqual(["compliance", "credit", "overview", "payouts"]);
   });
 
-  it("CEO sees overview + all review areas + view-only staff, no manage_staff", async () => {
+  it("CEO sees overview + dispatch + all review areas + view-only staff, no manage_staff", async () => {
     h.profile = { id: 1, staffRole: "ceo" };
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
     expect(res.body.permissions.sort()).toEqual([
-      "bins", "compliance", "credit", "overview", "payouts", "view_staff",
+      "bins", "compliance", "credit", "dispatch", "overview", "payouts", "view_staff",
     ]);
   });
 
-  it("CTO / IT get full superadmin (review + bins + view + manage staff)", async () => {
+  it("CTO / IT get full superadmin (review + dispatch + bins + view + manage staff)", async () => {
     for (const role of ["cto", "it"]) {
       h.profile = { id: 1, staffRole: role };
       const res = await request(makeApp()).get("/admin/access");
       expect(res.status).toBe(200);
       expect(res.body.permissions.sort()).toEqual([
-        "bins", "compliance", "credit", "manage_staff", "overview", "payouts", "view_staff",
+        "bins", "compliance", "credit", "dispatch", "manage_staff", "overview", "payouts", "view_staff",
       ]);
     }
   });
