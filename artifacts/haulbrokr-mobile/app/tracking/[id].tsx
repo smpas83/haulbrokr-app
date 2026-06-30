@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -18,8 +18,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { ACCENT } from "@/constants/theme";
-import { useLiveJobs, useLiveRequests, useUpdateJob } from "@/hooks/useLiveApi";
+import { useJobStatusUpdates, useLiveJobs, useLiveRequests, useUpdateJob } from "@/hooks/useLiveApi";
 import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
+import { trackingProgressFromTimeline } from "@/lib/trackingProgress";
 
 const TRUCK_EMOJI = "🚛";
 
@@ -38,6 +39,7 @@ export default function TrackingScreen() {
   const numericId = !isRequestId && id ? parseInt(id, 10) : null;
   const { data: liveJobsRaw } = useLiveJobs();
   const { data: liveRequestsRaw } = useLiveRequests({ mine: true, enabled: isRequestId });
+  const { data: statusUpdatesRaw } = useJobStatusUpdates(numericId);
 
   const liveJob =
     numericId != null && Array.isArray(liveJobsRaw)
@@ -48,6 +50,10 @@ export default function TrackingScreen() {
       ? (liveRequestsRaw as LiveRequest[]).find((r) => r.id === requestNumericId)
       : undefined;
   const isLiveJob = !!liveJob;
+  const liveTrackingState = useMemo(
+    () => (isLiveJob ? trackingProgressFromTimeline(liveJob.status, statusUpdatesRaw ?? []) : null),
+    [isLiveJob, liveJob?.status, statusUpdatesRaw],
+  );
   const job = liveJob
     ? liveJobToViewJob(liveJob)
     : liveRequest
@@ -65,8 +71,20 @@ export default function TrackingScreen() {
   const progress = useRef(new Animated.Value(0.28)).current;
   const [progressPct, setProgressPct] = useState(28);
   const [eta, setEta] = useState(34); // minutes remaining
+  const displayProgressPct = liveTrackingState?.progressPct ?? progressPct;
+  const displayEta = liveTrackingState?.etaMinutes ?? eta;
+  const displayStatusLabel = liveTrackingState?.label ?? "In Progress";
 
   useEffect(() => {
+    if (liveTrackingState) {
+      Animated.timing(progress, {
+        toValue: liveTrackingState.progressPct / 100,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+      return undefined;
+    }
+
     // Slowly animate truck toward delivery
     Animated.timing(progress, {
       toValue: 0.9,
@@ -81,7 +99,7 @@ export default function TrackingScreen() {
     }, 10000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [liveTrackingState, progress]);
 
   if (!job) {
     return (
@@ -178,13 +196,13 @@ export default function TrackingScreen() {
             Live Tracking
           </Text>
           <Text style={[styles.headerSub, { color: ACCENT.green, fontFamily: "Inter_500Medium" }]}>
-            ● In Progress
+            ● {displayStatusLabel}
           </Text>
         </View>
         <View style={[styles.etaBadge, { backgroundColor: colors.primary }]}>
           <Feather name="clock" size={12} color={colors.primaryForeground} />
           <Text style={[styles.etaText, { color: colors.primaryForeground, fontFamily: "Inter_700Bold" }]}>
-            {eta} min
+            {displayEta} min
           </Text>
         </View>
       </View>
@@ -233,10 +251,10 @@ export default function TrackingScreen() {
           {/* ETA overlay */}
           <View style={[styles.etaOverlay, { backgroundColor: "#0a162890" }]}>
             <Text style={[styles.etaOverlayPct, { color: "#ffffff", fontFamily: "Inter_700Bold" }]}>
-              {progressPct}% Complete
+              {displayProgressPct}% Complete
             </Text>
             <Text style={[styles.etaOverlayEta, { color: "#ffffff99", fontFamily: "Inter_400Regular" }]}>
-              ~{eta} min to delivery
+              {displayEta > 0 ? `~${displayEta} min to delivery` : "Delivery complete"}
             </Text>
           </View>
         </View>
@@ -248,11 +266,11 @@ export default function TrackingScreen() {
               ROUTE PROGRESS
             </Text>
             <Text style={[styles.progressPct, { color: colors.primary, fontFamily: "Inter_700Bold" }]}>
-              {progressPct}%
+              {displayProgressPct}%
             </Text>
           </View>
           <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-            <View style={[styles.progressFill, { width: `${progressPct}%` as any, backgroundColor: colors.primary }]} />
+            <View style={[styles.progressFill, { width: `${displayProgressPct}%` as any, backgroundColor: colors.primary }]} />
           </View>
           <View style={styles.progressAddresses}>
             <Text style={[styles.progressAddr, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]} numberOfLines={1}>

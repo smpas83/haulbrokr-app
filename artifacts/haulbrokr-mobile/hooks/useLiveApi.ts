@@ -296,6 +296,7 @@ export function useJobStatusUpdates(jobId: number | null) {
     queryKey: ["status-updates", jobId],
     queryFn: () => apiFetch(getToken, "GET", `/jobs/${jobId}/status-updates`),
     enabled: !!isSignedIn && !!jobId,
+    refetchInterval: 15000,
   });
 }
 
