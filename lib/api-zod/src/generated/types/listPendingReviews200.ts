@@ -7,8 +7,6 @@
  */
 import type { RatingResponse } from './ratingResponse';
 
-export type GetJobRating200 = {
-  mine: RatingResponse | null;
-  theirs: RatingResponse | null;
-  reviews?: RatingResponse[];
+export type ListPendingReviews200 = {
+  reviews: RatingResponse[];
 };

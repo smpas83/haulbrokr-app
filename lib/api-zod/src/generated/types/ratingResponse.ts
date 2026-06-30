@@ -5,12 +5,15 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
+import type { ReviewModerationStatus } from './reviewModerationStatus';
+import type { ReviewType } from './reviewType';
 
 export interface RatingResponse {
   id: number;
   jobId: number;
   raterProfileId: number;
   rateeProfileId: number;
+  reviewType: ReviewType;
   /**
      * @minimum 1
      * @maximum 5
@@ -18,5 +21,13 @@ export interface RatingResponse {
   stars: number;
   /** @nullable */
   comment?: string | null;
+  moderationStatus: ReviewModerationStatus;
+  /** @nullable */
+  moderationReason?: string | null;
+  /** @nullable */
+  moderatedByProfileId?: number | null;
+  /** @nullable */
+  moderatedAt?: Date | null;
   createdAt: Date;
+  updatedAt?: Date;
 }
