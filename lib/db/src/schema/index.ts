@@ -28,3 +28,4 @@ export * from "./upload-sessions";
 export * from "./commission";
 export * from "./marketplace-payments";
 export * from "./dynamic-pricing";
+export * from "./marketplace-maps";

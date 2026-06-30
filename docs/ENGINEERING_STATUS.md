@@ -8,7 +8,7 @@ Last updated: 2026-06-30
 
 ## Latest Commit
 
-`cf50e05` - feat: stripe connect marketplace
+`4661d79` - feat: dynamic pricing engine
 
 ## Build Status
 
@@ -46,20 +46,23 @@ Passing for latest marketplace milestone.
   - Admin surcharge configuration APIs.
   - Persisted dynamic pricing calculations.
   - Award/completion calculations include active configured surcharges.
+- Realtime marketplace maps:
+  - Google Maps backend wrappers for geocoding, reverse geocoding, Places autocomplete, Routes, ETA, and traffic-aware duration.
+  - Driver/truck location update API.
+  - Privacy-scoped customer/vendor/driver job tracking API.
+  - Persisted route snapshots and latest driver location records.
 
 ## In Progress
 
-- Realtime marketplace maps.
+- Marketplace ratings.
 
 ## Next
 
-1. Marketplace ratings.
-2. Notification service.
+1. Notification service.
 
 ## Known Blockers
 
 - Real provider integration testing requires staging credentials that are not available in this environment.
-- Production Google Maps workflows are not yet implemented end-to-end.
 - Native mobile GPS/background/push behavior requires device QA.
 
 ## Outstanding Issues
