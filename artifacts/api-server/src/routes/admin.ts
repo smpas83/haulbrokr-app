@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, isNotNull, sql, and, notInArray, inArray, ilike, or } from "drizzle-orm";
+import { z } from "zod/v4";
 import { alias } from "drizzle-orm/pg-core";
 import {
   db,
@@ -13,6 +14,7 @@ import {
   w9SubmissionsTable,
   insuranceSubmissionsTable,
   driverDocumentsTable,
+  marketplaceConfigsTable,
 } from "@workspace/db";
 import { requireStaffOrProfile, attachStaffSession } from "../middlewares/staffAuth";
 import { attachClerkProfileIfPresent } from "../middlewares/requireAuth";
@@ -34,6 +36,7 @@ import {
   getProviderCanBid,
   profileSummary,
 } from "../lib/adminComplianceBundle";
+import { DEFAULT_MARKETPLACE_PRICING_CONFIG, getActiveMarketplacePricingConfig } from "../lib/marketplacePricing";
 
 const router: IRouter = Router();
 
@@ -106,6 +109,68 @@ router.get("/admin/access", async (req, res): Promise<void> => {
     permissions,
     staffDisplayName: req.staffUser?.displayName ?? null,
     authMethod: req.staffUser ? "staff" : staffRole ? "clerk" : null,
+  });
+});
+
+const MarketplaceConfigBody = z.object({
+  commissionRate: z.number().min(0).max(1).optional(),
+  surchargeRate: z.number().min(0).max(1).optional(),
+  flatSurchargeCents: z.number().int().min(0).optional(),
+  name: z.string().trim().min(1).max(80).optional(),
+});
+
+function serializeMarketplaceConfig(config: Awaited<ReturnType<typeof getActiveMarketplacePricingConfig>>) {
+  return {
+    id: config.id,
+    name: config.name,
+    commissionRate: config.commissionRate,
+    surchargeRate: config.surchargeRate,
+    flatSurchargeCents: config.flatSurchargeCents,
+    currency: config.currency,
+  };
+}
+
+router.get("/admin/marketplace-config", requireStaffOrProfile, requirePermission("payouts"), async (_req, res): Promise<void> => {
+  const config = await getActiveMarketplacePricingConfig();
+  res.json(serializeMarketplaceConfig(config));
+});
+
+router.patch("/admin/marketplace-config", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
+  const parsed = MarketplaceConfigBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const current = await getActiveMarketplacePricingConfig();
+  const next = {
+    ...DEFAULT_MARKETPLACE_PRICING_CONFIG,
+    ...current,
+    ...parsed.data,
+  };
+
+  await db.update(marketplaceConfigsTable)
+    .set({ isActive: 0 })
+    .where(eq(marketplaceConfigsTable.isActive, 1));
+
+  const [created] = await db.insert(marketplaceConfigsTable)
+    .values({
+      name: parsed.data.name ?? "default",
+      commissionRate: String(next.commissionRate),
+      surchargeRate: String(next.surchargeRate),
+      flatSurchargeCents: next.flatSurchargeCents,
+      currency: next.currency,
+      isActive: 1,
+    })
+    .returning();
+
+  res.json({
+    id: created.id,
+    name: created.name,
+    commissionRate: Number.parseFloat(created.commissionRate),
+    surchargeRate: Number.parseFloat(created.surchargeRate),
+    flatSurchargeCents: created.flatSurchargeCents,
+    currency: created.currency,
   });
 });
 

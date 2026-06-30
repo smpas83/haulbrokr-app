@@ -6,6 +6,7 @@ import { requestsTable } from "./requests";
 import { bidsTable } from "./bids";
 import { projectsTable } from "./projects";
 import { truckTypeEnum } from "./trucks";
+import { marketplaceConfigsTable } from "./marketplace";
 
 export const jobStatusEnum = pgEnum("job_status", [
   "active",
@@ -44,9 +45,15 @@ export const jobsTable = pgTable("jobs", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
   totalHours: numeric("total_hours", { precision: 8, scale: 2 }),
   totalAmount: numeric("total_amount", { precision: 12, scale: 2 }),
-  // ── Broker-fee revenue model (15% taken before the driver is paid) ──
-  platformFeeRate: numeric("platform_fee_rate", { precision: 5, scale: 4 }).notNull().default("0.15"),
+  // Marketplace economics are snapshotted on completion so later admin config
+  // changes never alter settled invoices or provider payouts.
+  pricingConfigId: integer("pricing_config_id").references(() => marketplaceConfigsTable.id),
+  platformFeeRate: numeric("platform_fee_rate", { precision: 5, scale: 4 }).notNull().default("0.20"),
   platformFeeAmount: numeric("platform_fee_amount", { precision: 12, scale: 2 }),
+  commissionRate: numeric("commission_rate", { precision: 5, scale: 4 }).notNull().default("0.20"),
+  commissionAmount: numeric("commission_amount", { precision: 12, scale: 2 }),
+  surchargeRate: numeric("surcharge_rate", { precision: 5, scale: 4 }).notNull().default("0"),
+  surchargeAmount: numeric("surcharge_amount", { precision: 12, scale: 2 }),
   customerTotalAmount: numeric("customer_total_amount", { precision: 12, scale: 2 }),
   providerNetAmount: numeric("provider_net_amount", { precision: 12, scale: 2 }),
   paymentStatus: jobPaymentStatusEnum("payment_status").notNull().default("unpaid"),

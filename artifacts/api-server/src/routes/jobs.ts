@@ -24,6 +24,12 @@ import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
 import {
+  DEFAULT_MARKETPLACE_PRICING_CONFIG,
+  computeMarketplacePricing,
+  formatRatePercent,
+  getActiveMarketplacePricingConfig,
+} from "../lib/marketplacePricing";
+import {
   ListJobsQueryParams,
   ListJobsResponse,
   GetJobParams,
@@ -59,8 +65,6 @@ import {
 
 const router: IRouter = Router();
 
-const DEFAULT_FEE_RATE = 0.15;
-
 function num(v: string | null | undefined): number | null {
   return v == null ? null : parseFloat(v);
 }
@@ -74,6 +78,10 @@ function serializeJob(j: any, customerCompany: string, providerCompany: string) 
     totalAmount: num(j.totalAmount),
     platformFeeRate: num(j.platformFeeRate),
     platformFeeAmount: num(j.platformFeeAmount),
+    commissionRate: num(j.commissionRate),
+    commissionAmount: num(j.commissionAmount),
+    surchargeRate: num(j.surchargeRate),
+    surchargeAmount: num(j.surchargeAmount),
     customerTotalAmount: num(j.customerTotalAmount),
     providerNetAmount: num(j.providerNetAmount),
     customerCompany,
@@ -152,26 +160,31 @@ async function notifyPayoutDelayed(
 }
 
 /**
- * Broker-fee model: the customer is billed the work value PLUS a 15% broker fee.
- * HaulBrokr deducts that 15% from the customer's gross payment BEFORE the
- * provider/driver is paid, so the driver receives the full work value (net) and
- * HaulBrokr retains the fee.
+ * Marketplace model: the customer is billed the work value plus configured
+ * commission/surcharges. The provider receives the full work value (net) and
+ * HaulBrokr retains the configured marketplace fees.
  *   base  = ratePerHour * hours   (work value → provider net)
- *   fee   = base * feeRate        (HaulBrokr's retained profit)
+ *   fee   = commission + surcharges
  *   gross = base + fee            (what the customer pays)
  */
 export function computeBreakdown(ratePerHour: number, hours: number, feeRate: number) {
-  const base = Math.round(ratePerHour * hours * 100) / 100;
-  const fee = Math.round(base * feeRate * 100) / 100;
-  const gross = Math.round((base + fee) * 100) / 100;
-  return { base, fee, gross };
+  const breakdown = computeMarketplacePricing({
+    ratePerHour,
+    hours,
+    config: {
+      ...DEFAULT_MARKETPLACE_PRICING_CONFIG,
+      name: "legacy-fee-rate",
+      commissionRate: feeRate,
+    },
+  });
+  return { base: breakdown.base, fee: breakdown.platformFee, gross: breakdown.gross };
 }
 
 /**
- * Funds the provider's net payout via Stripe Connect using separate
- * charge + transfer: charge the customer the GROSS on the platform account,
- * then transfer ONLY the net to the provider's connected account. The 15%
- * broker fee therefore never leaves the platform — it is retained by design.
+ * Funds the provider's net payout via Stripe Connect using separate charge +
+ * transfer: charge the customer the GROSS on the platform account, then transfer
+ * ONLY the net to the provider's connected account. Marketplace fees therefore
+ * never leave the platform — they are retained by design.
  */
 interface CustomerInstrument {
   stripeCustomerId: string | null;
@@ -240,7 +253,7 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
       currency: "usd",
       destination: stripeAccountId,
       source_transaction: chargeId,
-      description: `HaulBrokr payout for job #${job.id} (net of 15% broker fee)`,
+      description: `HaulBrokr payout for job #${job.id} (net of marketplace fees)`,
       metadata: { jobId: String(job.id), attempt: String(attempt) },
     },
     { idempotencyKey: `job-transfer:${job.id}:${attempt}` },
@@ -612,13 +625,19 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     const hours = parsed.data.totalHours ?? (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
     if (hours != null) {
       const rate = parseFloat(existingJob.ratePerHour);
-      const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_FEE_RATE;
-      const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
+      const config = await getActiveMarketplacePricingConfig();
+      const pricing = computeMarketplacePricing({ ratePerHour: rate, hours, config });
       updates.totalHours = String(hours);
-      updates.totalAmount = String(base);
-      updates.customerTotalAmount = String(gross);
-      updates.platformFeeAmount = String(fee);
-      updates.providerNetAmount = String(base);
+      updates.totalAmount = String(pricing.base);
+      updates.pricingConfigId = config.id;
+      updates.platformFeeRate = String(config.commissionRate);
+      updates.platformFeeAmount = String(pricing.platformFee);
+      updates.commissionRate = String(config.commissionRate);
+      updates.commissionAmount = String(pricing.commission);
+      updates.surchargeRate = String(config.surchargeRate);
+      updates.surchargeAmount = String(pricing.surcharge);
+      updates.customerTotalAmount = String(pricing.gross);
+      updates.providerNetAmount = String(pricing.providerNet);
     }
   }
 
@@ -660,7 +679,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
 /**
  * POST /jobs/:id/charge — customer pays for a completed job.
  * - Instant methods (credit_card / ach): charge gross, immediately transfer net
- *   to the provider (15% retained). Marks job released.
+ *   to the provider (marketplace fees retained). Marks job released.
  * - Net terms (net_15/30/45): create an invoice with a due date. No money moves
  *   and the provider is NOT paid until the customer's invoice is paid (release).
  */
@@ -799,7 +818,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
 
 /**
  * POST /jobs/:id/release — release the provider's net payout for a Net-terms
- * invoice once the customer has paid it. The 15% broker fee is retained.
+ * invoice once the customer has paid it. Marketplace fees are retained.
  */
 router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
@@ -928,7 +947,7 @@ router.get("/jobs/:id/payment-confirmation", requireProfile, async (req, res): P
  * POST /jobs/:id/confirm-payment — finalize a job after the customer has
  * re-authenticated the card on-session. The charge is already captured; here we
  * verify the PaymentIntent succeeded and release the provider's net payout
- * (15% broker fee retained), marking the job released.
+ * (marketplace fees retained), marking the job released.
  */
 router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
@@ -997,7 +1016,7 @@ router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promi
  * off-session /charge flow (charge on the platform + a separate Transfer of the
  * net), Checkout uses a DESTINATION CHARGE: the gross is charged on the platform
  * and the net is routed to the provider's connected account automatically, with
- * the 15% broker fee taken as the application fee. The provider nets the same
+ * marketplace fees taken as the application fee. The provider nets the same
  * amount either way; the fee never leaves the platform.
  *
  * Gating mirrors /charge so a job that is already paid/released/awaiting
@@ -1056,7 +1075,9 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
 
   const grossCents = Math.round(parseFloat(job.customerTotalAmount) * 100);
   const netCents = Math.round(parseFloat(job.providerNetAmount) * 100);
-  const feeCents = grossCents - netCents; // the retained 15% broker fee
+  const feeCents = grossCents - netCents; // retained marketplace fees
+  const feeRate = job.platformFeeRate == null ? null : parseFloat(job.platformFeeRate);
+  const feeLabel = Number.isFinite(feeRate) && feeRate != null ? formatRatePercent(feeRate) : "configured";
 
   const base = returnUrlBase(req);
   const rawReturnTo = parsedBody.data.returnTo ?? "";
@@ -1074,7 +1095,7 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
             unit_amount: grossCents,
             product_data: {
               name: `HaulBrokr job #${job.id} — ${job.materialType} delivery`,
-              description: "Includes the 15% HaulBrokr broker fee.",
+              description: `Includes HaulBrokr marketplace fees (${feeLabel} commission plus surcharges as configured).`,
             },
           },
           quantity: 1,
@@ -1083,7 +1104,7 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
       payment_intent_data: {
         application_fee_amount: feeCents,
         transfer_data: { destination: readiness.stripeAccountId },
-        description: `HaulBrokr job #${job.id} (gross, net of 15% fee routed to provider)`,
+        description: `HaulBrokr job #${job.id} (gross, net of marketplace fees routed to provider)`,
         metadata: { jobId: String(job.id), kind: "checkout" },
       },
       metadata: { jobId: String(job.id), kind: "checkout" },

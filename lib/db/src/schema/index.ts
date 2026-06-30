@@ -10,6 +10,7 @@ export * from "./w9";
 export * from "./insurance";
 export * from "./payment";
 export * from "./payout";
+export * from "./marketplace";
 export * from "./dump-sites";
 export * from "./bin-orders";
 export * from "./projects";
