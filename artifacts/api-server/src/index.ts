@@ -5,6 +5,7 @@ import { logger } from "./lib/logger";
 import { startPayoutRetryScheduler } from "./lib/payoutRetryScheduler";
 import { startOrphanUploadCleaner } from "./lib/orphanUploadCleaner";
 import { startDocReminderScheduler } from "./lib/docReminderScheduler";
+import { startComplianceExpirationScheduler } from "./lib/complianceExpirationScheduler";
 
 validateProductionEnv();
 
@@ -32,4 +33,5 @@ app.listen(port, (err) => {
   startPayoutRetryScheduler();
   startOrphanUploadCleaner();
   startDocReminderScheduler();
+  startComplianceExpirationScheduler();
 });

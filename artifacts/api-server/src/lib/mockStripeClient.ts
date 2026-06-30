@@ -51,12 +51,25 @@ export function createMockStripeClient(): Stripe {
         return {
           id,
           object: "payment_intent",
-          status: "succeeded",
+          status: params?.capture_method === "manual" ? "requires_capture" : "succeeded",
           client_secret: `${id}_secret_${mockId("cs")}`,
           latest_charge: mockId("ch"),
           amount: params?.amount ?? 0,
           currency: params?.currency ?? "usd",
           metadata: params?.metadata ?? {},
+        };
+      },
+      async capture(id: string) {
+        return {
+          id,
+          object: "payment_intent",
+          status: "succeeded",
+          client_secret: `${id}_secret_mock`,
+          latest_charge: mockId("ch"),
+          amount_received: 0,
+          amount: 0,
+          currency: "usd",
+          metadata: {},
         };
       },
       async retrieve(id: string) {
@@ -78,6 +91,20 @@ export function createMockStripeClient(): Stripe {
           amount: params?.amount ?? 0,
           currency: params?.currency ?? "usd",
           destination: params?.destination ?? null,
+          metadata: params?.metadata ?? {},
+        };
+      },
+    },
+
+    refunds: {
+      async create(params: any) {
+        return {
+          id: mockId("re"),
+          object: "refund",
+          status: "succeeded",
+          amount: params?.amount ?? 0,
+          currency: "usd",
+          payment_intent: params?.payment_intent ?? null,
           metadata: params?.metadata ?? {},
         };
       },

@@ -3,49 +3,69 @@ import { eq } from "drizzle-orm";
 import { db, payoutAccountsTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { getUncachableStripeClient } from "../lib/stripeClient";
-import { syncStripeStatus, buildPayoutRequirements } from "../lib/payoutStatus";
+import { syncStripeStatus, buildPayoutRequirements, onboardingStatusForAccount } from "../lib/payoutStatus";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 
 const router: IRouter = Router();
+
+async function ensureConnectedAccount(profile: ReturnType<typeof getRequestProfile>): Promise<string> {
+  const stripe = await getUncachableStripeClient();
+  const [existing] = await db.select().from(payoutAccountsTable)
+    .where(eq(payoutAccountsTable.profileId, profile.id));
+
+  let stripeAccountId = existing?.stripeAccountId ?? null;
+  if (!stripeAccountId) {
+    const acct = await stripe.accounts.create(
+      {
+        type: "express",
+        email: profile.email ?? undefined,
+        capabilities: {
+          transfers: { requested: true },
+          card_payments: { requested: true },
+        },
+        business_type: "individual",
+        metadata: { profileId: String(profile.id) },
+      },
+      // Idempotency: a double-click or retry returns the SAME account instead
+      // of creating a duplicate Express account for the same profile.
+      { idempotencyKey: `payouts:acct-create:${profile.id}` },
+    );
+    stripeAccountId = acct.id;
+    if (existing) {
+      await db.update(payoutAccountsTable)
+        .set({ stripeAccountId, onboardingStatus: "restricted" })
+        .where(eq(payoutAccountsTable.id, existing.id));
+    } else {
+      await db.insert(payoutAccountsTable).values({
+        profileId: profile.id,
+        stripeAccountId,
+        onboardingStatus: "restricted",
+      });
+    }
+  }
+
+  await syncStripeStatus(stripeAccountId, profile.id).catch(() => undefined);
+  return stripeAccountId;
+}
+
+/** POST /payouts/connect-account — create/retrieve the vendor's Connect Express account. */
+router.post("/payouts/connect-account", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  try {
+    const stripeAccountId = await ensureConnectedAccount(profile);
+    res.json({ stripeAccountId });
+  } catch (err: any) {
+    req.log.error({ err }, "Stripe connect-account failed");
+    res.status(500).json({ error: err?.message ?? "Stripe error" });
+  }
+});
 
 /** POST /payouts/connect-link — create/get Connect Express account, return onboarding URL. */
 router.post("/payouts/connect-link", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
   try {
     const stripe = await getUncachableStripeClient();
-    const [existing] = await db.select().from(payoutAccountsTable)
-      .where(eq(payoutAccountsTable.profileId, profile.id));
-
-    let stripeAccountId = existing?.stripeAccountId ?? null;
-    if (!stripeAccountId) {
-      const acct = await stripe.accounts.create(
-        {
-          type: "express",
-          email: profile.email ?? undefined,
-          capabilities: {
-            transfers: { requested: true },
-            card_payments: { requested: true },
-          },
-          business_type: "individual",
-          metadata: { profileId: String(profile.id) },
-        },
-        // Idempotency: a double-click or retry returns the SAME account instead
-        // of creating a duplicate Express account for the same profile.
-        { idempotencyKey: `payouts:acct-create:${profile.id}` },
-      );
-      stripeAccountId = acct.id;
-      if (existing) {
-        await db.update(payoutAccountsTable)
-          .set({ stripeAccountId })
-          .where(eq(payoutAccountsTable.id, existing.id));
-      } else {
-        await db.insert(payoutAccountsTable).values({
-          profileId: profile.id,
-          stripeAccountId,
-        });
-      }
-    }
-
+    const stripeAccountId = await ensureConnectedAccount(profile);
     const base = returnUrlBase(req);
     // The mobile app passes the deep link it wants Stripe to return to. We
     // embed it in our HTTPS return page (Stripe requires https URLs), which
@@ -89,6 +109,7 @@ router.get("/payouts/status", requireProfile, async (req, res): Promise<void> =>
       chargesEnabled: !!acct.charges_enabled,
       payoutsEnabled: !!acct.payouts_enabled,
       detailsSubmitted: !!acct.details_submitted,
+      onboardingStatus: onboardingStatusForAccount(acct),
       requirements: buildPayoutRequirements(acct),
     });
   } catch (err: any) {

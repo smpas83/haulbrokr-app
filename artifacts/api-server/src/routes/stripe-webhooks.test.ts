@@ -44,6 +44,8 @@ vi.mock("@workspace/db", () => {
     jobsTable: makeTable("jobs"),
     payoutAccountsTable: makeTable("payoutAccounts"),
     activityTable: makeTable("activity"),
+    stripeWebhookEventsTable: makeTable("stripeWebhookEvents"),
+    paymentAuditLogsTable: makeTable("paymentAuditLogs"),
   };
 });
 
@@ -88,9 +90,14 @@ import {
   handlePaymentIntentPaymentFailed,
   handleCheckoutSessionCompleted,
   handleAccountUpdated,
+  handleChargeRefunded,
+  handleInvoicePaid,
+  handleInvoicePaymentFailed,
+  handlePayoutStatus,
   handleStripeEvent,
+  processStripeWebhookEvent,
 } from "../lib/stripeWebhooks";
-import { jobsTable, payoutAccountsTable } from "@workspace/db";
+import { jobsTable, payoutAccountsTable, stripeWebhookEventsTable } from "@workspace/db";
 import { checkProviderPayoutReadiness, syncStripeStatus } from "../lib/payoutStatus";
 import { settleConfirmedPayout } from "../lib/payoutRetry";
 
@@ -257,7 +264,7 @@ describe("handlePaymentIntentPaymentFailed", () => {
       paymentStatus: "failed",
       stripePaymentIntentId: "pi_action_1",
     });
-    expect(h.inserts.at(-1)).toMatchObject({
+    expect(h.inserts.find((i) => i.type === "payment_failed")).toMatchObject({
       profileId: 1,
       type: "payment_failed",
       relatedId: 10,
@@ -327,6 +334,89 @@ describe("handleAccountUpdated", () => {
     const result = await handleAccountUpdated({ id: "acct_123", metadata: {} } as any);
     expect(result).toEqual({ handled: true, action: "payout_status_synced" });
     expect(syncStripeStatus).toHaveBeenCalledWith("acct_123", 7);
+  });
+});
+
+describe("production webhook handlers", () => {
+  it("marks a charge as fully refunded", async () => {
+    h.rows.set(jobsTable, [baseJob({ paymentStatus: "released", stripePaymentIntentId: "pi_refund_1" })]);
+
+    const result = await handleChargeRefunded({
+      id: "ch_refund_1",
+      amount: 11500,
+      amount_refunded: 11500,
+      currency: "usd",
+      payment_intent: "pi_refund_1",
+      refunds: { data: [{ id: "re_1" }] },
+      metadata: { jobId: "10" },
+    } as any);
+
+    expect(result).toEqual({ handled: true, action: "marked_refunded" });
+    expect(h.updates.at(-1)).toMatchObject({
+      paymentStatus: "refunded",
+      refundStatus: "succeeded",
+      stripeRefundId: "re_1",
+    });
+    expect(h.inserts.at(-1)).toMatchObject({
+      eventType: "charge.refunded",
+      status: "refunded",
+      stripeRefundId: "re_1",
+    });
+  });
+
+  it("updates invoice payment success and failure", async () => {
+    h.rows.set(jobsTable, [baseJob({ paymentStatus: "invoiced", stripePaymentIntentId: "pi_invoice_1" })]);
+
+    const paid = await handleInvoicePaid({
+      id: "in_1",
+      amount_paid: 24000,
+      currency: "usd",
+      payment_intent: "pi_invoice_1",
+      metadata: { jobId: "10" },
+    } as any);
+    expect(paid).toEqual({ handled: true, action: "invoice_marked_paid" });
+    expect(h.updates.at(-1)).toMatchObject({ paymentStatus: "paid", stripeInvoiceId: "in_1" });
+
+    const failed = await handleInvoicePaymentFailed({
+      id: "in_2",
+      amount_due: 24000,
+      currency: "usd",
+      payment_intent: "pi_invoice_1",
+      metadata: { jobId: "10" },
+    } as any);
+    expect(failed).toEqual({ handled: true, action: "invoice_marked_failed" });
+    expect(h.updates.at(-1)).toMatchObject({ paymentStatus: "failed", stripeInvoiceId: "in_2" });
+    expect(h.inserts.some((i) => i.type === "payment_failed")).toBe(true);
+  });
+
+  it("tracks connected account payout events", async () => {
+    h.rows.set(payoutAccountsTable, [{ id: 3, profileId: 7, stripeAccountId: "acct_vendor" }]);
+
+    const result = await handlePayoutStatus({
+      id: "po_1",
+      amount: 10000,
+      currency: "usd",
+      metadata: { jobId: "10" },
+    } as any, "acct_vendor", "paid");
+
+    expect(result).toEqual({ handled: true, action: "payout_marked_paid" });
+    expect(h.updates.at(-1)).toMatchObject({ stripePayoutId: "po_1", payoutStatus: "paid" });
+    expect(h.inserts.at(-1)).toMatchObject({
+      eventType: "payout.paid",
+      stripePayoutId: "po_1",
+    });
+  });
+
+  it("skips duplicate webhook events before invoking handlers", async () => {
+    h.rows.set(stripeWebhookEventsTable, [{ eventId: "evt_dupe", status: "succeeded" }]);
+    const result = await processStripeWebhookEvent({
+      id: "evt_dupe",
+      type: "payment_intent.succeeded",
+      data: { object: { id: "pi_1", metadata: { jobId: "10" } } },
+    } as any);
+
+    expect(result).toEqual({ handled: true, action: "duplicate_event" });
+    expect(settleConfirmedPayout).not.toHaveBeenCalled();
   });
 });
 
