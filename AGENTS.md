@@ -43,8 +43,13 @@ non-obvious cloud setup/run caveats.
 
 ### Auth caveats (important for manual/UI testing)
 - The **web UI is gated behind Clerk** (`ClerkProvider` in `src/AuthShell.tsx` wraps all
-  routes). With only dummy Clerk keys, Clerk JS can't load and authed pages render a
-  blank screen — full web-UI testing needs a **real Clerk publishable key**.
+  routes); if Clerk JS fails to initialize, every page (incl. the marketing landing)
+  renders a blank screen. To render the web UI on **localhost you need Clerk
+  _development_ instance keys** (`pk_test_`/`sk_test_`): a syntactically-valid dummy key
+  fails because Clerk JS can't load its host, and **production keys (`pk_live_`/`sk_live_`)
+  are domain-locked** (Clerk rejects the `localhost` origin with a 429 / "Production keys
+  are only allowed for domain …"). Either use dev-instance keys or add `localhost` to the
+  instance's allowed origins.
 - **Staff/admin auth is independent of Clerk** (cookie session via `STAFF_AUTH_SECRET`).
   Seed staff logins with `STAFF_DEFAULT_PASSWORD='...' pnpm --filter
   @workspace/api-server run seed-staff` (creates ceo/cfo/cto/etc.), then
