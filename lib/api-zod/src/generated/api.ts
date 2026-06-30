@@ -516,7 +516,7 @@ export const ListJobsResponseItem = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -565,7 +565,7 @@ export const GetJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -619,7 +619,7 @@ export const UpdateJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -667,7 +667,7 @@ export const AcceptJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -715,7 +715,7 @@ export const DeclineJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -1859,7 +1859,7 @@ export const AdvanceBinOrderStatusResponse = zod.object({
 
 
 /**
- * @summary Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+ * @summary Charge the customer for a completed job using configured marketplace fees. Instant methods immediately transfer the net to the provider; Net terms create an invoice.
  */
 export const ChargeJobParams = zod.object({
   "id": zod.coerce.number()
@@ -1891,7 +1891,7 @@ export const ChargeJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -1907,7 +1907,7 @@ export const ChargeJobResponse = zod.object({
 
 
 /**
- * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+ * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (marketplace fees already retained).
  */
 export const ReleaseJobPaymentParams = zod.object({
   "id": zod.coerce.number()
@@ -1939,7 +1939,7 @@ export const ReleaseJobPaymentResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -2001,7 +2001,7 @@ export const ConfirmJobPaymentResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -2017,7 +2017,7 @@ export const ConfirmJobPaymentResponse = zod.object({
 
 
 /**
- * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+ * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains configured marketplace fees as the application fee.
  */
 export const CreateJobCheckoutSessionParams = zod.object({
   "id": zod.coerce.number()
@@ -2069,7 +2069,7 @@ export const VerifyJobCheckoutResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -2212,7 +2212,7 @@ export const ApproveJobCompletionResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -2264,7 +2264,7 @@ export const FlagJobCompletionResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),

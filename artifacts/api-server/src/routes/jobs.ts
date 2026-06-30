@@ -30,6 +30,14 @@ import {
   getActiveMarketplacePricingConfig,
 } from "../lib/marketplacePricing";
 import {
+  captureAuthorizedPaymentIntent,
+  chargeIdFromPaymentIntent,
+  createAuthorizedPaymentIntent,
+  receiptUrlFromPaymentIntent,
+  refundJobPayment,
+  type CustomerInstrument,
+} from "../lib/stripePayments";
+import {
   ListJobsQueryParams,
   ListJobsResponse,
   GetJobParams,
@@ -186,12 +194,6 @@ export function computeBreakdown(ratePerHour: number, hours: number, feeRate: nu
  * ONLY the net to the provider's connected account. Marketplace fees therefore
  * never leave the platform — they are retained by design.
  */
-interface CustomerInstrument {
-  stripeCustomerId: string | null;
-  stripePaymentMethodId: string | null;
-  methodType: string;
-}
-
 async function settleProviderPayout(job: any, stripeAccountId: string, customer: CustomerInstrument, attempt: number) {
   const stripe = await getUncachableStripeClient();
   const grossCents = Math.round(parseFloat(job.customerTotalAmount) * 100);
@@ -245,7 +247,10 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
     { idempotencyKey: `job-charge:${job.id}:${attempt}` },
   );
 
-  const chargeId = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge?.id;
+  const chargeId = chargeIdFromPaymentIntent(pi);
+  if (!chargeId) {
+    throw new Error("Stripe PaymentIntent has no charge to transfer from.");
+  }
 
   const transfer = await stripe.transfers.create(
     {
@@ -259,7 +264,7 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
     { idempotencyKey: `job-transfer:${job.id}:${attempt}` },
   );
 
-  return { paymentIntentId: pi.id, transferId: transfer.id };
+  return { paymentIntentId: pi.id, transferId: transfer.id, chargeId, receiptUrl: receiptUrlFromPaymentIntent(pi) };
 }
 
 /**
@@ -781,7 +786,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
   };
 
   try {
-    const { paymentIntentId, transferId } = await settleProviderPayout(job, readiness.stripeAccountId, instrument, attempt);
+    const { paymentIntentId, transferId, chargeId, receiptUrl } = await settleProviderPayout(job, readiness.stripeAccountId, instrument, attempt);
     const now = new Date();
     const [updated] = await db.update(jobsTable)
       .set({
@@ -790,7 +795,10 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
         releasedAt: now,
         paymentAttempts: attempt,
         stripePaymentIntentId: paymentIntentId,
+        stripeChargeId: chargeId,
         stripeTransferId: transferId,
+        stripeReceiptUrl: receiptUrl,
+        payoutStatus: "paid",
       })
       .where(eq(jobsTable.id, job.id)).returning();
     const { customerCompany, providerCompany } = await companiesFor(updated);
@@ -813,6 +821,188 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
     await db.update(jobsTable).set({ paymentStatus: "failed", paymentAttempts: attempt }).where(eq(jobsTable.id, job.id));
     await notifyPaymentFailed(job);
     res.status(502).json({ error: err?.message ?? "Payment processing failed" });
+  }
+});
+
+async function customerInstrumentForJob(job: { customerId: number }, pm: { methodType?: string | null; stripePaymentMethodId?: string | null } | undefined | null): Promise<CustomerInstrument> {
+  const [customerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.customerId));
+  return {
+    stripeCustomerId: customerProfile?.stripeCustomerId ?? null,
+    stripePaymentMethodId: pm?.stripePaymentMethodId ?? null,
+    methodType: pm?.methodType ?? "credit_card",
+  };
+}
+
+router.post("/jobs/:id/authorize-payment", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid job id." });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable)
+    .where(and(eq(jobsTable.id, id), eq(jobsTable.customerId, profile.id)));
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+  if (job.status !== "completed") {
+    res.status(400).json({ error: "Job must be completed before payment can be authorized." });
+    return;
+  }
+  if (job.customerTotalAmount == null || job.providerNetAmount == null) {
+    res.status(400).json({ error: "Job has no computed amount. Mark it completed with hours first." });
+    return;
+  }
+  if (["authorized", "paid", "released", "refunded", "partially_refunded"].includes(job.paymentStatus)) {
+    res.status(409).json({ error: "This job already has a payment in progress or completed." });
+    return;
+  }
+
+  const [pm] = await db.select().from(paymentMethodsTable).where(eq(paymentMethodsTable.profileId, job.customerId));
+  if (pm?.methodType === "ach" && pm.verificationStatus === "pending") {
+    res.status(409).json({ error: "Your bank account is still being verified. Finish verifying it in Account before authorizing payment." });
+    return;
+  }
+
+  const readiness = await checkProviderPayoutReadiness(job.providerId);
+  if (!readiness.ok) {
+    await notifyPayoutDelayed(job, readiness.message);
+    res.status(409).json({ error: readiness.message });
+    return;
+  }
+
+  const attempt = (job.paymentAttempts ?? 0) + 1;
+  try {
+    const instrument = await customerInstrumentForJob(job, pm);
+    const pi = await createAuthorizedPaymentIntent({
+      id: job.id,
+      customerId: job.customerId,
+      customerTotalAmount: job.customerTotalAmount,
+      providerNetAmount: job.providerNetAmount,
+      paymentAttempts: job.paymentAttempts,
+      materialType: job.materialType,
+    }, instrument, attempt);
+    const [updated] = await db.update(jobsTable)
+      .set({
+        paymentStatus: "authorized",
+        paymentAttempts: attempt,
+        stripePaymentIntentId: pi.id,
+        stripeChargeId: chargeIdFromPaymentIntent(pi),
+        stripeReceiptUrl: receiptUrlFromPaymentIntent(pi),
+      })
+      .where(eq(jobsTable.id, job.id))
+      .returning();
+    const { customerCompany, providerCompany } = await companiesFor(updated);
+    res.json(serializeJob(updated, customerCompany, providerCompany));
+  } catch (err: any) {
+    req.log?.error?.({ err }, "Job payment authorization failed");
+    await db.update(jobsTable).set({ paymentStatus: "failed", paymentAttempts: attempt }).where(eq(jobsTable.id, job.id));
+    await notifyPaymentFailed(job);
+    res.status(err?.status ?? 502).json({ error: err?.message ?? "Payment authorization failed" });
+  }
+});
+
+router.post("/jobs/:id/capture-payment", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid job id." });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable)
+    .where(and(eq(jobsTable.id, id), eq(jobsTable.customerId, profile.id)));
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+  if (job.paymentStatus !== "authorized" || !job.stripePaymentIntentId) {
+    res.status(409).json({ error: "This job does not have an authorized payment to capture." });
+    return;
+  }
+  if (job.providerNetAmount == null || job.customerTotalAmount == null) {
+    res.status(400).json({ error: "Job has no computed amount." });
+    return;
+  }
+
+  const readiness = await checkProviderPayoutReadiness(job.providerId);
+  if (!readiness.ok) {
+    await notifyPayoutDelayed(job, readiness.message);
+    res.status(409).json({ error: readiness.message });
+    return;
+  }
+
+  try {
+    const pi = await captureAuthorizedPaymentIntent({
+      id: job.id,
+      customerId: job.customerId,
+      customerTotalAmount: job.customerTotalAmount,
+      providerNetAmount: job.providerNetAmount,
+      paymentAttempts: job.paymentAttempts,
+      materialType: job.materialType,
+      stripePaymentIntentId: job.stripePaymentIntentId,
+    });
+    const updated = await settleConfirmedPayout({
+      id: job.id,
+      providerNetAmount: job.providerNetAmount,
+      paymentAttempts: job.paymentAttempts,
+    }, readiness.stripeAccountId, pi as any);
+    await db.update(jobsTable)
+      .set({
+        stripeChargeId: chargeIdFromPaymentIntent(pi),
+        stripeReceiptUrl: receiptUrlFromPaymentIntent(pi),
+        payoutStatus: "paid",
+      })
+      .where(eq(jobsTable.id, job.id));
+    const { customerCompany, providerCompany } = await companiesFor(updated);
+    res.json(serializeJob(updated, customerCompany, providerCompany));
+  } catch (err: any) {
+    req.log?.error?.({ err }, "Job payment capture failed");
+    await db.update(jobsTable).set({ paymentStatus: "failed" }).where(eq(jobsTable.id, job.id));
+    await notifyPaymentFailed(job);
+    res.status(502).json({ error: err?.message ?? "Payment capture failed" });
+  }
+});
+
+router.post("/jobs/:id/refund", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid job id." });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, id));
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+  const admin = await isAdmin(req);
+  if (!admin && job.customerId !== profile.id) {
+    res.status(403).json({ error: "Only the customer or HaulBrokr staff can refund this job." });
+    return;
+  }
+  if (!["paid", "released", "failed", "requires_action"].includes(job.paymentStatus)) {
+    res.status(409).json({ error: "This job does not have a refundable payment." });
+    return;
+  }
+
+  const amountCents = typeof req.body?.amountCents === "number" ? req.body.amountCents : undefined;
+  if (amountCents != null && (!Number.isInteger(amountCents) || amountCents <= 0)) {
+    res.status(400).json({ error: "amountCents must be a positive integer." });
+    return;
+  }
+
+  try {
+    await refundJobPayment(job, amountCents);
+    const [updated] = await db.select().from(jobsTable).where(eq(jobsTable.id, job.id));
+    const { customerCompany, providerCompany } = await companiesFor(updated);
+    res.json(serializeJob(updated, customerCompany, providerCompany));
+  } catch (err: any) {
+    req.log?.error?.({ err }, "Job refund failed");
+    res.status(err?.status ?? 502).json({ error: err?.message ?? "Refund failed" });
   }
 });
 
@@ -876,7 +1066,7 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
   const attempt = (job.paymentAttempts ?? 0) + 1;
 
   try {
-    const { paymentIntentId, transferId } = await settleProviderPayout(job, readiness.stripeAccountId, instrument, attempt);
+    const { paymentIntentId, transferId, chargeId, receiptUrl } = await settleProviderPayout(job, readiness.stripeAccountId, instrument, attempt);
     const now = new Date();
     const [updated] = await db.update(jobsTable)
       .set({
@@ -885,7 +1075,10 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
         releasedAt: now,
         paymentAttempts: attempt,
         stripePaymentIntentId: paymentIntentId,
+        stripeChargeId: chargeId,
         stripeTransferId: transferId,
+        stripeReceiptUrl: receiptUrl,
+        payoutStatus: "paid",
       })
       .where(eq(jobsTable.id, job.id)).returning();
     const { customerCompany, providerCompany } = await companiesFor(updated);
@@ -1199,7 +1392,11 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
         paidAt: now,
         releasedAt: now,
         stripePaymentIntentId: paymentIntentId,
+        stripeCheckoutSessionId: session.id,
+        stripeChargeId: charge?.id ?? null,
+        stripeReceiptUrl: charge?.receipt_url ?? null,
         ...(transferId ? { stripeTransferId: transferId } : {}),
+        payoutStatus: "paid",
         // A successful payment clears any prior stuck-payout failure tracking.
         payoutRetryFailures: 0,
         payoutAlertSentAt: null,

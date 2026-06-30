@@ -15,6 +15,8 @@ import {
   insuranceSubmissionsTable,
   driverDocumentsTable,
   marketplaceConfigsTable,
+  payoutAccountsTable,
+  paymentAuditLogsTable,
 } from "@workspace/db";
 import { requireStaffOrProfile, attachStaffSession } from "../middlewares/staffAuth";
 import { attachClerkProfileIfPresent } from "../middlewares/requireAuth";
@@ -171,6 +173,116 @@ router.patch("/admin/marketplace-config", requireStaffOrProfile, requirePermissi
     surchargeRate: Number.parseFloat(created.surchargeRate),
     flatSurchargeCents: created.flatSurchargeCents,
     currency: created.currency,
+  });
+});
+
+router.get("/admin/payment-status", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
+  const limitRaw = typeof req.query.limit === "string" ? Number.parseInt(req.query.limit, 10) : 50;
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 50;
+  const rows = await db
+    .select({
+      id: jobsTable.id,
+      customerId: jobsTable.customerId,
+      providerId: jobsTable.providerId,
+      paymentStatus: jobsTable.paymentStatus,
+      payoutStatus: jobsTable.payoutStatus,
+      refundStatus: jobsTable.refundStatus,
+      customerTotalAmount: jobsTable.customerTotalAmount,
+      providerNetAmount: jobsTable.providerNetAmount,
+      platformFeeAmount: jobsTable.platformFeeAmount,
+      stripePaymentIntentId: jobsTable.stripePaymentIntentId,
+      stripeChargeId: jobsTable.stripeChargeId,
+      stripeTransferId: jobsTable.stripeTransferId,
+      stripeInvoiceId: jobsTable.stripeInvoiceId,
+      stripeRefundId: jobsTable.stripeRefundId,
+      stripePayoutId: jobsTable.stripePayoutId,
+      paidAt: jobsTable.paidAt,
+      releasedAt: jobsTable.releasedAt,
+      refundedAt: jobsTable.refundedAt,
+      updatedAt: jobsTable.updatedAt,
+    })
+    .from(jobsTable)
+    .orderBy(desc(jobsTable.updatedAt))
+    .limit(limit);
+
+  res.json(rows.map((row) => ({
+    ...row,
+    customerTotalAmount: row.customerTotalAmount == null ? null : Number(row.customerTotalAmount),
+    providerNetAmount: row.providerNetAmount == null ? null : Number(row.providerNetAmount),
+    platformFeeAmount: row.platformFeeAmount == null ? null : Number(row.platformFeeAmount),
+  })));
+});
+
+router.get("/admin/payment-status/:id", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
+  const id = Number.parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid job id." });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, id));
+  if (!job) {
+    res.status(404).json({ error: "Job not found." });
+    return;
+  }
+
+  const audits = await db
+    .select()
+    .from(paymentAuditLogsTable)
+    .where(eq(paymentAuditLogsTable.jobId, id))
+    .orderBy(desc(paymentAuditLogsTable.createdAt));
+
+  res.json({
+    job: {
+      ...job,
+      ratePerHour: Number(job.ratePerHour),
+      estimatedHours: Number(job.estimatedHours),
+      totalHours: job.totalHours == null ? null : Number(job.totalHours),
+      totalAmount: job.totalAmount == null ? null : Number(job.totalAmount),
+      customerTotalAmount: job.customerTotalAmount == null ? null : Number(job.customerTotalAmount),
+      providerNetAmount: job.providerNetAmount == null ? null : Number(job.providerNetAmount),
+      platformFeeAmount: job.platformFeeAmount == null ? null : Number(job.platformFeeAmount),
+    },
+    audits,
+  });
+});
+
+router.get("/admin/vendors/:profileId/stripe-status", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
+  const profileId = Number.parseInt(String(req.params.profileId), 10);
+  if (!Number.isFinite(profileId)) {
+    res.status(400).json({ error: "Invalid profile id." });
+    return;
+  }
+
+  const [payout] = await db.select().from(payoutAccountsTable).where(eq(payoutAccountsTable.profileId, profileId));
+  if (!payout) {
+    res.json({
+      profileId,
+      connected: false,
+      stripeAccountId: null,
+      onboardingStatus: "not_started",
+      chargesEnabled: false,
+      payoutsEnabled: false,
+      detailsSubmitted: false,
+      lastPayoutStatus: null,
+      lastStripePayoutId: null,
+    });
+    return;
+  }
+
+  res.json({
+    profileId,
+    connected: !!payout.stripeAccountId,
+    stripeAccountId: payout.stripeAccountId,
+    onboardingStatus: payout.onboardingStatus,
+    chargesEnabled: payout.chargesEnabled === 1,
+    payoutsEnabled: payout.payoutsEnabled === 1,
+    detailsSubmitted: payout.detailsSubmitted === 1,
+    disabledReason: payout.disabledReason,
+    requirements: payout.requirementsJson ? JSON.parse(payout.requirementsJson) : null,
+    lastStripeSyncAt: payout.lastStripeSyncAt,
+    lastPayoutStatus: payout.lastPayoutStatus,
+    lastStripePayoutId: payout.lastStripePayoutId,
   });
 });
 

@@ -1338,7 +1338,7 @@ paths:
     post:
       operationId: chargeJob
       tags: [jobs]
-      summary: Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+      summary: Charge the customer for a completed job using configured marketplace fees. Instant methods immediately transfer the net to the provider; Net terms create an invoice.
       parameters:
         - name: id
           in: path
@@ -1357,7 +1357,7 @@ paths:
     post:
       operationId: releaseJobPayment
       tags: [jobs]
-      summary: Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+      summary: Release the provider's net payout after a Net-terms customer invoice has been paid (marketplace fees already retained).
       parameters:
         - name: id
           in: path
@@ -1414,7 +1414,7 @@ paths:
     post:
       operationId: createJobCheckoutSession
       tags: [jobs]
-      summary: Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+      summary: Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains configured marketplace fees as the application fee.
       parameters:
         - name: id
           in: path
@@ -2830,7 +2830,7 @@ components:
           type: ["number", "null"]
         paymentStatus:
           type: string
-          enum: [unpaid, invoiced, paid, released, failed, requires_action]
+          enum: [unpaid, authorized, invoiced, paid, released, failed, requires_action, refunded, partially_refunded]
         paymentDueDate:
           type: ["string", "null"]
           format: date-time

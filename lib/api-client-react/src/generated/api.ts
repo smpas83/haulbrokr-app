@@ -5276,7 +5276,7 @@ export const getChargeJobUrl = (id: number,) => {
 }
 
 /**
- * @summary Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+ * @summary Charge the customer for a completed job using configured marketplace fees. Instant methods immediately transfer the net to the provider; Net terms create an invoice.
  */
 export const chargeJob = async (id: number, options?: RequestInit): Promise<Job> => {
 
@@ -5324,7 +5324,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ChargeJobMutationError = ErrorType<unknown>
 
     /**
- * @summary Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+ * @summary Charge the customer for a completed job using configured marketplace fees. Instant methods immediately transfer the net to the provider; Net terms create an invoice.
  */
 export const useChargeJob = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chargeJob>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -5346,7 +5346,7 @@ export const getReleaseJobPaymentUrl = (id: number,) => {
 }
 
 /**
- * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+ * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (marketplace fees already retained).
  */
 export const releaseJobPayment = async (id: number, options?: RequestInit): Promise<Job> => {
 
@@ -5394,7 +5394,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ReleaseJobPaymentMutationError = ErrorType<unknown>
 
     /**
- * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+ * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (marketplace fees already retained).
  */
 export const useReleaseJobPayment = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof releaseJobPayment>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -5563,7 +5563,7 @@ export const getCreateJobCheckoutSessionUrl = (id: number,) => {
 }
 
 /**
- * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+ * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains configured marketplace fees as the application fee.
  */
 export const createJobCheckoutSession = async (id: number,
     checkoutSessionInput?: CheckoutSessionInput, options?: RequestInit): Promise<CheckoutSession> => {
@@ -5613,7 +5613,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateJobCheckoutSessionMutationError = ErrorType<unknown>
 
     /**
- * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+ * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains configured marketplace fees as the application fee.
  */
 export const useCreateJobCheckoutSession = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJobCheckoutSession>>, TError,{id: number;data?: BodyType<CheckoutSessionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}

@@ -9,7 +9,7 @@ export const PAYOUTS_NOT_ENABLED_MSG =
 
 export type PayoutReadiness =
   | { ok: true; stripeAccountId: string }
-  | { ok: false; reason: "not_connected" | "not_enabled"; message: string };
+  | { ok: false; reason: "not_connected" | "not_enabled" | "not_approved"; message: string };
 
 /** A single outstanding Stripe onboarding step, in a provider-friendly shape. */
 export type PayoutRequirement = {
@@ -120,6 +120,13 @@ export function buildPayoutRequirements(acct: any): PayoutRequirements {
   };
 }
 
+export function onboardingStatusForAccount(acct: any): "complete" | "restricted" | "pending" {
+  if (acct?.payouts_enabled && acct?.charges_enabled && acct?.details_submitted) return "complete";
+  const reqs = buildPayoutRequirements(acct);
+  if (reqs.currentlyDue.length > 0 || reqs.disabledReason) return "restricted";
+  return acct?.details_submitted ? "pending" : "restricted";
+}
+
 /**
  * Refresh a connected account's capability flags from Stripe and persist them.
  * Returns the live Stripe account.
@@ -127,6 +134,7 @@ export function buildPayoutRequirements(acct: any): PayoutRequirements {
 export async function syncStripeStatus(stripeAccountId: string, profileId: number) {
   const stripe = await getUncachableStripeClient();
   const acct = await stripe.accounts.retrieve(stripeAccountId);
+  const requirements = buildPayoutRequirements(acct);
   await db
     .update(payoutAccountsTable)
     .set({
@@ -134,6 +142,10 @@ export async function syncStripeStatus(stripeAccountId: string, profileId: numbe
       payoutsEnabled: acct.payouts_enabled ? 1 : 0,
       detailsSubmitted: acct.details_submitted ? 1 : 0,
       status: acct.payouts_enabled ? "verified" : "pending",
+      onboardingStatus: onboardingStatusForAccount(acct),
+      requirementsJson: JSON.stringify(requirements),
+      disabledReason: requirements.disabledReason,
+      lastStripeSyncAt: new Date(),
     })
     .where(eq(payoutAccountsTable.profileId, profileId));
   return acct;
@@ -164,9 +176,11 @@ export async function checkProviderPayoutReadiness(
 
   // Connected: confirm payouts are actually enabled, preferring live Stripe data.
   let payoutsEnabled = row.payoutsEnabled === 1;
+  let payoutStatus = row.status ?? (payoutsEnabled ? "verified" : "pending");
   try {
     const acct = await syncStripeStatus(row.stripeAccountId, providerId);
     payoutsEnabled = !!acct.payouts_enabled;
+    payoutStatus = acct.payouts_enabled ? "verified" : "pending";
   } catch {
     // Stripe unreachable — fall back to the last persisted flag.
   }
@@ -174,5 +188,14 @@ export async function checkProviderPayoutReadiness(
   if (!payoutsEnabled) {
     return { ok: false, reason: "not_enabled", message: PAYOUTS_NOT_ENABLED_MSG };
   }
+
+  if (payoutStatus !== "verified") {
+    return {
+      ok: false,
+      reason: "not_approved",
+      message: "The provider's payout account is not approved yet. HaulBrokr must approve the provider and Stripe onboarding must be complete before payout.",
+    };
+  }
+
   return { ok: true, stripeAccountId: row.stripeAccountId };
 }
