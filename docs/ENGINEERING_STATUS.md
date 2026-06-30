@@ -8,7 +8,7 @@ Last updated: 2026-06-30
 
 ## Latest Commit
 
-`4661d79` - feat: dynamic pricing engine
+`b4645f3` - feat: realtime marketplace maps
 
 ## Build Status
 
@@ -51,14 +51,19 @@ Passing for latest marketplace milestone.
   - Driver/truck location update API.
   - Privacy-scoped customer/vendor/driver job tracking API.
   - Persisted route snapshots and latest driver location records.
+- Marketplace ratings:
+  - Completed-job rating requirement.
+  - Driver/customer/vendor five-star ratings with comments.
+  - Rating statistics API.
+  - Admin moderation API for visible, flagged, and hidden reviews.
 
 ## In Progress
 
-- Marketplace ratings.
+- Notification service.
 
 ## Next
 
-1. Notification service.
+1. Compliance engine hardening.
 
 ## Known Blockers
 

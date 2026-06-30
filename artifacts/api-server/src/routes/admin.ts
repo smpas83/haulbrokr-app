@@ -10,6 +10,7 @@ import {
   marketplacePaymentsTable,
   pricingSurchargeConfigsTable,
   profilesTable,
+  ratingsTable,
   activityTable,
   jobsTable,
   requestsTable,
@@ -70,6 +71,10 @@ const UpsertPricingSurchargeBody = z.object({
   value: z.number().min(0),
   active: z.boolean().optional(),
   reason: z.string().max(500).nullable().optional(),
+});
+const ModerateRatingBody = z.object({
+  moderationStatus: z.enum(["visible", "flagged", "hidden"]),
+  moderationNote: z.string().max(500).nullable().optional(),
 });
 
 function serializeCommissionConfig(row: typeof commissionConfigsTable.$inferSelect) {
@@ -243,6 +248,26 @@ router.put("/admin/pricing-surcharges", requireStaffOrProfile, requirePermission
       .returning();
 
   res.json(serializePricingSurchargeConfig(row));
+});
+
+router.patch("/admin/ratings/:id", requireStaffOrProfile, requirePermission("compliance"), async (req, res): Promise<void> => {
+  const ratingId = Number(req.params.id);
+  if (!Number.isFinite(ratingId)) { res.status(400).json({ error: "Invalid rating id" }); return; }
+  const parsed = ModerateRatingBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const [rating] = await db
+    .update(ratingsTable)
+    .set({
+      moderationStatus: parsed.data.moderationStatus,
+      moderationNote: parsed.data.moderationNote ?? null,
+      moderatedByProfileId: req.profile?.id ?? req.staffUser?.id ?? null,
+      moderatedAt: new Date(),
+    })
+    .where(eq(ratingsTable.id, ratingId))
+    .returning();
+  if (!rating) { res.status(404).json({ error: "Rating not found" }); return; }
+  res.json(rating);
 });
 
 //  Platform command-center overview 

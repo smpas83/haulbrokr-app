@@ -1,8 +1,10 @@
-import { pgTable, serial, timestamp, integer, text, unique } from "drizzle-orm/pg-core";
+import { pgTable, serial, timestamp, integer, text, unique, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { jobsTable } from "./jobs";
 import { profilesTable } from "./profiles";
+
+export const ratingModerationStatusEnum = pgEnum("rating_moderation_status", ["visible", "flagged", "hidden"]);
 
 export const ratingsTable = pgTable(
   "ratings",
@@ -13,6 +15,10 @@ export const ratingsTable = pgTable(
     rateeProfileId: integer("ratee_profile_id").notNull().references(() => profilesTable.id),
     stars: integer("stars").notNull(),
     comment: text("comment"),
+    moderationStatus: ratingModerationStatusEnum("moderation_status").notNull().default("visible"),
+    moderationNote: text("moderation_note"),
+    moderatedByProfileId: integer("moderated_by_profile_id").references(() => profilesTable.id),
+    moderatedAt: timestamp("moderated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({

@@ -18,11 +18,28 @@ router.get("/jobs/:id/rating", requireProfile, async (req, res): Promise<void> =
   const job = await loadJobIfMember(jobId, profile);
   if (!job) { res.status(404).json({ error: "Job not found" }); return; }
 
-  const rows = await db.select().from(ratingsTable).where(eq(ratingsTable.jobId, jobId));
+  const rows = (await db.select().from(ratingsTable).where(eq(ratingsTable.jobId, jobId)))
+    .filter((rating) => rating.moderationStatus !== "hidden");
   const mine = rows.find((r) => r.raterProfileId === profile.id) ?? null;
   const theirs = rows.find((r) => r.rateeProfileId === profile.id) ?? null;
 
   res.json(GetJobRatingResponse.parse({ mine, theirs }));
+});
+
+router.get("/profiles/:profileId/ratings/stats", requireProfile, async (req, res): Promise<void> => {
+  const profileId = parseInt(String(req.params.profileId), 10);
+  if (!Number.isFinite(profileId)) { res.status(400).json({ error: "Invalid profile id" }); return; }
+  const rows = (await db.select().from(ratingsTable).where(eq(ratingsTable.rateeProfileId, profileId)))
+    .filter((rating) => rating.moderationStatus !== "hidden");
+  const count = rows.length;
+  const averageStars = count === 0
+    ? null
+    : Math.round((rows.reduce((sum, rating) => sum + rating.stars, 0) / count) * 100) / 100;
+  const distribution = [1, 2, 3, 4, 5].reduce<Record<string, number>>((acc, stars) => {
+    acc[String(stars)] = rows.filter((rating) => rating.stars === stars).length;
+    return acc;
+  }, {});
+  res.json({ profileId, count, averageStars, distribution });
 });
 
 router.post("/jobs/:id/rating", requireProfile, async (req, res): Promise<void> => {

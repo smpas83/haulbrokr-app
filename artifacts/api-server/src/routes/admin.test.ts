@@ -68,6 +68,7 @@ vi.mock("@workspace/db", () => {
     activityTable: makeTable("activity"),
     jobsTable: makeTable("jobs"),
     requestsTable: makeTable("requests"),
+    ratingsTable: makeTable("ratings"),
     binOrders: makeTable("binOrders"),
     w9SubmissionsTable: makeTable("w9Submissions"),
     insuranceSubmissionsTable: makeTable("insuranceSubmissions"),
@@ -164,6 +165,25 @@ describe("PATCH /admin/compliance/:profileId", () => {
       .patch(`/admin/compliance/${APPLICANT_ID}`)
       .send({ action: "maybe" });
     expect(res.status).toBe(400);
+  });
+});
+
+describe("PATCH /admin/ratings/:id", () => {
+  it("moderates a rating with status and reviewer note", async () => {
+    h.profile = { id: 1, staffRole: "ceo" };
+    h.updateBase = { id: 77, stars: 2, comment: "Needs review" };
+
+    const res = await request(makeApp())
+      .patch("/admin/ratings/77")
+      .send({ moderationStatus: "hidden", moderationNote: "Contains personal information." });
+
+    expect(res.status).toBe(200);
+    expect(h.updates[0]).toMatchObject({
+      moderationStatus: "hidden",
+      moderationNote: "Contains personal information.",
+      moderatedByProfileId: 1,
+    });
+    expect(h.updates[0].moderatedAt).toBeInstanceOf(Date);
   });
 });
 

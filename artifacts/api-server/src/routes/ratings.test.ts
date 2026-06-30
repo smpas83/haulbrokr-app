@@ -184,6 +184,7 @@ describe("GET /jobs/:id/rating", () => {
         rateeProfileId: PROVIDER_ID,
         stars: 5,
         comment: "mine",
+        moderationStatus: "visible",
         createdAt: new Date("2026-06-01T00:00:00Z"),
       },
       {
@@ -193,6 +194,7 @@ describe("GET /jobs/:id/rating", () => {
         rateeProfileId: CUSTOMER_ID,
         stars: 4,
         comment: "theirs",
+        moderationStatus: "visible",
         createdAt: new Date("2026-06-02T00:00:00Z"),
       },
     ];
@@ -216,11 +218,52 @@ describe("GET /jobs/:id/rating", () => {
     expect(res.body.theirs).toBeNull();
   });
 
+  it("does not expose hidden ratings in job rating lookups", async () => {
+    h.ratingRows = [
+      {
+        id: 1,
+        jobId: JOB_ID,
+        raterProfileId: CUSTOMER_ID,
+        rateeProfileId: PROVIDER_ID,
+        stars: 5,
+        comment: "hidden",
+        moderationStatus: "hidden",
+        createdAt: new Date("2026-06-01T00:00:00Z"),
+      },
+    ];
+
+    const res = await request(makeApp()).get(`/jobs/${JOB_ID}/rating`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.mine).toBeNull();
+    expect(res.body.theirs).toBeNull();
+  });
+
   it("404s for a non-member", async () => {
     loadJobIfMember.mockResolvedValue(null);
 
     const res = await request(makeApp()).get(`/jobs/${JOB_ID}/rating`);
 
     expect(res.status).toBe(404);
+  });
+});
+
+describe("GET /profiles/:profileId/ratings/stats", () => {
+  it("returns average, count, and five-star distribution excluding hidden ratings", async () => {
+    h.ratingRows = [
+      { rateeProfileId: PROVIDER_ID, stars: 5, moderationStatus: "visible" },
+      { rateeProfileId: PROVIDER_ID, stars: 4, moderationStatus: "flagged" },
+      { rateeProfileId: PROVIDER_ID, stars: 1, moderationStatus: "hidden" },
+    ];
+
+    const res = await request(makeApp()).get(`/profiles/${PROVIDER_ID}/ratings/stats`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      profileId: PROVIDER_ID,
+      count: 2,
+      averageStars: 4.5,
+      distribution: { "1": 0, "2": 0, "3": 0, "4": 1, "5": 1 },
+    });
   });
 });
