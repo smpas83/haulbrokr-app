@@ -682,6 +682,17 @@ export interface JobUpdate {
   notes?: string;
 }
 
+/**
+ * @nullable
+ */
+export type JobTrackingEtaSource = typeof JobTrackingEtaSource[keyof typeof JobTrackingEtaSource] | null;
+
+
+export const JobTrackingEtaSource = {
+  google_maps: 'google_maps',
+  fallback: 'fallback',
+} as const;
+
 export type JobStatusUpdateStatus = typeof JobStatusUpdateStatus[keyof typeof JobStatusUpdateStatus];
 
 
@@ -815,6 +826,10 @@ export interface JobTracking {
   latestStatus?: JobStatusUpdate | null;
   /** @nullable */
   eta: string | null;
+  /** @nullable */
+  etaSource: JobTrackingEtaSource;
+  /** @nullable */
+  etaDurationSeconds: number | null;
   tickets: Ticket[];
   evidenceCount: number;
   deliveryPhotoCount: number;

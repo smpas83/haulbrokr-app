@@ -7,6 +7,7 @@
  */
 import type { Job } from './job';
 import type { JobStatusUpdate } from './jobStatusUpdate';
+import type { JobTrackingEtaSource } from './jobTrackingEtaSource';
 import type { Ticket } from './ticket';
 
 export interface JobTracking {
@@ -14,6 +15,10 @@ export interface JobTracking {
   latestStatus?: JobStatusUpdate | null;
   /** @nullable */
   eta: Date | null;
+  /** @nullable */
+  etaSource: JobTrackingEtaSource;
+  /** @nullable */
+  etaDurationSeconds: number | null;
   tickets: Ticket[];
   evidenceCount: number;
   deliveryPhotoCount: number;

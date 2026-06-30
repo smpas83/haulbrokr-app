@@ -904,6 +904,8 @@ export const GetJobTrackingResponse = zod.object({
   "createdAt": zod.coerce.date()
 }),zod.null()]).optional(),
   "eta": zod.coerce.date().nullable(),
+  "etaSource": zod.union([zod.literal('google_maps'),zod.literal('fallback'),zod.literal(null)]).nullable(),
+  "etaDurationSeconds": zod.number().nullable(),
   "tickets": zod.array(zod.object({
   "id": zod.number(),
   "jobId": zod.number(),

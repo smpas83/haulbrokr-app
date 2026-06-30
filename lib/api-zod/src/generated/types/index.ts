@@ -115,6 +115,7 @@ export * from './jobStatusUpdateInput';
 export * from './jobStatusUpdateInputStatus';
 export * from './jobStatusUpdateStatus';
 export * from './jobTracking';
+export * from './jobTrackingEtaSource';
 export * from './jobTruckType';
 export * from './jobUpdate';
 export * from './jobUpdateStatus';

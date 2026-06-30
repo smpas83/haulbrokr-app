@@ -27,6 +27,7 @@ import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCom
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
 import { computeBreakdown } from "../lib/jobSettlement";
 import { DRIVER_WORKFLOW_ACTIONS, transitionDriverWorkflow } from "../lib/driverWorkflow";
+import { estimateGoogleMapsEta } from "../lib/mapsEta";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -769,7 +770,10 @@ router.get("/jobs/:id/tracking", requireProfile, async (req, res): Promise<void>
 
   const latestStatus = updates[updates.length - 1] ?? null;
   const isDone = job.status === "completed" || latestStatus?.status === "completed";
-  const eta = isDone
+  const mapsEta = !isDone && (latestStatus?.status === "en_route_delivery" || latestStatus?.status === "left_pickup")
+    ? await estimateGoogleMapsEta(job.pickupAddress, job.deliveryAddress)
+    : null;
+  const fallbackEta = isDone
     ? null
     : latestStatus?.status === "en_route_delivery" || latestStatus?.status === "left_pickup"
       ? new Date(Date.now() + 45 * 60 * 1000).toISOString()
@@ -781,7 +785,9 @@ router.get("/jobs/:id/tracking", requireProfile, async (req, res): Promise<void>
   res.json({
     job: serializeJob(job, customerCompany, providerCompany),
     latestStatus,
-    eta,
+    eta: mapsEta?.eta ?? fallbackEta,
+    etaSource: mapsEta?.source ?? (fallbackEta ? "fallback" : null),
+    etaDurationSeconds: mapsEta?.durationSeconds ?? null,
     tickets: tickets.map((ticket) => ({
       ...ticket,
       weightTons: ticket.weightTons == null ? null : parseFloat(ticket.weightTons),

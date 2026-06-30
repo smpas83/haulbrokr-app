@@ -3107,7 +3107,7 @@ components:
 
     JobTracking:
       type: object
-      required: [job, eta, tickets, evidenceCount, deliveryPhotoCount, scaleTicketCount, signedTicketCount]
+      required: [job, eta, etaSource, etaDurationSeconds, tickets, evidenceCount, deliveryPhotoCount, scaleTicketCount, signedTicketCount]
       properties:
         job:
           $ref: "#/components/schemas/Job"
@@ -3118,6 +3118,11 @@ components:
         eta:
           type: ["string", "null"]
           format: date-time
+        etaSource:
+          type: ["string", "null"]
+          enum: [google_maps, fallback, null]
+        etaDurationSeconds:
+          type: ["integer", "null"]
         tickets:
           type: array
           items:
