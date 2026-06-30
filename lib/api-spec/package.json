@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "codegen": "node ../../scripts/merge-openapi.mjs && orval --config ./orval.config.ts && pnpm -w run typecheck:libs"
+    "codegen": "node ../../scripts/merge-openapi.mjs && orval --config ./orval.config.ts && node ../../scripts/restore-api-zod-index.mjs && pnpm -w run typecheck:libs"
   },
   "devDependencies": {
     "orval": "^8.9.1"
