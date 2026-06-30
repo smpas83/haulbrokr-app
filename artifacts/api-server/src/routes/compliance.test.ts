@@ -20,10 +20,13 @@ vi.mock("@workspace/db", () => {
   const complianceDocumentHistoryTable = makeTable("compliance_document_history");
   const trucksTable = makeTable("trucks");
   const notificationsTable = makeTable("notifications");
+  const notificationDeliveriesTable = makeTable("notification_deliveries");
+  const profilesTable = makeTable("profiles");
 
   const rowsFor = (table: unknown): any[] => {
     if (table === complianceDocumentsTable) return h.complianceRows;
     if (table === trucksTable) return h.truckRows;
+    if (table === profilesTable) return [{ id: 7, email: "owner@example.com" }];
     return [];
   };
 
@@ -65,6 +68,8 @@ vi.mock("@workspace/db", () => {
     complianceDocumentHistoryTable,
     trucksTable,
     notificationsTable,
+    notificationDeliveriesTable,
+    profilesTable,
     COMPLIANCE_OWNER_TYPES: ["vendor", "driver", "fleet"],
     COMPLIANCE_VENDOR_DOC_TYPES: [
       "w9", "coi", "business_registration", "dot_authority",
@@ -110,6 +115,13 @@ vi.mock("../middlewares/requireAdmin", () => ({
     }
     next();
   },
+}));
+
+vi.mock("../lib/resendClient", () => ({
+  getUncachableResendClient: vi.fn(async () => ({
+    fromEmail: "noreply@example.com",
+    client: { emails: { send: vi.fn(async () => ({ id: "email_1" })) } },
+  })),
 }));
 
 import complianceRouter from "./compliance";
@@ -206,6 +218,19 @@ describe("replace", () => {
   });
 });
 
+describe("history", () => {
+  it("returns versions and audit log for an owned document", async () => {
+    h.complianceRows = [
+      { id: 7, ownerType: "vendor", docType: "w9", profileId: 1, truckId: null, version: 2, isCurrent: true, status: "pending" },
+      { id: 6, ownerType: "vendor", docType: "w9", profileId: 1, truckId: null, version: 1, isCurrent: false, status: "approved" },
+    ];
+    const res = await request(makeApp()).get("/compliance/documents/7/history");
+    expect(res.status).toBe(200);
+    expect(res.body.versions.length).toBe(2);
+    expect(res.body.documentId).toBe(7);
+  });
+});
+
 describe("approve / reject (staff)", () => {
   beforeEach(() => {
     h.staff = { id: 50, staffRole: "cfo" };
@@ -239,6 +264,28 @@ describe("approve / reject (staff)", () => {
       .send({ reason: "illegible scan" });
     expect(res.status).toBe(200);
     expect(res.body.status).toBe("rejected");
+  });
+
+  it("marks a document as needs_update with a note and notification", async () => {
+    h.complianceRows = [{ id: 9, status: "approved", version: 1, profileId: 7, docType: "insurance" }];
+    const res = await request(makeApp())
+      .post("/admin/compliance/documents/9/needs-update")
+      .send({ note: "Upload the renewed COI page." });
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("needs_update");
+    const history = h.inserts.find((i) => i.action === "needs_update");
+    expect(history?.note).toBe("Upload the renewed COI page.");
+  });
+
+  it("records an admin note without changing status", async () => {
+    h.complianceRows = [{ id: 9, status: "approved", version: 1, profileId: 7 }];
+    const res = await request(makeApp())
+      .post("/admin/compliance/documents/9/notes")
+      .send({ note: "Called carrier for clearer copy." });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    const history = h.inserts.find((i) => i.action === "note");
+    expect(history?.toStatus).toBe("approved");
   });
 
   it("enforces the compliance permission", async () => {
@@ -278,6 +325,18 @@ describe("summaries", () => {
     const res = await request(makeApp()).get("/compliance/drivers/1/summary");
     expect(res.status).toBe(403);
   });
+
+  it("fleet summary blocks assignment when registration is expired", async () => {
+    h.truckRows = [{ id: 5, ownerId: 1 }];
+    h.complianceRows = [
+      { id: 1, ownerType: "fleet", docType: "truck_registration", truckId: 5, profileId: 1, status: "approved", expiresAt: "2026-01-01T00:00:00Z", version: 1, isCurrent: true },
+      { id: 2, ownerType: "fleet", docType: "insurance", truckId: 5, profileId: 1, status: "approved", expiresAt: FAR, version: 1, isCurrent: true },
+    ];
+    const res = await request(makeApp()).get("/compliance/fleet/5/summary");
+    expect(res.status).toBe(200);
+    expect(res.body.canBeAssigned).toBe(false);
+    expect(res.body.blockers).toContain("truck_registration expired");
+  });
 });
 
 describe("dashboards", () => {
@@ -304,6 +363,15 @@ describe("dashboards", () => {
       { id: 2, docType: "coi", status: "approved", expiresAt: "2026-01-01T00:00:00Z", isCurrent: true },
     ];
     const res = await request(makeApp()).get("/admin/compliance/expired");
+    expect(res.status).toBe(200);
+    expect(res.body.documents.length).toBe(1);
+  });
+
+  it("expiring endpoint returns current documents inside the requested window", async () => {
+    h.complianceRows = [
+      { id: 2, docType: "coi", status: "approved", expiresAt: "2026-07-10T00:00:00Z", isCurrent: true },
+    ];
+    const res = await request(makeApp()).get("/admin/compliance/expiring?days=30");
     expect(res.status).toBe(200);
     expect(res.body.documents.length).toBe(1);
   });

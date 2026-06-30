@@ -25,6 +25,23 @@ export const NOTIFICATION_TYPES = [
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
+export const NOTIFICATION_CHANNELS = [
+  "in_app",
+  "email",
+  "sms",
+  "push",
+  "realtime",
+] as const;
+export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
+
+export const NOTIFICATION_DELIVERY_STATUSES = [
+  "sent",
+  "skipped",
+  "failed",
+] as const;
+export type NotificationDeliveryStatus =
+  (typeof NOTIFICATION_DELIVERY_STATUSES)[number];
+
 export const notificationsTable = pgTable(
   "notifications",
   {
@@ -57,8 +74,43 @@ export const notificationsTable = pgTable(
   ],
 );
 
+export const notificationDeliveriesTable = pgTable(
+  "notification_deliveries",
+  {
+    id: serial("id").primaryKey(),
+    notificationId: integer("notification_id")
+      .notNull()
+      .references(() => notificationsTable.id, { onDelete: "cascade" }),
+    channel: text("channel").notNull(),
+    status: text("status").notNull(),
+    provider: text("provider"),
+    providerMessageId: text("provider_message_id"),
+    error: text("error"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("notification_deliveries_notification_idx").on(t.notificationId),
+    index("notification_deliveries_channel_status_idx").on(
+      t.channel,
+      t.status,
+    ),
+  ],
+);
+
 export const insertNotificationSchema = createInsertSchema(
   notificationsTable,
 ).omit({ id: true, createdAt: true });
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notificationsTable.$inferSelect;
+
+export const insertNotificationDeliverySchema = createInsertSchema(
+  notificationDeliveriesTable,
+).omit({ id: true, createdAt: true });
+export type InsertNotificationDelivery = z.infer<
+  typeof insertNotificationDeliverySchema
+>;
+export type NotificationDelivery =
+  typeof notificationDeliveriesTable.$inferSelect;

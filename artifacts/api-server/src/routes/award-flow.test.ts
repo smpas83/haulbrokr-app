@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   requests: [] as Record<string, unknown>[],
   bids: [] as Record<string, unknown>[],
   jobs: [] as Record<string, unknown>[],
+  complianceRows: [] as Record<string, unknown>[],
   inserts: [] as Record<string, unknown>[],
   updates: [] as Record<string, unknown>[],
   nextRequestId: 1,
@@ -25,6 +26,8 @@ vi.mock("@workspace/db", () => {
   const activityTable = makeTable("activity");
   const jobStatusUpdatesTable = makeTable("job_status_updates");
   const complianceDocumentsTable = makeTable("compliance_documents");
+  const notificationsTable = makeTable("notifications");
+  const notificationDeliveriesTable = makeTable("notification_deliveries");
 
   const db = {
     select: () => ({
@@ -34,6 +37,7 @@ vi.mock("@workspace/db", () => {
           if (table === requestsTable) return Promise.resolve(h.requests);
           if (table === jobsTable) return Promise.resolve(h.jobs);
           if (table === profilesTable) return Promise.resolve([{ companyName: "Hauler Co" }]);
+          if (table === complianceDocumentsTable) return Promise.resolve(h.complianceRows);
           return Promise.resolve([]);
         },
       }),
@@ -45,6 +49,9 @@ vi.mock("@workspace/db", () => {
           const job = { id: h.nextJobId++, ...vals };
           h.jobs.push(job);
           return { returning: () => Promise.resolve([job]) };
+        }
+        if (table === notificationsTable) {
+          return { returning: () => Promise.resolve([{ id: 99, ...vals }]) };
         }
         if (table === activityTable || table === jobStatusUpdatesTable) {
           return Promise.resolve(undefined);
@@ -91,7 +98,30 @@ vi.mock("@workspace/db", () => {
     }),
   };
 
-  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable, jobStatusUpdatesTable, complianceDocumentsTable };
+  return {
+    db,
+    requestsTable,
+    bidsTable,
+    jobsTable,
+    profilesTable,
+    activityTable,
+    jobStatusUpdatesTable,
+    complianceDocumentsTable,
+    notificationsTable,
+    notificationDeliveriesTable,
+    COMPLIANCE_VENDOR_DOC_TYPES: [
+      "w9", "coi", "business_registration", "dot_authority",
+      "mc_number", "usdot_number", "insurance", "additional",
+    ],
+    COMPLIANCE_DRIVER_DOC_TYPES: [
+      "cdl", "medical_certificate", "driver_license", "insurance",
+      "dot_document", "endorsement", "additional",
+    ],
+    COMPLIANCE_FLEET_DOC_TYPES: [
+      "truck_registration", "vin", "plate", "insurance",
+      "inspection", "equipment_document", "additional",
+    ],
+  };
 });
 
 vi.mock("../middlewares/requireAuth", () => ({
@@ -174,6 +204,7 @@ beforeEach(() => {
     createdAt: new Date(),
   }];
   h.jobs = [];
+  h.complianceRows = [];
   h.inserts = [];
   h.updates = [];
   h.nextJobId = 1;
@@ -195,6 +226,16 @@ describe("Job award / hauler acceptance flow", () => {
   it("provider accepts an awarded job", async () => {
     h.jobs = [sampleJob({ status: "awarded" })];
     h.profile = { id: 20, role: "provider", companyName: "Hauler Co" };
+    h.complianceRows = ["w9", "coi", "insurance", "dot_authority"].map((docType, i) => ({
+      id: i + 1,
+      ownerType: "vendor",
+      docType,
+      profileId: 20,
+      status: "approved",
+      version: 1,
+      isCurrent: true,
+      expiresAt: new Date("2027-01-01T00:00:00Z"),
+    }));
 
     const res = await request(makeApp()).post("/jobs/9/accept");
 
@@ -202,6 +243,17 @@ describe("Job award / hauler acceptance flow", () => {
     expect(h.jobs[0].status).toBe("accepted");
     expect(h.requests[0].status).toBe("accepted");
     expect(h.updates.some((u) => u.status === "accepted")).toBe(true);
+  });
+
+  it("blocks dispatch acceptance when vendor compliance is not approved", async () => {
+    h.jobs = [sampleJob({ status: "awarded" })];
+    h.profile = { id: 20, role: "provider", companyName: "Hauler Co" };
+    h.complianceRows = [{ id: 1, ownerType: "vendor", docType: "w9", profileId: 20, status: "pending", version: 1, isCurrent: true }];
+
+    const res = await request(makeApp()).post("/jobs/9/accept");
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toContain("vendor compliance is not approved");
   });
 
   it("provider declining an awarded job reopens the request when other bids remain", async () => {

@@ -4,6 +4,9 @@ export type ProductionService =
   | "stripe"
   | "google_maps"
   | "resend"
+  | "sms"
+  | "push"
+  | "realtime"
   | "r2"
   | "render"
   | "vercel"
@@ -43,6 +46,9 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   // Resend
   { service: "resend", variable: "RESEND_API_KEY", required: true, description: "Resend API key (re_…)." },
   { service: "resend", variable: "RESEND_FROM_EMAIL", required: true, description: "Verified sender address for transactional email." },
+  { service: "sms", variable: "SMS_WEBHOOK_URL", required: true, description: "HTTPS webhook endpoint used by the SMS provider adapter." },
+  { service: "push", variable: "PUSH_WEBHOOK_URL", required: true, description: "HTTPS webhook endpoint used by the push notification provider adapter." },
+  { service: "realtime", variable: "REALTIME_WEBHOOK_URL", required: true, description: "HTTPS webhook endpoint used by realtime notification fanout." },
 
   // Cloudflare R2
   { service: "r2", variable: "R2_ACCOUNT_ID", required: true, description: "Cloudflare account ID for R2 S3 endpoint." },
@@ -238,6 +244,24 @@ function validateResend(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): v
   }
 }
 
+function validateNotificationChannels(
+  env: NodeJS.ProcessEnv,
+  issues: EnvValidationIssue[],
+): void {
+  for (const [service, variable] of [
+    ["sms", "SMS_WEBHOOK_URL"],
+    ["push", "PUSH_WEBHOOK_URL"],
+    ["realtime", "REALTIME_WEBHOOK_URL"],
+  ] as const) {
+    const value = envValue(env, variable);
+    if (!value) {
+      pushMissing(issues, service, variable);
+    } else if (!looksLikeHttpsUrl(value)) {
+      pushInvalid(issues, service, variable, `${variable} must be a valid https:// URL.`);
+    }
+  }
+}
+
 function validateR2(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
   for (const variable of [
     "R2_ACCOUNT_ID",
@@ -322,6 +346,7 @@ export function collectProductionEnvIssues(env: NodeJS.ProcessEnv = process.env)
   validateStripe(env, issues);
   validateGoogleMaps(env, issues);
   validateResend(env, issues);
+  validateNotificationChannels(env, issues);
   validateR2(env, issues);
   validateRender(env, issues);
   validateCoreSecrets(env, issues);
@@ -342,6 +367,9 @@ function formatIssues(issues: EnvValidationIssue[]): string {
     "stripe",
     "google_maps",
     "resend",
+    "sms",
+    "push",
+    "realtime",
     "r2",
     "render",
     "core",

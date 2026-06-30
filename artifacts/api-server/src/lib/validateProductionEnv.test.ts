@@ -19,6 +19,9 @@ const VALID_PRODUCTION_ENV: Record<string, string> = {
   GOOGLE_MAPS_SERVER_API_KEY: "google-maps-server-key",
   RESEND_API_KEY: "re_resend_api_key",
   RESEND_FROM_EMAIL: "noreply@haulbrokr.com",
+  SMS_WEBHOOK_URL: "https://sms.haulbrokr.com/send",
+  PUSH_WEBHOOK_URL: "https://push.haulbrokr.com/send",
+  REALTIME_WEBHOOK_URL: "https://realtime.haulbrokr.com/fanout",
   R2_ACCOUNT_ID: "cloudflare-account-id",
   R2_ACCESS_KEY_ID: "r2-access-key",
   R2_SECRET_ACCESS_KEY: "r2-secret-access-key",
@@ -40,6 +43,9 @@ describe("validateProductionEnv", () => {
     expect(services.has("stripe")).toBe(true);
     expect(services.has("google_maps")).toBe(true);
     expect(services.has("resend")).toBe(true);
+    expect(services.has("sms")).toBe(true);
+    expect(services.has("push")).toBe(true);
+    expect(services.has("realtime")).toBe(true);
     expect(services.has("r2")).toBe(true);
     expect(services.has("render")).toBe(true);
     expect(services.has("vercel")).toBe(true);
@@ -59,7 +65,7 @@ describe("validateProductionEnv", () => {
     expect(() => validateProductionEnv(VALID_PRODUCTION_ENV)).not.toThrow();
   });
 
-  it("collects missing Neon, Clerk, Stripe, Resend, R2, Render, and core secrets", () => {
+  it("collects missing Neon, Clerk, Stripe, notification, R2, Render, and core secrets", () => {
     const issues = collectProductionEnvIssues({ NODE_ENV: "production", PORT: "8080" });
     const variables = issues.map((issue) => issue.variable);
 
@@ -68,6 +74,9 @@ describe("validateProductionEnv", () => {
     expect(variables).toContain("STRIPE_SECRET_KEY");
     expect(variables).toContain("GOOGLE_MAPS_SERVER_API_KEY");
     expect(variables).toContain("RESEND_API_KEY");
+    expect(variables).toContain("SMS_WEBHOOK_URL");
+    expect(variables).toContain("PUSH_WEBHOOK_URL");
+    expect(variables).toContain("REALTIME_WEBHOOK_URL");
     expect(variables).toContain("R2_BUCKET");
     expect(variables).toContain("UPLOAD_TOKEN_SECRET");
     expect(variables).toContain("ADMIN_USER_IDS");
@@ -95,6 +104,14 @@ describe("validateProductionEnv", () => {
       DATABASE_URL: "postgresql://user:pass@ep-xxxxx.neon.tech/neondb?sslmode=require",
     });
     expect(issues.some((issue) => issue.variable === "DATABASE_URL")).toBe(true);
+  });
+
+  it("rejects non-HTTPS notification webhooks", () => {
+    const issues = collectProductionEnvIssues({
+      ...VALID_PRODUCTION_ENV,
+      SMS_WEBHOOK_URL: "http://sms.example.test/send",
+    });
+    expect(issues.some((issue) => issue.variable === "SMS_WEBHOOK_URL")).toBe(true);
   });
 
   it("throws a grouped error message on startup validation failure", () => {

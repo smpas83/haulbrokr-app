@@ -1,4 +1,4 @@
-import { pgTable, serial, timestamp, integer, text, unique, pgEnum, numeric } from "drizzle-orm/pg-core";
+import { pgTable, serial, timestamp, integer, text, unique, pgEnum, numeric, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { jobsTable } from "./jobs";
@@ -42,6 +42,8 @@ export const ratingsTable = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
   (table) => ({
+    moderationStatusIdx: index("ratings_moderation_status_idx").on(table.moderationStatus),
+    rateeProfileIdx: index("ratings_ratee_profile_idx").on(table.rateeProfileId),
     reviewUnique: unique("ratings_job_rater_ratee_type_unique").on(table.jobId, table.raterProfileId, table.rateeProfileId, table.reviewType),
   }),
 );

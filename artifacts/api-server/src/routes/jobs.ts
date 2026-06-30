@@ -15,7 +15,12 @@ import {
   driverDocumentsTable,
   complianceDocumentsTable,
 } from "@workspace/db";
-import { expiredRequiredDocTypes } from "../lib/complianceDocuments";
+import {
+  driverCanAcceptJobs,
+  truckCanBeAssigned,
+  vendorCanReceiveDispatch,
+} from "../lib/complianceDocuments";
+import { safeNotify } from "../lib/notifications";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isAdmin } from "../middlewares/requireAdmin";
 import { buildJobInvoicePdf, canDownloadJobInvoice, jobIsInvoiceEligible } from "../lib/jobInvoice";
@@ -164,6 +169,15 @@ async function notifyPayoutDelayed(
       description: `Payout delayed for job #${job.id} — ${job.materialType} delivery. ${reason} Set up your payout account to get paid.`,
       relatedId: job.id,
     });
+    await safeNotify({
+      recipientProfileId: job.providerId,
+      type: "payout_delayed",
+      title: `Payout delayed for job #${job.id}`,
+      body: `${job.materialType} delivery payout is delayed. ${reason} Set up your payout account to get paid.`,
+      relatedType: "job",
+      relatedId: job.id,
+      channels: ["in_app", "email", "sms", "push", "realtime"],
+    });
   } catch (err) {
     console.error("Failed to record payout_delayed notification", err);
   }
@@ -188,6 +202,35 @@ export function computeBreakdown(ratePerHour: number, hours: number, feeRate: nu
     },
   });
   return { base: breakdown.base, fee: breakdown.platformFee, gross: breakdown.gross };
+}
+
+async function currentProfileComplianceDocs(
+  ownerType: "vendor" | "driver",
+  profileId: number,
+) {
+  return db
+    .select()
+    .from(complianceDocumentsTable)
+    .where(
+      and(
+        eq(complianceDocumentsTable.profileId, profileId),
+        eq(complianceDocumentsTable.ownerType, ownerType),
+        eq(complianceDocumentsTable.isCurrent, true),
+      ),
+    );
+}
+
+async function currentFleetComplianceDocs(truckId: number) {
+  return db
+    .select()
+    .from(complianceDocumentsTable)
+    .where(
+      and(
+        eq(complianceDocumentsTable.truckId, truckId),
+        eq(complianceDocumentsTable.ownerType, "fleet"),
+        eq(complianceDocumentsTable.isCurrent, true),
+      ),
+    );
 }
 
 /**
@@ -496,24 +539,12 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
     return;
   }
 
-  // Compliance gate: a carrier cannot accept (receive) a dispatch while a
-  // required compliance document has lapsed. Initial/missing compliance is
-  // enforced at bid time; here we specifically block EXPIRED required docs so a
-  // carrier whose insurance/authority lapsed after bidding can't take new work.
-  const carrierComplianceDocs = await db
-    .select()
-    .from(complianceDocumentsTable)
-    .where(
-      and(
-        eq(complianceDocumentsTable.profileId, job.providerId),
-        eq(complianceDocumentsTable.ownerType, "vendor"),
-        eq(complianceDocumentsTable.isCurrent, true),
-      ),
-    );
-  const expiredDocs = expiredRequiredDocTypes("vendor", carrierComplianceDocs);
-  if (expiredDocs.length > 0) {
+  const vendorCompliance = vendorCanReceiveDispatch(
+    await currentProfileComplianceDocs("vendor", job.providerId),
+  );
+  if (!vendorCompliance.allowed) {
     res.status(403).json({
-      error: `Cannot accept this job — expired compliance documents: ${expiredDocs.join(", ")}. Upload current versions for review.`,
+      error: `Cannot accept this job — vendor compliance is not approved: ${vendorCompliance.blockers.join(", ")}. Upload current versions for review.`,
     });
     return;
   }
@@ -542,6 +573,24 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
     type: "job_accepted",
     description: `Hauler accepted job #${job.id} — ${job.materialType} delivery`,
     relatedId: job.id,
+  });
+  await safeNotify({
+    recipientProfileId: profile.id,
+    type: "job_accepted",
+    title: `Job #${job.id} accepted`,
+    body: `You accepted the ${job.materialType} delivery.`,
+    relatedType: "job",
+    relatedId: job.id,
+    channels: ["in_app", "push", "realtime"],
+  });
+  await safeNotify({
+    recipientProfileId: job.customerId,
+    type: "job_accepted",
+    title: `Hauler accepted job #${job.id}`,
+    body: `The hauler accepted your ${job.materialType} delivery.`,
+    relatedType: "job",
+    relatedId: job.id,
+    channels: ["in_app", "email", "push", "realtime"],
   });
 
   const { customerCompany, providerCompany } = await companiesFor(updated);
@@ -1462,11 +1511,30 @@ router.post("/jobs/:id/assign", requireProfile, async (req, res): Promise<void> 
   );
   if (!driverOk) { res.status(400).json({ error: "Driver is not part of your company." }); return; }
 
+  const driverCompliance = driverCanAcceptJobs(
+    await currentProfileComplianceDocs("driver", parsed.data.driverProfileId),
+  );
+  if (!driverCompliance.allowed) {
+    res.status(403).json({
+      error: `Driver cannot accept jobs until compliance is current: ${driverCompliance.blockers.join(", ")}.`,
+    });
+    return;
+  }
+
   let truckId: number | null = null;
   if (parsed.data.truckId != null) {
     const [truck] = await db.select().from(trucksTable).where(eq(trucksTable.id, parsed.data.truckId));
     if (!truck || truck.ownerId !== job.providerId) {
       res.status(400).json({ error: "Truck is not part of your fleet." });
+      return;
+    }
+    const fleetCompliance = truckCanBeAssigned(
+      await currentFleetComplianceDocs(truck.id),
+    );
+    if (!fleetCompliance.allowed) {
+      res.status(403).json({
+        error: `Truck cannot be assigned until registration and insurance are current: ${fleetCompliance.blockers.join(", ")}.`,
+      });
       return;
     }
     truckId = truck.id;

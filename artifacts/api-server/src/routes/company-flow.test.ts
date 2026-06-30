@@ -44,6 +44,7 @@ import {
   trucksTable,
   jobsTable,
   ticketsTable,
+  complianceDocumentsTable,
   requestsTable,
   bidsTable,
   projectsTable,
@@ -141,6 +142,8 @@ afterAll(async () => {
   await db.delete(projectAssignmentsTable).where(eq(projectAssignmentsTable.projectId, project.id));
   await db.delete(jobStatusUpdatesTable).where(eq(jobStatusUpdatesTable.jobId, job.id));
   await db.delete(ticketsTable).where(eq(ticketsTable.jobId, job.id));
+  await db.delete(complianceDocumentsTable).where(eq(complianceDocumentsTable.profileId, driver.id));
+  await db.delete(complianceDocumentsTable).where(eq(complianceDocumentsTable.truckId, truckId));
   await db.delete(jobsTable).where(eq(jobsTable.id, job.id));
   await db.delete(bidsTable).where(eq(bidsTable.id, bid.id));
   await db.delete(requestsTable).where(eq(requestsTable.id, request_.id));
@@ -180,6 +183,28 @@ describe("Company/team full flow", () => {
   });
 
   it("3. owner assigns the job to the driver + truck (creates a load ticket)", async () => {
+    const future = new Date("2027-01-01T00:00:00Z");
+    await db.insert(complianceDocumentsTable).values(
+      ["cdl", "medical_certificate", "driver_license", "insurance"].map((docType) => ({
+        ownerType: "driver",
+        profileId: driver.id,
+        docType,
+        status: "approved",
+        isCurrent: true,
+        expiresAt: future,
+      })),
+    );
+    await db.insert(complianceDocumentsTable).values(
+      ["truck_registration", "insurance"].map((docType) => ({
+        ownerType: "fleet",
+        profileId: providerOwner.id,
+        truckId,
+        docType,
+        status: "approved",
+        isCurrent: true,
+        expiresAt: future,
+      })),
+    );
     as(providerOwner);
     const res = await request(app).post(`/jobs/${job.id}/assign`).send({
       driverProfileId: driver.id, truckId,

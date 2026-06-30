@@ -378,6 +378,57 @@ router.put(
   },
 );
 
+router.get(
+  "/compliance/documents/:id/history",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const profile = getRequestProfile(req);
+    const id = parseId(req.params.id);
+    if (id === null) {
+      res.status(400).json({ error: "Invalid document id" });
+      return;
+    }
+    const [doc] = await db
+      .select()
+      .from(complianceDocumentsTable)
+      .where(eq(complianceDocumentsTable.id, id));
+    if (!doc) {
+      res.status(404).json({ error: "Document not found" });
+      return;
+    }
+    if (!isStaff(req) && profile.id !== doc.profileId) {
+      res.status(403).json({ error: "Access denied" });
+      return;
+    }
+
+    if (doc.ownerType !== "fleet" && doc.profileId == null) {
+      res.status(400).json({ error: "Document is missing an owner profile" });
+      return;
+    }
+    const subjectCond =
+      doc.ownerType === "fleet" && doc.truckId
+        ? eq(complianceDocumentsTable.truckId, doc.truckId)
+        : eq(complianceDocumentsTable.profileId, doc.profileId!);
+    const versions = await db
+      .select()
+      .from(complianceDocumentsTable)
+      .where(
+        and(
+          eq(complianceDocumentsTable.ownerType, doc.ownerType),
+          eq(complianceDocumentsTable.docType, doc.docType),
+          subjectCond,
+        ),
+      )
+      .orderBy(desc(complianceDocumentsTable.version));
+    const auditLog = await db
+      .select()
+      .from(complianceDocumentHistoryTable)
+      .where(eq(complianceDocumentHistoryTable.documentId, id))
+      .orderBy(desc(complianceDocumentHistoryTable.createdAt));
+    res.json({ documentId: id, versions, auditLog });
+  },
+);
+
 // ---- Admin review + dashboards ------------------------------------------
 
 const adminRouter: IRouter = Router();
@@ -493,6 +544,105 @@ adminRouter.post(
       });
     }
     res.json(updated);
+  },
+);
+
+adminRouter.post(
+  "/admin/compliance/documents/:id/needs-update",
+  requireStaffOrProfile,
+  requirePermission("compliance"),
+  async (req, res): Promise<void> => {
+    const id = parseId(req.params.id);
+    if (id === null) {
+      res.status(400).json({ error: "Invalid document id" });
+      return;
+    }
+    const note = typeof req.body?.note === "string" ? req.body.note.trim() : "";
+    if (!note) {
+      res.status(400).json({ error: "A note is required" });
+      return;
+    }
+    const [doc] = await db
+      .select()
+      .from(complianceDocumentsTable)
+      .where(eq(complianceDocumentsTable.id, id));
+    if (!doc) {
+      res.status(404).json({ error: "Document not found" });
+      return;
+    }
+    const actorProfileId = req.profile?.id ?? null;
+    const [updated] = await db
+      .update(complianceDocumentsTable)
+      .set({
+        status: "needs_update",
+        reviewedByProfileId: actorProfileId,
+        reviewedAt: new Date(),
+        reviewNote: note,
+      })
+      .where(eq(complianceDocumentsTable.id, id))
+      .returning();
+    await recordHistory({
+      documentId: id,
+      action: "needs_update",
+      fromStatus: doc.status ?? null,
+      toStatus: "needs_update",
+      actorProfileId,
+      version: doc.version ?? null,
+      note,
+    });
+    if (doc.profileId) {
+      await safeNotify({
+        recipientProfileId: doc.profileId,
+        type: "compliance_rejected",
+        title: `${doc.docType} needs an update`,
+        body: note,
+        relatedType: "compliance_document",
+        relatedId: id,
+        channels: ["in_app", "email", "push", "realtime"],
+      });
+    }
+    res.json(updated);
+  },
+);
+
+adminRouter.post(
+  "/admin/compliance/documents/:id/notes",
+  requireStaffOrProfile,
+  requirePermission("compliance"),
+  async (req, res): Promise<void> => {
+    const id = parseId(req.params.id);
+    if (id === null) {
+      res.status(400).json({ error: "Invalid document id" });
+      return;
+    }
+    const note = typeof req.body?.note === "string" ? req.body.note.trim() : "";
+    if (!note) {
+      res.status(400).json({ error: "A note is required" });
+      return;
+    }
+    const [doc] = await db
+      .select()
+      .from(complianceDocumentsTable)
+      .where(eq(complianceDocumentsTable.id, id));
+    if (!doc) {
+      res.status(404).json({ error: "Document not found" });
+      return;
+    }
+    const actorProfileId = req.profile?.id ?? null;
+    await db
+      .update(complianceDocumentsTable)
+      .set({ reviewNote: note })
+      .where(eq(complianceDocumentsTable.id, id));
+    await recordHistory({
+      documentId: id,
+      action: "note",
+      fromStatus: doc.status ?? null,
+      toStatus: doc.status ?? null,
+      actorProfileId,
+      version: doc.version ?? null,
+      note,
+    });
+    res.json({ ok: true });
   },
 );
 

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, numeric, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { jobsTable } from "./jobs";
@@ -32,49 +32,67 @@ export const jobRoutesTable = pgTable("job_routes", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
-export const truckLocationsTable = pgTable("truck_locations", {
-  id: serial("id").primaryKey(),
-  truckId: integer("truck_id").references(() => trucksTable.id, { onDelete: "cascade" }),
-  driverProfileId: integer("driver_profile_id").notNull().references(() => profilesTable.id, { onDelete: "cascade" }),
-  jobId: integer("job_id").references(() => jobsTable.id, { onDelete: "set null" }),
-  lat: numeric("lat", { precision: 10, scale: 7 }).notNull(),
-  lng: numeric("lng", { precision: 10, scale: 7 }).notNull(),
-  heading: numeric("heading", { precision: 6, scale: 2 }),
-  speedMps: numeric("speed_mps", { precision: 8, scale: 3 }),
-  accuracyMeters: numeric("accuracy_meters", { precision: 8, scale: 2 }),
-  recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
-  isStale: integer("is_stale").notNull().default(0),
-  offRouteStatus: text("off_route_status").notNull().default("unknown"),
-  etaRecalculationRequestedAt: timestamp("eta_recalculation_requested_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+export const truckLocationsTable = pgTable(
+  "truck_locations",
+  {
+    id: serial("id").primaryKey(),
+    truckId: integer("truck_id").references(() => trucksTable.id, { onDelete: "cascade" }),
+    driverProfileId: integer("driver_profile_id").notNull().references(() => profilesTable.id, { onDelete: "cascade" }),
+    jobId: integer("job_id").references(() => jobsTable.id, { onDelete: "set null" }),
+    lat: numeric("lat", { precision: 10, scale: 7 }).notNull(),
+    lng: numeric("lng", { precision: 10, scale: 7 }).notNull(),
+    heading: numeric("heading", { precision: 6, scale: 2 }),
+    speedMps: numeric("speed_mps", { precision: 8, scale: 3 }),
+    accuracyMeters: numeric("accuracy_meters", { precision: 8, scale: 2 }),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
+    isStale: integer("is_stale").notNull().default(0),
+    offRouteStatus: text("off_route_status").notNull().default("unknown"),
+    etaRecalculationRequestedAt: timestamp("eta_recalculation_requested_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("truck_locations_truck_idx").on(t.truckId),
+    index("truck_locations_driver_idx").on(t.driverProfileId),
+  ],
+);
 
-export const tripLocationHistoryTable = pgTable("trip_location_history", {
-  id: serial("id").primaryKey(),
-  jobId: integer("job_id").references(() => jobsTable.id, { onDelete: "cascade" }),
-  truckId: integer("truck_id").references(() => trucksTable.id, { onDelete: "set null" }),
-  driverProfileId: integer("driver_profile_id").notNull().references(() => profilesTable.id, { onDelete: "cascade" }),
-  lat: numeric("lat", { precision: 10, scale: 7 }).notNull(),
-  lng: numeric("lng", { precision: 10, scale: 7 }).notNull(),
-  heading: numeric("heading", { precision: 6, scale: 2 }),
-  speedMps: numeric("speed_mps", { precision: 8, scale: 3 }),
-  accuracyMeters: numeric("accuracy_meters", { precision: 8, scale: 2 }),
-  recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
-  offRouteStatus: text("off_route_status").notNull().default("unknown"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const tripLocationHistoryTable = pgTable(
+  "trip_location_history",
+  {
+    id: serial("id").primaryKey(),
+    jobId: integer("job_id").references(() => jobsTable.id, { onDelete: "cascade" }),
+    truckId: integer("truck_id").references(() => trucksTable.id, { onDelete: "set null" }),
+    driverProfileId: integer("driver_profile_id").notNull().references(() => profilesTable.id, { onDelete: "cascade" }),
+    lat: numeric("lat", { precision: 10, scale: 7 }).notNull(),
+    lng: numeric("lng", { precision: 10, scale: 7 }).notNull(),
+    heading: numeric("heading", { precision: 6, scale: 2 }),
+    speedMps: numeric("speed_mps", { precision: 8, scale: 3 }),
+    accuracyMeters: numeric("accuracy_meters", { precision: 8, scale: 2 }),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
+    offRouteStatus: text("off_route_status").notNull().default("unknown"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("trip_location_history_job_idx").on(t.jobId),
+    index("trip_location_history_recorded_idx").on(t.recordedAt),
+  ],
+);
 
-export const trackingAuditLogsTable = pgTable("tracking_audit_logs", {
-  id: serial("id").primaryKey(),
-  actorProfileId: integer("actor_profile_id").references(() => profilesTable.id, { onDelete: "set null" }),
-  jobId: integer("job_id").references(() => jobsTable.id, { onDelete: "set null" }),
-  truckId: integer("truck_id").references(() => trucksTable.id, { onDelete: "set null" }),
-  eventType: text("event_type").notNull(),
-  message: text("message"),
-  metadataJson: text("metadata_json"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const trackingAuditLogsTable = pgTable(
+  "tracking_audit_logs",
+  {
+    id: serial("id").primaryKey(),
+    actorProfileId: integer("actor_profile_id").references(() => profilesTable.id, { onDelete: "set null" }),
+    jobId: integer("job_id").references(() => jobsTable.id, { onDelete: "set null" }),
+    truckId: integer("truck_id").references(() => trucksTable.id, { onDelete: "set null" }),
+    eventType: text("event_type").notNull(),
+    message: text("message"),
+    metadataJson: text("metadata_json"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("tracking_audit_logs_job_idx").on(t.jobId)],
+);
 
 export const insertJobRouteSchema = createInsertSchema(jobRoutesTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertTruckLocationSchema = createInsertSchema(truckLocationsTable).omit({ id: true, createdAt: true, updatedAt: true });
