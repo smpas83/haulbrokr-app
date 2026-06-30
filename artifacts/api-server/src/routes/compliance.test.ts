@@ -19,6 +19,7 @@ vi.mock("@workspace/db", () => {
   const complianceDocumentsTable = makeTable("compliance_documents");
   const complianceDocumentHistoryTable = makeTable("compliance_document_history");
   const trucksTable = makeTable("trucks");
+  const notificationsTable = makeTable("notifications");
 
   const rowsFor = (table: unknown): any[] => {
     if (table === complianceDocumentsTable) return h.complianceRows;
@@ -63,6 +64,7 @@ vi.mock("@workspace/db", () => {
     complianceDocumentsTable,
     complianceDocumentHistoryTable,
     trucksTable,
+    notificationsTable,
     COMPLIANCE_OWNER_TYPES: ["vendor", "driver", "fleet"],
     COMPLIANCE_VENDOR_DOC_TYPES: [
       "w9", "coi", "business_registration", "dot_authority",
@@ -209,8 +211,8 @@ describe("approve / reject (staff)", () => {
     h.staff = { id: 50, staffRole: "cfo" };
   });
 
-  it("approves a document and writes history", async () => {
-    h.complianceRows = [{ id: 9, status: "pending", version: 1 }];
+  it("approves a document, writes history, and notifies the owner", async () => {
+    h.complianceRows = [{ id: 9, status: "pending", version: 1, profileId: 7 }];
     const res = await request(makeApp())
       .post("/admin/compliance/documents/9/approve")
       .send({ note: "looks good" });
@@ -218,6 +220,8 @@ describe("approve / reject (staff)", () => {
     expect(res.body.status).toBe("approved");
     const history = h.inserts.find((i) => i.action !== undefined);
     expect(history?.action).toBe("approved");
+    const notification = h.inserts.find((i) => i.type === "compliance_approved");
+    expect(notification?.recipientProfileId).toBe(7);
   });
 
   it("requires a reason to reject", async () => {

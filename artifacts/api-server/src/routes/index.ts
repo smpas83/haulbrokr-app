@@ -25,6 +25,7 @@ import adminRouter from "./admin";
 import ratingsRouter from "./ratings";
 import mapsRouter from "./maps";
 import complianceRouter from "./compliance";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -54,5 +55,6 @@ router.use(adminRouter);
 router.use(ratingsRouter);
 router.use(mapsRouter);
 router.use(complianceRouter);
+router.use(notificationsRouter);
 
 export default router;

@@ -26,6 +26,7 @@ import {
   vendorCanReceiveDispatch,
   truckCanBeAssigned,
 } from "../lib/complianceDocuments";
+import { safeNotify } from "../lib/notifications";
 
 const router: IRouter = Router();
 
@@ -423,6 +424,16 @@ adminRouter.post(
       version: doc.version ?? null,
       note,
     });
+    if (doc.profileId) {
+      await safeNotify({
+        recipientProfileId: doc.profileId,
+        type: "compliance_approved",
+        title: `${doc.docType} approved`,
+        body: `Your ${doc.docType} document was approved.`,
+        relatedType: "compliance_document",
+        relatedId: id,
+      });
+    }
     res.json(updated);
   },
 );
@@ -471,6 +482,16 @@ adminRouter.post(
       version: doc.version ?? null,
       note: reason,
     });
+    if (doc.profileId) {
+      await safeNotify({
+        recipientProfileId: doc.profileId,
+        type: "compliance_rejected",
+        title: `${doc.docType} needs attention`,
+        body: `Your ${doc.docType} document was rejected: ${reason}`,
+        relatedType: "compliance_document",
+        relatedId: id,
+      });
+    }
     res.json(updated);
   },
 );
