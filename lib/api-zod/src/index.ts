@@ -4,6 +4,7 @@ export * from "./generated/api";
 // Resolve TS2308: these names exist both as generated TS types and as zod
 // schema consts. Explicitly re-export the zod schema (const) version.
 export {
+  CancelJobBody,
   ConnectQuickBooksBody,
   CreateBinOrderBody,
   CreateDriverEventBody,

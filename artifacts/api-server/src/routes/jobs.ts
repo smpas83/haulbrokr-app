@@ -14,6 +14,7 @@ import {
   trucksTable,
   jobStatusUpdatesTable,
   driverDocumentsTable,
+  deliveryEvidenceTable,
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isAdmin } from "../middlewares/requireAdmin";
@@ -82,6 +83,8 @@ const DriverWorkflowBody = z.object({
     caption: z.string().nullable().optional(),
   })).optional(),
 });
+
+const JobIdParam = z.object({ id: z.number().int().positive() });
 
 function num(v: string | null | undefined): number | null {
   return v == null ? null : parseFloat(v);
@@ -661,6 +664,133 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
 
   const { customerCompany, providerCompany } = await companiesFor(job);
   res.json(UpdateJobResponse.parse(serializeJob(job, customerCompany, providerCompany)));
+});
+
+router.post("/jobs/:id/cancel", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const params = JobIdParam.safeParse({ id: parseInt(String(req.params.id), 10) });
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const job = await loadJobIfMember(params.data.id, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  if (!CUSTOMER_SIDE.has(profile.role) && !profile.staffRole) {
+    res.status(403).json({ error: "Only the customer side or staff can cancel a job." });
+    return;
+  }
+  if (["completed", "cancelled"].includes(job.status) || ["paid", "released"].includes(job.paymentStatus)) {
+    res.status(409).json({ error: "This job can no longer be cancelled." });
+    return;
+  }
+
+  const [updated] = await db.update(jobsTable)
+    .set({ status: "cancelled", notes: req.body?.reason ? `${job.notes ?? ""}\nCancellation reason: ${req.body.reason}`.trim() : job.notes })
+    .where(eq(jobsTable.id, job.id))
+    .returning();
+  await db.update(requestsTable).set({ status: "cancelled" }).where(eq(requestsTable.id, job.requestId));
+  await db.update(ticketsTable).set({ status: "cancelled" }).where(eq(ticketsTable.jobId, job.id));
+  await db.insert(activityTable).values([
+    {
+      profileId: job.customerId,
+      type: "job_cancelled",
+      description: `Cancelled job #${job.id} - ${job.materialType} delivery`,
+      relatedId: job.id,
+    },
+    {
+      profileId: job.providerId,
+      type: "job_cancelled",
+      description: `Customer cancelled job #${job.id} - ${job.materialType} delivery`,
+      relatedId: job.id,
+    },
+  ]);
+
+  const { customerCompany, providerCompany } = await companiesFor(updated);
+  res.json(serializeJob(updated, customerCompany, providerCompany));
+});
+
+router.post("/jobs/:id/approve-invoice", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const params = JobIdParam.safeParse({ id: parseInt(String(req.params.id), 10) });
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const job = await loadJobIfMember(params.data.id, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  if (!CUSTOMER_SIDE.has(profile.role)) {
+    res.status(403).json({ error: "Only the customer side can approve invoices." });
+    return;
+  }
+  if (job.status !== "completed") {
+    res.status(409).json({ error: "The job must be completed before invoice approval." });
+    return;
+  }
+  if (!(await canReviewCompletion(job, profile))) {
+    res.status(403).json({ error: "You are not assigned to approve this job." });
+    return;
+  }
+
+  const [updated] = await db.update(jobsTable)
+    .set({
+      invoiceApprovedAt: new Date(),
+      invoiceApprovedByProfileId: profile.id,
+      completionApproval: job.completionApproval === "flagged" ? "flagged" : "approved",
+      approvedByProfileId: job.approvedByProfileId ?? profile.id,
+      completionApprovedAt: job.completionApprovedAt ?? new Date(),
+    })
+    .where(eq(jobsTable.id, job.id))
+    .returning();
+  await db.insert(activityTable).values({
+    profileId: job.providerId,
+    type: "invoice_approved",
+    description: `Customer approved invoice for job #${job.id} - ${job.materialType} delivery`,
+    relatedId: job.id,
+  });
+
+  const { customerCompany, providerCompany } = await companiesFor(updated);
+  res.json(serializeJob(updated, customerCompany, providerCompany));
+});
+
+router.get("/jobs/:id/tracking", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const params = JobIdParam.safeParse({ id: parseInt(String(req.params.id), 10) });
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const job = await loadJobIfMember(params.data.id, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+
+  const updates = await db
+    .select()
+    .from(jobStatusUpdatesTable)
+    .where(eq(jobStatusUpdatesTable.jobId, job.id))
+    .orderBy(sql`${jobStatusUpdatesTable.createdAt} asc`);
+  const tickets = await db.select().from(ticketsTable)
+    .where(eq(ticketsTable.jobId, job.id))
+    .orderBy(sql`${ticketsTable.loadNumber} asc`);
+  const evidence = await db.select().from(deliveryEvidenceTable)
+    .where(eq(deliveryEvidenceTable.jobId, job.id));
+
+  const latestStatus = updates[updates.length - 1] ?? null;
+  const isDone = job.status === "completed" || latestStatus?.status === "completed";
+  const eta = isDone
+    ? null
+    : latestStatus?.status === "en_route_delivery" || latestStatus?.status === "left_pickup"
+      ? new Date(Date.now() + 45 * 60 * 1000).toISOString()
+      : latestStatus?.status === "en_route_pickup"
+        ? new Date(Date.now() + 30 * 60 * 1000).toISOString()
+        : job.scheduledDate.toISOString();
+
+  const { customerCompany, providerCompany } = await companiesFor(job);
+  res.json({
+    job: serializeJob(job, customerCompany, providerCompany),
+    latestStatus,
+    eta,
+    tickets: tickets.map((ticket) => ({
+      ...ticket,
+      weightTons: ticket.weightTons == null ? null : parseFloat(ticket.weightTons),
+    })),
+    evidenceCount: evidence.length,
+    deliveryPhotoCount: evidence.filter((row) => row.photoCaption?.includes("delivery")).length,
+    scaleTicketCount: tickets.filter((ticket) => !!ticket.photoUrl).length,
+    signedTicketCount: evidence.filter((row) => row.photoCaption?.includes("signed")).length,
+  });
 });
 
 /**

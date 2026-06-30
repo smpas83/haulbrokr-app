@@ -35,6 +35,7 @@ import type {
   BidInput,
   BidUpdate,
   BinOrder,
+  CancelJobBody,
   CheckoutSession,
   CheckoutSessionInput,
   ClockInTicket200,
@@ -82,6 +83,7 @@ import type {
   JobRequestUpdate,
   JobStatusUpdate,
   JobStatusUpdateInput,
+  JobTracking,
   JobUpdate,
   ListBinCatalog200,
   ListBinOrders200Item,
@@ -1864,6 +1866,225 @@ export const useDeclineJob = <TError = ErrorType<void>,
       > => {
       return useMutation(getDeclineJobMutationOptions(options));
     }
+
+export const getCancelJobUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/cancel`
+}
+
+/**
+ * @summary Customer cancels an active job before completion/payment
+ */
+export const cancelJob = async (id: number,
+    cancelJobBody?: CancelJobBody, options?: RequestInit): Promise<Job> => {
+
+  return customFetch<Job>(getCancelJobUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      cancelJobBody,)
+  }
+);}
+
+
+
+
+export const getCancelJobMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{id: number;data?: BodyType<CancelJobBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{id: number;data?: BodyType<CancelJobBody>}, TContext> => {
+
+const mutationKey = ['cancelJob'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelJob>>, {id: number;data?: BodyType<CancelJobBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  cancelJob(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelJobMutationResult = NonNullable<Awaited<ReturnType<typeof cancelJob>>>
+    export type CancelJobMutationBody = BodyType<CancelJobBody> | undefined
+    export type CancelJobMutationError = ErrorType<void>
+
+    /**
+ * @summary Customer cancels an active job before completion/payment
+ */
+export const useCancelJob = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{id: number;data?: BodyType<CancelJobBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof cancelJob>>,
+        TError,
+        {id: number;data?: BodyType<CancelJobBody>},
+        TContext
+      > => {
+      return useMutation(getCancelJobMutationOptions(options));
+    }
+
+export const getApproveJobInvoiceUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/approve-invoice`
+}
+
+/**
+ * @summary Customer approves a completed job invoice
+ */
+export const approveJobInvoice = async (id: number, options?: RequestInit): Promise<Job> => {
+
+  return customFetch<Job>(getApproveJobInvoiceUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getApproveJobInvoiceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveJobInvoice>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveJobInvoice>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['approveJobInvoice'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveJobInvoice>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  approveJobInvoice(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveJobInvoiceMutationResult = NonNullable<Awaited<ReturnType<typeof approveJobInvoice>>>
+
+    export type ApproveJobInvoiceMutationError = ErrorType<void>
+
+    /**
+ * @summary Customer approves a completed job invoice
+ */
+export const useApproveJobInvoice = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveJobInvoice>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof approveJobInvoice>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getApproveJobInvoiceMutationOptions(options));
+    }
+
+export const getGetJobTrackingUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/tracking`
+}
+
+/**
+ * @summary Get contractor tracking summary for a job
+ */
+export const getJobTracking = async (id: number, options?: RequestInit): Promise<JobTracking> => {
+
+  return customFetch<JobTracking>(getGetJobTrackingUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetJobTrackingQueryKey = (id: number,) => {
+    return [
+    `/api/jobs/${id}/tracking`
+    ] as const;
+    }
+
+
+export const getGetJobTrackingQueryOptions = <TData = Awaited<ReturnType<typeof getJobTracking>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobTracking>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetJobTrackingQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobTracking>>> = ({ signal }) => getJobTracking(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getJobTracking>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetJobTrackingQueryResult = NonNullable<Awaited<ReturnType<typeof getJobTracking>>>
+export type GetJobTrackingQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get contractor tracking summary for a job
+ */
+
+export function useGetJobTracking<TData = Awaited<ReturnType<typeof getJobTracking>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobTracking>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetJobTrackingQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetJobRatingUrl = (id: number,) => {
 

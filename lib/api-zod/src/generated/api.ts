@@ -519,6 +519,8 @@ export const ListJobsResponseItem = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -568,6 +570,8 @@ export const GetJobResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -622,6 +626,8 @@ export const UpdateJobResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -670,6 +676,8 @@ export const AcceptJobResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -718,6 +726,8 @@ export const DeclineJobResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -727,6 +737,208 @@ export const DeclineJobResponse = zod.object({
   "flagReason": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Customer cancels an active job before completion/payment
+ */
+export const CancelJobParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CancelJobBody = zod.object({
+  "reason": zod.string().optional()
+})
+
+export const CancelJobResponse = zod.object({
+  "id": zod.number(),
+  "requestId": zod.number(),
+  "bidId": zod.number(),
+  "customerId": zod.number(),
+  "customerCompany": zod.string(),
+  "providerId": zod.number(),
+  "providerCompany": zod.string(),
+  "ratePerHour": zod.number(),
+  "trucksAssigned": zod.number(),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
+  "materialType": zod.string(),
+  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
+  "pickupAddress": zod.string(),
+  "deliveryAddress": zod.string(),
+  "scheduledDate": zod.coerce.date(),
+  "startTime": zod.string(),
+  "estimatedHours": zod.number(),
+  "startedAt": zod.coerce.date().nullish(),
+  "completedAt": zod.coerce.date().nullish(),
+  "totalHours": zod.number().nullish(),
+  "totalAmount": zod.number().nullish(),
+  "platformFeeRate": zod.number().nullish(),
+  "platformFeeAmount": zod.number().nullish(),
+  "customerTotalAmount": zod.number().nullish(),
+  "providerNetAmount": zod.number().nullish(),
+  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentDueDate": zod.coerce.date().nullish(),
+  "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
+  "paidAt": zod.coerce.date().nullish(),
+  "releasedAt": zod.coerce.date().nullish(),
+  "projectId": zod.number().nullish(),
+  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
+  "approvedByProfileId": zod.number().nullish(),
+  "completionApprovedAt": zod.coerce.date().nullish(),
+  "flagReason": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Customer approves a completed job invoice
+ */
+export const ApproveJobInvoiceParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ApproveJobInvoiceResponse = zod.object({
+  "id": zod.number(),
+  "requestId": zod.number(),
+  "bidId": zod.number(),
+  "customerId": zod.number(),
+  "customerCompany": zod.string(),
+  "providerId": zod.number(),
+  "providerCompany": zod.string(),
+  "ratePerHour": zod.number(),
+  "trucksAssigned": zod.number(),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
+  "materialType": zod.string(),
+  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
+  "pickupAddress": zod.string(),
+  "deliveryAddress": zod.string(),
+  "scheduledDate": zod.coerce.date(),
+  "startTime": zod.string(),
+  "estimatedHours": zod.number(),
+  "startedAt": zod.coerce.date().nullish(),
+  "completedAt": zod.coerce.date().nullish(),
+  "totalHours": zod.number().nullish(),
+  "totalAmount": zod.number().nullish(),
+  "platformFeeRate": zod.number().nullish(),
+  "platformFeeAmount": zod.number().nullish(),
+  "customerTotalAmount": zod.number().nullish(),
+  "providerNetAmount": zod.number().nullish(),
+  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentDueDate": zod.coerce.date().nullish(),
+  "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
+  "paidAt": zod.coerce.date().nullish(),
+  "releasedAt": zod.coerce.date().nullish(),
+  "projectId": zod.number().nullish(),
+  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
+  "approvedByProfileId": zod.number().nullish(),
+  "completionApprovedAt": zod.coerce.date().nullish(),
+  "flagReason": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get contractor tracking summary for a job
+ */
+export const GetJobTrackingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetJobTrackingResponse = zod.object({
+  "job": zod.object({
+  "id": zod.number(),
+  "requestId": zod.number(),
+  "bidId": zod.number(),
+  "customerId": zod.number(),
+  "customerCompany": zod.string(),
+  "providerId": zod.number(),
+  "providerCompany": zod.string(),
+  "ratePerHour": zod.number(),
+  "trucksAssigned": zod.number(),
+  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
+  "materialType": zod.string(),
+  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
+  "pickupAddress": zod.string(),
+  "deliveryAddress": zod.string(),
+  "scheduledDate": zod.coerce.date(),
+  "startTime": zod.string(),
+  "estimatedHours": zod.number(),
+  "startedAt": zod.coerce.date().nullish(),
+  "completedAt": zod.coerce.date().nullish(),
+  "totalHours": zod.number().nullish(),
+  "totalAmount": zod.number().nullish(),
+  "platformFeeRate": zod.number().nullish(),
+  "platformFeeAmount": zod.number().nullish(),
+  "customerTotalAmount": zod.number().nullish(),
+  "providerNetAmount": zod.number().nullish(),
+  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentDueDate": zod.coerce.date().nullish(),
+  "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
+  "paidAt": zod.coerce.date().nullish(),
+  "releasedAt": zod.coerce.date().nullish(),
+  "projectId": zod.number().nullish(),
+  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
+  "approvedByProfileId": zod.number().nullish(),
+  "completionApprovedAt": zod.coerce.date().nullish(),
+  "flagReason": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}),
+  "latestStatus": zod.union([zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "ticketId": zod.number().nullish(),
+  "actorProfileId": zod.number(),
+  "actorName": zod.string().nullish(),
+  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'checked_in', 'started', 'ticket_uploaded', 'photo_uploaded', 'completed', 'driver_accepted', 'driver_declined', 'en_route_pickup', 'left_pickup', 'en_route_delivery', 'arrived_delivery', 'loading_photos_uploaded', 'scale_ticket_uploaded', 'delivery_photos_uploaded', 'signed_ticket_uploaded', 'checked_out']),
+  "note": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}),zod.null()]).optional(),
+  "eta": zod.coerce.date().nullable(),
+  "tickets": zod.array(zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish(),
+  "loadNumber": zod.number(),
+  "status": zod.enum(['pending', 'in_progress', 'completed', 'verified', 'declined', 'cancelled']),
+  "workflowState": zod.enum(['assigned', 'accepted', 'declined', 'en_route_pickup', 'checked_in', 'loading', 'loading_photos_uploaded', 'scale_ticket_uploaded', 'left_pickup', 'en_route_delivery', 'arrived_delivery', 'delivery_photos_uploaded', 'signed_ticket_uploaded', 'checked_out', 'completed']).optional(),
+  "acceptedAt": zod.coerce.date().nullish(),
+  "declinedAt": zod.coerce.date().nullish(),
+  "enRoutePickupAt": zod.coerce.date().nullish(),
+  "pickupCheckedInAt": zod.coerce.date().nullish(),
+  "loadingStartedAt": zod.coerce.date().nullish(),
+  "loadingPhotosUploadedAt": zod.coerce.date().nullish(),
+  "scaleTicketUploadedAt": zod.coerce.date().nullish(),
+  "leftPickupAt": zod.coerce.date().nullish(),
+  "enRouteDeliveryAt": zod.coerce.date().nullish(),
+  "arrivedDeliveryAt": zod.coerce.date().nullish(),
+  "deliveryPhotosUploadedAt": zod.coerce.date().nullish(),
+  "signedTicketUploadedAt": zod.coerce.date().nullish(),
+  "checkedOutAt": zod.coerce.date().nullish(),
+  "completedAt": zod.coerce.date().nullish(),
+  "lastWorkflowTransitionAt": zod.coerce.date().nullish(),
+  "clockedInAt": zod.coerce.date().nullish(),
+  "clockedOutAt": zod.coerce.date().nullish(),
+  "weightTons": zod.number().nullish(),
+  "notes": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "verifiedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})),
+  "evidenceCount": zod.number(),
+  "deliveryPhotoCount": zod.number(),
+  "scaleTicketCount": zod.number(),
+  "signedTicketCount": zod.number()
 })
 
 
@@ -815,7 +1027,7 @@ export const GetDashboardStatsResponse = zod.object({
  */
 export const GetDashboardActivityResponseItem = zod.object({
   "id": zod.number(),
-  "type": zod.enum(['request_posted', 'bid_placed', 'bid_awarded', 'bid_accepted', 'job_accepted', 'job_declined', 'job_started', 'job_completed', 'payment_failed', 'payment_requires_action', 'application_approved', 'application_rejected', 'payout_delayed', 'payout_stuck_alert', 'bin_confirmed', 'bin_delivered', 'bin_picked_up', 'bin_cancelled']),
+  "type": zod.enum(['request_posted', 'bid_placed', 'bid_awarded', 'bid_accepted', 'job_accepted', 'job_declined', 'job_cancelled', 'job_started', 'job_completed', 'invoice_approved', 'delivery_evidence_submitted', 'driver_event_rejected', 'driver_workflow_updated', 'payment_failed', 'payment_requires_action', 'application_approved', 'application_rejected', 'payout_delayed', 'payout_stuck_alert', 'bin_confirmed', 'bin_delivered', 'bin_picked_up', 'bin_cancelled']),
   "description": zod.string(),
   "relatedId": zod.number().nullish(),
   "relatedBinOrderId": zod.string().nullish(),
@@ -1894,6 +2106,8 @@ export const ChargeJobResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -1942,6 +2156,8 @@ export const ReleaseJobPaymentResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -2004,6 +2220,8 @@ export const ConfirmJobPaymentResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -2072,6 +2290,8 @@ export const VerifyJobCheckoutResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -2158,7 +2378,7 @@ export const ListJobStatusUpdatesResponseItem = zod.object({
   "ticketId": zod.number().nullish(),
   "actorProfileId": zod.number(),
   "actorName": zod.string().nullish(),
-  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'checked_in', 'started', 'ticket_uploaded', 'photo_uploaded', 'completed']),
+  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'checked_in', 'started', 'ticket_uploaded', 'photo_uploaded', 'completed', 'driver_accepted', 'driver_declined', 'en_route_pickup', 'left_pickup', 'en_route_delivery', 'arrived_delivery', 'loading_photos_uploaded', 'scale_ticket_uploaded', 'delivery_photos_uploaded', 'signed_ticket_uploaded', 'checked_out']),
   "note": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -2173,7 +2393,7 @@ export const CreateJobStatusUpdateParams = zod.object({
 })
 
 export const CreateJobStatusUpdateBody = zod.object({
-  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'checked_in', 'started', 'ticket_uploaded', 'photo_uploaded', 'completed']),
+  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'checked_in', 'started', 'ticket_uploaded', 'photo_uploaded', 'completed', 'driver_accepted', 'driver_declined', 'en_route_pickup', 'left_pickup', 'en_route_delivery', 'arrived_delivery', 'loading_photos_uploaded', 'scale_ticket_uploaded', 'delivery_photos_uploaded', 'signed_ticket_uploaded', 'checked_out']),
   "ticketId": zod.number().optional(),
   "note": zod.string().optional()
 })
@@ -2215,6 +2435,8 @@ export const ApproveJobCompletionResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),
@@ -2267,6 +2489,8 @@ export const FlagJobCompletionResponse = zod.object({
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedAt": zod.coerce.date().nullish(),
+  "invoiceApprovedByProfileId": zod.number().nullish(),
   "paidAt": zod.coerce.date().nullish(),
   "releasedAt": zod.coerce.date().nullish(),
   "projectId": zod.number().nullish(),

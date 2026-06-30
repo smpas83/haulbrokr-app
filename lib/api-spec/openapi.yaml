@@ -498,6 +498,76 @@ paths:
         "404":
           description: Job not found
 
+  /jobs/{id}/cancel:
+    post:
+      operationId: cancelJob
+      tags: [jobs]
+      summary: Customer cancels an active job before completion/payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Job cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "409":
+          description: Job can no longer be cancelled
+
+  /jobs/{id}/approve-invoice:
+    post:
+      operationId: approveJobInvoice
+      tags: [jobs]
+      summary: Customer approves a completed job invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoice approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "409":
+          description: Job must be completed first
+
+  /jobs/{id}/tracking:
+    get:
+      operationId: getJobTracking
+      tags: [jobs]
+      summary: Get contractor tracking summary for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tracking summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobTracking"
+
   # ── Ratings ───────────────────────────────────────────────────────────────────
   /jobs/{id}/rating:
     get:
@@ -2914,6 +2984,11 @@ components:
         invoicedAt:
           type: ["string", "null"]
           format: date-time
+        invoiceApprovedAt:
+          type: ["string", "null"]
+          format: date-time
+        invoiceApprovedByProfileId:
+          type: ["integer", "null"]
         paidAt:
           type: ["string", "null"]
           format: date-time
@@ -2950,6 +3025,32 @@ components:
         notes:
           type: string
 
+    JobTracking:
+      type: object
+      required: [job, eta, tickets, evidenceCount, deliveryPhotoCount, scaleTicketCount, signedTicketCount]
+      properties:
+        job:
+          $ref: "#/components/schemas/Job"
+        latestStatus:
+          oneOf:
+            - $ref: "#/components/schemas/JobStatusUpdate"
+            - type: "null"
+        eta:
+          type: ["string", "null"]
+          format: date-time
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ticket"
+        evidenceCount:
+          type: integer
+        deliveryPhotoCount:
+          type: integer
+        scaleTicketCount:
+          type: integer
+        signedTicketCount:
+          type: integer
+
     # ── Dashboard ─────────────────────────────────────────────────────────────
     DashboardStats:
       type: object
@@ -2978,7 +3079,7 @@ components:
           type: integer
         type:
           type: string
-          enum: [request_posted, bid_placed, bid_awarded, bid_accepted, job_accepted, job_declined, job_started, job_completed, payment_failed, payment_requires_action, application_approved, application_rejected, payout_delayed, payout_stuck_alert, bin_confirmed, bin_delivered, bin_picked_up, bin_cancelled]
+          enum: [request_posted, bid_placed, bid_awarded, bid_accepted, job_accepted, job_declined, job_cancelled, job_started, job_completed, invoice_approved, delivery_evidence_submitted, driver_event_rejected, driver_workflow_updated, payment_failed, payment_requires_action, application_approved, application_rejected, payout_delayed, payout_stuck_alert, bin_confirmed, bin_delivered, bin_picked_up, bin_cancelled]
         description:
           type: string
         relatedId:
@@ -4196,7 +4297,55 @@ components:
           type: integer
         status:
           type: string
-          enum: [pending, in_progress, completed, verified]
+          enum: [pending, in_progress, completed, verified, declined, cancelled]
+        workflowState:
+          type: string
+          enum: [assigned, accepted, declined, en_route_pickup, checked_in, loading, loading_photos_uploaded, scale_ticket_uploaded, left_pickup, en_route_delivery, arrived_delivery, delivery_photos_uploaded, signed_ticket_uploaded, checked_out, completed]
+        acceptedAt:
+          type: ["string", "null"]
+          format: date-time
+        declinedAt:
+          type: ["string", "null"]
+          format: date-time
+        enRoutePickupAt:
+          type: ["string", "null"]
+          format: date-time
+        pickupCheckedInAt:
+          type: ["string", "null"]
+          format: date-time
+        loadingStartedAt:
+          type: ["string", "null"]
+          format: date-time
+        loadingPhotosUploadedAt:
+          type: ["string", "null"]
+          format: date-time
+        scaleTicketUploadedAt:
+          type: ["string", "null"]
+          format: date-time
+        leftPickupAt:
+          type: ["string", "null"]
+          format: date-time
+        enRouteDeliveryAt:
+          type: ["string", "null"]
+          format: date-time
+        arrivedDeliveryAt:
+          type: ["string", "null"]
+          format: date-time
+        deliveryPhotosUploadedAt:
+          type: ["string", "null"]
+          format: date-time
+        signedTicketUploadedAt:
+          type: ["string", "null"]
+          format: date-time
+        checkedOutAt:
+          type: ["string", "null"]
+          format: date-time
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        lastWorkflowTransitionAt:
+          type: ["string", "null"]
+          format: date-time
         clockedInAt:
           type: ["string", "null"]
           format: date-time
@@ -4268,7 +4417,7 @@ components:
           type: ["string", "null"]
         status:
           type: string
-          enum: [en_route, arrived, loading, loaded, dumping, checked_in, started, ticket_uploaded, photo_uploaded, completed]
+          enum: [en_route, arrived, loading, loaded, dumping, checked_in, started, ticket_uploaded, photo_uploaded, completed, driver_accepted, driver_declined, en_route_pickup, left_pickup, en_route_delivery, arrived_delivery, loading_photos_uploaded, scale_ticket_uploaded, delivery_photos_uploaded, signed_ticket_uploaded, checked_out]
         note:
           type: ["string", "null"]
         createdAt:
@@ -4281,7 +4430,7 @@ components:
       properties:
         status:
           type: string
-          enum: [en_route, arrived, loading, loaded, dumping, checked_in, started, ticket_uploaded, photo_uploaded, completed]
+          enum: [en_route, arrived, loading, loaded, dumping, checked_in, started, ticket_uploaded, photo_uploaded, completed, driver_accepted, driver_declined, en_route_pickup, left_pickup, en_route_delivery, arrived_delivery, loading_photos_uploaded, scale_ticket_uploaded, delivery_photos_uploaded, signed_ticket_uploaded, checked_out]
         ticketId:
           type: integer
         note:

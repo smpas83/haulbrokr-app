@@ -52,6 +52,8 @@ export const jobsTable = pgTable("jobs", {
   paymentStatus: jobPaymentStatusEnum("payment_status").notNull().default("unpaid"),
   paymentDueDate: timestamp("payment_due_date", { withTimezone: true }),
   invoicedAt: timestamp("invoiced_at", { withTimezone: true }),
+  invoiceApprovedAt: timestamp("invoice_approved_at", { withTimezone: true }),
+  invoiceApprovedByProfileId: integer("invoice_approved_by_profile_id").references(() => profilesTable.id),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   releasedAt: timestamp("released_at", { withTimezone: true }),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
