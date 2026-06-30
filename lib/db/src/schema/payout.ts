@@ -19,6 +19,12 @@ export const payoutAccountsTable = pgTable("payout_accounts", {
   chargesEnabled: integer("charges_enabled").notNull().default(0),
   payoutsEnabled: integer("payouts_enabled").notNull().default(0),
   detailsSubmitted: integer("details_submitted").notNull().default(0),
+  onboardingStatus: text("onboarding_status").notNull().default("not_started"),
+  requirementsJson: text("requirements_json"),
+  disabledReason: text("disabled_reason"),
+  lastStripeSyncAt: timestamp("last_stripe_sync_at", { withTimezone: true }),
+  lastStripePayoutId: text("last_stripe_payout_id"),
+  lastPayoutStatus: text("last_payout_status"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

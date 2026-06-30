@@ -527,6 +527,10 @@ paths:
                     oneOf:
                       - $ref: "#/components/schemas/RatingResponse"
                       - type: "null"
+                  reviews:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RatingResponse"
     post:
       operationId: createJobRating
       tags: [ratings]
@@ -544,8 +548,159 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateRatingRequest"
       responses:
+        "201":
+          description: Review created and queued for moderation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingResponse"
+  /jobs/{id}/reviews:
+    get:
+      operationId: getJobReviews
+      tags: [ratings]
+      summary: Get approved reviews for a job plus the caller's own submitted review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
         "200":
-          description: Rating created or updated
+          description: Reviews for the job visible to the caller
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mine, theirs, reviews]
+                properties:
+                  mine:
+                    oneOf:
+                      - $ref: "#/components/schemas/RatingResponse"
+                      - type: "null"
+                  theirs:
+                    oneOf:
+                      - $ref: "#/components/schemas/RatingResponse"
+                      - type: "null"
+                  reviews:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RatingResponse"
+    post:
+      operationId: createJobReview
+      tags: [ratings]
+      summary: Create a moderated review for a completed job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRatingRequest"
+      responses:
+        "201":
+          description: Review created and queued for moderation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingResponse"
+  /ratings/drivers/{profileId}/summary:
+    get:
+      operationId: getDriverRatingSummary
+      tags: [ratings]
+      summary: Get approved customer-to-driver rating summary
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Driver rating summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingSummary"
+  /ratings/customers/{profileId}/summary:
+    get:
+      operationId: getCustomerRatingSummary
+      tags: [ratings]
+      summary: Get approved customer rating summary
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer rating summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingSummary"
+  /ratings/vendors/{profileId}/summary:
+    get:
+      operationId: getVendorRatingSummary
+      tags: [ratings]
+      summary: Get approved vendor rating summary
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Vendor rating summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingSummary"
+  /admin/reviews/pending:
+    get:
+      operationId: listPendingReviews
+      tags: [ratings, admin]
+      summary: List reviews awaiting admin moderation
+      responses:
+        "200":
+          description: Pending reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reviews]
+                properties:
+                  reviews:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RatingResponse"
+  /admin/reviews/{id}/moderate:
+    patch:
+      operationId: moderateReview
+      tags: [ratings, admin]
+      summary: Approve, reject, or hide a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModerateReviewRequest"
+      responses:
+        "200":
+          description: Moderated review
           content:
             application/json:
               schema:
@@ -1338,7 +1493,7 @@ paths:
     post:
       operationId: chargeJob
       tags: [jobs]
-      summary: Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+      summary: Charge the customer for a completed job using configured marketplace fees. Instant methods immediately transfer the net to the provider; Net terms create an invoice.
       parameters:
         - name: id
           in: path
@@ -1357,7 +1512,7 @@ paths:
     post:
       operationId: releaseJobPayment
       tags: [jobs]
-      summary: Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+      summary: Release the provider's net payout after a Net-terms customer invoice has been paid (marketplace fees already retained).
       parameters:
         - name: id
           in: path
@@ -1414,7 +1569,7 @@ paths:
     post:
       operationId: createJobCheckoutSession
       tags: [jobs]
-      summary: Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+      summary: Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains configured marketplace fees as the application fee.
       parameters:
         - name: id
           in: path
@@ -2830,7 +2985,7 @@ components:
           type: ["number", "null"]
         paymentStatus:
           type: string
-          enum: [unpaid, invoiced, paid, released, failed, requires_action]
+          enum: [unpaid, authorized, invoiced, paid, released, failed, requires_action, refunded, partially_refunded]
         paymentDueDate:
           type: ["string", "null"]
           format: date-time
@@ -4244,9 +4399,15 @@ components:
           type: integer
 
     # ── Ratings ──────────────────────────────────────────────────────────────
+    ReviewType:
+      type: string
+      enum: [customer_to_driver, driver_to_customer, vendor_to_customer]
+    ReviewModerationStatus:
+      type: string
+      enum: [pending, approved, rejected, hidden]
     RatingResponse:
       type: object
-      required: [id, jobId, raterProfileId, rateeProfileId, stars, createdAt]
+      required: [id, jobId, raterProfileId, rateeProfileId, reviewType, stars, moderationStatus, createdAt]
       properties:
         id:
           type: integer
@@ -4256,13 +4417,27 @@ components:
           type: integer
         rateeProfileId:
           type: integer
+        reviewType:
+          $ref: "#/components/schemas/ReviewType"
         stars:
           type: integer
           minimum: 1
           maximum: 5
         comment:
           type: ["string", "null"]
+        moderationStatus:
+          $ref: "#/components/schemas/ReviewModerationStatus"
+        moderationReason:
+          type: ["string", "null"]
+        moderatedByProfileId:
+          type: ["integer", "null"]
+        moderatedAt:
+          type: ["string", "null"]
+          format: date-time
         createdAt:
+          type: string
+          format: date-time
+        updatedAt:
           type: string
           format: date-time
 
@@ -4270,9 +4445,42 @@ components:
       type: object
       required: [stars]
       properties:
+        reviewType:
+          $ref: "#/components/schemas/ReviewType"
+        revieweeProfileId:
+          type: integer
         stars:
           type: integer
           minimum: 1
           maximum: 5
         comment:
+          type: ["string", "null"]
+          maxLength: 1000
+    RatingSummary:
+      type: object
+      required: [profileId, reviewType, averageStars, reviewCount, starsBreakdown]
+      properties:
+        profileId:
+          type: integer
+        reviewType:
+          oneOf:
+            - $ref: "#/components/schemas/ReviewType"
+            - type: "null"
+        averageStars:
+          type: number
+        reviewCount:
+          type: integer
+        starsBreakdown:
+          type: object
+          additionalProperties:
+            type: integer
+    ModerateReviewRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
           type: string
+          enum: [approved, rejected, hidden]
+        reason:
+          type: ["string", "null"]
+          maxLength: 1000

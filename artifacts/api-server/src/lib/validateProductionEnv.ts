@@ -2,6 +2,7 @@ export type ProductionService =
   | "neon"
   | "clerk"
   | "stripe"
+  | "google_maps"
   | "resend"
   | "r2"
   | "render"
@@ -35,6 +36,9 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   { service: "stripe", variable: "STRIPE_PUBLISHABLE_KEY", required: true, description: "Stripe publishable key (pk_live_… or pk_test_…)." },
   { service: "stripe", variable: "STRIPE_WEBHOOK_SECRET", required: true, description: "Stripe webhook signing secret (whsec_…)." },
   { service: "stripe", variable: "PAYMENTS_MOCK_MODE", required: true, description: "Must be unset or false in production — mock payments are not allowed." },
+
+  // Google Maps Platform (server-side only)
+  { service: "google_maps", variable: "GOOGLE_MAPS_SERVER_API_KEY", required: true, description: "Server-side Google Maps key for Places, Geocoding, Directions, Routes, ETA, distance, and traffic-aware estimates." },
 
   // Resend
   { service: "resend", variable: "RESEND_API_KEY", required: true, description: "Resend API key (re_…)." },
@@ -210,6 +214,15 @@ function validateStripe(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): v
   }
 }
 
+function validateGoogleMaps(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+  const key = envValue(env, "GOOGLE_MAPS_SERVER_API_KEY") || envValue(env, "GOOGLE_MAPS_API_KEY");
+  if (!key) {
+    pushMissing(issues, "google_maps", "GOOGLE_MAPS_SERVER_API_KEY");
+  } else if (containsPlaceholder(key)) {
+    pushInvalid(issues, "google_maps", "GOOGLE_MAPS_SERVER_API_KEY", "GOOGLE_MAPS_SERVER_API_KEY contains placeholder text.");
+  }
+}
+
 function validateResend(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
   const apiKey = envValue(env, "RESEND_API_KEY");
   const fromEmail = envValue(env, "RESEND_FROM_EMAIL");
@@ -307,6 +320,7 @@ export function collectProductionEnvIssues(env: NodeJS.ProcessEnv = process.env)
   validateDatabaseUrl(env, issues);
   validateClerk(env, issues);
   validateStripe(env, issues);
+  validateGoogleMaps(env, issues);
   validateResend(env, issues);
   validateR2(env, issues);
   validateRender(env, issues);
@@ -326,6 +340,7 @@ function formatIssues(issues: EnvValidationIssue[]): string {
     "neon",
     "clerk",
     "stripe",
+    "google_maps",
     "resend",
     "r2",
     "render",

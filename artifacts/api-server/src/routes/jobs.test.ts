@@ -27,7 +27,16 @@ vi.mock("@workspace/db", () => {
   const db = {
     select: () => ({
       from: (table: unknown) => ({
-        where: () => Promise.resolve(h.rows.get(table) ?? []),
+        where: () => {
+          const rows = h.rows.get(table) ?? [];
+          const result = Promise.resolve(rows) as Promise<unknown[]> & {
+            orderBy: (..._args: unknown[]) => { limit: (_n: number) => Promise<unknown[]> };
+          };
+          result.orderBy = () => ({
+            limit: () => Promise.resolve(rows),
+          });
+          return result;
+        },
       }),
     }),
     update: () => ({
@@ -55,6 +64,7 @@ vi.mock("@workspace/db", () => {
     profilesTable: makeTable("profiles"),
     requestsTable: makeTable("requests"),
     activityTable: makeTable("activity"),
+    marketplaceConfigsTable: makeTable("marketplaceConfigs"),
   };
 });
 

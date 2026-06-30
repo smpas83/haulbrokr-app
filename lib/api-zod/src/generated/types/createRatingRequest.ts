@@ -5,12 +5,19 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
+import type { ReviewType } from './reviewType';
 
 export interface CreateRatingRequest {
+  reviewType?: ReviewType;
+  revieweeProfileId?: number;
   /**
      * @minimum 1
      * @maximum 5
      */
   stars: number;
-  comment?: string;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  comment?: string | null;
 }
