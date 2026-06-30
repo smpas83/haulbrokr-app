@@ -4,7 +4,7 @@
 
 1. Provision Neon Postgres and set `DATABASE_URL` with `sslmode=require`.
 2. Run database schema deployment: `pnpm --filter @workspace/db run push`.
-3. Configure Render API environment variables from `.env.example`.
+3. Configure Render API environment variables from `ENVIRONMENT_INVENTORY.md`.
 4. Deploy the Render API from `render.yaml`.
 5. Verify API readiness: `curl https://haulbrokr-api.onrender.com/api/readyz`.
 6. Configure Vercel web environment variables.
@@ -35,6 +35,7 @@
 - `pnpm run build`
 - `pnpm -r --if-present run test`
 - `pnpm -r --if-present run lint`
+- `pnpm run verify:deployment`
 - `scripts/verify-production.sh`
 - Stripe webhook delivery test for payment and Connect events.
 - Clerk sign-in/sign-up smoke test on production domains.
@@ -51,4 +52,4 @@
 
 ## Reference
 
-Use `docs/DEPLOY-VERCEL-RENDER.md` for detailed host-by-host setup instructions.
+Use `DEPLOYMENT_CHECKLIST.md` for empty-account setup and `docs/DEPLOY-VERCEL-RENDER.md` for host-specific setup notes.
