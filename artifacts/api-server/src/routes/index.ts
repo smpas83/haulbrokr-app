@@ -24,6 +24,7 @@ import staffAuthRouter from "./staff-auth";
 import adminRouter from "./admin";
 import ratingsRouter from "./ratings";
 import mapsRouter from "./maps";
+import complianceDocumentsRouter from "./compliance-documents";
 
 const router: IRouter = Router();
 
@@ -52,5 +53,6 @@ router.use(staffAuthRouter);
 router.use(adminRouter);
 router.use(ratingsRouter);
 router.use(mapsRouter);
+router.use(complianceDocumentsRouter);
 
 export default router;

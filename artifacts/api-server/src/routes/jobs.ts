@@ -23,6 +23,7 @@ import { settleConfirmedPayout } from "../lib/payoutRetry";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { driverCanAcceptJobs } from "../lib/complianceDocuments";
 import {
   DEFAULT_MARKETPLACE_PRICING_CONFIG,
   computeMarketplacePricing,
@@ -488,6 +489,13 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
   if (profile.role === "provider" && job.providerId !== profile.id) {
     res.status(403).json({ error: "Only the awarded hauler may accept this job" });
     return;
+  }
+  if (profile.role === "driver") {
+    const compliance = await driverCanAcceptJobs(profile.id);
+    if (!compliance.ok) {
+      res.status(403).json({ error: "Driver compliance documents are missing or expired.", blockers: compliance.blockers });
+      return;
+    }
   }
   if (job.status !== "awarded") {
     res.status(400).json({ error: "Job is not awaiting hauler acceptance" });
