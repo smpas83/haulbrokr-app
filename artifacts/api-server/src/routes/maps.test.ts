@@ -18,6 +18,8 @@ vi.mock("@workspace/db", () => {
   const db = {
     select: () => ({
       from: (table: unknown) => ({
+        then: (resolve: (rows: unknown[]) => unknown, reject?: (err: unknown) => unknown) =>
+          Promise.resolve(h.rows.get(table) ?? []).then(resolve, reject),
         where: () => Promise.resolve(h.rows.get(table) ?? []),
       }),
     }),
