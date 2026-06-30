@@ -23,6 +23,7 @@ import type {
   AccountStatus,
   ActivityItem,
   AdminAccess,
+  AdminAssignmentInput,
   AdminCreditApplicationItem,
   AdminOverview,
   AdminProviderCompliance,
@@ -67,6 +68,7 @@ import type {
   DisconnectQuickBooks200,
   DumpSite,
   FlagCompletionInput,
+  GetAdminDispatch200,
   GetBinOrder200,
   GetJobRating200,
   GetMyOrganization200,
@@ -4459,6 +4461,297 @@ export function useGetAdminOverview<TData = Awaited<ReturnType<typeof getAdminOv
 
 
 
+
+export const getGetAdminDispatchUrl = () => {
+
+
+
+
+  return `/api/admin/dispatch`
+}
+
+/**
+ * @summary Active dispatch board with jobs, drivers, trucks, assignments, compliance, notifications, and audit context
+ */
+export const getAdminDispatch = async ( options?: RequestInit): Promise<GetAdminDispatch200> => {
+
+  return customFetch<GetAdminDispatch200>(getGetAdminDispatchUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminDispatchQueryKey = () => {
+    return [
+    `/api/admin/dispatch`
+    ] as const;
+    }
+
+
+export const getGetAdminDispatchQueryOptions = <TData = Awaited<ReturnType<typeof getAdminDispatch>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminDispatch>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminDispatchQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminDispatch>>> = ({ signal }) => getAdminDispatch({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminDispatch>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminDispatchQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminDispatch>>>
+export type GetAdminDispatchQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Active dispatch board with jobs, drivers, trucks, assignments, compliance, notifications, and audit context
+ */
+
+export function useGetAdminDispatch<TData = Awaited<ReturnType<typeof getAdminDispatch>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminDispatch>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminDispatchQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAdminAssignDriverUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/jobs/${id}/assign`
+}
+
+/**
+ * @summary Assign a driver and optional truck to a job
+ */
+export const adminAssignDriver = async (id: number,
+    adminAssignmentInput: AdminAssignmentInput, options?: RequestInit): Promise<Ticket> => {
+
+  return customFetch<Ticket>(getAdminAssignDriverUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      adminAssignmentInput,)
+  }
+);}
+
+
+
+
+export const getAdminAssignDriverMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminAssignDriver>>, TError,{id: number;data: BodyType<AdminAssignmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminAssignDriver>>, TError,{id: number;data: BodyType<AdminAssignmentInput>}, TContext> => {
+
+const mutationKey = ['adminAssignDriver'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminAssignDriver>>, {id: number;data: BodyType<AdminAssignmentInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminAssignDriver(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminAssignDriverMutationResult = NonNullable<Awaited<ReturnType<typeof adminAssignDriver>>>
+    export type AdminAssignDriverMutationBody = BodyType<AdminAssignmentInput>
+    export type AdminAssignDriverMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Assign a driver and optional truck to a job
+ */
+export const useAdminAssignDriver = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminAssignDriver>>, TError,{id: number;data: BodyType<AdminAssignmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminAssignDriver>>,
+        TError,
+        {id: number;data: BodyType<AdminAssignmentInput>},
+        TContext
+      > => {
+      return useMutation(getAdminAssignDriverMutationOptions(options));
+    }
+
+export const getAdminReassignDriverUrl = (ticketId: number,) => {
+
+
+
+
+  return `/api/admin/assignments/${ticketId}`
+}
+
+/**
+ * @summary Reassign an existing driver/truck assignment
+ */
+export const adminReassignDriver = async (ticketId: number,
+    adminAssignmentInput: AdminAssignmentInput, options?: RequestInit): Promise<Ticket> => {
+
+  return customFetch<Ticket>(getAdminReassignDriverUrl(ticketId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      adminAssignmentInput,)
+  }
+);}
+
+
+
+
+export const getAdminReassignDriverMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminReassignDriver>>, TError,{ticketId: number;data: BodyType<AdminAssignmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminReassignDriver>>, TError,{ticketId: number;data: BodyType<AdminAssignmentInput>}, TContext> => {
+
+const mutationKey = ['adminReassignDriver'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminReassignDriver>>, {ticketId: number;data: BodyType<AdminAssignmentInput>}> = (props) => {
+          const {ticketId,data} = props ?? {};
+
+          return  adminReassignDriver(ticketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminReassignDriverMutationResult = NonNullable<Awaited<ReturnType<typeof adminReassignDriver>>>
+    export type AdminReassignDriverMutationBody = BodyType<AdminAssignmentInput>
+    export type AdminReassignDriverMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Reassign an existing driver/truck assignment
+ */
+export const useAdminReassignDriver = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminReassignDriver>>, TError,{ticketId: number;data: BodyType<AdminAssignmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminReassignDriver>>,
+        TError,
+        {ticketId: number;data: BodyType<AdminAssignmentInput>},
+        TContext
+      > => {
+      return useMutation(getAdminReassignDriverMutationOptions(options));
+    }
+
+export const getAdminCancelAssignmentUrl = (ticketId: number,) => {
+
+
+
+
+  return `/api/admin/assignments/${ticketId}`
+}
+
+/**
+ * @summary Cancel an assignment and free its truck
+ */
+export const adminCancelAssignment = async (ticketId: number, options?: RequestInit): Promise<Ticket> => {
+
+  return customFetch<Ticket>(getAdminCancelAssignmentUrl(ticketId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getAdminCancelAssignmentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCancelAssignment>>, TError,{ticketId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminCancelAssignment>>, TError,{ticketId: number}, TContext> => {
+
+const mutationKey = ['adminCancelAssignment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCancelAssignment>>, {ticketId: number}> = (props) => {
+          const {ticketId} = props ?? {};
+
+          return  adminCancelAssignment(ticketId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminCancelAssignmentMutationResult = NonNullable<Awaited<ReturnType<typeof adminCancelAssignment>>>
+
+    export type AdminCancelAssignmentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Cancel an assignment and free its truck
+ */
+export const useAdminCancelAssignment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCancelAssignment>>, TError,{ticketId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminCancelAssignment>>,
+        TError,
+        {ticketId: number},
+        TContext
+      > => {
+      return useMutation(getAdminCancelAssignmentMutationOptions(options));
+    }
 
 export const getListAdminComplianceUrl = () => {
 

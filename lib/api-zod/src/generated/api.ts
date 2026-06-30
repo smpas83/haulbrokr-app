@@ -1664,6 +1664,112 @@ export const GetAdminOverviewResponse = zod.object({
 
 
 /**
+ * @summary Active dispatch board with jobs, drivers, trucks, assignments, compliance, notifications, and audit context
+ */
+export const GetAdminDispatchResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Assign a driver and optional truck to a job
+ */
+export const AdminAssignDriverParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AdminAssignDriverBody = zod.object({
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish()
+})
+
+
+/**
+ * @summary Reassign an existing driver/truck assignment
+ */
+export const AdminReassignDriverParams = zod.object({
+  "ticketId": zod.coerce.number()
+})
+
+export const AdminReassignDriverBody = zod.object({
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish()
+})
+
+export const AdminReassignDriverResponse = zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish(),
+  "loadNumber": zod.number(),
+  "status": zod.enum(['pending', 'in_progress', 'completed', 'verified', 'declined', 'cancelled']),
+  "workflowState": zod.enum(['assigned', 'accepted', 'declined', 'en_route_pickup', 'checked_in', 'loading', 'loading_photos_uploaded', 'scale_ticket_uploaded', 'left_pickup', 'en_route_delivery', 'arrived_delivery', 'delivery_photos_uploaded', 'signed_ticket_uploaded', 'checked_out', 'completed']).optional(),
+  "acceptedAt": zod.coerce.date().nullish(),
+  "declinedAt": zod.coerce.date().nullish(),
+  "enRoutePickupAt": zod.coerce.date().nullish(),
+  "pickupCheckedInAt": zod.coerce.date().nullish(),
+  "loadingStartedAt": zod.coerce.date().nullish(),
+  "loadingPhotosUploadedAt": zod.coerce.date().nullish(),
+  "scaleTicketUploadedAt": zod.coerce.date().nullish(),
+  "leftPickupAt": zod.coerce.date().nullish(),
+  "enRouteDeliveryAt": zod.coerce.date().nullish(),
+  "arrivedDeliveryAt": zod.coerce.date().nullish(),
+  "deliveryPhotosUploadedAt": zod.coerce.date().nullish(),
+  "signedTicketUploadedAt": zod.coerce.date().nullish(),
+  "checkedOutAt": zod.coerce.date().nullish(),
+  "completedAt": zod.coerce.date().nullish(),
+  "lastWorkflowTransitionAt": zod.coerce.date().nullish(),
+  "clockedInAt": zod.coerce.date().nullish(),
+  "clockedOutAt": zod.coerce.date().nullish(),
+  "weightTons": zod.number().nullish(),
+  "notes": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "verifiedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Cancel an assignment and free its truck
+ */
+export const AdminCancelAssignmentParams = zod.object({
+  "ticketId": zod.coerce.number()
+})
+
+export const AdminCancelAssignmentResponse = zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish(),
+  "loadNumber": zod.number(),
+  "status": zod.enum(['pending', 'in_progress', 'completed', 'verified', 'declined', 'cancelled']),
+  "workflowState": zod.enum(['assigned', 'accepted', 'declined', 'en_route_pickup', 'checked_in', 'loading', 'loading_photos_uploaded', 'scale_ticket_uploaded', 'left_pickup', 'en_route_delivery', 'arrived_delivery', 'delivery_photos_uploaded', 'signed_ticket_uploaded', 'checked_out', 'completed']).optional(),
+  "acceptedAt": zod.coerce.date().nullish(),
+  "declinedAt": zod.coerce.date().nullish(),
+  "enRoutePickupAt": zod.coerce.date().nullish(),
+  "pickupCheckedInAt": zod.coerce.date().nullish(),
+  "loadingStartedAt": zod.coerce.date().nullish(),
+  "loadingPhotosUploadedAt": zod.coerce.date().nullish(),
+  "scaleTicketUploadedAt": zod.coerce.date().nullish(),
+  "leftPickupAt": zod.coerce.date().nullish(),
+  "enRouteDeliveryAt": zod.coerce.date().nullish(),
+  "arrivedDeliveryAt": zod.coerce.date().nullish(),
+  "deliveryPhotosUploadedAt": zod.coerce.date().nullish(),
+  "signedTicketUploadedAt": zod.coerce.date().nullish(),
+  "checkedOutAt": zod.coerce.date().nullish(),
+  "completedAt": zod.coerce.date().nullish(),
+  "lastWorkflowTransitionAt": zod.coerce.date().nullish(),
+  "clockedInAt": zod.coerce.date().nullish(),
+  "clockedOutAt": zod.coerce.date().nullish(),
+  "weightTons": zod.number().nullish(),
+  "notes": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "verifiedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary List carrier compliance records for admin review
  */
 export const ListAdminComplianceResponseItem = zod.object({

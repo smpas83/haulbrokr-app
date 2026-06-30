@@ -1105,6 +1105,86 @@ paths:
               schema:
                 $ref: "#/components/schemas/AdminOverview"
 
+  /admin/dispatch:
+    get:
+      operationId: getAdminDispatch
+      tags: [admin]
+      summary: Active dispatch board with jobs, drivers, trucks, assignments, compliance, notifications, and audit context
+      responses:
+        "200":
+          description: Dispatch command center
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /admin/jobs/{id}/assign:
+    post:
+      operationId: adminAssignDriver
+      tags: [admin]
+      summary: Assign a driver and optional truck to a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminAssignmentInput"
+      responses:
+        "201":
+          description: Assignment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  /admin/assignments/{ticketId}:
+    patch:
+      operationId: adminReassignDriver
+      tags: [admin]
+      summary: Reassign an existing driver/truck assignment
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminAssignmentInput"
+      responses:
+        "200":
+          description: Assignment updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+    delete:
+      operationId: adminCancelAssignment
+      tags: [admin]
+      summary: Cancel an assignment and free its truck
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Assignment cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
   /admin/compliance:
     get:
       operationId: listAdminCompliance
@@ -4400,6 +4480,15 @@ components:
           type: integer
         truckId:
           type: integer
+
+    AdminAssignmentInput:
+      type: object
+      required: [driverProfileId]
+      properties:
+        driverProfileId:
+          type: integer
+        truckId:
+          type: ["integer", "null"]
 
     JobStatusUpdate:
       type: object

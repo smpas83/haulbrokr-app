@@ -13,6 +13,9 @@ import {
   w9SubmissionsTable,
   insuranceSubmissionsTable,
   driverDocumentsTable,
+  ticketsTable,
+  trucksTable,
+  jobStatusUpdatesTable,
 } from "@workspace/db";
 import { requireStaffOrProfile, attachStaffSession } from "../middlewares/staffAuth";
 import { attachClerkProfileIfPresent } from "../middlewares/requireAuth";
@@ -330,6 +333,208 @@ router.get("/admin/jobs", requireStaffOrProfile, requirePermission("overview"), 
     brokerFee: Number(r.brokerFee),
     providerNet: Number(r.providerNet),
   })));
+});
+
+router.get("/admin/dispatch", requireStaffOrProfile, requirePermission("overview"), async (_req, res): Promise<void> => {
+  const cust = alias(profilesTable, "dispatch_cust");
+  const prov = alias(profilesTable, "dispatch_prov");
+
+  const jobs = await db
+    .select({
+      id: jobsTable.id,
+      status: jobsTable.status,
+      paymentStatus: jobsTable.paymentStatus,
+      materialType: jobsTable.materialType,
+      truckType: jobsTable.truckType,
+      pickupAddress: jobsTable.pickupAddress,
+      deliveryAddress: jobsTable.deliveryAddress,
+      scheduledDate: jobsTable.scheduledDate,
+      trucksAssigned: jobsTable.trucksAssigned,
+      customerId: jobsTable.customerId,
+      providerId: jobsTable.providerId,
+      customerName: cust.companyName,
+      providerName: prov.companyName,
+      completionApproval: jobsTable.completionApproval,
+      createdAt: jobsTable.createdAt,
+    })
+    .from(jobsTable)
+    .leftJoin(cust, eq(cust.id, jobsTable.customerId))
+    .leftJoin(prov, eq(prov.id, jobsTable.providerId))
+    .where(inArray(jobsTable.status, ["active", "awarded", "accepted", "in_progress"]))
+    .orderBy(desc(jobsTable.scheduledDate));
+
+  const [drivers, trucks, recentActivity] = await Promise.all([
+    db.select({
+      id: profilesTable.id,
+      companyName: profilesTable.companyName,
+      contactName: profilesTable.contactName,
+      phone: profilesTable.phone,
+      email: profilesTable.email,
+      organizationId: profilesTable.organizationId,
+      city: profilesTable.city,
+      state: profilesTable.state,
+    }).from(profilesTable).where(eq(profilesTable.role, "driver")),
+    db.select().from(trucksTable),
+    db.select().from(activityTable).orderBy(desc(activityTable.createdAt)).limit(100),
+  ]);
+
+  const activeJobs = await Promise.all(jobs.map(async (job) => {
+    const [assignments, latestStatus, compliance] = await Promise.all([
+      db.select().from(ticketsTable).where(eq(ticketsTable.jobId, job.id)).orderBy(sql`${ticketsTable.loadNumber} asc`),
+      db.select().from(jobStatusUpdatesTable).where(eq(jobStatusUpdatesTable.jobId, job.id)).orderBy(sql`${jobStatusUpdatesTable.createdAt} desc`).limit(1),
+      getProviderCanBid(job.providerId),
+    ]);
+    return {
+      ...job,
+      assignments: assignments.map((ticket) => ({
+        ...ticket,
+        weightTons: ticket.weightTons == null ? null : Number(ticket.weightTons),
+      })),
+      latestStatus: latestStatus[0] ?? null,
+      compliance,
+      notifications: recentActivity.filter((item) => item.relatedId === job.id),
+    };
+  }));
+
+  res.json({
+    jobs: activeJobs,
+    drivers,
+    trucks,
+    activeTruckCount: trucks.filter((truck) => truck.isAvailable).length,
+    activeDriverCount: drivers.length,
+  });
+});
+
+async function loadDispatchJob(jobId: number) {
+  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+  return job ?? null;
+}
+
+async function validateDispatchDriver(job: typeof jobsTable.$inferSelect, driverProfileId: number) {
+  const [driver] = await db.select().from(profilesTable).where(eq(profilesTable.id, driverProfileId));
+  const [provider] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.providerId));
+  const ok = driver && (
+    driver.id === job.providerId ||
+    driver.role === "driver" && (
+      provider?.organizationId == null ||
+      driver.organizationId === provider.organizationId
+    )
+  );
+  return ok ? driver : null;
+}
+
+router.post("/admin/jobs/:id/assign", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const jobId = Number(req.params.id);
+  const driverProfileId = Number(req.body?.driverProfileId);
+  const truckId = req.body?.truckId == null ? null : Number(req.body.truckId);
+  if (!Number.isFinite(jobId) || !Number.isFinite(driverProfileId)) {
+    res.status(400).json({ error: "Valid job id and driverProfileId are required." });
+    return;
+  }
+  const job = await loadDispatchJob(jobId);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  const driver = await validateDispatchDriver(job, driverProfileId);
+  if (!driver) { res.status(400).json({ error: "Driver is not eligible for this provider." }); return; }
+
+  if (truckId != null) {
+    const [truck] = await db.select().from(trucksTable).where(eq(trucksTable.id, truckId));
+    if (!truck || truck.ownerId !== job.providerId) {
+      res.status(400).json({ error: "Truck is not part of the provider fleet." });
+      return;
+    }
+    await db.update(trucksTable).set({ assignedDriverId: driverProfileId }).where(eq(trucksTable.id, truck.id));
+  }
+
+  const existing = await db.select({ ln: ticketsTable.loadNumber }).from(ticketsTable).where(eq(ticketsTable.jobId, jobId));
+  const nextLoad = existing.reduce((max, row) => Math.max(max, row.ln), 0) + 1;
+  const [ticket] = await db.insert(ticketsTable).values({
+    jobId,
+    driverProfileId,
+    truckId,
+    loadNumber: nextLoad,
+    status: "pending",
+  }).returning();
+  await db.insert(activityTable).values({
+    profileId: job.providerId,
+    type: "driver_workflow_updated",
+    description: `Admin assigned driver ${driver.contactName ?? driver.companyName} to job #${job.id}`,
+    relatedId: job.id,
+  });
+
+  res.status(201).json(ticket);
+});
+
+router.patch("/admin/assignments/:ticketId", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const ticketId = Number(req.params.ticketId);
+  const driverProfileId = Number(req.body?.driverProfileId);
+  const truckId = req.body?.truckId == null ? null : Number(req.body.truckId);
+  if (!Number.isFinite(ticketId) || !Number.isFinite(driverProfileId)) {
+    res.status(400).json({ error: "Valid ticketId and driverProfileId are required." });
+    return;
+  }
+  const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId));
+  if (!ticket) { res.status(404).json({ error: "Assignment not found." }); return; }
+  const job = await loadDispatchJob(ticket.jobId);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  const driver = await validateDispatchDriver(job, driverProfileId);
+  if (!driver) { res.status(400).json({ error: "Driver is not eligible for this provider." }); return; }
+  if (truckId != null) {
+    const [truck] = await db.select().from(trucksTable).where(eq(trucksTable.id, truckId));
+    if (!truck || truck.ownerId !== job.providerId) {
+      res.status(400).json({ error: "Truck is not part of the provider fleet." });
+      return;
+    }
+    await db.update(trucksTable).set({ assignedDriverId: driverProfileId }).where(eq(trucksTable.id, truck.id));
+  }
+  if (ticket.truckId != null && ticket.truckId !== truckId) {
+    await db.update(trucksTable).set({ assignedDriverId: null }).where(eq(trucksTable.id, ticket.truckId));
+  }
+
+  const [updated] = await db.update(ticketsTable)
+    .set({
+      driverProfileId,
+      truckId,
+      status: "pending",
+      workflowState: "assigned",
+      acceptedAt: null,
+      declinedAt: null,
+      lastWorkflowTransitionAt: new Date(),
+    })
+    .where(eq(ticketsTable.id, ticketId))
+    .returning();
+  await db.insert(activityTable).values({
+    profileId: job.providerId,
+    type: "driver_workflow_updated",
+    description: `Admin reassigned load #${ticket.loadNumber} on job #${job.id} to ${driver.contactName ?? driver.companyName}`,
+    relatedId: job.id,
+  });
+
+  res.json(updated);
+});
+
+router.delete("/admin/assignments/:ticketId", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const ticketId = Number(req.params.ticketId);
+  if (!Number.isFinite(ticketId)) { res.status(400).json({ error: "Valid ticketId is required." }); return; }
+  const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId));
+  if (!ticket) { res.status(404).json({ error: "Assignment not found." }); return; }
+  const job = await loadDispatchJob(ticket.jobId);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+
+  const [updated] = await db.update(ticketsTable)
+    .set({ status: "cancelled", lastWorkflowTransitionAt: new Date() })
+    .where(eq(ticketsTable.id, ticketId))
+    .returning();
+  if (ticket.truckId != null) {
+    await db.update(trucksTable).set({ assignedDriverId: null }).where(eq(trucksTable.id, ticket.truckId));
+  }
+  await db.insert(activityTable).values({
+    profileId: job.providerId,
+    type: "driver_workflow_updated",
+    description: `Admin cancelled load assignment #${ticket.loadNumber} on job #${job.id}`,
+    relatedId: job.id,
+  });
+
+  res.json(updated);
 });
 
 // GET /admin/requests?status=&q=&limit= -> customer job posts

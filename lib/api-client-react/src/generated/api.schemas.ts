@@ -1969,6 +1969,12 @@ export interface AssignJobInput {
   truckId?: number;
 }
 
+export interface AdminAssignmentInput {
+  driverProfileId: number;
+  /** @nullable */
+  truckId?: number | null;
+}
+
 export type JobStatusUpdateInputStatus = typeof JobStatusUpdateInputStatus[keyof typeof JobStatusUpdateInputStatus];
 
 
@@ -2110,6 +2116,8 @@ export const ListDumpSitesType = {
   hazardous_waste: 'hazardous_waste',
   compost: 'compost',
 } as const;
+
+export type GetAdminDispatch200 = { [key: string]: unknown };
 
 export type GetMyOrganization200 = { [key: string]: unknown };
 
