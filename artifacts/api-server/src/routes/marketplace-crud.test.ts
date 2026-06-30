@@ -139,6 +139,26 @@ vi.mock("../lib/adminComplianceBundle", () => ({
   }),
 }));
 
+vi.mock("../lib/commissionEngine", () => ({
+  calculateCommissionFromHours: (ratePerHour: number, hours: number, commissionRate: number) => {
+    const workAmount = Math.round(ratePerHour * hours * 100) / 100;
+    const platformCommission = Math.round(workAmount * commissionRate * 100) / 100;
+    const customerTotal = Math.round((workAmount + platformCommission) * 100) / 100;
+    return {
+      workAmount,
+      platformCommission,
+      customerTotal,
+      vendorPayout: workAmount,
+      driverPayout: null,
+      internalProfit: platformCommission,
+      marketplaceGmv: customerTotal,
+      commissionRate,
+    };
+  },
+  resolveCommission: async () => ({ rate: 0.2, scopeType: "global", scopeId: null, configId: null }),
+  recordCommissionCalculation: vi.fn(async () => undefined),
+}));
+
 import trucksRouter from "./trucks";
 import requestsRouter from "./requests";
 import bidsRouter from "./bids";

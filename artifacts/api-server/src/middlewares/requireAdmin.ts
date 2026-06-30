@@ -31,6 +31,7 @@ export type Permission =
   | "credit"
   | "compliance"
   | "bins"
+  | "marketplace"
   | "view_staff"
   | "manage_staff";
 
@@ -47,15 +48,15 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
   ar: [...REVIEW_SCOPE],
   accounting: [...REVIEW_SCOPE],
   // CEO: full visibility incl. bins + read-only team roster, no staff edits.
-  ceo: [...REVIEW_SCOPE, "bins", "view_staff"],
+  ceo: [...REVIEW_SCOPE, "bins", "marketplace", "view_staff"],
   // President: executive visibility incl. bins + read-only team roster.
-  president: [...REVIEW_SCOPE, "bins", "view_staff"],
+  president: [...REVIEW_SCOPE, "bins", "marketplace", "view_staff"],
   // CFO: finance review + full staff management, but NO operational bins.
-  cfo: [...REVIEW_SCOPE, "view_staff", "manage_staff"],
+  cfo: [...REVIEW_SCOPE, "marketplace", "view_staff", "manage_staff"],
   // Technical superadmins: review scope + bins + full staff management.
-  cto: [...REVIEW_SCOPE, "bins", "view_staff", "manage_staff"],
-  it: [...REVIEW_SCOPE, "bins", "view_staff", "manage_staff"],
-  programmer: [...REVIEW_SCOPE, "bins", "view_staff", "manage_staff"],
+  cto: [...REVIEW_SCOPE, "bins", "marketplace", "view_staff", "manage_staff"],
+  it: [...REVIEW_SCOPE, "bins", "marketplace", "view_staff", "manage_staff"],
+  programmer: [...REVIEW_SCOPE, "bins", "marketplace", "view_staff", "manage_staff"],
 };
 
 export const STAFF_ROLES: StaffRole[] = [

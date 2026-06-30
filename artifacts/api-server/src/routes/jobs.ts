@@ -23,6 +23,7 @@ import { settleConfirmedPayout } from "../lib/payoutRetry";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { calculateCommissionFromHours, DEFAULT_COMMISSION_RATE, recordCommissionCalculation } from "../lib/commissionEngine";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -58,8 +59,6 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-
-const DEFAULT_FEE_RATE = 0.15;
 
 function num(v: string | null | undefined): number | null {
   return v == null ? null : parseFloat(v);
@@ -161,10 +160,12 @@ async function notifyPayoutDelayed(
  *   gross = base + fee            (what the customer pays)
  */
 export function computeBreakdown(ratePerHour: number, hours: number, feeRate: number) {
-  const base = Math.round(ratePerHour * hours * 100) / 100;
-  const fee = Math.round(base * feeRate * 100) / 100;
-  const gross = Math.round((base + fee) * 100) / 100;
-  return { base, fee, gross };
+  const breakdown = calculateCommissionFromHours(ratePerHour, hours, feeRate);
+  return {
+    base: breakdown.workAmount,
+    fee: breakdown.platformCommission,
+    gross: breakdown.customerTotal,
+  };
 }
 
 /**
@@ -612,7 +613,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     const hours = parsed.data.totalHours ?? (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
     if (hours != null) {
       const rate = parseFloat(existingJob.ratePerHour);
-      const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_FEE_RATE;
+      const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_COMMISSION_RATE;
       const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
       updates.totalHours = String(hours);
       updates.totalAmount = String(base);
@@ -634,6 +635,28 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   }
 
   if (parsed.data.status === "completed") {
+    if (updates.totalAmount != null && updates.platformFeeAmount != null && updates.customerTotalAmount != null && updates.providerNetAmount != null) {
+      const commissionRate = parseFloat(String(job.platformFeeRate ?? DEFAULT_COMMISSION_RATE));
+      await recordCommissionCalculation({
+        jobId: job.id,
+        resolved: {
+          rate: commissionRate,
+          scopeType: "global",
+          scopeId: null,
+          configId: null,
+        },
+        breakdown: {
+          workAmount: parseFloat(String(updates.totalAmount)),
+          platformCommission: parseFloat(String(updates.platformFeeAmount)),
+          customerTotal: parseFloat(String(updates.customerTotalAmount)),
+          vendorPayout: parseFloat(String(updates.providerNetAmount)),
+          driverPayout: null,
+          internalProfit: parseFloat(String(updates.platformFeeAmount)),
+          marketplaceGmv: parseFloat(String(updates.customerTotalAmount)),
+          commissionRate,
+        },
+      });
+    }
     await db.update(requestsTable).set({ status: "completed" }).where(eq(requestsTable.id, job.requestId));
     await db.insert(activityTable).values({
       profileId: profile.id,

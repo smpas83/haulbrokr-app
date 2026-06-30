@@ -411,7 +411,7 @@ describe("per-role permission gating", () => {
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
     expect(res.body.permissions.sort()).toEqual([
-      "bins", "compliance", "credit", "overview", "payouts", "view_staff",
+      "bins", "compliance", "credit", "marketplace", "overview", "payouts", "view_staff",
     ]);
   });
 
@@ -421,7 +421,7 @@ describe("per-role permission gating", () => {
       const res = await request(makeApp()).get("/admin/access");
       expect(res.status).toBe(200);
       expect(res.body.permissions.sort()).toEqual([
-        "bins", "compliance", "credit", "manage_staff", "overview", "payouts", "view_staff",
+        "bins", "compliance", "credit", "manage_staff", "marketplace", "overview", "payouts", "view_staff",
       ]);
     }
   });
@@ -431,7 +431,7 @@ describe("per-role permission gating", () => {
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
     expect(res.body.permissions.sort()).toEqual([
-      "compliance", "credit", "manage_staff", "overview", "payouts", "view_staff",
+      "compliance", "credit", "manage_staff", "marketplace", "overview", "payouts", "view_staff",
     ]);
     expect(res.body.permissions).not.toContain("bins");
   });

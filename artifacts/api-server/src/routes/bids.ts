@@ -4,6 +4,7 @@ import { db, bidsTable, requestsTable, profilesTable, jobsTable, activityTable }
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { getCarrierComplianceSnapshot } from "../lib/adminComplianceBundle";
 import { describeCanBidBlockers } from "../lib/providerCompliance";
+import { calculateCommissionFromHours, recordCommissionCalculation, resolveCommission } from "../lib/commissionEngine";
 import {
   ListBidsParams,
   ListBidsResponse,
@@ -238,11 +239,24 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
 
     const [provider] = await db.select().from(profilesTable).where(eq(profilesTable.id, existingBid.providerId));
 
-    await db.insert(jobsTable).values({
+    const resolvedCommission = await resolveCommission({
+      customerId: request.customerId,
+      vendorId: existingBid.providerId,
+      projectId: request.projectId,
+    });
+    const estimatedHours = existingBid.estimatedHours ?? request.estimatedHours;
+    const commissionBreakdown = calculateCommissionFromHours(
+      parseFloat(existingBid.ratePerHour),
+      parseFloat(estimatedHours),
+      resolvedCommission.rate,
+    );
+
+    const [job] = await db.insert(jobsTable).values({
       requestId: request.id,
       bidId: existingBid.id,
       customerId: request.customerId,
       providerId: existingBid.providerId,
+      projectId: request.projectId,
       ratePerHour: existingBid.ratePerHour,
       trucksAssigned: existingBid.trucksOffered,
       status: "awarded",
@@ -253,7 +267,18 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       scheduledDate: request.scheduledDate,
       startTime: request.startTime,
       estimatedHours: request.estimatedHours,
+      totalAmount: String(commissionBreakdown.workAmount),
+      platformFeeRate: String(commissionBreakdown.commissionRate),
+      platformFeeAmount: String(commissionBreakdown.platformCommission),
+      customerTotalAmount: String(commissionBreakdown.customerTotal),
+      providerNetAmount: String(commissionBreakdown.vendorPayout),
       notes: request.notes,
+    }).returning();
+
+    await recordCommissionCalculation({
+      jobId: job.id,
+      resolved: resolvedCommission,
+      breakdown: commissionBreakdown,
     });
 
     await db.update(requestsTable).set({ status: "awarded" }).where(eq(requestsTable.id, request.id));

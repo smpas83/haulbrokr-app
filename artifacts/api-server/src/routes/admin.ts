@@ -1,8 +1,10 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, isNotNull, sql, and, notInArray, inArray, ilike, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { z } from "zod/v4";
 import {
   db,
+  commissionConfigsTable,
   dotCdlTable,
   creditApplicationsTable,
   profilesTable,
@@ -34,8 +36,25 @@ import {
   getProviderCanBid,
   profileSummary,
 } from "../lib/adminComplianceBundle";
+import { DEFAULT_COMMISSION_RATE, upsertCommissionConfig } from "../lib/commissionEngine";
 
 const router: IRouter = Router();
+
+const CommissionScopeTypeSchema = z.enum(["global", "customer", "vendor", "project"]);
+const UpsertCommissionConfigBody = z.object({
+  scopeType: CommissionScopeTypeSchema,
+  scopeId: z.number().int().positive().nullable().optional(),
+  rate: z.number().min(0).max(1),
+  reason: z.string().max(500).nullable().optional(),
+});
+
+function serializeCommissionConfig(row: typeof commissionConfigsTable.$inferSelect) {
+  return {
+    ...row,
+    rate: parseFloat(row.rate),
+    active: row.active === 1,
+  };
+}
 
 router.use(attachStaffSession);
 router.use(attachClerkProfileIfPresent);
@@ -107,6 +126,37 @@ router.get("/admin/access", async (req, res): Promise<void> => {
     staffDisplayName: req.staffUser?.displayName ?? null,
     authMethod: req.staffUser ? "staff" : staffRole ? "clerk" : null,
   });
+});
+
+router.get("/admin/commission-configs", requireStaffOrProfile, requirePermission("marketplace"), async (_req, res): Promise<void> => {
+  const rows = await db
+    .select()
+    .from(commissionConfigsTable)
+    .orderBy(desc(commissionConfigsTable.updatedAt));
+  res.json({
+    defaultRate: DEFAULT_COMMISSION_RATE,
+    configs: rows.map(serializeCommissionConfig),
+  });
+});
+
+router.put("/admin/commission-configs", requireStaffOrProfile, requirePermission("marketplace"), async (req, res): Promise<void> => {
+  const parsed = UpsertCommissionConfigBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  try {
+    const config = await upsertCommissionConfig({
+      scopeType: parsed.data.scopeType,
+      scopeId: parsed.data.scopeId ?? null,
+      rate: parsed.data.rate,
+      reason: parsed.data.reason ?? null,
+      actorProfileId: req.profile?.id ?? req.staffUser?.id ?? null,
+    });
+    res.json(serializeCommissionConfig(config));
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : "Invalid commission configuration." });
+  }
 });
 
 //  Platform command-center overview 
