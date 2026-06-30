@@ -26,6 +26,6 @@ COPY --from=build /app/artifacts/api-server/node_modules ./artifacts/api-server/
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:8080/api/healthz || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/api/readyz || exit 1
 
 CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]

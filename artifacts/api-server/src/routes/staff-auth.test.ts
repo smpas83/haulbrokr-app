@@ -35,7 +35,7 @@ vi.mock("../middlewares/requireAuth", () => ({
   attachClerkProfileIfPresent: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-import staffAuthRouter from "./staff-auth";
+import staffAuthRouter, { __resetStaffLoginRateLimitForTests } from "./staff-auth";
 import adminRouter from "./admin";
 
 async function makeApp(): Promise<Express> {
@@ -48,6 +48,7 @@ async function makeApp(): Promise<Express> {
 }
 
 beforeEach(async () => {
+  __resetStaffLoginRateLimitForTests();
   h.users = [];
   const hash = await hashStaffPassword("test-password");
   h.users.push({
@@ -94,5 +95,21 @@ describe("staff admin login", () => {
       .set("Cookie", [`haulbrokr_staff=${token}`]);
     expect(res.status).toBe(200);
     expect(res.headers["set-cookie"]?.[0]).toMatch(/haulbrokr_staff=;/);
+  });
+
+  it("rate limits repeated failed staff login attempts", async () => {
+    const app = await makeApp();
+    for (let i = 0; i < 5; i += 1) {
+      const res = await request(app)
+        .post("/admin/login")
+        .send({ username: "ceo", password: "wrong-password" });
+      expect(res.status).toBe(401);
+    }
+
+    const blocked = await request(app)
+      .post("/admin/login")
+      .send({ username: "ceo", password: "test-password" });
+
+    expect(blocked.status).toBe(429);
   });
 });

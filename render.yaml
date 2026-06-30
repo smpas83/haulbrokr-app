@@ -10,15 +10,17 @@ services:
     name: haulbrokr-api
     runtime: docker
     dockerfilePath: ./Dockerfile
-    # Free = $0 (spins down after 15 min idle, ~1 min cold start). Starter = $7/mo always-on.
-    plan: free
+    # Starter keeps the API warm for payment webhooks and dispatch workflows.
+    plan: starter
     region: oregon
-    healthCheckPath: /api/healthz
+    healthCheckPath: /api/readyz
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: "8080"
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://haulbrokr.com,https://www.haulbrokr.com
       # Neon Postgres — paste connection string from neon.tech dashboard
       # Use pooled URL with ?sslmode=require
       - key: DATABASE_URL

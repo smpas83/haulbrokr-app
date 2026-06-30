@@ -26,7 +26,7 @@ services:
     environment:
       DATABASE_URL: postgres://haulbrokr:haulbrokr@db:5432/haulbrokr?sslmode=disable
       PORT: "8080"
-      NODE_ENV: production
+      NODE_ENV: development
       PAYMENTS_MOCK_MODE: "true"
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-sk_test_placeholder}
       CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY:-pk_test_placeholder}
