@@ -23,6 +23,7 @@ vi.mock("@workspace/db", () => {
   const jobsTable = makeTable("jobs");
   const profilesTable = makeTable("profiles");
   const activityTable = makeTable("activity");
+  const notificationDeliveriesTable = makeTable("notificationDeliveries");
   const jobStatusUpdatesTable = makeTable("job_status_updates");
 
   const db = {
@@ -45,7 +46,7 @@ vi.mock("@workspace/db", () => {
           h.jobs.push(job);
           return { returning: () => Promise.resolve([job]) };
         }
-        if (table === activityTable || table === jobStatusUpdatesTable) {
+        if (table === activityTable || table === notificationDeliveriesTable || table === jobStatusUpdatesTable) {
           return Promise.resolve(undefined);
         }
         return Promise.resolve(undefined);
@@ -90,7 +91,7 @@ vi.mock("@workspace/db", () => {
     }),
   };
 
-  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable, jobStatusUpdatesTable };
+  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable, notificationDeliveriesTable, jobStatusUpdatesTable };
 });
 
 vi.mock("../middlewares/requireAuth", () => ({

@@ -95,6 +95,8 @@ vi.mock("@workspace/db", () => {
     profilesTable: makeTable("profiles"),
     requestsTable: makeTable("requests"),
     activityTable: makeTable("activity"),
+    notificationDeliveriesTable: makeTable("notificationDeliveries"),
+    marketplacePaymentsTable: makeTable("marketplacePayments"),
     paymentMethodsTable: makeTable("paymentMethods"),
     ticketsTable: makeTable("tickets"),
     trucksTable: makeTable("trucks"),

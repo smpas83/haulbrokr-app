@@ -6,6 +6,7 @@ import { getCarrierComplianceSnapshot } from "../lib/adminComplianceBundle";
 import { describeCanBidBlockers } from "../lib/providerCompliance";
 import { calculateCommissionFromHours, recordCommissionCalculation, resolveCommission } from "../lib/commissionEngine";
 import { calculateDynamicPricingFromHours, listActiveSurchargeConfigs, recordPricingCalculation } from "../lib/dynamicPricingEngine";
+import { sendNotification } from "../lib/notificationService";
 import {
   ListBidsParams,
   ListBidsResponse,
@@ -303,17 +304,19 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       .returning();
 
     if (provider) {
-      await db.insert(activityTable).values({
-        profileId: profile.id,
-        type: "bid_awarded",
-        description: `Awarded job to ${provider.companyName} at $${existingBid.ratePerHour}/hr — awaiting hauler acceptance`,
-        relatedId: existingBid.id,
+      await sendNotification({
+        eventType: "job_assigned",
+        recipientProfileId: profile.id,
+        jobId: job.id,
+        subject: "Job awarded",
+        body: `Awarded job to ${provider.companyName} at $${existingBid.ratePerHour}/hr — awaiting hauler acceptance`,
       });
-      await db.insert(activityTable).values({
-        profileId: existingBid.providerId,
-        type: "bid_awarded",
-        description: `You were awarded a job at $${existingBid.ratePerHour}/hr — accept or decline to proceed`,
-        relatedId: existingBid.id,
+      await sendNotification({
+        eventType: "job_assigned",
+        recipientProfileId: existingBid.providerId,
+        jobId: job.id,
+        subject: "You were awarded a job",
+        body: `You were awarded a job at $${existingBid.ratePerHour}/hr — accept or decline to proceed`,
       });
     }
 

@@ -26,6 +26,7 @@ import { recordJobTimelineEvent } from "../lib/jobTimeline";
 import { calculateCommissionFromHours, DEFAULT_COMMISSION_RATE, recordCommissionCalculation } from "../lib/commissionEngine";
 import { recordPaymentLedgerEntry } from "../lib/paymentLedger";
 import { calculateDynamicPricingFromHours, listActiveSurchargeConfigs, recordPricingCalculation } from "../lib/dynamicPricingEngine";
+import { sendNotification } from "../lib/notificationService";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -271,6 +272,20 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
     stripeTransferId: transfer.id,
     description: `Released marketplace payment for job #${job.id}`,
   });
+  await sendNotification({
+    eventType: "payment_complete",
+    recipientProfileId: job.customerId,
+    jobId: job.id,
+    subject: "Payment complete",
+    body: `Payment completed for job #${job.id}.`,
+  });
+  await sendNotification({
+    eventType: "payment_complete",
+    recipientProfileId: job.providerId,
+    jobId: job.id,
+    subject: "Payout released",
+    body: `Payout released for job #${job.id}.`,
+  });
 
   return { paymentIntentId: pi.id, transferId: transfer.id };
 }
@@ -515,17 +530,19 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
   await db.update(requestsTable).set({ status: "accepted" }).where(eq(requestsTable.id, job.requestId));
   await db.update(bidsTable).set({ status: "accepted" }).where(eq(bidsTable.id, job.bidId));
 
-  await db.insert(activityTable).values({
-    profileId: profile.id,
-    type: "job_accepted",
-    description: `Accepted awarded job #${job.id} — ${job.materialType} delivery`,
-    relatedId: job.id,
+  await sendNotification({
+    eventType: "driver_accepted",
+    recipientProfileId: profile.id,
+    jobId: job.id,
+    subject: "Job accepted",
+    body: `Accepted awarded job #${job.id} — ${job.materialType} delivery`,
   });
-  await db.insert(activityTable).values({
-    profileId: job.customerId,
-    type: "job_accepted",
-    description: `Hauler accepted job #${job.id} — ${job.materialType} delivery`,
-    relatedId: job.id,
+  await sendNotification({
+    eventType: "driver_accepted",
+    recipientProfileId: job.customerId,
+    jobId: job.id,
+    subject: "Hauler accepted your job",
+    body: `Hauler accepted job #${job.id} — ${job.materialType} delivery`,
   });
 
   const { customerCompany, providerCompany } = await companiesFor(updated);
@@ -692,11 +709,19 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
       });
     }
     await db.update(requestsTable).set({ status: "completed" }).where(eq(requestsTable.id, job.requestId));
-    await db.insert(activityTable).values({
-      profileId: profile.id,
-      type: "job_completed",
-      description: `Completed job #${job.id} — ${job.materialType} delivery`,
-      relatedId: job.id,
+    await sendNotification({
+      eventType: "load_complete",
+      recipientProfileId: profile.id,
+      jobId: job.id,
+      subject: "Load complete",
+      body: `Completed job #${job.id} — ${job.materialType} delivery`,
+    });
+    await sendNotification({
+      eventType: "review_request",
+      recipientProfileId: job.customerId,
+      jobId: job.id,
+      subject: "Review requested",
+      body: `Job #${job.id} is complete — review the delivery and approve completion when ready.`,
     });
     await recordJobTimelineEvent(job.id, profile.id, "completed", { note: "Job marked complete" });
   } else if (parsed.data.status === "in_progress") {
@@ -1270,6 +1295,20 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
       stripeCheckoutSessionId: session.id,
       stripeTransferId: transferId,
       description: `Released hosted Checkout payment for job #${job.id}`,
+    });
+    await sendNotification({
+      eventType: "payment_complete",
+      recipientProfileId: job.customerId,
+      jobId: job.id,
+      subject: "Payment complete",
+      body: `Payment completed for job #${job.id}.`,
+    });
+    await sendNotification({
+      eventType: "payment_complete",
+      recipientProfileId: job.providerId,
+      jobId: job.id,
+      subject: "Payout released",
+      body: `Payout released for job #${job.id}.`,
     });
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(VerifyJobCheckoutResponse.parse(serializeJob(updated, customerCompany, providerCompany)));

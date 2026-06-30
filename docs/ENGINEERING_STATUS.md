@@ -8,7 +8,7 @@ Last updated: 2026-06-30
 
 ## Latest Commit
 
-`b4645f3` - feat: realtime marketplace maps
+`54098ab` - feat: marketplace ratings
 
 ## Build Status
 
@@ -56,14 +56,20 @@ Passing for latest marketplace milestone.
   - Driver/customer/vendor five-star ratings with comments.
   - Rating statistics API.
   - Admin moderation API for visible, flagged, and hidden reviews.
+- Notification service:
+  - In-app notification delivery through the existing activity feed.
+  - Delivery status ledger for in-app, email, SMS, push, and realtime channels.
+  - Resend email delivery hook when configured.
+  - SMS, push, and realtime provider placeholders recorded as skipped until provider credentials are configured.
+  - Core marketplace event hooks for job assignment, acceptance, arrival, load completion, payment completion, review request, and compliance reminders.
 
 ## In Progress
 
-- Notification service.
+- Compliance engine hardening.
 
 ## Next
 
-1. Compliance engine hardening.
+1. Database indexes and migration-safety pass.
 
 ## Known Blockers
 
@@ -73,4 +79,3 @@ Passing for latest marketplace milestone.
 ## Outstanding Issues
 
 - R2 upload/retrieval requires authenticated staging-user validation.
-- Resend email coverage is partial and needs a dedicated notification service milestone.
