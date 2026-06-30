@@ -159,6 +159,15 @@ vi.mock("../lib/commissionEngine", () => ({
   recordCommissionCalculation: vi.fn(async () => undefined),
 }));
 
+vi.mock("../lib/dynamicPricingEngine", () => ({
+  calculateDynamicPricingFromHours: (ratePerHour: number, hours: number) => {
+    const baseAmount = Math.round(ratePerHour * hours * 100) / 100;
+    return { baseAmount, surchargeTotal: 0, pricedAmount: baseAmount, appliedSurcharges: [] };
+  },
+  listActiveSurchargeConfigs: async () => [],
+  recordPricingCalculation: vi.fn(async () => undefined),
+}));
+
 import trucksRouter from "./trucks";
 import requestsRouter from "./requests";
 import bidsRouter from "./bids";

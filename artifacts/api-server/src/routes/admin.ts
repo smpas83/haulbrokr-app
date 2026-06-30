@@ -8,6 +8,7 @@ import {
   dotCdlTable,
   creditApplicationsTable,
   marketplacePaymentsTable,
+  pricingSurchargeConfigsTable,
   profilesTable,
   activityTable,
   jobsTable,
@@ -43,10 +44,31 @@ import { serializeMarketplacePayment } from "../lib/paymentLedger";
 const router: IRouter = Router();
 
 const CommissionScopeTypeSchema = z.enum(["global", "customer", "vendor", "project"]);
+const PricingSurchargeTypeSchema = z.enum([
+  "demand",
+  "truck_shortage",
+  "night_hauling",
+  "weekend",
+  "holiday",
+  "emergency_dispatch",
+  "weather",
+  "traffic",
+  "remote_jobsite",
+  "waiting_time",
+  "toll_roads",
+]);
+const PricingSurchargeModeSchema = z.enum(["percentage", "fixed_amount"]);
 const UpsertCommissionConfigBody = z.object({
   scopeType: CommissionScopeTypeSchema,
   scopeId: z.number().int().positive().nullable().optional(),
   rate: z.number().min(0).max(1),
+  reason: z.string().max(500).nullable().optional(),
+});
+const UpsertPricingSurchargeBody = z.object({
+  surchargeType: PricingSurchargeTypeSchema,
+  mode: PricingSurchargeModeSchema,
+  value: z.number().min(0),
+  active: z.boolean().optional(),
   reason: z.string().max(500).nullable().optional(),
 });
 
@@ -54,6 +76,14 @@ function serializeCommissionConfig(row: typeof commissionConfigsTable.$inferSele
   return {
     ...row,
     rate: parseFloat(row.rate),
+    active: row.active === 1,
+  };
+}
+
+function serializePricingSurchargeConfig(row: typeof pricingSurchargeConfigsTable.$inferSelect) {
+  return {
+    ...row,
+    value: parseFloat(row.value),
     active: row.active === 1,
   };
 }
@@ -168,6 +198,51 @@ router.get("/admin/payments", requireStaffOrProfile, requirePermission("payouts"
     .orderBy(desc(marketplacePaymentsTable.createdAt))
     .limit(100);
   res.json({ payments: rows.map(serializeMarketplacePayment) });
+});
+
+router.get("/admin/pricing-surcharges", requireStaffOrProfile, requirePermission("marketplace"), async (_req, res): Promise<void> => {
+  const rows = await db
+    .select()
+    .from(pricingSurchargeConfigsTable)
+    .orderBy(desc(pricingSurchargeConfigsTable.updatedAt));
+  res.json({ surcharges: rows.map(serializePricingSurchargeConfig) });
+});
+
+router.put("/admin/pricing-surcharges", requireStaffOrProfile, requirePermission("marketplace"), async (req, res): Promise<void> => {
+  const parsed = UpsertPricingSurchargeBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [existing] = await db
+    .select()
+    .from(pricingSurchargeConfigsTable)
+    .where(eq(pricingSurchargeConfigsTable.surchargeType, parsed.data.surchargeType))
+    .orderBy(desc(pricingSurchargeConfigsTable.updatedAt))
+    .limit(1);
+
+  const values = {
+    surchargeType: parsed.data.surchargeType,
+    mode: parsed.data.mode,
+    value: String(parsed.data.value),
+    active: parsed.data.active === false ? 0 : 1,
+    reason: parsed.data.reason ?? null,
+    createdByProfileId: req.profile?.id ?? req.staffUser?.id ?? null,
+  };
+
+  const [row] = existing
+    ? await db
+      .update(pricingSurchargeConfigsTable)
+      .set(values)
+      .where(eq(pricingSurchargeConfigsTable.id, existing.id))
+      .returning()
+    : await db
+      .insert(pricingSurchargeConfigsTable)
+      .values(values)
+      .returning();
+
+  res.json(serializePricingSurchargeConfig(row));
 });
 
 //  Platform command-center overview 

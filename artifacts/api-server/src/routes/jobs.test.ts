@@ -73,6 +73,15 @@ vi.mock("../lib/stripeClient", () => ({
   getStripePublishableKey: vi.fn(async () => "pk_test_123"),
 }));
 
+vi.mock("../lib/dynamicPricingEngine", () => ({
+  calculateDynamicPricingFromHours: (ratePerHour: number, hours: number) => {
+    const baseAmount = Math.round(ratePerHour * hours * 100) / 100;
+    return { baseAmount, surchargeTotal: 0, pricedAmount: baseAmount, appliedSurcharges: [] };
+  },
+  listActiveSurchargeConfigs: async () => [],
+  recordPricingCalculation: vi.fn(async () => undefined),
+}));
+
 // Inject an authenticated customer profile (id 1) without Clerk.
 vi.mock("../middlewares/requireAuth", () => ({
   requireAuth: (_req: any, _res: any, next: any) => next(),

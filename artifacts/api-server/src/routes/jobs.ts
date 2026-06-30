@@ -25,6 +25,7 @@ import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCom
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
 import { calculateCommissionFromHours, DEFAULT_COMMISSION_RATE, recordCommissionCalculation } from "../lib/commissionEngine";
 import { recordPaymentLedgerEntry } from "../lib/paymentLedger";
+import { calculateDynamicPricingFromHours, listActiveSurchargeConfigs, recordPricingCalculation } from "../lib/dynamicPricingEngine";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -628,6 +629,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   }
 
   const updates: Record<string, any> = { ...parsed.data };
+  let pricingBreakdownToRecord: Awaited<ReturnType<typeof calculateDynamicPricingFromHours>> | null = null;
   if (parsed.data.totalHours !== undefined) updates.totalHours = String(parsed.data.totalHours);
 
   if (parsed.data.status === "in_progress") {
@@ -638,7 +640,9 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     if (hours != null) {
       const rate = parseFloat(existingJob.ratePerHour);
       const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_COMMISSION_RATE;
-      const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
+      const pricingBreakdown = calculateDynamicPricingFromHours(rate, hours, await listActiveSurchargeConfigs());
+      pricingBreakdownToRecord = pricingBreakdown;
+      const { base, fee, gross } = computeBreakdown(pricingBreakdown.pricedAmount, 1, feeRate);
       updates.totalHours = String(hours);
       updates.totalAmount = String(base);
       updates.customerTotalAmount = String(gross);
@@ -661,6 +665,12 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   if (parsed.data.status === "completed") {
     if (updates.totalAmount != null && updates.platformFeeAmount != null && updates.customerTotalAmount != null && updates.providerNetAmount != null) {
       const commissionRate = parseFloat(String(job.platformFeeRate ?? DEFAULT_COMMISSION_RATE));
+      if (pricingBreakdownToRecord) {
+        await recordPricingCalculation({
+          jobId: job.id,
+          breakdown: pricingBreakdownToRecord,
+        });
+      }
       await recordCommissionCalculation({
         jobId: job.id,
         resolved: {

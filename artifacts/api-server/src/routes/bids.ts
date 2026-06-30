@@ -5,6 +5,7 @@ import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { getCarrierComplianceSnapshot } from "../lib/adminComplianceBundle";
 import { describeCanBidBlockers } from "../lib/providerCompliance";
 import { calculateCommissionFromHours, recordCommissionCalculation, resolveCommission } from "../lib/commissionEngine";
+import { calculateDynamicPricingFromHours, listActiveSurchargeConfigs, recordPricingCalculation } from "../lib/dynamicPricingEngine";
 import {
   ListBidsParams,
   ListBidsResponse,
@@ -245,9 +246,14 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       projectId: request.projectId,
     });
     const estimatedHours = existingBid.estimatedHours ?? request.estimatedHours;
-    const commissionBreakdown = calculateCommissionFromHours(
+    const pricingBreakdown = calculateDynamicPricingFromHours(
       parseFloat(existingBid.ratePerHour),
       parseFloat(estimatedHours),
+      await listActiveSurchargeConfigs(),
+    );
+    const commissionBreakdown = calculateCommissionFromHours(
+      pricingBreakdown.pricedAmount,
+      1,
       resolvedCommission.rate,
     );
 
@@ -279,6 +285,10 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       jobId: job.id,
       resolved: resolvedCommission,
       breakdown: commissionBreakdown,
+    });
+    await recordPricingCalculation({
+      jobId: job.id,
+      breakdown: pricingBreakdown,
     });
 
     await db.update(requestsTable).set({ status: "awarded" }).where(eq(requestsTable.id, request.id));

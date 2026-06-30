@@ -8,7 +8,7 @@ Last updated: 2026-06-30
 
 ## Latest Commit
 
-`5fcd9aa` - feat: configurable commission engine
+`cf50e05` - feat: stripe connect marketplace
 
 ## Build Status
 
@@ -40,16 +40,21 @@ Passing for latest marketplace milestone.
   - Payment history API for customers and vendors.
   - Admin payment listing API for finance staff.
   - Ledger capture for off-session charge/transfer and hosted Checkout paths.
+- Dynamic pricing engine:
+  - Configurable demand, truck-shortage, night, weekend, holiday, emergency, weather, traffic, remote-site, waiting-time, and toll-road surcharges.
+  - Percentage and fixed-amount surcharge modes.
+  - Admin surcharge configuration APIs.
+  - Persisted dynamic pricing calculations.
+  - Award/completion calculations include active configured surcharges.
 
 ## In Progress
 
-- Dynamic pricing engine.
+- Realtime marketplace maps.
 
 ## Next
 
-1. Realtime marketplace maps.
-2. Marketplace ratings.
-3. Notification service.
+1. Marketplace ratings.
+2. Notification service.
 
 ## Known Blockers
 
