@@ -24,6 +24,7 @@ import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
 import { calculateCommissionFromHours, DEFAULT_COMMISSION_RATE, recordCommissionCalculation } from "../lib/commissionEngine";
+import { recordPaymentLedgerEntry } from "../lib/paymentLedger";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -150,6 +151,14 @@ async function notifyPayoutDelayed(
   }
 }
 
+async function safeRecordPaymentLedgerEntry(input: Parameters<typeof recordPaymentLedgerEntry>[0]): Promise<void> {
+  try {
+    await recordPaymentLedgerEntry(input);
+  } catch (err) {
+    console.error("Failed to record marketplace payment ledger entry", err);
+  }
+}
+
 /**
  * Broker-fee model: the customer is billed the work value PLUS a 15% broker fee.
  * HaulBrokr deducts that 15% from the customer's gross payment BEFORE the
@@ -246,6 +255,21 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
     },
     { idempotencyKey: `job-transfer:${job.id}:${attempt}` },
   );
+
+  await safeRecordPaymentLedgerEntry({
+    jobId: job.id,
+    customerId: job.customerId,
+    vendorId: job.providerId,
+    type: "transfer",
+    status: "released",
+    amountCents: grossCents,
+    platformFeeCents: grossCents - netCents,
+    vendorPayoutCents: netCents,
+    paymentRail: customer.methodType,
+    stripePaymentIntentId: pi.id,
+    stripeTransferId: transfer.id,
+    description: `Released marketplace payment for job #${job.id}`,
+  });
 
   return { paymentIntentId: pi.id, transferId: transfer.id };
 }
@@ -1118,6 +1142,19 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
       res.status(502).json({ error: "Stripe did not return a Checkout URL." });
       return;
     }
+    await safeRecordPaymentLedgerEntry({
+      jobId: job.id,
+      customerId: job.customerId,
+      vendorId: job.providerId,
+      type: "checkout_session",
+      status: "pending",
+      amountCents: grossCents,
+      platformFeeCents: feeCents,
+      vendorPayoutCents: netCents,
+      paymentRail: "checkout",
+      stripeCheckoutSessionId: session.id,
+      description: `Started hosted Checkout for job #${job.id}`,
+    });
     res.json(CreateJobCheckoutSessionResponse.parse({ url: session.url }));
   } catch (err: any) {
     req.log?.error?.({ err }, "Create Checkout Session failed");
@@ -1207,6 +1244,23 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
         payoutAlertSentAt: null,
       })
       .where(eq(jobsTable.id, job.id)).returning();
+    const grossCents = Math.round(parseFloat(job.customerTotalAmount ?? "0") * 100);
+    const netCents = Math.round(parseFloat(job.providerNetAmount ?? "0") * 100);
+    await safeRecordPaymentLedgerEntry({
+      jobId: job.id,
+      customerId: job.customerId,
+      vendorId: job.providerId,
+      type: "checkout_session",
+      status: "released",
+      amountCents: grossCents,
+      platformFeeCents: grossCents - netCents,
+      vendorPayoutCents: netCents,
+      paymentRail: "checkout",
+      stripePaymentIntentId: paymentIntentId,
+      stripeCheckoutSessionId: session.id,
+      stripeTransferId: transferId,
+      description: `Released hosted Checkout payment for job #${job.id}`,
+    });
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(VerifyJobCheckoutResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {

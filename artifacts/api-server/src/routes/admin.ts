@@ -7,6 +7,7 @@ import {
   commissionConfigsTable,
   dotCdlTable,
   creditApplicationsTable,
+  marketplacePaymentsTable,
   profilesTable,
   activityTable,
   jobsTable,
@@ -37,6 +38,7 @@ import {
   profileSummary,
 } from "../lib/adminComplianceBundle";
 import { DEFAULT_COMMISSION_RATE, upsertCommissionConfig } from "../lib/commissionEngine";
+import { serializeMarketplacePayment } from "../lib/paymentLedger";
 
 const router: IRouter = Router();
 
@@ -157,6 +159,15 @@ router.put("/admin/commission-configs", requireStaffOrProfile, requirePermission
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : "Invalid commission configuration." });
   }
+});
+
+router.get("/admin/payments", requireStaffOrProfile, requirePermission("payouts"), async (_req, res): Promise<void> => {
+  const rows = await db
+    .select()
+    .from(marketplacePaymentsTable)
+    .orderBy(desc(marketplacePaymentsTable.createdAt))
+    .limit(100);
+  res.json({ payments: rows.map(serializeMarketplacePayment) });
 });
 
 //  Platform command-center overview 

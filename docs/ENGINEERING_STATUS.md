@@ -8,17 +8,17 @@ Last updated: 2026-06-30
 
 ## Latest Commit
 
-`2a9d745` - Add beta certification report
+`5fcd9aa` - feat: configurable commission engine
 
 ## Build Status
 
-Passing for commission milestone.
+Passing for latest marketplace milestone.
 
 - `pnpm run build`
 
 ## Test Status
 
-Passing for commission milestone.
+Passing for latest marketplace milestone.
 
 - `pnpm run typecheck`
 - `pnpm -r --if-present run test`
@@ -35,17 +35,21 @@ Passing for commission milestone.
   - Persisted commission calculations.
   - Commission audit history.
   - Admin commission configuration APIs.
+- Stripe Connect marketplace hardening:
+  - Persisted marketplace payment ledger.
+  - Payment history API for customers and vendors.
+  - Admin payment listing API for finance staff.
+  - Ledger capture for off-session charge/transfer and hosted Checkout paths.
 
 ## In Progress
 
-- Stripe Connect marketplace hardening.
+- Dynamic pricing engine.
 
 ## Next
 
-1. Dynamic pricing engine.
-2. Realtime marketplace maps.
-3. Marketplace ratings.
-4. Notification service.
+1. Realtime marketplace maps.
+2. Marketplace ratings.
+3. Notification service.
 
 ## Known Blockers
 
@@ -55,6 +59,5 @@ Passing for commission milestone.
 
 ## Outstanding Issues
 
-- Existing payment flows use Stripe Connect primitives, but marketplace-wide payment history/admin payment APIs still need backend hardening.
 - R2 upload/retrieval requires authenticated staging-user validation.
 - Resend email coverage is partial and needs a dedicated notification service milestone.
