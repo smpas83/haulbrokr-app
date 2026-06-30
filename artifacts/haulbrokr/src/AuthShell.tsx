@@ -261,9 +261,8 @@ function AuthShellRoutes() {
               <AdminLoginPage />
             </Route>
 
-                        <Route path="/admin">
-              <Show when="signed-in"><AdminPage /></Show>
-              <Show when="signed-out"><Redirect to="/admin/login" /></Show>
+            <Route path="/admin">
+              <AdminPage />
             </Route>
 
 

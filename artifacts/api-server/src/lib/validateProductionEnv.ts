@@ -52,6 +52,7 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   // Render (API host)
   { service: "render", variable: "PORT", required: true, description: "HTTP listen port (8080 on Render)." },
   { service: "render", variable: "NODE_ENV", required: true, description: "Must be production on Render." },
+  { service: "render", variable: "CORS_ALLOWED_ORIGINS", required: false, description: "Optional comma-separated browser origins beyond haulbrokr.com/www/haulbrokr.vercel.app." },
 
   // Vercel (web app — validated at build/runtime on Vercel, documented for ops)
   { service: "vercel", variable: "VITE_CLERK_PUBLISHABLE_KEY", required: true, description: "Clerk publishable key baked into the Vercel web build." },
@@ -62,6 +63,7 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   { service: "core", variable: "TICKET_QR_SECRET", required: true, description: "HMAC secret for ticket QR codes (≥32 chars)." },
   { service: "core", variable: "STAFF_AUTH_SECRET", required: true, description: "Staff session HMAC secret (≥32 chars; TICKET_QR_SECRET may substitute)." },
   { service: "core", variable: "ADMIN_USER_IDS", required: true, description: "Comma-separated Clerk user IDs with admin access." },
+  { service: "core", variable: "AUTOMATION_KEY", required: false, description: "Optional shared key for internal automation endpoints." },
 ];
 
 const PLACEHOLDER_PATTERNS = [

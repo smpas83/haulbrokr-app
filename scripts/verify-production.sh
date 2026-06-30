@@ -13,19 +13,19 @@ echo "    Web:  $WEB_URL"
 echo "    API:  $API_DIRECT"
 echo ""
 
-echo "==> API health (Render direct)"
-HEALTH_DIRECT="$(curl -sf "$API_DIRECT/api/healthz" || fail "API direct health check failed")"
+echo "==> API readiness (Render direct)"
+HEALTH_DIRECT="$(curl -sf "$API_DIRECT/api/readyz" || fail "API direct readiness check failed")"
 echo "$HEALTH_DIRECT" | head -c 200
 echo ""
 echo "$HEALTH_DIRECT" | grep -q '"status":"ok"' || fail "API direct health status not ok"
-ok "Render /api/healthz"
+ok "Render /api/readyz"
 
-echo "==> API health (Vercel proxy)"
-HEALTH_PROXY="$(curl -sf "$WEB_URL/api/healthz" || fail "Vercel API proxy failed")"
+echo "==> API readiness (Vercel proxy)"
+HEALTH_PROXY="$(curl -sf "$WEB_URL/api/readyz" || fail "Vercel API proxy failed")"
 echo "$HEALTH_PROXY" | head -c 200
 echo ""
 echo "$HEALTH_PROXY" | grep -q '"status":"ok"' || fail "Proxied health status not ok"
-ok "Vercel /api/healthz proxy"
+ok "Vercel /api/readyz proxy"
 
 echo "==> Web homepage"
 HOME_CODE="$(curl -sf -o /dev/null -w "%{http_code}" "$WEB_URL")"
