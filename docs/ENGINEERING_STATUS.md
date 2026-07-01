@@ -35,12 +35,14 @@
 
 ## Latest Commit
 
-- Updated by the Sprint 6 branch `cursor/marketplace-payments-trust-8e8f`.
+- Latest verified code commit before this status update: `d035afd`.
 
 ## Build Status
 
-- Pending final Sprint 6 verification run.
+- Passed: `pnpm --filter @workspace/api-spec run codegen && pnpm run typecheck && pnpm run build`.
 
 ## Test Status
 
-- Pending final Sprint 6 verification run.
+- Passed: `pnpm --filter @workspace/api-server run test`.
+- Passed: targeted route suites for marketplace finance, notifications, ratings, ACH capture, Stripe webhooks, jobs, and payout status.
+- Warning: `pnpm --filter @workspace/api-server run test:integration` requires a live local Postgres service; this Cursor Cloud container has no Postgres listener on `localhost:5432`.
