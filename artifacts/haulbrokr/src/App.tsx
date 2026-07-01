@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter } from 'wouter';
 
+import { AppErrorBoundary } from "./components/app-error-boundary";
 import { AppLoader } from "./components/app-loader";
 import SupportPage from "./pages/support";
 import PrivacyPage from "./pages/privacy";
@@ -15,9 +16,11 @@ function PublicRouter() {
       <Route path="/support" component={SupportPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route>
-        <Suspense fallback={<AppLoader />}>
-          <AuthShell />
-        </Suspense>
+        <AppErrorBoundary>
+          <Suspense fallback={<AppLoader />}>
+            <AuthShell />
+          </Suspense>
+        </AppErrorBoundary>
       </Route>
     </Switch>
   );

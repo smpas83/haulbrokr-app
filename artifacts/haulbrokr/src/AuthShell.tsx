@@ -41,8 +41,6 @@ function stripBase(path: string): string {
   return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || "/" : path;
 }
 
-if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
-
 const clerkAppearance = {
   theme: shadcn,
   cssLayerName: "clerk",
@@ -127,6 +125,24 @@ function RequireProfile({ children }: { children: React.ReactNode }) {
 
 function AuthShellRoutes() {
   const [, setLocation] = useLocation();
+  if (!clerkPubKey) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
+        <div className="max-w-md border-2 border-border bg-card p-6 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            Configuration missing
+          </p>
+          <h1 className="mt-3 text-2xl font-black tracking-tight">
+            Clerk is not configured.
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Set `VITE_CLERK_PUBLISHABLE_KEY` in the web deployment environment
+            before using authenticated HaulBrokr workflows.
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <ClerkProvider
       publishableKey={clerkPubKey}
