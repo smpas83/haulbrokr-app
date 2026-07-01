@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/marketplace-engine-3455`
-Latest verified milestone commit: `a6c362f`
+Latest verified milestone commit: `283f8aa`
 
 ## Completed milestones
 
@@ -22,16 +22,21 @@ Latest verified milestone commit: `a6c362f`
 - Added Stripe refund execution with refund/ledger persistence and no card-data storage.
 - Added Stripe webhook event persistence and duplicate-event skipping for idempotent webhook processing.
 - Wired net-terms billing to persist invoice records.
+- Added explicit financial-engine tables for commission settings, pricing events, marketplace transactions, vendor settlements, customer invoices, invoice items, payment history, refund history, and financial audit logs.
+- Expanded commission settings to support material and region overrides.
+- Expanded dynamic pricing to support hourly, distance, per-load, per-ton, truck shortage, bridge toll, permit fee, taxes, fees, and pass-through surcharges.
+- Added financial quote, vendor settlement, customer billing summary, and admin financial dashboard APIs.
+- Added immutable financial audit and marketplace transaction helpers for settlements, invoices, and payment history.
 
 ## Current work
 
-- Marketplace Engine sprint backend foundations and marketplace API coverage are complete; next work is live-service certification and UI wiring after product design approval.
+- Marketplace Financial Engine backend is complete; next work is live-service certification and UI wiring after product design approval.
 
 ## Next sprint
 
 1. Sprint 4 Live Operations: Google Maps, realtime GPS tracking, dispatcher command center, fleet map, driver trip tracking, customer live tracking, geofencing, and ETA updates.
 2. Wire marketplace quote outputs into customer/provider UI after product design approves placement and copy.
-3. Add refund, invoice, and payment-ledger UI wiring after product design approves placement and copy.
+3. Add financial dashboard, settlement, invoice, and quote UI wiring after product design approves placement and copy.
 4. Move production database rollout from `drizzle-kit push` to generated, reviewed migrations.
 
 ## Build status
@@ -52,7 +57,7 @@ Latest verified milestone commit: `a6c362f`
 ## Coverage
 
 - Unit coverage added for commission resolution, marketplace amount math, dynamic pricing rules, and audit logging.
-- Route-level coverage added for quote creation, admin commission configuration, transaction reads, invoice reads, refunds, fleet availability, notifications, trip timelines, document status, and webhook idempotency.
+- Route-level coverage added for quote creation, financial quote creation, admin commission configuration, transaction reads, invoice reads, refunds, vendor settlements, billing summaries, financial dashboard APIs, fleet availability, notifications, trip timelines, document status, and webhook idempotency.
 - Existing award-flow coverage now verifies job award financial snapshots.
 
 ## Known blockers
