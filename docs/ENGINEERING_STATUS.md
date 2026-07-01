@@ -34,18 +34,22 @@
 ## Known Blockers
 
 - Pricing-engine quote API and live map coordinate APIs are not exposed in this active branch, so the UI does not invent duplicate quote or map business logic.
+- Manual browser validation of protected Sprint 7 panels is blocked in Cursor Cloud by missing valid Clerk/staff credentials; unauthenticated root redirects to staff login as expected.
 - Production Stripe, SMS, and push provider credentials are required for live external delivery and real-money verification.
 - Direct driver payouts remain future-ready in the data model; money still settles to vendors today.
 - UI integration is intentionally out of scope for this backend-only sprint.
 
 ## Latest Commit
 
-- Latest verified code commit before this status update: `79d59f3`.
+- Latest verified code commit before this status update: `96e9611`.
 
 ## Build Status
 
-- Pending final Sprint 7 verification run.
+- Passed: `pnpm run build`.
 
 ## Test Status
 
-- Pending final Sprint 7 verification run.
+- Passed: `pnpm run typecheck`.
+- Passed: `pnpm --filter @workspace/haulbrokr run test`.
+- Passed: `pnpm --filter @workspace/haulbrokr-mobile run test`.
+- Passed: `pnpm -r --if-present run lint`.
