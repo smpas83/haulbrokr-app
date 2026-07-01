@@ -1002,6 +1002,8 @@ export const JobTruckType = {
   skid_steer: 'skid_steer',
 } as const;
 
+export type JobQuoteHistoryItem = { [key: string]: unknown };
+
 export type JobPaymentStatus = typeof JobPaymentStatus[keyof typeof JobPaymentStatus];
 
 
@@ -1060,6 +1062,27 @@ export interface Job {
   customerTotalAmount?: number | null;
   /** @nullable */
   providerNetAmount?: number | null;
+  /** @nullable */
+  driverPayoutAmount?: number | null;
+  /** @nullable */
+  taxesAmount?: number | null;
+  /** @nullable */
+  feesAmount?: number | null;
+  /** @nullable */
+  fuelSurchargeAmount?: number | null;
+  /** @nullable */
+  gmvAmount?: number | null;
+  /** @nullable */
+  netMarketplaceRevenueAmount?: number | null;
+  /** @nullable */
+  marketplaceQuoteId?: number | null;
+  /** @nullable */
+  commissionRuleId?: number | null;
+  /** @nullable */
+  dispatchDecisionId?: number | null;
+  /** @nullable */
+  pricingBreakdown?: PricingBreakdownItem[] | null;
+  quoteHistory?: JobQuoteHistoryItem[];
   paymentStatus?: JobPaymentStatus;
   /** @nullable */
   paymentDueDate?: string | null;
@@ -2272,6 +2295,19 @@ export interface CreateJobMessageRequest {
 export interface AssignJobInput {
   driverProfileId: number;
   truckId?: number;
+}
+
+export interface DispatchRecommendation {
+  driverProfileId: number;
+  /** @nullable */
+  truckId?: number | null;
+  score: number;
+  reason: string;
+}
+
+export interface DispatchRecommendations {
+  jobId: number;
+  recommendations: DispatchRecommendation[];
 }
 
 export type JobStatusUpdateStatus = typeof JobStatusUpdateStatus[keyof typeof JobStatusUpdateStatus];

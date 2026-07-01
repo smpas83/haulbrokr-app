@@ -7,15 +7,17 @@ import {
   profilesTable,
   jobsTable,
   activityTable,
+  marketplaceQuotesTable,
+  pricingEventsTable,
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { getCarrierComplianceSnapshot } from "../lib/adminComplianceBundle";
 import { describeCanBidBlockers } from "../lib/providerCompliance";
+import { recordMarketplaceAudit } from "../lib/marketplaceCommission";
 import {
-  computeJobAmounts,
-  recordMarketplaceAudit,
-  resolveCommissionRule,
-} from "../lib/marketplaceCommission";
+  computeFinancialQuote,
+  financialJobUpdate,
+} from "../lib/financialEngine";
 import {
   ListBidsParams,
   ListBidsResponse,
@@ -347,17 +349,57 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       .from(profilesTable)
       .where(eq(profilesTable.id, existingBid.providerId));
 
-    const commission = await resolveCommissionRule({
+    const financialQuote = await computeFinancialQuote({
       customerId: request.customerId,
       vendorId: existingBid.providerId,
       projectId: request.projectId,
-      emergency: false,
+      distanceMiles: 0,
+      estimatedHours: parseFloat(
+        existingBid.estimatedHours ?? request.estimatedHours,
+      ),
+      trucksNeeded: existingBid.trucksOffered,
+      baseRatePerHour: parseFloat(existingBid.ratePerHour),
+      quantityTons: parseFloat(request.quantityTons),
+      truckType: request.truckType,
+      materialType: request.materialType,
+      emergencyDispatch: false,
     });
-    const estimatedAmounts = computeJobAmounts(
-      parseFloat(existingBid.ratePerHour),
-      parseFloat(request.estimatedHours),
-      commission.rate,
-    );
+    const [quoteRow] = await db
+      .insert(marketplaceQuotesTable)
+      .values({
+        customerId: request.customerId,
+        vendorId: existingBid.providerId,
+        projectId: request.projectId,
+        input: {
+          source: "bid_award",
+          requestId: request.id,
+          bidId: existingBid.id,
+        },
+        pricingBreakdown: financialQuote.pricingExplanation,
+        commissionRuleId: financialQuote.commissionRuleId,
+        commissionRate: String(financialQuote.commissionRate),
+        vendorPayout: String(financialQuote.vendorPayout),
+        driverPayout: String(financialQuote.driverPayout),
+        platformCommission: String(financialQuote.platformCommission),
+        marketplaceRevenue: String(financialQuote.netMarketplaceRevenue),
+        platformProfit: String(financialQuote.platformProfit),
+        customerTotal: String(financialQuote.customerTotal),
+        gmv: String(financialQuote.gmv),
+      })
+      .returning();
+    await db.insert(pricingEventsTable).values({
+      quoteId: quoteRow.id,
+      input: {
+        source: "bid_award",
+        requestId: request.id,
+        bidId: existingBid.id,
+      },
+      explanation: financialQuote.pricingExplanation,
+      customerQuote: String(financialQuote.customerQuote),
+      vendorPayout: String(financialQuote.vendorPayout),
+      platformMargin: String(financialQuote.platformProfit),
+    });
+    const financialUpdates = financialJobUpdate(financialQuote);
 
     const [job] = await db
       .insert(jobsTable)
@@ -376,19 +418,15 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
         scheduledDate: request.scheduledDate,
         startTime: request.startTime,
         estimatedHours: request.estimatedHours,
-        totalAmount: String(estimatedAmounts.workAmount),
-        platformFeeRate: String(commission.rate),
-        platformFeeAmount: String(estimatedAmounts.platformCommission),
-        customerTotalAmount: String(estimatedAmounts.customerTotal),
-        providerNetAmount: String(estimatedAmounts.vendorPayout),
-        driverPayoutAmount: String(estimatedAmounts.driverPayout),
-        taxesAmount: "0",
-        feesAmount: "0",
-        fuelSurchargeAmount: "0",
-        gmvAmount: String(estimatedAmounts.gmv),
-        netMarketplaceRevenueAmount: String(
-          estimatedAmounts.marketplaceRevenue,
-        ),
+        totalAmount: String(financialQuote.vendorPayout),
+        platformFeeRate: String(financialQuote.commissionRate),
+        commissionRuleId: financialQuote.commissionRuleId,
+        marketplaceQuoteId: quoteRow.id,
+        pricingBreakdown: financialQuote.pricingExplanation,
+        quoteHistory: [
+          { quoteId: quoteRow.id, source: "bid_award", quote: financialQuote },
+        ],
+        ...financialUpdates,
         notes: request.notes,
       })
       .returning();
@@ -400,8 +438,8 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
         entityType: "job",
         entityId: job.id,
         after: {
-          commission,
-          estimatedAmounts,
+          quoteId: quoteRow.id,
+          financialQuote,
         },
       });
     }

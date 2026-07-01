@@ -13,6 +13,8 @@ import {
   trucksTable,
   jobStatusUpdatesTable,
   driverDocumentsTable,
+  marketplaceQuotesTable,
+  pricingEventsTable,
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isAdmin } from "../middlewares/requireAdmin";
@@ -42,6 +44,14 @@ import {
   DEFAULT_COMMISSION_RATE,
   computeJobAmounts,
 } from "../lib/marketplaceCommission";
+import {
+  computeFinancialQuote,
+  financialJobUpdate,
+} from "../lib/financialEngine";
+import {
+  recommendDispatchForJob,
+  recordDispatchDecision,
+} from "../lib/dispatchEngine";
 import {
   recordInvoiceForJob,
   recordPaymentTransaction,
@@ -102,6 +112,15 @@ function serializeJob(
     platformFeeAmount: num(j.platformFeeAmount),
     customerTotalAmount: num(j.customerTotalAmount),
     providerNetAmount: num(j.providerNetAmount),
+    driverPayoutAmount: num(j.driverPayoutAmount),
+    taxesAmount: num(j.taxesAmount),
+    feesAmount: num(j.feesAmount),
+    fuelSurchargeAmount: num(j.fuelSurchargeAmount),
+    gmvAmount: num(j.gmvAmount),
+    netMarketplaceRevenueAmount: num(j.netMarketplaceRevenueAmount),
+    pricingBreakdown: j.pricingBreakdown ?? null,
+    quoteHistory: j.quoteHistory ?? [],
+    dispatchDecisionId: j.dispatchDecisionId ?? null,
     customerCompany,
     providerCompany,
   };
@@ -805,22 +824,71 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
       parsed.data.totalHours ??
       (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
     if (hours != null) {
-      const rate = parseFloat(existingJob.ratePerHour);
-      const feeRate = existingJob.platformFeeRate
-        ? parseFloat(existingJob.platformFeeRate)
-        : DEFAULT_COMMISSION_RATE;
-      const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
+      const financialQuote = await computeFinancialQuote({
+        customerId: existingJob.customerId,
+        vendorId: existingJob.providerId,
+        projectId: existingJob.projectId,
+        distanceMiles: 0,
+        estimatedHours: hours,
+        trucksNeeded: existingJob.trucksAssigned,
+        baseRatePerHour: parseFloat(existingJob.ratePerHour),
+        truckType: existingJob.truckType,
+        materialType: existingJob.materialType,
+        taxes: existingJob.taxesAmount
+          ? parseFloat(existingJob.taxesAmount)
+          : 0,
+        fees: existingJob.feesAmount ? parseFloat(existingJob.feesAmount) : 0,
+        fuelSurchargeAmount: existingJob.fuelSurchargeAmount
+          ? parseFloat(existingJob.fuelSurchargeAmount)
+          : 0,
+      });
+      const [quoteRow] = await db
+        .insert(marketplaceQuotesTable)
+        .values({
+          customerId: existingJob.customerId,
+          vendorId: existingJob.providerId,
+          projectId: existingJob.projectId,
+          jobId: existingJob.id,
+          input: { source: "job_completion", jobId: existingJob.id, hours },
+          pricingBreakdown: financialQuote.pricingExplanation,
+          commissionRuleId: financialQuote.commissionRuleId,
+          commissionRate: String(financialQuote.commissionRate),
+          vendorPayout: String(financialQuote.vendorPayout),
+          driverPayout: String(financialQuote.driverPayout),
+          platformCommission: String(financialQuote.platformCommission),
+          marketplaceRevenue: String(financialQuote.netMarketplaceRevenue),
+          platformProfit: String(financialQuote.platformProfit),
+          customerTotal: String(financialQuote.customerTotal),
+          gmv: String(financialQuote.gmv),
+        })
+        .returning();
+      await db.insert(pricingEventsTable).values({
+        quoteId: quoteRow.id,
+        jobId: existingJob.id,
+        input: { source: "job_completion", jobId: existingJob.id, hours },
+        explanation: financialQuote.pricingExplanation,
+        customerQuote: String(financialQuote.customerQuote),
+        vendorPayout: String(financialQuote.vendorPayout),
+        platformMargin: String(financialQuote.platformProfit),
+      });
+      const priorHistory = Array.isArray(existingJob.quoteHistory)
+        ? existingJob.quoteHistory
+        : [];
       updates.totalHours = String(hours);
-      updates.totalAmount = String(base);
-      updates.customerTotalAmount = String(gross);
-      updates.platformFeeAmount = String(fee);
-      updates.providerNetAmount = String(base);
-      updates.driverPayoutAmount = "0";
-      updates.taxesAmount = existingJob.taxesAmount ?? "0";
-      updates.feesAmount = existingJob.feesAmount ?? "0";
-      updates.fuelSurchargeAmount = existingJob.fuelSurchargeAmount ?? "0";
-      updates.gmvAmount = String(gross);
-      updates.netMarketplaceRevenueAmount = String(fee);
+      updates.totalAmount = String(financialQuote.vendorPayout);
+      updates.platformFeeRate = String(financialQuote.commissionRate);
+      updates.commissionRuleId = financialQuote.commissionRuleId;
+      updates.marketplaceQuoteId = quoteRow.id;
+      updates.pricingBreakdown = financialQuote.pricingExplanation;
+      updates.quoteHistory = [
+        ...priorHistory,
+        {
+          quoteId: quoteRow.id,
+          source: "job_completion",
+          quote: financialQuote,
+        },
+      ];
+      Object.assign(updates, financialJobUpdate(financialQuote));
     }
   }
 
@@ -1707,6 +1775,37 @@ router.post(
 );
 
 // ── Driver / truck assignment ───────────────────────────────────────────────
+router.get(
+  "/jobs/:id/dispatch-recommendations",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const profile = getRequestProfile(req);
+    const jobId = parseInt(String(req.params.id), 10);
+    if (!Number.isFinite(jobId)) {
+      res.status(400).json({ error: "Invalid job id" });
+      return;
+    }
+    const job = await loadJobIfMember(jobId, profile);
+    if (!job) {
+      res.status(404).json({ error: "Job not found" });
+      return;
+    }
+    if (!DRIVER_SIDE.has(profile.role) || !isOrgManager(profile)) {
+      res
+        .status(403)
+        .json({
+          error:
+            "Only provider owners or admins can view dispatch recommendations.",
+        });
+      return;
+    }
+    res.json({
+      jobId: job.id,
+      recommendations: await recommendDispatchForJob(job),
+    });
+  },
+);
+
 router.post(
   "/jobs/:id/assign",
   requireProfile,
@@ -1789,10 +1888,24 @@ router.post(
       })
       .returning();
 
+    const decision = await recordDispatchDecision({
+      job,
+      selectedByProfileId: profile.id,
+      driverProfileId: parsed.data.driverProfileId,
+      truckId,
+    });
+    if (decision) {
+      await db
+        .update(jobsTable)
+        .set({ dispatchDecisionId: decision.id })
+        .where(eq(jobsTable.id, job.id));
+    }
+
     res.status(201).json({
       ...ticket,
       weightTons:
         ticket.weightTons != null ? parseFloat(ticket.weightTons) : null,
+      dispatchDecision: decision,
     });
   },
 );

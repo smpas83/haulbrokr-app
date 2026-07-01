@@ -110,6 +110,13 @@ export const vendorSettlementStatusEnum = pgEnum("vendor_settlement_status", [
   "debit",
 ]);
 
+export const dispatchDecisionStatusEnum = pgEnum("dispatch_decision_status", [
+  "recommended",
+  "assigned",
+  "overridden",
+  "rejected",
+]);
+
 export const financialTransactionTypeEnum = pgEnum(
   "financial_transaction_type",
   [
@@ -320,6 +327,46 @@ export const pricingEventsTable = pgTable(
   (table) => ({
     jobIdx: index("pricing_events_job_idx").on(table.jobId, table.createdAt),
     quoteIdx: index("pricing_events_quote_idx").on(table.quoteId),
+  }),
+);
+
+export const dispatchDecisionsTable = pgTable(
+  "dispatch_decisions",
+  {
+    id: serial("id").primaryKey(),
+    jobId: integer("job_id").references(() => jobsTable.id),
+    requestId: integer("request_id"),
+    providerId: integer("provider_id").references(() => profilesTable.id),
+    driverProfileId: integer("driver_profile_id").references(
+      () => profilesTable.id,
+    ),
+    truckId: integer("truck_id"),
+    status: dispatchDecisionStatusEnum("status")
+      .notNull()
+      .default("recommended"),
+    score: numeric("score", { precision: 8, scale: 4 }).notNull().default("0"),
+    reason: text("reason"),
+    recommendation: jsonb("recommendation").notNull(),
+    selectedByProfileId: integer("selected_by_profile_id").references(
+      () => profilesTable.id,
+    ),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    jobIdx: index("dispatch_decisions_job_idx").on(
+      table.jobId,
+      table.createdAt,
+    ),
+    providerIdx: index("dispatch_decisions_provider_idx").on(
+      table.providerId,
+      table.status,
+    ),
   }),
 );
 

@@ -30,10 +30,13 @@ Latest commit: `81bb329` (App Store remediation verified at `50a4e92`)
 - Fixed App Review 2.1(a) sign-out rejection by routing both Account tab sign-out controls through one direct Clerk sign-out path.
 - Added iOS privacy manifest metadata declaring no tracking and App Store review notes for correcting App Privacy labels under Guideline 5.1.2(i).
 - Bumped iOS build number to `3` for resubmission after rejected build `2`.
+- Integrated the financial quote engine into bid award and job completion so jobs store linked quote history, pricing breakdowns, GMV, commission, payout, and invoice totals.
+- Added dispatch recommendations and persisted dispatch decisions when assigning drivers/trucks to jobs.
+- Wired web assignment controls to consume dispatch recommendations and mobile job detail to consume quote previews and live bid-award APIs.
 
 ## Current work
 
-- App Store rejection remediation is complete and verified for resubmission.
+- Dispatch/pricing workflow integration is complete; final verification is in progress.
 
 ## Next sprint
 
@@ -59,6 +62,7 @@ Latest commit: `81bb329` (App Store remediation verified at `50a4e92`)
 - Passing: `pnpm --filter @workspace/haulbrokr-mobile run typecheck`
 - Passing: `pnpm --filter @workspace/haulbrokr-mobile exec vitest run test/account-signout.test.ts`
 - Passing: `EXPO_PUBLIC_DOMAIN=test.local pnpm --filter @workspace/haulbrokr-mobile run build`
+- Passing: `PAYMENTS_MOCK_MODE=true pnpm --filter @workspace/api-server exec vitest run src/lib/dispatchEngine.test.ts src/routes/award-flow.test.ts`
 
 ## Coverage
 
@@ -66,6 +70,7 @@ Latest commit: `81bb329` (App Store remediation verified at `50a4e92`)
 - Route-level coverage added for quote creation, financial quote creation, admin commission configuration, transaction reads, invoice reads, refunds, vendor settlements, billing summaries, financial dashboard APIs, fleet availability, notifications, trip timelines, document status, and webhook idempotency.
 - Existing award-flow coverage now verifies job award financial snapshots.
 - Mobile account sign-out helper coverage verifies successful navigation to sign-in and error handling without relying on native alert button callbacks.
+- Dispatch coverage verifies recommendation ranking and persisted dispatch decisions; award-flow coverage verifies financial quote snapshots on job creation.
 
 ## Known blockers
 

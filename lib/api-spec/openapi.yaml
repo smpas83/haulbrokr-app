@@ -1541,6 +1541,25 @@ paths:
           description: Member removed
 
   # ── Job Assignment & Status ──────────────────────────────────────────────────
+  /jobs/{id}/dispatch-recommendations:
+    get:
+      operationId: getJobDispatchRecommendations
+      tags: [jobs]
+      summary: Get ranked dispatch recommendations for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ranked dispatch recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DispatchRecommendations"
+
   /jobs/{id}/assign:
     post:
       operationId: assignJob
@@ -3091,7 +3110,17 @@ components:
       allOf:
         - $ref: "#/components/schemas/MarketplaceQuote"
         - type: object
-          required: [taxes, fees, fuelSurcharge, bridgeTolls, permitFees, finalInvoice, netMarketplaceRevenue, pricingExplanation]
+          required:
+            [
+              taxes,
+              fees,
+              fuelSurcharge,
+              bridgeTolls,
+              permitFees,
+              finalInvoice,
+              netMarketplaceRevenue,
+              pricingExplanation,
+            ]
           properties:
             taxes: { type: number }
             fees: { type: number }
@@ -3110,7 +3139,17 @@ components:
       properties:
         status:
           type: string
-          enum: [approved_invoice, pending_payout, paid, failed, partial_payout, adjustment, credit, debit]
+          enum:
+            [
+              approved_invoice,
+              pending_payout,
+              paid,
+              failed,
+              partial_payout,
+              adjustment,
+              credit,
+              debit,
+            ]
         adjustmentAmount: { type: number }
         creditAmount: { type: number }
         debitAmount: { type: number }
@@ -3137,7 +3176,8 @@ components:
 
     CustomerBillingSummary:
       type: object
-      required: [outstandingBalance, invoiceCount, paymentHistory, refundHistory]
+      required:
+        [outstandingBalance, invoiceCount, paymentHistory, refundHistory]
       properties:
         outstandingBalance: { type: number }
         invoiceCount: { type: integer }
@@ -4043,6 +4083,32 @@ components:
           type: ["number", "null"]
         providerNetAmount:
           type: ["number", "null"]
+        driverPayoutAmount:
+          type: ["number", "null"]
+        taxesAmount:
+          type: ["number", "null"]
+        feesAmount:
+          type: ["number", "null"]
+        fuelSurchargeAmount:
+          type: ["number", "null"]
+        gmvAmount:
+          type: ["number", "null"]
+        netMarketplaceRevenueAmount:
+          type: ["number", "null"]
+        marketplaceQuoteId:
+          type: ["integer", "null"]
+        commissionRuleId:
+          type: ["integer", "null"]
+        dispatchDecisionId:
+          type: ["integer", "null"]
+        pricingBreakdown:
+          type: ["array", "null"]
+          items:
+            $ref: "#/components/schemas/PricingBreakdownItem"
+        quoteHistory:
+          type: array
+          items:
+            type: object
         paymentStatus:
           type: string
           enum: [unpaid, invoiced, paid, released, failed, requires_action]
@@ -5539,6 +5605,30 @@ components:
           type: integer
         truckId:
           type: integer
+
+    DispatchRecommendation:
+      type: object
+      required: [driverProfileId, score, reason]
+      properties:
+        driverProfileId:
+          type: integer
+        truckId:
+          type: ["integer", "null"]
+        score:
+          type: number
+        reason:
+          type: string
+
+    DispatchRecommendations:
+      type: object
+      required: [jobId, recommendations]
+      properties:
+        jobId:
+          type: integer
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DispatchRecommendation"
 
     JobStatusUpdate:
       type: object

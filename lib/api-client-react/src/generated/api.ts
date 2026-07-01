@@ -66,6 +66,7 @@ import type {
   CustomerBillingSummary,
   DashboardStats,
   DisconnectQuickBooks200,
+  DispatchRecommendations,
   DocumentStatus,
   DumpSite,
   FlagCompletionInput,
@@ -5939,6 +5940,83 @@ export const useRemoveOrgMember = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getRemoveOrgMemberMutationOptions(options));
     }
+
+export const getGetJobDispatchRecommendationsUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/dispatch-recommendations`
+}
+
+/**
+ * @summary Get ranked dispatch recommendations for a job
+ */
+export const getJobDispatchRecommendations = async (id: number, options?: RequestInit): Promise<DispatchRecommendations> => {
+
+  return customFetch<DispatchRecommendations>(getGetJobDispatchRecommendationsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetJobDispatchRecommendationsQueryKey = (id: number,) => {
+    return [
+    `/api/jobs/${id}/dispatch-recommendations`
+    ] as const;
+    }
+
+
+export const getGetJobDispatchRecommendationsQueryOptions = <TData = Awaited<ReturnType<typeof getJobDispatchRecommendations>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobDispatchRecommendations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetJobDispatchRecommendationsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobDispatchRecommendations>>> = ({ signal }) => getJobDispatchRecommendations(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getJobDispatchRecommendations>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetJobDispatchRecommendationsQueryResult = NonNullable<Awaited<ReturnType<typeof getJobDispatchRecommendations>>>
+export type GetJobDispatchRecommendationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get ranked dispatch recommendations for a job
+ */
+
+export function useGetJobDispatchRecommendations<TData = Awaited<ReturnType<typeof getJobDispatchRecommendations>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobDispatchRecommendations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetJobDispatchRecommendationsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getAssignJobUrl = (id: number,) => {
 

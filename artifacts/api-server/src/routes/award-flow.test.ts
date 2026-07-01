@@ -28,7 +28,10 @@ vi.mock("@workspace/db", () => {
   const activityTable = makeTable("activity");
   const jobStatusUpdatesTable = makeTable("job_status_updates");
   const commissionRulesTable = makeTable("commission_rules");
+  const pricingRulesTable = makeTable("pricing_rules");
   const marketplaceAuditLogsTable = makeTable("marketplace_audit_logs");
+  const marketplaceQuotesTable = makeTable("marketplace_quotes");
+  const pricingEventsTable = makeTable("pricing_events");
 
   const db = {
     select: () => ({
@@ -40,6 +43,7 @@ vi.mock("@workspace/db", () => {
           if (table === profilesTable)
             return Promise.resolve([{ companyName: "Hauler Co" }]);
           if (table === commissionRulesTable) return Promise.resolve([]);
+          if (table === pricingRulesTable) return Promise.resolve([]);
           return Promise.resolve([]);
         },
       }),
@@ -52,10 +56,17 @@ vi.mock("@workspace/db", () => {
           h.jobs.push(job);
           return { returning: () => Promise.resolve([job]) };
         }
+        if (table === marketplaceQuotesTable) {
+          return {
+            returning: () =>
+              Promise.resolve([{ id: 100 + h.nextJobId, ...vals }]),
+          };
+        }
         if (
           table === activityTable ||
           table === jobStatusUpdatesTable ||
-          table === marketplaceAuditLogsTable
+          table === marketplaceAuditLogsTable ||
+          table === pricingEventsTable
         ) {
           return Promise.resolve(undefined);
         }
@@ -111,7 +122,10 @@ vi.mock("@workspace/db", () => {
     activityTable,
     jobStatusUpdatesTable,
     commissionRulesTable,
+    pricingRulesTable,
     marketplaceAuditLogsTable,
+    marketplaceQuotesTable,
+    pricingEventsTable,
   };
 });
 
@@ -218,9 +232,10 @@ describe("Job award / hauler acceptance flow", () => {
       providerId: 20,
       bidId: 5,
       platformFeeRate: "0.2",
-      platformFeeAmount: "192",
-      customerTotalAmount: "1152",
-      providerNetAmount: "960",
+      platformFeeAmount: "384",
+      customerTotalAmount: "2304",
+      providerNetAmount: "1920",
+      marketplaceQuoteId: 101,
     });
     expect(h.requests[0].status).toBe("awarded");
     expect(h.bids[0].status).toBe("awarded");

@@ -6,6 +6,7 @@ import {
   integer,
   numeric,
   pgEnum,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -111,6 +112,9 @@ export const jobsTable = pgTable("jobs", {
     scale: 2,
   }),
   finalInvoiceId: integer("final_invoice_id"),
+  pricingBreakdown: jsonb("pricing_breakdown"),
+  quoteHistory: jsonb("quote_history"),
+  dispatchDecisionId: integer("dispatch_decision_id"),
   paymentStatus: jobPaymentStatusEnum("payment_status")
     .notNull()
     .default("unpaid"),

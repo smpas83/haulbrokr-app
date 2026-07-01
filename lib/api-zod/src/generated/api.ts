@@ -516,6 +516,25 @@ export const ListJobsResponseItem = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -565,6 +584,25 @@ export const GetJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -619,6 +657,25 @@ export const UpdateJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -667,6 +724,25 @@ export const AcceptJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -715,6 +791,25 @@ export const DeclineJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -1891,6 +1986,25 @@ export const ChargeJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -1939,6 +2053,25 @@ export const ReleaseJobPaymentResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -2001,6 +2134,25 @@ export const ConfirmJobPaymentResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -2069,6 +2221,25 @@ export const VerifyJobCheckoutResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -2129,6 +2300,24 @@ export const UpdateOrgMemberRoleResponse = zod.object({
  */
 export const RemoveOrgMemberParams = zod.object({
   "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Get ranked dispatch recommendations for a job
+ */
+export const GetJobDispatchRecommendationsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetJobDispatchRecommendationsResponse = zod.object({
+  "jobId": zod.number(),
+  "recommendations": zod.array(zod.object({
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish(),
+  "score": zod.number(),
+  "reason": zod.string()
+}))
 })
 
 
@@ -2212,6 +2401,25 @@ export const ApproveJobCompletionResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -2264,6 +2472,25 @@ export const FlagJobCompletionResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "driverPayoutAmount": zod.number().nullish(),
+  "taxesAmount": zod.number().nullish(),
+  "feesAmount": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "gmvAmount": zod.number().nullish(),
+  "netMarketplaceRevenueAmount": zod.number().nullish(),
+  "marketplaceQuoteId": zod.number().nullish(),
+  "commissionRuleId": zod.number().nullish(),
+  "dispatchDecisionId": zod.number().nullish(),
+  "pricingBreakdown": zod.array(zod.object({
+  "code": zod.string(),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "amount": zod.number()
+})).nullish(),
+  "quoteHistory": zod.array(zod.object({
+
+}).passthrough()).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
