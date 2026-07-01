@@ -78,9 +78,10 @@ function normalizeLocation(input: unknown): NormalizedLocation | null {
 }
 
 function normalizeLocations(body: unknown): NormalizedLocation[] | null {
-  const raw = body && typeof body === "object" && Array.isArray((body as Record<string, unknown>).locations)
+  const maybeLocations = body && typeof body === "object"
     ? (body as Record<string, unknown>).locations
-    : [body];
+    : undefined;
+  const raw: unknown[] = Array.isArray(maybeLocations) ? maybeLocations : [body];
   const locations = raw.map(normalizeLocation);
   if (locations.some((location) => !location)) return null;
   return locations as NormalizedLocation[];
