@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/marketplace-engine-3455`
-Latest verified milestone commit: `283f8aa`
+Latest commit: `b11dc27` (financial engine verified at `283f8aa`)
 
 ## Completed milestones
 
