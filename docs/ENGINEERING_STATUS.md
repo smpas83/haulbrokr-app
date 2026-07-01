@@ -55,12 +55,16 @@ HaulBrokr is structurally ready for a closed beta engineering pass, but not for 
 
 ## Build and test status
 
-Verification for the current revision is pending. Required checks:
+Latest branch verification:
 
-- `pnpm run typecheck`
-- `pnpm --filter @workspace/api-server run test`
-- `pnpm --filter @workspace/haulbrokr run test`
-- `pnpm --filter @workspace/haulbrokr-mobile run test`
-- `pnpm --filter @workspace/api-server run build`
-- `pnpm --filter @workspace/haulbrokr run build`
-- `pnpm run verify:deployment`
+| Check | Status | Notes |
+|---|---|---|
+| `pnpm run typecheck` | Passing | Full workspace typecheck passes. |
+| `pnpm --filter @workspace/api-server run test` | Passing | 31 API test files / 332 tests pass. |
+| `pnpm --filter @workspace/haulbrokr run test` | Passing | Web test suite passes. |
+| `pnpm --filter @workspace/haulbrokr-mobile run test` | Passing | Mobile test suite passes. |
+| `pnpm --filter @workspace/api-server run build` | Passing | API production bundle builds. |
+| `pnpm --filter @workspace/haulbrokr run build` | Passing | Web production build and prerender pass. |
+| `EXPO_PUBLIC_DOMAIN=haulbrokr.test pnpm --filter @workspace/haulbrokr-mobile run build` | Passing | Static Expo build passes when the required domain env is set. |
+| `pnpm -r --if-present run lint` | No-op | No package currently defines a lint script; this remains a launch-process gap. |
+| `pnpm run verify:deployment` | Passing | Staging env-only verification passes with endpoint/live-provider checks intentionally skipped. |
