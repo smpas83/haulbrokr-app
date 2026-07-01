@@ -129,7 +129,7 @@ function distanceMeters(a: { latitude: number; longitude: number }, b: { latitud
   return 2 * radiusMeters * Math.asin(Math.sqrt(h));
 }
 
-function estimateEta(
+function fallbackEta(
   latest: ReturnType<typeof serializeLocation> | null,
   geofences: ReturnType<typeof serializeGeofence>[],
 ) {
@@ -145,8 +145,50 @@ function estimateEta(
     distanceMeters: Math.round(distanceToDestinationMeters),
     minutes,
     estimatedArrivalAt: new Date(Date.now() + minutes * 60_000),
-    source: process.env.GOOGLE_MAPS_API_KEY ? "google_maps_ready_fallback" : "haversine_fallback",
+    source: "haversine_fallback",
   };
+}
+
+async function estimateEta(
+  latest: ReturnType<typeof serializeLocation> | null,
+  geofences: ReturnType<typeof serializeGeofence>[],
+) {
+  const destination = geofences.find((geofence) => geofence.kind === "delivery")
+    ?? geofences.find((geofence) => geofence.kind === "pickup");
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!latest || !destination || !apiKey) return fallbackEta(latest, geofences);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1_500);
+  try {
+    const url = new URL("https://maps.googleapis.com/maps/api/distancematrix/json");
+    url.searchParams.set("origins", `${latest.latitude},${latest.longitude}`);
+    url.searchParams.set("destinations", `${destination.latitude},${destination.longitude}`);
+    url.searchParams.set("units", "imperial");
+    url.searchParams.set("key", apiKey);
+
+    const response = await fetch(url, { signal: controller.signal });
+    const data = await response.json() as {
+      status?: string;
+      rows?: Array<{ elements?: Array<{ status?: string; distance?: { value?: number }; duration?: { value?: number } }> }>;
+    };
+    const element = data.rows?.[0]?.elements?.[0];
+    if (response.ok && data.status === "OK" && element?.status === "OK" && element.duration?.value) {
+      const minutes = Math.max(1, Math.ceil(element.duration.value / 60));
+      return {
+        distanceMeters: Math.round(element.distance?.value ?? 0),
+        minutes,
+        estimatedArrivalAt: new Date(Date.now() + minutes * 60_000),
+        source: "google_maps",
+      };
+    }
+  } catch {
+    // Fall back to a local estimate so live tracking keeps working without Google.
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  return fallbackEta(latest, geofences);
 }
 
 function routeProgress(
@@ -339,7 +381,7 @@ router.get("/jobs/:id/tracking", requireProfile, async (req, res): Promise<void>
     deliveryAddress: job.deliveryAddress,
     activeTickets: tickets.filter((ticket) => ticket.status === "pending" || ticket.status === "in_progress"),
     latestLocation,
-    eta: estimateEta(latestLocation, geofences),
+    eta: await estimateEta(latestLocation, geofences),
     routeProgress: routeProgress(latestLocation, geofences),
     geofences,
   });
