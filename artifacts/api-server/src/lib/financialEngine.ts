@@ -50,12 +50,7 @@ export async function computeFinancialQuote(
   const bridgeTolls = roundMoney(input.bridgeTolls ?? 0);
   const permitFees = roundMoney(input.permitFees ?? 0);
   const finalInvoice = roundMoney(
-    quote.customerTotal +
-      taxes +
-      fees +
-      fuelSurcharge +
-      bridgeTolls +
-      permitFees,
+    quote.customerTotal + taxes + fees + fuelSurcharge,
   );
   return {
     ...quote,
