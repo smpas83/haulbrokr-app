@@ -65,12 +65,16 @@
 
 ## Latest Commit
 
-- Latest verified code commit before this status update: `363aecb`.
+- Latest verified code commit before this status update: `3a69c02`.
 
 ## Build Status
 
-- Pending final closed-beta hardening verification run.
+- Passed: `pnpm run build`.
 
 ## Test Status
 
-- Pending final closed-beta hardening verification run.
+- Passed: `pnpm --filter @workspace/api-server run test`.
+- Passed: `pnpm --filter @workspace/haulbrokr run test`.
+- Passed: `pnpm --filter @workspace/haulbrokr-mobile run test`.
+- Passed: `pnpm run typecheck`.
+- Passed: `pnpm -r --if-present run lint`.
