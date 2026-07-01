@@ -28,6 +28,7 @@ export type StaffRole =
 export type Permission =
   | "overview"
   | "payouts"
+  | "pricing"
   | "credit"
   | "compliance"
   | "bins"
@@ -35,7 +36,13 @@ export type Permission =
   | "manage_staff";
 
 // The finance/review scope shared by every role (Overview + the three review areas).
-const REVIEW_SCOPE: Permission[] = ["overview", "payouts", "credit", "compliance"];
+const REVIEW_SCOPE: Permission[] = [
+  "overview",
+  "payouts",
+  "pricing",
+  "credit",
+  "compliance",
+];
 
 // `bins` is bin-order fulfillment/operations — an operational, non-finance scope.
 // It is intentionally NOT held by the finance roles: Accounting (ap/ar/accounting)
@@ -59,11 +66,25 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
 };
 
 export const STAFF_ROLES: StaffRole[] = [
-  "ap", "ar", "cfo", "cto", "ceo", "accounting", "it", "president", "programmer",
+  "ap",
+  "ar",
+  "cfo",
+  "cto",
+  "ceo",
+  "accounting",
+  "it",
+  "president",
+  "programmer",
 ];
 
 export const ASSIGNABLE_ROLES: StaffRole[] = [
-  "ceo", "president", "cto", "cfo", "accounting", "it", "programmer",
+  "ceo",
+  "president",
+  "cto",
+  "cfo",
+  "accounting",
+  "it",
+  "programmer",
 ];
 
 function isStaffRole(value: unknown): value is StaffRole {
@@ -122,7 +143,10 @@ export async function getPermissions(req: Request): Promise<Permission[]> {
   return role ? ROLE_PERMISSIONS[role] : [];
 }
 
-export async function hasPermission(req: Request, permission: Permission): Promise<boolean> {
+export async function hasPermission(
+  req: Request,
+  permission: Permission,
+): Promise<boolean> {
   const perms = await getPermissions(req);
   return perms.includes(permission);
 }
@@ -135,7 +159,11 @@ export async function isAdmin(req: Request): Promise<boolean> {
 
 // Middleware: require any staff role. Kept for endpoints that any staff member
 // may read (e.g. the access flag). Prefer requirePermission for actions.
-export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+export function requireAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   isAdmin(req)
     .then((ok) => {
       if (!ok) {
@@ -153,7 +181,9 @@ export function requirePermission(permission: Permission) {
     hasPermission(req, permission)
       .then((ok) => {
         if (!ok) {
-          res.status(403).json({ error: `Missing required permission: ${permission}.` });
+          res
+            .status(403)
+            .json({ error: `Missing required permission: ${permission}.` });
           return;
         }
         next();

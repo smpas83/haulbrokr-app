@@ -7,8 +7,10 @@
  */
 import type { JobCompletionApproval } from './jobCompletionApproval';
 import type { JobPaymentStatus } from './jobPaymentStatus';
+import type { JobQuoteHistoryItem } from './jobQuoteHistoryItem';
 import type { JobStatus } from './jobStatus';
 import type { JobTruckType } from './jobTruckType';
+import type { PricingBreakdownItem } from './pricingBreakdownItem';
 
 export interface Job {
   id: number;
@@ -44,6 +46,27 @@ export interface Job {
   customerTotalAmount?: number | null;
   /** @nullable */
   providerNetAmount?: number | null;
+  /** @nullable */
+  driverPayoutAmount?: number | null;
+  /** @nullable */
+  taxesAmount?: number | null;
+  /** @nullable */
+  feesAmount?: number | null;
+  /** @nullable */
+  fuelSurchargeAmount?: number | null;
+  /** @nullable */
+  gmvAmount?: number | null;
+  /** @nullable */
+  netMarketplaceRevenueAmount?: number | null;
+  /** @nullable */
+  marketplaceQuoteId?: number | null;
+  /** @nullable */
+  commissionRuleId?: number | null;
+  /** @nullable */
+  dispatchDecisionId?: number | null;
+  /** @nullable */
+  pricingBreakdown?: PricingBreakdownItem[] | null;
+  quoteHistory?: JobQuoteHistoryItem[];
   paymentStatus?: JobPaymentStatus;
   /** @nullable */
   paymentDueDate?: Date | null;

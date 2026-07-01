@@ -133,7 +133,10 @@ describe("PATCH /admin/compliance/:profileId", () => {
       .send({ action: "approve" });
 
     expect(res.status).toBe(200);
-    expect(h.updates[0]).toMatchObject({ status: "verified", reviewNote: null });
+    expect(h.updates[0]).toMatchObject({
+      status: "verified",
+      reviewNote: null,
+    });
     expect(h.inserts).toHaveLength(1);
     expect(h.inserts[0]).toMatchObject({
       profileId: APPLICANT_ID,
@@ -156,7 +159,9 @@ describe("PATCH /admin/compliance/:profileId", () => {
       profileId: APPLICANT_ID,
       type: "application_rejected",
     });
-    expect(h.inserts[0].description).toContain("Insurance certificate expired.");
+    expect(h.inserts[0].description).toContain(
+      "Insurance certificate expired.",
+    );
   });
 
   it("rejects an invalid action", async () => {
@@ -173,7 +178,10 @@ describe("PATCH /admin/compliance/:profileId/w9", () => {
       .patch(`/admin/compliance/${APPLICANT_ID}/w9`)
       .send({ action: "approve" });
     expect(res.status).toBe(200);
-    expect(h.updates[0]).toMatchObject({ status: "verified", reviewNote: null });
+    expect(h.updates[0]).toMatchObject({
+      status: "verified",
+      reviewNote: null,
+    });
     expect(h.inserts[0].description).toContain("W-9");
   });
 
@@ -182,7 +190,10 @@ describe("PATCH /admin/compliance/:profileId/w9", () => {
       .patch(`/admin/compliance/${APPLICANT_ID}/w9`)
       .send({ action: "reject", note: "Name mismatch." });
     expect(res.status).toBe(200);
-    expect(h.updates[0]).toMatchObject({ status: "rejected", reviewNote: "Name mismatch." });
+    expect(h.updates[0]).toMatchObject({
+      status: "rejected",
+      reviewNote: "Name mismatch.",
+    });
   });
 });
 
@@ -202,7 +213,10 @@ describe("PATCH /admin/compliance/:profileId/documents/:docType", () => {
       .patch(`/admin/compliance/${APPLICANT_ID}/documents/coi`)
       .send({ action: "approve" });
     expect(res.status).toBe(200);
-    expect(h.updates[0]).toMatchObject({ status: "verified", reviewNote: null });
+    expect(h.updates[0]).toMatchObject({
+      status: "verified",
+      reviewNote: null,
+    });
   });
 
   it("rejects an invalid doc type with 404", async () => {
@@ -220,7 +234,10 @@ describe("PATCH /admin/credit-applications/:profileId", () => {
       .send({ action: "approve" });
 
     expect(res.status).toBe(200);
-    expect(h.updates[0]).toMatchObject({ status: "approved", reviewNote: null });
+    expect(h.updates[0]).toMatchObject({
+      status: "approved",
+      reviewNote: null,
+    });
     expect(h.inserts[0]).toMatchObject({
       profileId: APPLICANT_ID,
       type: "application_approved",
@@ -241,7 +258,9 @@ describe("PATCH /admin/credit-applications/:profileId", () => {
       profileId: APPLICANT_ID,
       type: "application_rejected",
     });
-    expect(h.inserts[0].description).toContain("Insufficient trade references.");
+    expect(h.inserts[0].description).toContain(
+      "Insufficient trade references.",
+    );
   });
 });
 
@@ -302,9 +321,39 @@ describe("GET /admin/stuck-payouts", () => {
 
   it("sorts the most-failed payouts first", async () => {
     h.stuckJobs = [
-      { id: 1, materialType: "A", customerId: 2, providerId: 3, paymentAttempts: 1, payoutRetryFailures: 1, payoutAlertSentAt: null, completedAt: null, createdAt: "2026-06-16T00:00:00.000Z" },
-      { id: 2, materialType: "B", customerId: 2, providerId: 3, paymentAttempts: 1, payoutRetryFailures: 5, payoutAlertSentAt: null, completedAt: null, createdAt: "2026-06-16T00:00:00.000Z" },
-      { id: 3, materialType: "C", customerId: 2, providerId: 3, paymentAttempts: 1, payoutRetryFailures: 3, payoutAlertSentAt: null, completedAt: null, createdAt: "2026-06-16T00:00:00.000Z" },
+      {
+        id: 1,
+        materialType: "A",
+        customerId: 2,
+        providerId: 3,
+        paymentAttempts: 1,
+        payoutRetryFailures: 1,
+        payoutAlertSentAt: null,
+        completedAt: null,
+        createdAt: "2026-06-16T00:00:00.000Z",
+      },
+      {
+        id: 2,
+        materialType: "B",
+        customerId: 2,
+        providerId: 3,
+        paymentAttempts: 1,
+        payoutRetryFailures: 5,
+        payoutAlertSentAt: null,
+        completedAt: null,
+        createdAt: "2026-06-16T00:00:00.000Z",
+      },
+      {
+        id: 3,
+        materialType: "C",
+        customerId: 2,
+        providerId: 3,
+        paymentAttempts: 1,
+        payoutRetryFailures: 3,
+        payoutAlertSentAt: null,
+        completedAt: null,
+        createdAt: "2026-06-16T00:00:00.000Z",
+      },
     ];
     const res = await request(makeApp()).get("/admin/stuck-payouts");
     expect(res.status).toBe(200);
@@ -322,7 +371,11 @@ describe("GET /admin/stuck-payouts", () => {
 describe("POST /admin/stuck-payouts/:id/retry", () => {
   it("returns 200 with the released outcome on success", async () => {
     h.selectRows = [{ id: 7 }];
-    h.retryResult = { jobId: 7, outcome: "released", message: "Provider payout released." };
+    h.retryResult = {
+      jobId: 7,
+      outcome: "released",
+      message: "Provider payout released.",
+    };
     const res = await request(makeApp()).post("/admin/stuck-payouts/7/retry");
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ jobId: 7, outcome: "released" });
@@ -330,7 +383,11 @@ describe("POST /admin/stuck-payouts/:id/retry", () => {
 
   it("returns 200 with a skipped outcome when not eligible", async () => {
     h.selectRows = [{ id: 7 }];
-    h.retryResult = { jobId: 7, outcome: "skipped", message: "Customer charge has not succeeded yet." };
+    h.retryResult = {
+      jobId: 7,
+      outcome: "skipped",
+      message: "Customer charge has not succeeded yet.",
+    };
     const res = await request(makeApp()).post("/admin/stuck-payouts/7/retry");
     expect(res.status).toBe(200);
     expect(res.body.outcome).toBe("skipped");
@@ -353,22 +410,41 @@ describe("POST /admin/stuck-payouts/:id/retry", () => {
 
 describe("POST /admin/stuck-payouts/:id/reset-failures", () => {
   it("zeroes the failure count and clears the alert flag", async () => {
-    h.selectRows = [{ id: 7, payoutRetryFailures: 4, payoutAlertSentAt: "2026-06-16T01:00:00.000Z" }];
-    const res = await request(makeApp()).post("/admin/stuck-payouts/7/reset-failures");
+    h.selectRows = [
+      {
+        id: 7,
+        payoutRetryFailures: 4,
+        payoutAlertSentAt: "2026-06-16T01:00:00.000Z",
+      },
+    ];
+    const res = await request(makeApp()).post(
+      "/admin/stuck-payouts/7/reset-failures",
+    );
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ id: 7, payoutRetryFailures: 0, payoutAlertSentAt: null });
-    expect(h.updates[0]).toMatchObject({ payoutRetryFailures: 0, payoutAlertSentAt: null });
+    expect(res.body).toEqual({
+      id: 7,
+      payoutRetryFailures: 0,
+      payoutAlertSentAt: null,
+    });
+    expect(h.updates[0]).toMatchObject({
+      payoutRetryFailures: 0,
+      payoutAlertSentAt: null,
+    });
   });
 
   it("returns 404 when the job does not exist", async () => {
     h.selectRows = [];
-    const res = await request(makeApp()).post("/admin/stuck-payouts/123/reset-failures");
+    const res = await request(makeApp()).post(
+      "/admin/stuck-payouts/123/reset-failures",
+    );
     expect(res.status).toBe(404);
     expect(h.updates).toHaveLength(0);
   });
 
   it("returns 400 for a non-numeric id", async () => {
-    const res = await request(makeApp()).post("/admin/stuck-payouts/abc/reset-failures");
+    const res = await request(makeApp()).post(
+      "/admin/stuck-payouts/abc/reset-failures",
+    );
     expect(res.status).toBe(400);
   });
 });
@@ -387,7 +463,13 @@ describe("per-role permission gating", () => {
     expect(res.status).toBe(200);
     expect(res.body.isAdmin).toBe(true);
     expect(res.body.staffRole).toBe("accounting");
-    expect(res.body.permissions.sort()).toEqual(["compliance", "credit", "overview", "payouts"]);
+    expect(res.body.permissions.sort()).toEqual([
+      "compliance",
+      "credit",
+      "overview",
+      "payouts",
+      "pricing",
+    ]);
   });
 
   it("legacy AP resolves to the Accounting scope (all review areas + overview)", async () => {
@@ -395,7 +477,13 @@ describe("per-role permission gating", () => {
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
     expect(res.body.staffRole).toBe("ap");
-    expect(res.body.permissions.sort()).toEqual(["compliance", "credit", "overview", "payouts"]);
+    expect(res.body.permissions.sort()).toEqual([
+      "compliance",
+      "credit",
+      "overview",
+      "payouts",
+      "pricing",
+    ]);
   });
 
   it("legacy AR resolves to the Accounting scope (all review areas + overview)", async () => {
@@ -403,7 +491,13 @@ describe("per-role permission gating", () => {
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
     expect(res.body.staffRole).toBe("ar");
-    expect(res.body.permissions.sort()).toEqual(["compliance", "credit", "overview", "payouts"]);
+    expect(res.body.permissions.sort()).toEqual([
+      "compliance",
+      "credit",
+      "overview",
+      "payouts",
+      "pricing",
+    ]);
   });
 
   it("CEO sees overview + all review areas + view-only staff, no manage_staff", async () => {
@@ -411,7 +505,13 @@ describe("per-role permission gating", () => {
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
     expect(res.body.permissions.sort()).toEqual([
-      "bins", "compliance", "credit", "overview", "payouts", "view_staff",
+      "bins",
+      "compliance",
+      "credit",
+      "overview",
+      "payouts",
+      "pricing",
+      "view_staff",
     ]);
   });
 
@@ -421,7 +521,14 @@ describe("per-role permission gating", () => {
       const res = await request(makeApp()).get("/admin/access");
       expect(res.status).toBe(200);
       expect(res.body.permissions.sort()).toEqual([
-        "bins", "compliance", "credit", "manage_staff", "overview", "payouts", "view_staff",
+        "bins",
+        "compliance",
+        "credit",
+        "manage_staff",
+        "overview",
+        "payouts",
+        "pricing",
+        "view_staff",
       ]);
     }
   });
@@ -431,7 +538,13 @@ describe("per-role permission gating", () => {
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
     expect(res.body.permissions.sort()).toEqual([
-      "compliance", "credit", "manage_staff", "overview", "payouts", "view_staff",
+      "compliance",
+      "credit",
+      "manage_staff",
+      "overview",
+      "payouts",
+      "pricing",
+      "view_staff",
     ]);
     expect(res.body.permissions).not.toContain("bins");
   });
@@ -440,7 +553,11 @@ describe("per-role permission gating", () => {
     h.profile = { id: 1, staffRole: null };
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ isAdmin: false, staffRole: null, permissions: [] });
+    expect(res.body).toMatchObject({
+      isAdmin: false,
+      staffRole: null,
+      permissions: [],
+    });
   });
 
   it("Accounting can review compliance, credit, and payouts", async () => {
@@ -492,7 +609,9 @@ describe("GET /admin/overview", () => {
   it("returns platform-wide KPIs for a staff member with overview access", async () => {
     h.profile = { id: 1, staffRole: "accounting" };
     // Every aggregate query in the endpoint reads row[0] of this result.
-    h.selectRows = [{ totalJobs: 12, gmv: "9000.00", brokerFees: "1350.00", count: 4 }];
+    h.selectRows = [
+      { totalJobs: 12, gmv: "9000.00", brokerFees: "1350.00", count: 4 },
+    ];
     h.stuckJobs = [{ id: 1 }, { id: 2 }];
 
     const res = await request(makeApp()).get("/admin/overview");
@@ -527,16 +646,34 @@ describe("staff team management (manage_staff)", () => {
 
   it("CFO can list staff members", async () => {
     h.profile = { id: 1, staffRole: "cfo" };
-    h.selectRows = [{ id: 9, companyName: "Ops Inc", role: "customer", staffRole: "accounting" }];
+    h.selectRows = [
+      {
+        id: 9,
+        companyName: "Ops Inc",
+        role: "customer",
+        staffRole: "accounting",
+      },
+    ];
     const res = await request(makeApp()).get("/admin/staff");
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
-    expect(res.body[0]).toMatchObject({ id: 9, companyName: "Ops Inc", staffRole: "accounting" });
+    expect(res.body[0]).toMatchObject({
+      id: 9,
+      companyName: "Ops Inc",
+      staffRole: "accounting",
+    });
   });
 
   it("CEO can view the staff roster read-only but cannot edit", async () => {
     h.profile = { id: 1, staffRole: "ceo" };
-    h.selectRows = [{ id: 9, companyName: "Ops Inc", role: "customer", staffRole: "accounting" }];
+    h.selectRows = [
+      {
+        id: 9,
+        companyName: "Ops Inc",
+        role: "customer",
+        staffRole: "accounting",
+      },
+    ];
     const list = await request(makeApp()).get("/admin/staff");
     expect(list.status).toBe(200);
     expect(list.body[0]).toMatchObject({ id: 9, staffRole: "accounting" });

@@ -31,6 +31,8 @@ tags:
     description: Provider payout (Stripe Connect) status and onboarding
   - name: admin
     description: Admin review of carrier compliance and customer credit applications
+  - name: marketplace
+    description: Marketplace commission, pricing, and quote operations
 
 paths:
   /healthz:
@@ -204,7 +206,17 @@ paths:
           in: query
           schema:
             type: string
-            enum: [open, bid_received, bidding, awarded, accepted, in_progress, completed, cancelled]
+            enum:
+              [
+                open,
+                bid_received,
+                bidding,
+                awarded,
+                accepted,
+                in_progress,
+                completed,
+                cancelled,
+              ]
         - name: mine
           in: query
           schema:
@@ -393,7 +405,16 @@ paths:
           in: query
           schema:
             type: string
-            enum: [active, awarded, accepted, declined, cancelled, in_progress, completed]
+            enum:
+              [
+                active,
+                awarded,
+                accepted,
+                declined,
+                cancelled,
+                in_progress,
+                completed,
+              ]
       responses:
         "200":
           description: List of jobs
@@ -609,7 +630,15 @@ paths:
           in: query
           schema:
             type: string
-            enum: [landfill, transfer_station, recycling_center, construction_debris, hazardous_waste, compost]
+            enum:
+              [
+                landfill,
+                transfer_station,
+                recycling_center,
+                construction_debris,
+                hazardous_waste,
+                compost,
+              ]
       responses:
         "200":
           description: List of dump sites
@@ -1512,6 +1541,25 @@ paths:
           description: Member removed
 
   # ── Job Assignment & Status ──────────────────────────────────────────────────
+  /jobs/{id}/dispatch-recommendations:
+    get:
+      operationId: getJobDispatchRecommendations
+      tags: [jobs]
+      summary: Get ranked dispatch recommendations for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ranked dispatch recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DispatchRecommendations"
+
   /jobs/{id}/assign:
     post:
       operationId: assignJob
@@ -1731,8 +1779,8 @@ paths:
         "204":
           description: Foreman unassigned
 
-# OpenAPI path extensions — merged into openapi.yaml before codegen.
-# Run: node scripts/merge-openapi.mjs
+  # OpenAPI path extensions — merged into openapi.yaml before codegen.
+  # Run: node scripts/merge-openapi.mjs
 
   # ── Organizations (extended) ───────────────────────────────────────────────
   /organizations/me:
@@ -2329,6 +2377,396 @@ paths:
               schema:
                 type: object
 
+  # ── Marketplace Engine ──────────────────────────────────────────────────────
+  /marketplace/commission/preview:
+    post:
+      operationId: previewMarketplaceCommission
+      tags: [marketplace]
+      summary: Preview commission and payout amounts for a work amount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommissionPreviewInput"
+      responses:
+        "200":
+          description: Commission preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionPreview"
+
+  /marketplace/quotes:
+    post:
+      operationId: createMarketplaceQuote
+      tags: [marketplace]
+      summary: Create a dynamic marketplace quote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketplaceQuoteInput"
+      responses:
+        "201":
+          description: Quote created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceQuote"
+        "409":
+          description: Pricing rules are incomplete
+
+  /marketplace/financial/quote:
+    post:
+      operationId: createMarketplaceFinancialQuote
+      tags: [marketplace]
+      summary: Create a full financial quote with taxes, fees, surcharges, and invoice total
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketplaceQuoteInput"
+      responses:
+        "201":
+          description: Financial quote created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceFinancialQuote"
+
+  /admin/marketplace/commission-rules:
+    get:
+      operationId: listCommissionRules
+      tags: [marketplace]
+      summary: List marketplace commission rules
+      responses:
+        "200":
+          description: Commission rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommissionRule"
+    post:
+      operationId: createCommissionRule
+      tags: [marketplace]
+      summary: Create a marketplace commission rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommissionRuleInput"
+      responses:
+        "201":
+          description: Commission rule created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionRule"
+
+  /admin/marketplace/commission-rules/{id}:
+    patch:
+      operationId: updateCommissionRule
+      tags: [marketplace]
+      summary: Update a marketplace commission rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommissionRuleInput"
+      responses:
+        "200":
+          description: Commission rule updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionRule"
+
+  /admin/marketplace/pricing-rules:
+    get:
+      operationId: listPricingRules
+      tags: [marketplace]
+      summary: List marketplace pricing rules
+      responses:
+        "200":
+          description: Pricing rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PricingRule"
+    post:
+      operationId: createPricingRule
+      tags: [marketplace]
+      summary: Create a marketplace pricing rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PricingRuleInput"
+      responses:
+        "201":
+          description: Pricing rule created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricingRule"
+
+  /admin/marketplace/pricing-rules/{id}:
+    patch:
+      operationId: updatePricingRule
+      tags: [marketplace]
+      summary: Update a marketplace pricing rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PricingRuleInput"
+      responses:
+        "200":
+          description: Pricing rule updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricingRule"
+
+  /marketplace/jobs/{id}/transactions:
+    get:
+      operationId: listMarketplaceJobTransactions
+      tags: [marketplace]
+      summary: List payment ledger rows for a marketplace job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Payment transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentTransaction"
+
+  /marketplace/invoices:
+    get:
+      operationId: listMarketplaceInvoices
+      tags: [marketplace]
+      summary: List marketplace invoice records visible to the caller
+      responses:
+        "200":
+          description: Invoice records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketplaceInvoice"
+
+  /marketplace/invoices/{id}:
+    get:
+      operationId: getMarketplaceInvoice
+      tags: [marketplace]
+      summary: Get a marketplace invoice record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Invoice record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceInvoice"
+
+  /marketplace/jobs/{id}/refunds:
+    post:
+      operationId: createMarketplaceJobRefund
+      tags: [marketplace]
+      summary: Create a Stripe refund for a marketplace job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketplaceRefundInput"
+      responses:
+        "201":
+          description: Refund created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceRefund"
+
+  /marketplace/jobs/{id}/vendor-settlements:
+    post:
+      operationId: createVendorSettlement
+      tags: [marketplace]
+      summary: Create a vendor settlement record for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VendorSettlementInput"
+      responses:
+        "201":
+          description: Vendor settlement created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorSettlement"
+
+  /marketplace/vendor-settlements:
+    get:
+      operationId: listVendorSettlements
+      tags: [marketplace]
+      summary: List vendor settlements visible to the caller
+      responses:
+        "200":
+          description: Vendor settlements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VendorSettlement"
+
+  /marketplace/customer-billing/summary:
+    get:
+      operationId: getCustomerBillingSummary
+      tags: [marketplace]
+      summary: Get customer billing balance, payment history, and refund history
+      responses:
+        "200":
+          description: Customer billing summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerBillingSummary"
+
+  /admin/marketplace/financial-dashboard:
+    get:
+      operationId: getMarketplaceFinancialDashboard
+      tags: [marketplace]
+      summary: Get admin financial dashboard metrics
+      responses:
+        "200":
+          description: Financial dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceFinancialDashboard"
+
+  /marketplace/fleet-availability:
+    get:
+      operationId: getMarketplaceFleetAvailability
+      tags: [marketplace]
+      summary: Get available truck capacity counts for marketplace pricing
+      parameters:
+        - name: providerId
+          in: query
+          schema: { type: integer }
+        - name: truckType
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Fleet availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetAvailability"
+
+  /marketplace/notifications:
+    get:
+      operationId: listMarketplaceNotifications
+      tags: [marketplace]
+      summary: List paginated marketplace notifications for the caller
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100 }
+        - name: cursor
+          in: query
+          schema: { type: integer }
+        - name: type
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationFeed"
+
+  /marketplace/jobs/{id}/trips:
+    get:
+      operationId: getMarketplaceJobTripTimeline
+      tags: [marketplace]
+      summary: Get trip timeline updates for a marketplace job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Trip timeline
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripTimeline"
+
+  /marketplace/document-status:
+    get:
+      operationId: getMarketplaceDocumentStatus
+      tags: [marketplace]
+      summary: Get marketplace document/compliance status for the caller
+      responses:
+        "200":
+          description: Document status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentStatus"
+
 components:
   schemas:
     HealthStatus:
@@ -2337,6 +2775,582 @@ components:
       properties:
         status:
           type: string
+
+    CommissionScope:
+      type: string
+      enum: [global, customer, vendor, project, material, region, emergency]
+
+    CommissionRuleInput:
+      type: object
+      required: [scope, rate]
+      properties:
+        scope:
+          $ref: "#/components/schemas/CommissionScope"
+        targetId:
+          type: ["integer", "null"]
+        targetKey:
+          type: ["string", "null"]
+        rate:
+          type: number
+          minimum: 0
+          maximum: 1
+        priority:
+          type: integer
+        active:
+          type: integer
+          enum: [0, 1]
+        reason:
+          type: ["string", "null"]
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveTo:
+          type: ["string", "null"]
+          format: date-time
+
+    CommissionRule:
+      allOf:
+        - $ref: "#/components/schemas/CommissionRuleInput"
+        - type: object
+          required: [id, active, priority, createdAt, updatedAt]
+          properties:
+            id:
+              type: integer
+            createdByProfileId:
+              type: ["integer", "null"]
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    MarketplaceAmounts:
+      type: object
+      required:
+        [
+          workAmount,
+          platformCommission,
+          vendorPayout,
+          driverPayout,
+          marketplaceRevenue,
+          platformProfit,
+          customerTotal,
+          gmv,
+        ]
+      properties:
+        workAmount:
+          type: number
+        platformCommission:
+          type: number
+        vendorPayout:
+          type: number
+        driverPayout:
+          type: number
+        marketplaceRevenue:
+          type: number
+        platformProfit:
+          type: number
+        customerTotal:
+          type: number
+        gmv:
+          type: number
+
+    CommissionPreviewInput:
+      type: object
+      required: [workAmount]
+      properties:
+        workAmount:
+          type: number
+        customerId:
+          type: ["integer", "null"]
+        vendorId:
+          type: ["integer", "null"]
+        projectId:
+          type: ["integer", "null"]
+        emergency:
+          type: boolean
+
+    CommissionPreview:
+      type: object
+      required: [commission, amounts]
+      properties:
+        commission:
+          type: object
+          required: [ruleId, scope, rate]
+          properties:
+            ruleId:
+              type: ["integer", "null"]
+            scope:
+              type: string
+            rate:
+              type: number
+            reason:
+              type: ["string", "null"]
+        amounts:
+          $ref: "#/components/schemas/MarketplaceAmounts"
+
+    PricingRuleCode:
+      type: string
+      enum:
+        [
+          base_hourly_rate,
+          distance_mile_rate,
+          per_load_rate,
+          per_ton_rate,
+          truck_type_multiplier,
+          material_multiplier,
+          demand_multiplier,
+          truck_shortage_multiplier,
+          available_trucks_multiplier,
+          traffic_multiplier,
+          fuel_surcharge_pct,
+          night_surcharge_pct,
+          weekend_surcharge_pct,
+          holiday_surcharge_pct,
+          emergency_surcharge_pct,
+          remote_location_surcharge_pct,
+          weather_surcharge_pct,
+          waiting_time_hourly_rate,
+          extra_stop_fee,
+          bridge_toll_fee,
+          permit_fee,
+          tax_rate,
+          platform_fee,
+        ]
+
+    PricingValueType:
+      type: string
+      enum: [fixed_amount, percent, multiplier]
+
+    PricingRuleInput:
+      type: object
+      required: [code, label, valueType, value]
+      properties:
+        code:
+          $ref: "#/components/schemas/PricingRuleCode"
+        label:
+          type: string
+        valueType:
+          $ref: "#/components/schemas/PricingValueType"
+        value:
+          type: number
+        targetKey:
+          type: ["string", "null"]
+        minInput:
+          type: ["number", "null"]
+        maxInput:
+          type: ["number", "null"]
+        priority:
+          type: integer
+        active:
+          type: integer
+          enum: [0, 1]
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveTo:
+          type: ["string", "null"]
+          format: date-time
+
+    PricingRule:
+      allOf:
+        - $ref: "#/components/schemas/PricingRuleInput"
+        - type: object
+          required: [id, active, priority, createdAt, updatedAt]
+          properties:
+            id:
+              type: integer
+            createdByProfileId:
+              type: ["integer", "null"]
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    MarketplaceQuoteInput:
+      type: object
+      required: [distanceMiles, estimatedHours]
+      properties:
+        customerId:
+          type: ["integer", "null"]
+        vendorId:
+          type: ["integer", "null"]
+        projectId:
+          type: ["integer", "null"]
+        distanceMiles:
+          type: number
+        estimatedHours:
+          type: number
+        trucksNeeded:
+          type: integer
+        baseRatePerHour:
+          type: ["number", "null"]
+        loads:
+          type: ["number", "null"]
+        quantityTons:
+          type: ["number", "null"]
+        truckType:
+          type: ["string", "null"]
+        materialType:
+          type: ["string", "null"]
+        region:
+          type: ["string", "null"]
+        demandLevel:
+          type: ["string", "null"]
+        availableTrucks:
+          type: ["integer", "null"]
+        truckShortageLevel:
+          type: ["string", "null"]
+        trafficLevel:
+          type: ["string", "null"]
+        fuelSurcharge:
+          type: boolean
+        nightHauling:
+          type: boolean
+        weekend:
+          type: boolean
+        holiday:
+          type: boolean
+        emergencyDispatch:
+          type: boolean
+        remoteLocation:
+          type: boolean
+        weatherSeverity:
+          type: ["string", "null"]
+        waitingTimeMinutes:
+          type: ["number", "null"]
+        extraStops:
+          type: ["integer", "null"]
+        bridgeTolls:
+          type: ["number", "null"]
+        permitFees:
+          type: ["number", "null"]
+        taxes:
+          type: ["number", "null"]
+        fees:
+          type: ["number", "null"]
+        fuelSurchargeAmount:
+          type: ["number", "null"]
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+
+    PricingBreakdownItem:
+      type: object
+      required: [code, label, valueType, value, amount]
+      properties:
+        code:
+          type: string
+        label:
+          type: string
+        valueType:
+          $ref: "#/components/schemas/PricingValueType"
+        value:
+          type: number
+        amount:
+          type: number
+
+    MarketplaceQuote:
+      type: object
+      required:
+        [
+          customerQuote,
+          customerTotal,
+          vendorPayout,
+          driverPayout,
+          platformCommission,
+          marketplaceRevenue,
+          platformProfit,
+          gmv,
+          commissionRate,
+          pricingBreakdown,
+        ]
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        customerQuote:
+          type: number
+        customerTotal:
+          type: number
+        vendorPayout:
+          type: number
+        driverPayout:
+          type: number
+        platformCommission:
+          type: number
+        marketplaceRevenue:
+          type: number
+        platformProfit:
+          type: number
+        gmv:
+          type: number
+        commissionRate:
+          type: number
+        commissionRuleId:
+          type: ["integer", "null"]
+        commissionScope:
+          type: string
+        pricingBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/PricingBreakdownItem"
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    MarketplaceFinancialQuote:
+      allOf:
+        - $ref: "#/components/schemas/MarketplaceQuote"
+        - type: object
+          required:
+            [
+              taxes,
+              fees,
+              fuelSurcharge,
+              bridgeTolls,
+              permitFees,
+              finalInvoice,
+              netMarketplaceRevenue,
+              pricingExplanation,
+            ]
+          properties:
+            taxes: { type: number }
+            fees: { type: number }
+            fuelSurcharge: { type: number }
+            bridgeTolls: { type: number }
+            permitFees: { type: number }
+            finalInvoice: { type: number }
+            netMarketplaceRevenue: { type: number }
+            pricingExplanation:
+              type: array
+              items:
+                $ref: "#/components/schemas/PricingBreakdownItem"
+
+    VendorSettlementInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            [
+              approved_invoice,
+              pending_payout,
+              paid,
+              failed,
+              partial_payout,
+              adjustment,
+              credit,
+              debit,
+            ]
+        adjustmentAmount: { type: number }
+        creditAmount: { type: number }
+        debitAmount: { type: number }
+        metadata:
+          type: object
+
+    VendorSettlement:
+      type: object
+      required: [id, vendorId, status]
+      properties:
+        id: { type: integer }
+        jobId: { type: ["integer", "null"] }
+        vendorId: { type: integer }
+        status: { type: string }
+        approvedInvoiceAmount: { type: number }
+        pendingPayoutAmount: { type: number }
+        paidAmount: { type: number }
+        failedAmount: { type: number }
+        adjustmentAmount: { type: number }
+        creditAmount: { type: number }
+        debitAmount: { type: number }
+        driverPayoutAmount: { type: number }
+        reconciliationStatus: { type: string }
+
+    CustomerBillingSummary:
+      type: object
+      required:
+        [outstandingBalance, invoiceCount, paymentHistory, refundHistory]
+      properties:
+        outstandingBalance: { type: number }
+        invoiceCount: { type: integer }
+        paymentHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaymentTransaction"
+        refundHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketplaceRefund"
+
+    MarketplaceFinancialDashboard:
+      type: object
+      required:
+        [
+          gmv,
+          commission,
+          marketplaceRevenue,
+          vendorPayouts,
+          outstandingInvoices,
+          refunds,
+          chargebacks,
+          averageJobValue,
+          averageMargin,
+          revenueByCustomer,
+          revenueByVendor,
+          revenueByRegion,
+          revenueByMaterial,
+        ]
+      properties:
+        gmv: { type: number }
+        commission: { type: number }
+        marketplaceRevenue: { type: number }
+        vendorPayouts: { type: number }
+        outstandingInvoices: { type: number }
+        refunds: { type: number }
+        chargebacks: { type: number }
+        averageJobValue: { type: number }
+        averageMargin: { type: number }
+        revenueByCustomer:
+          type: array
+          items: { type: object }
+        revenueByVendor:
+          type: array
+          items: { type: object }
+        revenueByRegion:
+          type: array
+          items: { type: object }
+        revenueByMaterial:
+          type: array
+          items: { type: object }
+
+    PaymentTransaction:
+      type: object
+      required: [id, kind, status, amountCents, amount]
+      properties:
+        id: { type: integer }
+        jobId: { type: ["integer", "null"] }
+        kind: { type: string }
+        status: { type: string }
+        amountCents: { type: integer }
+        amount: { type: number }
+        currency: { type: string }
+        stripePaymentIntentId: { type: ["string", "null"] }
+        stripeChargeId: { type: ["string", "null"] }
+        stripeTransferId: { type: ["string", "null"] }
+        stripeRefundId: { type: ["string", "null"] }
+        stripeCheckoutSessionId: { type: ["string", "null"] }
+        createdAt:
+          type: string
+          format: date-time
+
+    MarketplaceInvoice:
+      type: object
+      required:
+        [
+          id,
+          jobId,
+          invoiceNumber,
+          status,
+          subtotal,
+          platformFeeAmount,
+          totalAmount,
+        ]
+      properties:
+        id: { type: integer }
+        jobId: { type: integer }
+        invoiceNumber: { type: string }
+        status: { type: string }
+        subtotal: { type: number }
+        platformFeeAmount: { type: number }
+        totalAmount: { type: number }
+        dueDate:
+          type: ["string", "null"]
+          format: date-time
+        paidAt:
+          type: ["string", "null"]
+          format: date-time
+        externalRef: { type: ["string", "null"] }
+
+    MarketplaceRefundInput:
+      type: object
+      properties:
+        amountCents:
+          type: integer
+          minimum: 1
+        reason:
+          type: ["string", "null"]
+
+    MarketplaceRefund:
+      type: object
+      required: [id, jobId, amountCents, amount, status]
+      properties:
+        id: { type: integer }
+        jobId: { type: ["integer", "null"] }
+        amountCents: { type: integer }
+        amount: { type: number }
+        reason: { type: ["string", "null"] }
+        stripeRefundId: { type: ["string", "null"] }
+        status: { type: string }
+
+    FleetAvailability:
+      type: object
+      required: [totalAvailable, byTruckType]
+      properties:
+        totalAvailable: { type: integer }
+        byTruckType:
+          type: array
+          items:
+            type: object
+            required: [truckType, availableTrucks]
+            properties:
+              truckType: { type: string }
+              availableTrucks: { type: integer }
+
+    NotificationFeed:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        nextCursor:
+          type: ["integer", "null"]
+
+    TripTimeline:
+      type: object
+      required: [jobId, status, timeline]
+      properties:
+        jobId: { type: integer }
+        status: { type: string }
+        timeline:
+          type: array
+          items:
+            type: object
+
+    DocumentStatus:
+      type: object
+      required: [profileId, role, complete, gated, missing, items]
+      properties:
+        profileId: { type: integer }
+        role: { type: string }
+        complete: { type: boolean }
+        gated: { type: boolean }
+        missing:
+          type: array
+          items: { type: string }
+        items:
+          type: array
+          items:
+            type: object
 
     # ── User Profile ──────────────────────────────────────────────────────────
     UserProfile:
@@ -2502,7 +3516,17 @@ components:
     # ── Truck ─────────────────────────────────────────────────────────────────
     Truck:
       type: object
-      required: [id, ownerId, ownerCompany, truckType, capacityTons, ratePerHour, isAvailable, createdAt]
+      required:
+        [
+          id,
+          ownerId,
+          ownerCompany,
+          truckType,
+          capacityTons,
+          ratePerHour,
+          isAvailable,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -2512,7 +3536,23 @@ components:
           type: string
         truckType:
           type: string
-          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+          enum:
+            [
+              standard,
+              articulated,
+              side_dump,
+              bottom_dump,
+              transfer,
+              dump_truck,
+              super_10,
+              end_dump,
+              belly_dump,
+              lowboy,
+              water_truck,
+              excavator,
+              dozer,
+              skid_steer,
+            ]
         capacityTons:
           type: number
         ratePerHour:
@@ -2548,7 +3588,23 @@ components:
       properties:
         truckType:
           type: string
-          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+          enum:
+            [
+              standard,
+              articulated,
+              side_dump,
+              bottom_dump,
+              transfer,
+              dump_truck,
+              super_10,
+              end_dump,
+              belly_dump,
+              lowboy,
+              water_truck,
+              excavator,
+              dozer,
+              skid_steer,
+            ]
         capacityTons:
           type: number
         ratePerHour:
@@ -2580,7 +3636,23 @@ components:
       properties:
         truckType:
           type: string
-          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+          enum:
+            [
+              standard,
+              articulated,
+              side_dump,
+              bottom_dump,
+              transfer,
+              dump_truck,
+              super_10,
+              end_dump,
+              belly_dump,
+              lowboy,
+              water_truck,
+              excavator,
+              dozer,
+              skid_steer,
+            ]
         capacityTons:
           type: number
         ratePerHour:
@@ -2610,7 +3682,23 @@ components:
     # ── Job Request ────────────────────────────────────────────────────────────
     JobRequest:
       type: object
-      required: [id, customerId, customerCompany, materialType, truckType, quantityTons, pickupAddress, deliveryAddress, scheduledDate, startTime, estimatedHours, status, trucksNeeded, createdAt]
+      required:
+        [
+          id,
+          customerId,
+          customerCompany,
+          materialType,
+          truckType,
+          quantityTons,
+          pickupAddress,
+          deliveryAddress,
+          scheduledDate,
+          startTime,
+          estimatedHours,
+          status,
+          trucksNeeded,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -2620,10 +3708,37 @@ components:
           type: string
         materialType:
           type: string
-          enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
+          enum:
+            [
+              dirt,
+              gravel,
+              sand,
+              concrete,
+              asphalt,
+              demolition,
+              topsoil,
+              fill,
+              other,
+            ]
         truckType:
           type: string
-          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+          enum:
+            [
+              standard,
+              articulated,
+              side_dump,
+              bottom_dump,
+              transfer,
+              dump_truck,
+              super_10,
+              end_dump,
+              belly_dump,
+              lowboy,
+              water_truck,
+              excavator,
+              dozer,
+              skid_steer,
+            ]
         quantityTons:
           type: number
         pickupAddress:
@@ -2640,7 +3755,17 @@ components:
           type: number
         status:
           type: string
-          enum: [open, bid_received, bidding, awarded, accepted, in_progress, completed, cancelled]
+          enum:
+            [
+              open,
+              bid_received,
+              bidding,
+              awarded,
+              accepted,
+              in_progress,
+              completed,
+              cancelled,
+            ]
         trucksNeeded:
           type: integer
         budgetPerHour:
@@ -2655,14 +3780,52 @@ components:
 
     JobRequestInput:
       type: object
-      required: [materialType, truckType, quantityTons, pickupAddress, deliveryAddress, scheduledDate, startTime, estimatedHours, trucksNeeded]
+      required:
+        [
+          materialType,
+          truckType,
+          quantityTons,
+          pickupAddress,
+          deliveryAddress,
+          scheduledDate,
+          startTime,
+          estimatedHours,
+          trucksNeeded,
+        ]
       properties:
         materialType:
           type: string
-          enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
+          enum:
+            [
+              dirt,
+              gravel,
+              sand,
+              concrete,
+              asphalt,
+              demolition,
+              topsoil,
+              fill,
+              other,
+            ]
         truckType:
           type: string
-          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+          enum:
+            [
+              standard,
+              articulated,
+              side_dump,
+              bottom_dump,
+              transfer,
+              dump_truck,
+              super_10,
+              end_dump,
+              belly_dump,
+              lowboy,
+              water_truck,
+              excavator,
+              dozer,
+              skid_steer,
+            ]
         quantityTons:
           type: number
         pickupAddress:
@@ -2691,13 +3854,50 @@ components:
       properties:
         status:
           type: string
-          enum: [open, bid_received, bidding, awarded, accepted, in_progress, completed, cancelled]
+          enum:
+            [
+              open,
+              bid_received,
+              bidding,
+              awarded,
+              accepted,
+              in_progress,
+              completed,
+              cancelled,
+            ]
         materialType:
           type: string
-          enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]
+          enum:
+            [
+              dirt,
+              gravel,
+              sand,
+              concrete,
+              asphalt,
+              demolition,
+              topsoil,
+              fill,
+              other,
+            ]
         truckType:
           type: string
-          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+          enum:
+            [
+              standard,
+              articulated,
+              side_dump,
+              bottom_dump,
+              transfer,
+              dump_truck,
+              super_10,
+              end_dump,
+              belly_dump,
+              lowboy,
+              water_truck,
+              excavator,
+              dozer,
+              skid_steer,
+            ]
         quantityTons:
           type: number
         pickupAddress:
@@ -2722,7 +3922,17 @@ components:
     # ── Bid ───────────────────────────────────────────────────────────────────
     Bid:
       type: object
-      required: [id, requestId, providerId, providerCompany, ratePerHour, trucksOffered, status, createdAt]
+      required:
+        [
+          id,
+          requestId,
+          providerId,
+          providerCompany,
+          ratePerHour,
+          trucksOffered,
+          status,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -2771,7 +3981,27 @@ components:
     # ── Job ───────────────────────────────────────────────────────────────────
     Job:
       type: object
-      required: [id, requestId, bidId, customerId, customerCompany, providerId, providerCompany, ratePerHour, trucksAssigned, status, materialType, truckType, pickupAddress, deliveryAddress, scheduledDate, startTime, estimatedHours, createdAt]
+      required:
+        [
+          id,
+          requestId,
+          bidId,
+          customerId,
+          customerCompany,
+          providerId,
+          providerCompany,
+          ratePerHour,
+          trucksAssigned,
+          status,
+          materialType,
+          truckType,
+          pickupAddress,
+          deliveryAddress,
+          scheduledDate,
+          startTime,
+          estimatedHours,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -2793,12 +4023,37 @@ components:
           type: integer
         status:
           type: string
-          enum: [active, awarded, accepted, declined, cancelled, in_progress, completed]
+          enum:
+            [
+              active,
+              awarded,
+              accepted,
+              declined,
+              cancelled,
+              in_progress,
+              completed,
+            ]
         materialType:
           type: string
         truckType:
           type: string
-          enum: [standard, articulated, side_dump, bottom_dump, transfer, dump_truck, super_10, end_dump, belly_dump, lowboy, water_truck, excavator, dozer, skid_steer]
+          enum:
+            [
+              standard,
+              articulated,
+              side_dump,
+              bottom_dump,
+              transfer,
+              dump_truck,
+              super_10,
+              end_dump,
+              belly_dump,
+              lowboy,
+              water_truck,
+              excavator,
+              dozer,
+              skid_steer,
+            ]
         pickupAddress:
           type: string
         deliveryAddress:
@@ -2828,6 +4083,32 @@ components:
           type: ["number", "null"]
         providerNetAmount:
           type: ["number", "null"]
+        driverPayoutAmount:
+          type: ["number", "null"]
+        taxesAmount:
+          type: ["number", "null"]
+        feesAmount:
+          type: ["number", "null"]
+        fuelSurchargeAmount:
+          type: ["number", "null"]
+        gmvAmount:
+          type: ["number", "null"]
+        netMarketplaceRevenueAmount:
+          type: ["number", "null"]
+        marketplaceQuoteId:
+          type: ["integer", "null"]
+        commissionRuleId:
+          type: ["integer", "null"]
+        dispatchDecisionId:
+          type: ["integer", "null"]
+        pricingBreakdown:
+          type: ["array", "null"]
+          items:
+            $ref: "#/components/schemas/PricingBreakdownItem"
+        quoteHistory:
+          type: array
+          items:
+            type: object
         paymentStatus:
           type: string
           enum: [unpaid, invoiced, paid, released, failed, requires_action]
@@ -2876,7 +4157,16 @@ components:
     # ── Dashboard ─────────────────────────────────────────────────────────────
     DashboardStats:
       type: object
-      required: [openRequests, activeJobs, completedJobs, totalBids, pendingBids, totalRevenue, totalSpent]
+      required:
+        [
+          openRequests,
+          activeJobs,
+          completedJobs,
+          totalBids,
+          pendingBids,
+          totalRevenue,
+          totalSpent,
+        ]
       properties:
         openRequests:
           type: integer
@@ -2901,7 +4191,27 @@ components:
           type: integer
         type:
           type: string
-          enum: [request_posted, bid_placed, bid_awarded, bid_accepted, job_accepted, job_declined, job_started, job_completed, payment_failed, payment_requires_action, application_approved, application_rejected, payout_delayed, payout_stuck_alert, bin_confirmed, bin_delivered, bin_picked_up, bin_cancelled]
+          enum:
+            [
+              request_posted,
+              bid_placed,
+              bid_awarded,
+              bid_accepted,
+              job_accepted,
+              job_declined,
+              job_started,
+              job_completed,
+              payment_failed,
+              payment_requires_action,
+              application_approved,
+              application_rejected,
+              payout_delayed,
+              payout_stuck_alert,
+              bin_confirmed,
+              bin_delivered,
+              bin_picked_up,
+              bin_cancelled,
+            ]
         description:
           type: string
         relatedId:
@@ -2934,7 +4244,14 @@ components:
 
     Wallet:
       type: object
-      required: [availableBalance, pendingBalance, lifetimeEarnings, payoutAccount, transactions]
+      required:
+        [
+          availableBalance,
+          pendingBalance,
+          lifetimeEarnings,
+          payoutAccount,
+          transactions,
+        ]
       properties:
         availableBalance:
           type: number
@@ -2976,7 +4293,15 @@ components:
           type: string
         type:
           type: string
-          enum: [landfill, transfer_station, recycling_center, construction_debris, hazardous_waste, compost]
+          enum:
+            [
+              landfill,
+              transfer_station,
+              recycling_center,
+              construction_debris,
+              hazardous_waste,
+              compost,
+            ]
         phone:
           type: ["string", "null"]
         isActive:
@@ -2987,7 +4312,23 @@ components:
     # ── W-9 ───────────────────────────────────────────────────────────────────
     W9Submission:
       type: object
-      required: [id, profileId, legalName, businessType, taxIdType, taxIdLast4, address, city, state, zip, signatureFullName, agreedToTerms, status, createdAt]
+      required:
+        [
+          id,
+          profileId,
+          legalName,
+          businessType,
+          taxIdType,
+          taxIdLast4,
+          address,
+          city,
+          state,
+          zip,
+          signatureFullName,
+          agreedToTerms,
+          status,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -2999,7 +4340,16 @@ components:
           type: ["string", "null"]
         businessType:
           type: string
-          enum: [sole_proprietor, single_member_llc, multi_member_llc, partnership, c_corporation, s_corporation, other]
+          enum:
+            [
+              sole_proprietor,
+              single_member_llc,
+              multi_member_llc,
+              partnership,
+              c_corporation,
+              s_corporation,
+              other,
+            ]
         taxIdType:
           type: string
           enum: [ein, ssn]
@@ -3028,7 +4378,19 @@ components:
 
     W9Input:
       type: object
-      required: [legalName, businessType, taxIdType, taxIdLast4, address, city, state, zip, signatureFullName, agreedToTerms]
+      required:
+        [
+          legalName,
+          businessType,
+          taxIdType,
+          taxIdLast4,
+          address,
+          city,
+          state,
+          zip,
+          signatureFullName,
+          agreedToTerms,
+        ]
       properties:
         legalName:
           type: string
@@ -3036,7 +4398,16 @@ components:
           type: string
         businessType:
           type: string
-          enum: [sole_proprietor, single_member_llc, multi_member_llc, partnership, c_corporation, s_corporation, other]
+          enum:
+            [
+              sole_proprietor,
+              single_member_llc,
+              multi_member_llc,
+              partnership,
+              c_corporation,
+              s_corporation,
+              other,
+            ]
         taxIdType:
           type: string
           enum: [ein, ssn]
@@ -3058,7 +4429,17 @@ components:
     # ── Insurance ─────────────────────────────────────────────────────────────
     InsuranceSubmission:
       type: object
-      required: [id, profileId, glCarrier, glPolicyNumber, glCoverageAmount, glExpirationDate, status, createdAt]
+      required:
+        [
+          id,
+          profileId,
+          glCarrier,
+          glPolicyNumber,
+          glCoverageAmount,
+          glExpirationDate,
+          status,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -3285,7 +4666,18 @@ components:
     # ── Payout Account (Provider) ─────────────────────────────────────────────
     PayoutAccount:
       type: object
-      required: [id, profileId, bankName, accountHolderName, accountType, routingLast4, accountLast4, status, createdAt]
+      required:
+        [
+          id,
+          profileId,
+          bankName,
+          accountHolderName,
+          accountType,
+          routingLast4,
+          accountLast4,
+          status,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -3311,7 +4703,8 @@ components:
 
     PayoutAccountInput:
       type: object
-      required: [bankName, accountHolderName, accountType, routingNumber, accountNumber]
+      required:
+        [bankName, accountHolderName, accountType, routingNumber, accountNumber]
       properties:
         bankName:
           type: string
@@ -3339,7 +4732,8 @@ components:
 
     PayoutRequirements:
       type: object
-      required: [currentlyDue, pendingVerification, disabledReason, currentDeadline]
+      required:
+        [currentlyDue, pendingVerification, disabledReason, currentDeadline]
       properties:
         currentlyDue:
           type: array
@@ -3419,7 +4813,17 @@ components:
     # ── Account Status ────────────────────────────────────────────────────────
     AccountStatus:
       type: object
-      required: [profileComplete, w9Status, insuranceStatus, dotCdlStatus, paymentStatus, payoutStatus, canBid, canPost]
+      required:
+        [
+          profileComplete,
+          w9Status,
+          insuranceStatus,
+          dotCdlStatus,
+          paymentStatus,
+          payoutStatus,
+          canBid,
+          canPost,
+        ]
       properties:
         profileComplete:
           type: boolean
@@ -3594,7 +4998,17 @@ components:
           type: array
           items:
             type: string
-            enum: [overview, payouts, credit, compliance, bins, view_staff, manage_staff]
+            enum:
+              [
+                overview,
+                payouts,
+                pricing,
+                credit,
+                compliance,
+                bins,
+                view_staff,
+                manage_staff,
+              ]
           description: The exact capabilities this staff role unlocks.
 
     StaffMember:
@@ -3769,7 +5183,15 @@ components:
 
     StuckPayoutItem:
       type: object
-      required: [id, materialType, customerCompany, providerCompany, paymentAttempts, payoutRetryFailures]
+      required:
+        [
+          id,
+          materialType,
+          customerCompany,
+          providerCompany,
+          paymentAttempts,
+          payoutRetryFailures,
+        ]
       properties:
         id:
           type: integer
@@ -3924,7 +5346,8 @@ components:
 
     AdminProviderComplianceInsurance:
       type: object
-      required: [status, glCarrier, glPolicyNumber, glCoverageAmount, glExpirationDate]
+      required:
+        [status, glCarrier, glPolicyNumber, glCoverageAmount, glExpirationDate]
       properties:
         status:
           type: string
@@ -4006,7 +5429,15 @@ components:
 
     AdminProviderCompliance:
       type: object
-      required: [profileId, profile, canBid, hasPendingReview, payoutStatus, uploadedDocuments]
+      required:
+        [
+          profileId,
+          profile,
+          canBid,
+          hasPendingReview,
+          payoutStatus,
+          uploadedDocuments,
+        ]
       properties:
         profileId:
           type: integer
@@ -4175,6 +5606,30 @@ components:
         truckId:
           type: integer
 
+    DispatchRecommendation:
+      type: object
+      required: [driverProfileId, score, reason]
+      properties:
+        driverProfileId:
+          type: integer
+        truckId:
+          type: ["integer", "null"]
+        score:
+          type: number
+        reason:
+          type: string
+
+    DispatchRecommendations:
+      type: object
+      required: [jobId, recommendations]
+      properties:
+        jobId:
+          type: integer
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DispatchRecommendation"
+
     JobStatusUpdate:
       type: object
       required: [id, jobId, actorProfileId, status, createdAt]
@@ -4191,7 +5646,19 @@ components:
           type: ["string", "null"]
         status:
           type: string
-          enum: [en_route, arrived, loading, loaded, dumping, checked_in, started, ticket_uploaded, photo_uploaded, completed]
+          enum:
+            [
+              en_route,
+              arrived,
+              loading,
+              loaded,
+              dumping,
+              checked_in,
+              started,
+              ticket_uploaded,
+              photo_uploaded,
+              completed,
+            ]
         note:
           type: ["string", "null"]
         createdAt:
@@ -4204,7 +5671,19 @@ components:
       properties:
         status:
           type: string
-          enum: [en_route, arrived, loading, loaded, dumping, checked_in, started, ticket_uploaded, photo_uploaded, completed]
+          enum:
+            [
+              en_route,
+              arrived,
+              loading,
+              loaded,
+              dumping,
+              checked_in,
+              started,
+              ticket_uploaded,
+              photo_uploaded,
+              completed,
+            ]
         ticketId:
           type: integer
         note:

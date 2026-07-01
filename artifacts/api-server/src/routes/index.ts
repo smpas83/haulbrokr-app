@@ -23,6 +23,7 @@ import messagesRouter from "./messages";
 import staffAuthRouter from "./staff-auth";
 import adminRouter from "./admin";
 import ratingsRouter from "./ratings";
+import marketplaceRouter from "./marketplace";
 
 const router: IRouter = Router();
 
@@ -41,7 +42,7 @@ router.use(projectsRouter);
 router.use(factoringRouter);
 router.use(quickbooksRouter);
 router.use(evidenceRouter);
-  router.use(driverEventsRouter);
+router.use(driverEventsRouter);
 router.use(ticketsRouter);
 router.use(storageRouter);
 router.use(driverDocsRouter);
@@ -50,5 +51,6 @@ router.use(messagesRouter);
 router.use(staffAuthRouter);
 router.use(adminRouter);
 router.use(ratingsRouter);
+router.use(marketplaceRouter);
 
 export default router;

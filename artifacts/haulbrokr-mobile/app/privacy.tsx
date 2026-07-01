@@ -114,7 +114,7 @@ No system is 100% secure. In the event of a data breach that affects your rights
 
 You can control cookie settings through your browser preferences. Disabling certain cookies may limit functionality of the platform.
 
-We do not engage in cross-site tracking for advertising purposes.`,
+We do not engage in cross-site tracking for advertising purposes, and we do not link app data with third-party data to track users under Apple's App Tracking Transparency definition.`,
   },
   {
     id: "8",
@@ -149,44 +149,84 @@ export default function PrivacyScreen() {
       <View
         style={[
           styles.header,
-          { backgroundColor: colors.background, borderBottomColor: colors.border, paddingTop: topPad + 12 },
+          {
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+            paddingTop: topPad + 12,
+          },
         ]}
       >
         <Pressable
           onPress={() => router.back()}
-          style={[styles.backBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[
+            styles.backBtn,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
         >
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
+        <Text
+          style={[
+            styles.headerTitle,
+            { color: colors.foreground, fontFamily: "Inter_700Bold" },
+          ]}
+        >
           Privacy Policy
         </Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <View style={[styles.banner, { backgroundColor: colors.primary + "18", borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.banner,
+          {
+            backgroundColor: colors.primary + "18",
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
         <Feather name="lock" size={16} color={colors.primary} />
-        <Text style={[styles.bannerText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-          We are committed to protecting your personal data and being transparent about how we use it.
+        <Text
+          style={[
+            styles.bannerText,
+            { color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
+          ]}
+        >
+          We are committed to protecting your personal data and being
+          transparent about how we use it.
         </Text>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: 60 + insets.bottom }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: 60 + insets.bottom },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {SECTIONS.map((section) => {
           const open = expanded === section.id;
           return (
-            <View key={section.id} style={[styles.section, { borderColor: colors.border }]}>
+            <View
+              key={section.id}
+              style={[styles.section, { borderColor: colors.border }]}
+            >
               <Pressable
                 onPress={() => setExpanded(open ? null : section.id)}
-                style={[styles.sectionHeader, { backgroundColor: open ? colors.primary + "10" : colors.card }]}
+                style={[
+                  styles.sectionHeader,
+                  {
+                    backgroundColor: open ? colors.primary + "10" : colors.card,
+                  },
+                ]}
               >
                 <Text
                   style={[
                     styles.sectionTitle,
-                    { color: open ? colors.primary : colors.foreground, fontFamily: "Inter_600SemiBold" },
+                    {
+                      color: open ? colors.primary : colors.foreground,
+                      fontFamily: "Inter_600SemiBold",
+                    },
                   ]}
                   numberOfLines={2}
                 >
@@ -199,8 +239,18 @@ export default function PrivacyScreen() {
                 />
               </Pressable>
               {open && (
-                <View style={[styles.sectionBody, { backgroundColor: colors.card }]}>
-                  <Text style={[styles.bodyText, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
+                <View
+                  style={[styles.sectionBody, { backgroundColor: colors.card }]}
+                >
+                  <Text
+                    style={[
+                      styles.bodyText,
+                      {
+                        color: colors.foreground,
+                        fontFamily: "Inter_400Regular",
+                      },
+                    ]}
+                  >
                     {section.body}
                   </Text>
                 </View>
@@ -223,8 +273,19 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     borderBottomWidth: 1,
   },
-  backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  headerTitle: { fontSize: 18, fontWeight: "700" as const, flex: 1, textAlign: "center" },
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    flex: 1,
+    textAlign: "center",
+  },
   banner: {
     flexDirection: "row",
     alignItems: "center",
@@ -243,7 +304,12 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
   },
-  sectionTitle: { fontSize: 14, fontWeight: "600" as const, flex: 1, lineHeight: 20 },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    flex: 1,
+    lineHeight: 20,
+  },
   sectionBody: { padding: 16, paddingTop: 12 },
   bodyText: { fontSize: 14, lineHeight: 22 },
 });

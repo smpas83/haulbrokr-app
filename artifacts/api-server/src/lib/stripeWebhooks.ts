@@ -1,15 +1,30 @@
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
-import { db, jobsTable, payoutAccountsTable, activityTable } from "@workspace/db";
+import {
+  activityTable,
+  db,
+  jobsTable,
+  payoutAccountsTable,
+  stripeWebhookEventsTable,
+} from "@workspace/db";
 import { checkProviderPayoutReadiness, syncStripeStatus } from "./payoutStatus";
 import { settleConfirmedPayout } from "./payoutRetry";
 import { logger } from "./logger";
+import {
+  moneyToCents,
+  recordPaymentTransaction,
+  recordRefund,
+} from "./marketplacePayments";
 
 export type WebhookHandleResult =
   | { handled: true; action: string }
   | { handled: false; reason: string };
 
-async function notifyPaymentFailed(job: { id: number; customerId: number; materialType: string }): Promise<void> {
+async function notifyPaymentFailed(job: {
+  id: number;
+  customerId: number;
+  materialType: string;
+}): Promise<void> {
   try {
     await db.insert(activityTable).values({
       profileId: job.customerId,
@@ -18,7 +33,10 @@ async function notifyPaymentFailed(job: { id: number; customerId: number; materi
       relatedId: job.id,
     });
   } catch (err) {
-    logger.error({ err, jobId: job.id }, "Failed to record payment_failed notification from webhook");
+    logger.error(
+      { err, jobId: job.id },
+      "Failed to record payment_failed notification from webhook",
+    );
   }
 }
 
@@ -47,15 +65,27 @@ function transferIdFromPaymentIntent(pi: Stripe.PaymentIntent): string | null {
   if (!charge || typeof charge === "string") return null;
   const transfer = charge.transfer;
   if (typeof transfer === "string") return transfer;
-  if (transfer && typeof transfer === "object" && "id" in transfer) return transfer.id;
+  if (transfer && typeof transfer === "object" && "id" in transfer)
+    return transfer.id;
   return null;
 }
 
-async function loadJobByMetadataJobId(jobIdRaw: string | undefined): Promise<(typeof jobsTable.$inferSelect) | null> {
+function chargeIdFromPaymentIntent(pi: Stripe.PaymentIntent): string | null {
+  const charge = pi.latest_charge;
+  if (!charge) return null;
+  return typeof charge === "string" ? charge : charge.id;
+}
+
+async function loadJobByMetadataJobId(
+  jobIdRaw: string | undefined,
+): Promise<typeof jobsTable.$inferSelect | null> {
   if (!jobIdRaw) return null;
   const jobId = parseInt(jobIdRaw, 10);
   if (!Number.isFinite(jobId)) return null;
-  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+  const [job] = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, jobId));
   return job ?? null;
 }
 
@@ -83,7 +113,35 @@ async function finalizeCheckoutFromPaymentIntent(
   if (!paymentIntentMatchesJob(job, pi)) {
     return { handled: false, reason: "pi_mismatch" };
   }
-  await markJobReleased(job.id, pi.id, transferIdFromPaymentIntent(pi));
+  const transferId = transferIdFromPaymentIntent(pi);
+  const chargeId = chargeIdFromPaymentIntent(pi);
+  await markJobReleased(job.id, pi.id, transferId);
+  const grossCents = moneyToCents(job.customerTotalAmount);
+  const netCents = moneyToCents(job.providerNetAmount);
+  if (grossCents) {
+    await recordPaymentTransaction({
+      jobId: job.id,
+      kind: "charge",
+      status: "succeeded",
+      amountCents: grossCents,
+      stripePaymentIntentId: pi.id,
+      stripeChargeId: chargeId,
+      stripeTransferId: transferId,
+      metadata: { settlement: "checkout_webhook" },
+    });
+  }
+  if (transferId && netCents) {
+    await recordPaymentTransaction({
+      jobId: job.id,
+      kind: "transfer",
+      status: "succeeded",
+      amountCents: netCents,
+      stripePaymentIntentId: pi.id,
+      stripeChargeId: chargeId,
+      stripeTransferId: transferId,
+      metadata: { settlement: "checkout_webhook" },
+    });
+  }
   return { handled: true, action: "checkout_finalized" };
 }
 
@@ -104,6 +162,19 @@ async function finalizeChargeTransferFromPaymentIntent(
 
   if (job.stripeTransferId) {
     await markJobReleased(job.id, pi.id, job.stripeTransferId);
+    const grossCents = moneyToCents(job.customerTotalAmount);
+    if (grossCents) {
+      await recordPaymentTransaction({
+        jobId: job.id,
+        kind: "charge",
+        status: "succeeded",
+        amountCents: grossCents,
+        stripePaymentIntentId: pi.id,
+        stripeChargeId: chargeIdFromPaymentIntent(pi),
+        stripeTransferId: job.stripeTransferId,
+        metadata: { settlement: "webhook_existing_transfer" },
+      });
+    }
     return { handled: true, action: "marked_released_existing_transfer" };
   }
 
@@ -121,7 +192,11 @@ async function finalizeChargeTransferFromPaymentIntent(
   }
 
   await settleConfirmedPayout(
-    { id: job.id, providerNetAmount: job.providerNetAmount, paymentAttempts: job.paymentAttempts },
+    {
+      id: job.id,
+      providerNetAmount: job.providerNetAmount,
+      paymentAttempts: job.paymentAttempts,
+    },
     readiness.stripeAccountId,
     pi,
   );
@@ -161,6 +236,16 @@ export async function handlePaymentIntentPaymentFailed(
     })
     .where(eq(jobsTable.id, job.id));
   await notifyPaymentFailed(job);
+  await recordPaymentTransaction({
+    jobId: job.id,
+    kind: "charge",
+    status: "failed",
+    amountCents: pi.amount ?? moneyToCents(job.customerTotalAmount) ?? 0,
+    stripePaymentIntentId: pi.id,
+    failureCode: pi.last_payment_error?.code ?? null,
+    failureMessage: pi.last_payment_error?.message ?? null,
+    metadata: { webhook: "payment_intent.payment_failed" },
+  });
   return { handled: true, action: "marked_failed" };
 }
 
@@ -185,7 +270,7 @@ export async function handleCheckoutSessionCompleted(
   const paymentIntentId =
     typeof session.payment_intent === "string"
       ? session.payment_intent
-      : session.payment_intent?.id ?? null;
+      : (session.payment_intent?.id ?? null);
 
   let transferId: string | null = null;
   if (paymentIntentId) {
@@ -194,10 +279,25 @@ export async function handleCheckoutSessionCompleted(
   }
 
   await markJobReleased(job.id, paymentIntentId, transferId);
+  const grossCents = moneyToCents(job.customerTotalAmount);
+  if (grossCents) {
+    await recordPaymentTransaction({
+      jobId: job.id,
+      kind: "checkout",
+      status: "succeeded",
+      amountCents: grossCents,
+      stripeCheckoutSessionId: session.id,
+      stripePaymentIntentId: paymentIntentId,
+      stripeTransferId: transferId,
+      metadata: { webhook: "checkout.session.completed" },
+    });
+  }
   return { handled: true, action: "checkout_session_finalized" };
 }
 
-export async function handleAccountUpdated(account: Stripe.Account): Promise<WebhookHandleResult> {
+export async function handleAccountUpdated(
+  account: Stripe.Account,
+): Promise<WebhookHandleResult> {
   const profileIdRaw = account.metadata?.profileId;
   if (profileIdRaw) {
     const profileId = parseInt(profileIdRaw, 10);
@@ -217,24 +317,108 @@ export async function handleAccountUpdated(account: Stripe.Account): Promise<Web
   return { handled: true, action: "payout_status_synced" };
 }
 
-export async function handleStripeEvent(event: Stripe.Event): Promise<WebhookHandleResult> {
+async function handleStripeEventBusinessLogic(
+  event: Stripe.Event,
+): Promise<WebhookHandleResult> {
   switch (event.type) {
     case "payment_intent.succeeded":
-      return handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+      return handlePaymentIntentSucceeded(
+        event.data.object as Stripe.PaymentIntent,
+      );
     case "payment_intent.payment_failed":
-      return handlePaymentIntentPaymentFailed(event.data.object as Stripe.PaymentIntent);
+      return handlePaymentIntentPaymentFailed(
+        event.data.object as Stripe.PaymentIntent,
+      );
     case "checkout.session.completed":
       return handleCheckoutSessionCompleted(
         event.data.object as Stripe.Checkout.Session,
         async (id) => {
           const { getUncachableStripeClient } = await import("./stripeClient");
           const stripe = await getUncachableStripeClient();
-          return stripe.paymentIntents.retrieve(id, { expand: ["latest_charge"] }) as Promise<Stripe.PaymentIntent>;
+          return stripe.paymentIntents.retrieve(id, {
+            expand: ["latest_charge"],
+          }) as Promise<Stripe.PaymentIntent>;
         },
       );
     case "account.updated":
       return handleAccountUpdated(event.data.object as Stripe.Account);
+    case "charge.refunded": {
+      const charge = event.data.object as Stripe.Charge;
+      const job = await loadJobByMetadataJobId(charge.metadata?.jobId);
+      if (!job) return { handled: false, reason: "job_not_found" };
+      const amountRefunded = charge.amount_refunded ?? 0;
+      await recordRefund({
+        jobId: job.id,
+        amountCents: amountRefunded,
+        reason: "Stripe charge.refunded webhook",
+        stripeRefundId:
+          typeof charge.refunds?.data?.[0]?.id === "string"
+            ? charge.refunds.data[0].id
+            : null,
+        status: "succeeded",
+      });
+      await recordPaymentTransaction({
+        jobId: job.id,
+        kind: "refund",
+        status: "succeeded",
+        amountCents: amountRefunded,
+        stripePaymentIntentId:
+          typeof charge.payment_intent === "string"
+            ? charge.payment_intent
+            : (charge.payment_intent?.id ?? null),
+        stripeChargeId: charge.id,
+        stripeRefundId:
+          typeof charge.refunds?.data?.[0]?.id === "string"
+            ? charge.refunds.data[0].id
+            : null,
+        metadata: { webhook: "charge.refunded" },
+      });
+      return { handled: true, action: "refund_recorded" };
+    }
     default:
       return { handled: false, reason: "ignored_event_type" };
   }
+}
+
+export async function handleStripeEvent(
+  event: Stripe.Event,
+): Promise<WebhookHandleResult> {
+  if (!event.id) {
+    return handleStripeEventBusinessLogic(event);
+  }
+
+  const [existing] = await db
+    .select()
+    .from(stripeWebhookEventsTable)
+    .where(eq(stripeWebhookEventsTable.stripeEventId, event.id));
+  if (existing?.handled) {
+    return { handled: true, action: "duplicate_event_skipped" };
+  }
+
+  if (!existing) {
+    try {
+      await db.insert(stripeWebhookEventsTable).values({
+        stripeEventId: event.id,
+        eventType: event.type,
+        payload: event as unknown as Record<string, unknown>,
+        handled: 0,
+      });
+    } catch (err) {
+      logger.warn(
+        { err, eventId: event.id },
+        "Stripe webhook event insert raced",
+      );
+      return { handled: true, action: "duplicate_event_skipped" };
+    }
+  }
+
+  const result = await handleStripeEventBusinessLogic(event);
+  await db
+    .update(stripeWebhookEventsTable)
+    .set({
+      handled: result.handled ? 1 : 0,
+      handleResult: JSON.stringify(result),
+    })
+    .where(eq(stripeWebhookEventsTable.stripeEventId, event.id));
+  return result;
 }

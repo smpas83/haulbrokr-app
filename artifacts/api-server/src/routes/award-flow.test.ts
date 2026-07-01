@@ -3,7 +3,10 @@ import express, { type Express } from "express";
 import request from "supertest";
 
 const h = vi.hoisted(() => ({
-  profile: { id: 10, role: "customer", companyName: "Customer Co" } as Record<string, unknown>,
+  profile: { id: 10, role: "customer", companyName: "Customer Co" } as Record<
+    string,
+    unknown
+  >,
   requests: [] as Record<string, unknown>[],
   bids: [] as Record<string, unknown>[],
   jobs: [] as Record<string, unknown>[],
@@ -24,6 +27,11 @@ vi.mock("@workspace/db", () => {
   const profilesTable = makeTable("profiles");
   const activityTable = makeTable("activity");
   const jobStatusUpdatesTable = makeTable("job_status_updates");
+  const commissionRulesTable = makeTable("commission_rules");
+  const pricingRulesTable = makeTable("pricing_rules");
+  const marketplaceAuditLogsTable = makeTable("marketplace_audit_logs");
+  const marketplaceQuotesTable = makeTable("marketplace_quotes");
+  const pricingEventsTable = makeTable("pricing_events");
 
   const db = {
     select: () => ({
@@ -32,7 +40,10 @@ vi.mock("@workspace/db", () => {
           if (table === bidsTable) return Promise.resolve(h.bids);
           if (table === requestsTable) return Promise.resolve(h.requests);
           if (table === jobsTable) return Promise.resolve(h.jobs);
-          if (table === profilesTable) return Promise.resolve([{ companyName: "Hauler Co" }]);
+          if (table === profilesTable)
+            return Promise.resolve([{ companyName: "Hauler Co" }]);
+          if (table === commissionRulesTable) return Promise.resolve([]);
+          if (table === pricingRulesTable) return Promise.resolve([]);
           return Promise.resolve([]);
         },
       }),
@@ -45,7 +56,18 @@ vi.mock("@workspace/db", () => {
           h.jobs.push(job);
           return { returning: () => Promise.resolve([job]) };
         }
-        if (table === activityTable || table === jobStatusUpdatesTable) {
+        if (table === marketplaceQuotesTable) {
+          return {
+            returning: () =>
+              Promise.resolve([{ id: 100 + h.nextJobId, ...vals }]),
+          };
+        }
+        if (
+          table === activityTable ||
+          table === jobStatusUpdatesTable ||
+          table === marketplaceAuditLogsTable ||
+          table === pricingEventsTable
+        ) {
           return Promise.resolve(undefined);
         }
         return Promise.resolve(undefined);
@@ -60,7 +82,8 @@ vi.mock("@workspace/db", () => {
           }
           if (table === bidsTable) {
             for (const b of h.bids) {
-              if (vals.status === "rejected" && b.status === "pending") Object.assign(b, vals);
+              if (vals.status === "rejected" && b.status === "pending")
+                Object.assign(b, vals);
               else if (b.id === h.bids[0]?.id) Object.assign(b, vals);
             }
           }
@@ -90,7 +113,20 @@ vi.mock("@workspace/db", () => {
     }),
   };
 
-  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable, jobStatusUpdatesTable };
+  return {
+    db,
+    requestsTable,
+    bidsTable,
+    jobsTable,
+    profilesTable,
+    activityTable,
+    jobStatusUpdatesTable,
+    commissionRulesTable,
+    pricingRulesTable,
+    marketplaceAuditLogsTable,
+    marketplaceQuotesTable,
+    pricingEventsTable,
+  };
 });
 
 vi.mock("../middlewares/requireAuth", () => ({
@@ -102,7 +138,8 @@ vi.mock("../middlewares/requireAuth", () => ({
 }));
 
 vi.mock("../lib/access", () => ({
-  loadJobIfMember: async (jobId: number) => h.jobs.find((j) => j.id === jobId) ?? null,
+  loadJobIfMember: async (jobId: number) =>
+    h.jobs.find((j) => j.id === jobId) ?? null,
   orgScopedActorIds: async () => [h.profile.id],
   isOrgManager: () => false,
   canReviewCompletion: () => false,
@@ -148,30 +185,34 @@ function sampleJob(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   h.profile = { id: 10, role: "customer", companyName: "Customer Co" };
-  h.requests = [{
-    id: 1,
-    customerId: 10,
-    status: "bid_received",
-    materialType: "dirt",
-    truckType: "dump_truck",
-    quantityTons: "100",
-    pickupAddress: "A",
-    deliveryAddress: "B",
-    scheduledDate: new Date(),
-    startTime: "08:00",
-    estimatedHours: "8",
-    trucksNeeded: 2,
-    notes: "End-dump only; no belly dumps.",
-  }];
-  h.bids = [{
-    id: 5,
-    requestId: 1,
-    providerId: 20,
-    ratePerHour: "120.00",
-    trucksOffered: 2,
-    status: "pending",
-    createdAt: new Date(),
-  }];
+  h.requests = [
+    {
+      id: 1,
+      customerId: 10,
+      status: "bid_received",
+      materialType: "dirt",
+      truckType: "dump_truck",
+      quantityTons: "100",
+      pickupAddress: "A",
+      deliveryAddress: "B",
+      scheduledDate: new Date(),
+      startTime: "08:00",
+      estimatedHours: "8",
+      trucksNeeded: 2,
+      notes: "End-dump only; no belly dumps.",
+    },
+  ];
+  h.bids = [
+    {
+      id: 5,
+      requestId: 1,
+      providerId: 20,
+      ratePerHour: "120.00",
+      trucksOffered: 2,
+      status: "pending",
+      createdAt: new Date(),
+    },
+  ];
   h.jobs = [];
   h.inserts = [];
   h.updates = [];
@@ -186,7 +227,16 @@ describe("Job award / hauler acceptance flow", () => {
 
     expect(res.status).toBe(200);
     expect(h.jobs).toHaveLength(1);
-    expect(h.jobs[0]).toMatchObject({ status: "awarded", providerId: 20, bidId: 5 });
+    expect(h.jobs[0]).toMatchObject({
+      status: "awarded",
+      providerId: 20,
+      bidId: 5,
+      platformFeeRate: "0.2",
+      platformFeeAmount: "384",
+      customerTotalAmount: "2304",
+      providerNetAmount: "1920",
+      marketplaceQuoteId: 101,
+    });
     expect(h.requests[0].status).toBe("awarded");
     expect(h.bids[0].status).toBe("awarded");
   });

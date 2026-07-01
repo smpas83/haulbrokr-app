@@ -12,6 +12,7 @@ export type AdminAccessPermissionsItem = typeof AdminAccessPermissionsItem[keyof
 export const AdminAccessPermissionsItem = {
   overview: 'overview',
   payouts: 'payouts',
+  pricing: 'pricing',
   credit: 'credit',
   compliance: 'compliance',
   bins: 'bins',
