@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/add-lint-release-gate-3455`
-Latest verified milestone commit: `a02a4cb`
+Latest verified milestone commit: `b3574cf`
 
 ## Completed milestones
 
