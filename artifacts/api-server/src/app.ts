@@ -1,4 +1,5 @@
 import cookieParser from "cookie-parser";
+import crypto from "node:crypto";
 import express, { type Express } from "express";
 import cors, { type CorsOptions } from "cors";
 import pinoHttp from "pino-http";
@@ -17,6 +18,8 @@ import { errorHandler } from "./middlewares/errorHandler";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+
+app.set("trust proxy", 1);
 
 const DEFAULT_PRODUCTION_ORIGINS = [
   "https://haulbrokr.com",
@@ -74,6 +77,14 @@ app.use((_req, res, next) => {
 app.use(
   pinoHttp({
     logger,
+    genReqId(req, res) {
+      const incoming = req.headers["x-request-id"];
+      const requestId = typeof incoming === "string" && incoming.trim()
+        ? incoming.trim()
+        : crypto.randomUUID();
+      res.setHeader("X-Request-Id", requestId);
+      return requestId;
+    },
     serializers: {
       req(req) {
         return {
@@ -104,8 +115,8 @@ app.use(
   stripeWebhooksRouter,
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // Health check must work without Clerk auth so deployment probes succeed
 // even when Clerk keys are absent/invalid. Mount it before clerkMiddleware.

@@ -25,7 +25,20 @@ import { useMyProfile } from "@/hooks/useLiveApi";
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) =>
+        failureCount < 2 && /network|fetch|timeout|unavailable/i.test(error instanceof Error ? error.message : String(error)),
+      staleTime: 30_000,
+    },
+  },
+});
+
+function isMissingProfileError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /profile not found|not found|404/i.test(message);
+}
 
 // Bridge React Query's focus tracking to React Native AppState so interval
 // polling pauses when the OS backgrounds the app and resumes on foreground.
@@ -62,10 +75,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       router.replace("/sign-in" as any);
       return;
     }
-    if (profileQuery.isError) {
+    if (profileQuery.isError && isMissingProfileError(profileQuery.error)) {
       router.replace("/onboarding" as any);
     }
-  }, [isLoaded, isSignedIn, profileQuery.isError]);
+  }, [isLoaded, isSignedIn, profileQuery.isError, profileQuery.error]);
 
   return <>{children}</>;
 }

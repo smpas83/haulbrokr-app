@@ -77,8 +77,8 @@ export default function JobDetailScreen() {
   const numericId = !isRequestId && id ? parseInt(id, 10) : null;
   const evidenceQuery = useJobEvidence(numericId);
   const submitEvidence = useSubmitEvidence();
-  const { data: liveJobsRaw, isFetching: fetchingJobs, isLoading: loadingJobs, dataUpdatedAt: jobsUpdatedAt } = useLiveJobs();
-  const { data: liveRequestsRaw, isFetching: fetchingRequests, dataUpdatedAt: requestsUpdatedAt } = useLiveRequests({ mine: true, enabled: isRequestId });
+  const { data: liveJobsRaw, isFetching: fetchingJobs, isLoading: loadingJobs, isError: jobsError, dataUpdatedAt: jobsUpdatedAt } = useLiveJobs();
+  const { data: liveRequestsRaw, isFetching: fetchingRequests, isLoading: loadingRequests, isError: requestsError, dataUpdatedAt: requestsUpdatedAt } = useLiveRequests({ mine: true, enabled: isRequestId });
   const { data: payoutStatusData, isFetching: fetchingPayout } = usePayoutStatus();
   const createBid = useCreateBid();
   const updateRequest = useUpdateRequest();
@@ -123,6 +123,20 @@ export default function JobDetailScreen() {
   // refetch across the live job / request queries. Used by the LastUpdated label.
   const lastUpdated = Math.max(jobsUpdatedAt, requestsUpdatedAt) || undefined;
 
+  const liveLookupLoading = loadingJobs || (isRequestId && loadingRequests);
+  const liveLookupError = jobsError || (isRequestId && requestsError);
+
+  if (!job && liveLookupLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.center}>
+          <Feather name="loader" size={32} color={colors.primary} style={{ marginBottom: 12 }} />
+          <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 16 }}>Loading job…</Text>
+        </View>
+      </View>
+    );
+  }
+
   if (!job) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -135,8 +149,12 @@ export default function JobDetailScreen() {
         </View>
         <View style={styles.center}>
           <Feather name="alert-circle" size={40} color={colors.mutedForeground} style={{ marginBottom: 12 }} />
-          <Text style={[{ color: colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 17, marginBottom: 6 }]}>Job Not Found</Text>
-          <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", paddingHorizontal: 32, marginBottom: 24 }]}>This job may have been removed or the link is no longer valid.</Text>
+          <Text style={[{ color: colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 17, marginBottom: 6 }]}>
+            {liveLookupError ? "Couldn't Load Job" : "Job Not Found"}
+          </Text>
+          <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", paddingHorizontal: 32, marginBottom: 24 }]}>
+            {liveLookupError ? "Check your connection and pull to refresh, or try again shortly." : "This job may have been removed or the link is no longer valid."}
+          </Text>
           <Pressable onPress={() => router.replace("/(tabs)/jobs")} style={[{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 }]}>
             <Text style={[{ color: colors.primaryForeground, fontFamily: "Inter_600SemiBold", fontSize: 15 }]}>Browse All Loads</Text>
           </Pressable>

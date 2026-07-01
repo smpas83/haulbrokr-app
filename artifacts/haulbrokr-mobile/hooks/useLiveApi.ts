@@ -10,17 +10,24 @@ async function apiFetch(
   body?: object
 ) {
   const token = await getToken();
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error("Network unavailable. Check your connection and try again.");
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error ?? "Request failed");
+    const requestId = res.headers.get("X-Request-Id") ?? err.requestId;
+    const suffix = requestId ? ` (Request ID: ${requestId})` : "";
+    throw new Error(`${err.error ?? "Request failed"}${suffix}`);
   }
   const text = await res.text();
   return text ? JSON.parse(text) : null;
@@ -789,6 +796,26 @@ export function useLiveActivity() {
   return useQuery({
     queryKey: ["dashboard", "activity"],
     queryFn: () => apiFetch(getToken, "GET", "/dashboard/activity"),
+    enabled: !!isSignedIn,
+    refetchInterval: 30000,
+  });
+}
+
+export function useNotifications() {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => apiFetch(getToken, "GET", "/notifications"),
+    enabled: !!isSignedIn,
+    refetchInterval: 30000,
+  });
+}
+
+export function useDriverEarnings() {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery({
+    queryKey: ["driver", "earnings"],
+    queryFn: () => apiFetch(getToken, "GET", "/driver/earnings"),
     enabled: !!isSignedIn,
   });
 }

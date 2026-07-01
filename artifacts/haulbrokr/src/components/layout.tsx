@@ -132,6 +132,12 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-muted/30">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:bg-background focus:text-foreground focus:border-2 focus:border-primary focus:px-4 focus:py-2"
+      >
+        Skip to main content
+      </a>
       {/* Desktop Sidebar */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden md:flex flex-col">
         <Sidebar navItems={navItems} profile={profile} user={user} onSignOut={handleSignOut} />
@@ -148,7 +154,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-sidebar-foreground">
+              <Button variant="ghost" size="icon" className="text-sidebar-foreground" aria-label="Open navigation menu">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -163,7 +169,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </Sheet>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 md:p-8 pb-24 md:pb-8">
+        <div id="main-content" className="flex-1 overflow-auto p-4 md:p-8 pb-24 md:pb-8">
           <DocumentGateBanner />
           {children}
         </div>
@@ -174,7 +180,7 @@ export function Layout({ children }: { children: ReactNode }) {
             {visibleNav.map((item) => {
               const active = location === item.href || location.startsWith(`${item.href}/`);
               return (
-                <Link key={item.href} href={item.href} className="flex-1">
+                <Link key={item.href} href={item.href} className="flex-1" aria-label={item.label}>
                   <div className={cn(
                     "flex flex-col items-center justify-center h-full gap-1 text-[10px] font-semibold transition-colors",
                     active
