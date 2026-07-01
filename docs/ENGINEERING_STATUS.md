@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/marketplace-engine-3455`
-Latest commit: `81bb329` (App Store remediation verified at `50a4e92`)
+Latest commit: `652345a` (dispatch/pricing integration verified)
 
 ## Completed milestones
 
@@ -36,7 +36,7 @@ Latest commit: `81bb329` (App Store remediation verified at `50a4e92`)
 
 ## Current work
 
-- Dispatch/pricing workflow integration is complete; final verification is in progress.
+- Dispatch/pricing workflow integration is complete and verified.
 
 ## Next sprint
 
