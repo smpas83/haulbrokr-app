@@ -47,6 +47,7 @@ vi.mock("@workspace/api-client-react", () => ({
     isLoading: false,
   }),
   useGetAccountStatus: () => ({ data: { profileComplete: true } }),
+  useListNotifications: () => ({ data: { notifications: [] }, isLoading: false }),
 }));
 
 // recharts needs ResizeObserver/layout jsdom can't provide and is irrelevant
