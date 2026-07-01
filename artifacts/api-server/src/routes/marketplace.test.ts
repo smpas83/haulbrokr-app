@@ -14,11 +14,15 @@ const h = vi.hoisted(() => ({
   jobs: [] as Record<string, unknown>[],
   transactions: [] as Record<string, unknown>[],
   invoices: [] as Record<string, unknown>[],
+  customerInvoices: [] as Record<string, unknown>[],
+  vendorSettlements: [] as Record<string, unknown>[],
+  marketplaceTransactions: [] as Record<string, unknown>[],
+  refundHistory: [] as Record<string, unknown>[],
   refunds: [] as Record<string, unknown>[],
   trucks: [] as Record<string, unknown>[],
   activity: [] as Record<string, unknown>[],
   statusUpdates: [] as Record<string, unknown>[],
-  inserts: [] as { table: unknown; row: Record<string, unknown> }[],
+  inserts: [] as { table: unknown; row: any }[],
   nextId: 1,
 }));
 
@@ -37,12 +41,26 @@ vi.mock("@workspace/db", () => {
   const jobStatusUpdatesTable = makeTable("jobStatusUpdates");
   const jobsTable = makeTable("jobs");
   const payoutTransfersTable = makeTable("payoutTransfers");
+  const commissionSettingsTable = makeTable("commissionSettings");
+  const pricingEventsTable = makeTable("pricingEvents");
+  const customerInvoicesTable = makeTable("customerInvoices");
+  const invoiceItemsTable = makeTable("invoiceItems");
+  const paymentHistoryTable = makeTable("paymentHistory");
+  const refundHistoryTable = makeTable("refundHistory");
+  const financialAuditLogsTable = makeTable("financialAuditLogs");
+  const marketplaceTransactionsTable = makeTable("marketplaceTransactions");
+  const vendorSettlementsTable = makeTable("vendorSettlements");
 
   function rowsFor(table: unknown) {
     if (table === pricingRulesTable) return h.pricingRules;
     if (table === commissionRulesTable) return h.commissionRules;
     if (table === paymentTransactionsTable) return h.transactions;
     if (table === invoicesTable) return h.invoices;
+    if (table === customerInvoicesTable) return h.customerInvoices;
+    if (table === vendorSettlementsTable) return h.vendorSettlements;
+    if (table === marketplaceTransactionsTable)
+      return h.marketplaceTransactions;
+    if (table === refundHistoryTable) return h.refundHistory;
     if (table === trucksTable) return h.trucks;
     if (table === activityTable) return h.activity;
     if (table === jobStatusUpdatesTable) return h.statusUpdates;
@@ -85,12 +103,21 @@ vi.mock("@workspace/db", () => {
     jobStatusUpdatesTable,
     jobsTable,
     payoutTransfersTable,
+    commissionSettingsTable,
+    pricingEventsTable,
+    customerInvoicesTable,
+    invoiceItemsTable,
+    paymentHistoryTable,
+    refundHistoryTable,
+    financialAuditLogsTable,
+    marketplaceTransactionsTable,
+    vendorSettlementsTable,
     db: {
       select: () => ({
         from: chain,
       }),
       insert: (table: unknown) => ({
-        values: (row: Record<string, unknown>) => {
+        values: (row: any) => {
           h.inserts.push({ table, row });
           return {
             returning: () =>
@@ -99,7 +126,7 @@ vi.mock("@workspace/db", () => {
                   id: h.nextId++,
                   status: "quoted",
                   createdAt: new Date("2026-07-01T00:00:00Z"),
-                  ...row,
+                  ...(Array.isArray(row) ? {} : row),
                 },
               ]),
           };
@@ -202,6 +229,14 @@ beforeEach(() => {
       value: "5",
       priority: 0,
     },
+    {
+      id: 4,
+      code: "per_load_rate",
+      label: "Per load",
+      valueType: "fixed_amount",
+      value: "25",
+      priority: 0,
+    },
   ];
   h.commissionRules = [
     {
@@ -223,6 +258,9 @@ beforeEach(() => {
       providerNetAmount: "250.00",
       stripePaymentIntentId: "pi_1",
       stripeChargeId: "ch_1",
+      driverPayoutAmount: "0",
+      gmvAmount: "300.00",
+      netMarketplaceRevenueAmount: "50.00",
     },
   ];
   h.transactions = [
@@ -246,6 +284,48 @@ beforeEach(() => {
       totalAmount: "300.00",
       createdAt: new Date("2026-07-01T00:00:00Z"),
     },
+  ];
+  h.customerInvoices = [
+    {
+      id: 1,
+      jobId: 10,
+      customerId: 1,
+      invoiceNumber: "HB-2026-000010",
+      status: "open",
+      subtotal: "250.00",
+      taxes: "0",
+      fees: "0",
+      totalAmount: "300.00",
+      outstandingBalance: "300.00",
+    },
+  ];
+  h.vendorSettlements = [
+    {
+      id: 1,
+      jobId: 10,
+      vendorId: 1,
+      status: "pending_payout",
+      approvedInvoiceAmount: "250.00",
+      pendingPayoutAmount: "250.00",
+      paidAmount: "0",
+      failedAmount: "0",
+      adjustmentAmount: "0",
+      creditAmount: "0",
+      debitAmount: "0",
+      driverPayoutAmount: "0",
+    },
+  ];
+  h.marketplaceTransactions = [
+    {
+      id: 1,
+      customerId: 1,
+      type: "customer_charge",
+      amountCents: 30000,
+      status: "succeeded",
+    },
+  ];
+  h.refundHistory = [
+    { id: 1, customerId: 1, amountCents: 5000, status: "succeeded" },
   ];
   h.refunds = [];
   h.trucks = [{ truckType: "dump_truck", availableTrucks: 3 }];
@@ -279,6 +359,35 @@ describe("POST /marketplace/quotes", () => {
     expect(res.body.gmv).toBe(300);
     expect(h.inserts.some((entry) => entry.row.customerTotal === "300")).toBe(
       true,
+    );
+  });
+
+  it("creates a financial quote with per-load pricing, taxes, fees, and final invoice", async () => {
+    const res = await request(makeApp())
+      .post("/marketplace/financial/quote")
+      .send({
+        distanceMiles: 10,
+        estimatedHours: 2,
+        loads: 2,
+        taxes: 12,
+        fees: 8,
+        fuelSurchargeAmount: 10,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.vendorPayout).toBe(300);
+    expect(res.body.platformCommission).toBe(60);
+    expect(res.body.finalInvoice).toBe(390);
+    expect(res.body.netMarketplaceRevenue).toBe(68);
+    expect(h.inserts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          row: expect.objectContaining({ customerTotal: "390" }),
+        }),
+        expect.objectContaining({
+          row: expect.objectContaining({ action: "financial_quote.create" }),
+        }),
+      ]),
     );
   });
 });
@@ -367,6 +476,39 @@ describe("marketplace financial APIs", () => {
       ]),
     );
   });
+
+  it("creates a vendor settlement for a job", async () => {
+    h.profile = {
+      id: 2,
+      role: "provider",
+      companyName: "Vendor Co",
+      staffRole: null,
+    };
+    const res = await request(makeApp())
+      .post("/marketplace/jobs/10/vendor-settlements")
+      .send({
+        status: "pending_payout",
+        adjustmentAmount: 5,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      vendorId: 2,
+      pendingPayoutAmount: 250,
+      adjustmentAmount: 5,
+    });
+  });
+
+  it("returns customer billing summary with history", async () => {
+    const res = await request(makeApp()).get(
+      "/marketplace/customer-billing/summary",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.outstandingBalance).toBe(300);
+    expect(res.body.paymentHistory[0]).toMatchObject({ amount: 300 });
+    expect(res.body.refundHistory[0]).toMatchObject({ amount: 50 });
+  });
 });
 
 describe("marketplace status APIs", () => {
@@ -405,5 +547,22 @@ describe("marketplace status APIs", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ profileId: 1, complete: true });
+  });
+});
+
+describe("admin marketplace financial dashboard", () => {
+  it("returns financial dashboard aggregates and breakdowns", async () => {
+    const res = await request(makeApp()).get(
+      "/admin/marketplace/financial-dashboard",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      chargebacks: 0,
+      revenueByCustomer: expect.any(Array),
+      revenueByVendor: expect.any(Array),
+      revenueByRegion: expect.any(Array),
+      revenueByMaterial: expect.any(Array),
+    });
   });
 });

@@ -12,9 +12,12 @@ export type PricingRuleCode = typeof PricingRuleCode[keyof typeof PricingRuleCod
 export const PricingRuleCode = {
   base_hourly_rate: 'base_hourly_rate',
   distance_mile_rate: 'distance_mile_rate',
+  per_load_rate: 'per_load_rate',
+  per_ton_rate: 'per_ton_rate',
   truck_type_multiplier: 'truck_type_multiplier',
   material_multiplier: 'material_multiplier',
   demand_multiplier: 'demand_multiplier',
+  truck_shortage_multiplier: 'truck_shortage_multiplier',
   available_trucks_multiplier: 'available_trucks_multiplier',
   traffic_multiplier: 'traffic_multiplier',
   fuel_surcharge_pct: 'fuel_surcharge_pct',
@@ -26,4 +29,8 @@ export const PricingRuleCode = {
   weather_surcharge_pct: 'weather_surcharge_pct',
   waiting_time_hourly_rate: 'waiting_time_hourly_rate',
   extra_stop_fee: 'extra_stop_fee',
+  bridge_toll_fee: 'bridge_toll_fee',
+  permit_fee: 'permit_fee',
+  tax_rate: 'tax_rate',
+  platform_fee: 'platform_fee',
 } as const;

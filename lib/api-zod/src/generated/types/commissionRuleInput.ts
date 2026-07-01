@@ -12,6 +12,8 @@ export interface CommissionRuleInput {
   scope: CommissionScope;
   /** @nullable */
   targetId?: number | null;
+  /** @nullable */
+  targetKey?: string | null;
   /**
      * @minimum 0
      * @maximum 1

@@ -2399,6 +2399,25 @@ paths:
         "409":
           description: Pricing rules are incomplete
 
+  /marketplace/financial/quote:
+    post:
+      operationId: createMarketplaceFinancialQuote
+      tags: [marketplace]
+      summary: Create a full financial quote with taxes, fees, surcharges, and invoice total
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketplaceQuoteInput"
+      responses:
+        "201":
+          description: Financial quote created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceFinancialQuote"
+
   /admin/marketplace/commission-rules:
     get:
       operationId: listCommissionRules
@@ -2590,6 +2609,71 @@ paths:
               schema:
                 $ref: "#/components/schemas/MarketplaceRefund"
 
+  /marketplace/jobs/{id}/vendor-settlements:
+    post:
+      operationId: createVendorSettlement
+      tags: [marketplace]
+      summary: Create a vendor settlement record for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VendorSettlementInput"
+      responses:
+        "201":
+          description: Vendor settlement created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorSettlement"
+
+  /marketplace/vendor-settlements:
+    get:
+      operationId: listVendorSettlements
+      tags: [marketplace]
+      summary: List vendor settlements visible to the caller
+      responses:
+        "200":
+          description: Vendor settlements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VendorSettlement"
+
+  /marketplace/customer-billing/summary:
+    get:
+      operationId: getCustomerBillingSummary
+      tags: [marketplace]
+      summary: Get customer billing balance, payment history, and refund history
+      responses:
+        "200":
+          description: Customer billing summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerBillingSummary"
+
+  /admin/marketplace/financial-dashboard:
+    get:
+      operationId: getMarketplaceFinancialDashboard
+      tags: [marketplace]
+      summary: Get admin financial dashboard metrics
+      responses:
+        "200":
+          description: Financial dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceFinancialDashboard"
+
   /marketplace/fleet-availability:
     get:
       operationId: getMarketplaceFleetAvailability
@@ -2675,7 +2759,7 @@ components:
 
     CommissionScope:
       type: string
-      enum: [global, customer, vendor, project, emergency]
+      enum: [global, customer, vendor, project, material, region, emergency]
 
     CommissionRuleInput:
       type: object
@@ -2685,6 +2769,8 @@ components:
           $ref: "#/components/schemas/CommissionScope"
         targetId:
           type: ["integer", "null"]
+        targetKey:
+          type: ["string", "null"]
         rate:
           type: number
           minimum: 0
@@ -2791,9 +2877,12 @@ components:
         [
           base_hourly_rate,
           distance_mile_rate,
+          per_load_rate,
+          per_ton_rate,
           truck_type_multiplier,
           material_multiplier,
           demand_multiplier,
+          truck_shortage_multiplier,
           available_trucks_multiplier,
           traffic_multiplier,
           fuel_surcharge_pct,
@@ -2805,6 +2894,10 @@ components:
           weather_surcharge_pct,
           waiting_time_hourly_rate,
           extra_stop_fee,
+          bridge_toll_fee,
+          permit_fee,
+          tax_rate,
+          platform_fee,
         ]
 
     PricingValueType:
@@ -2876,14 +2969,22 @@ components:
           type: integer
         baseRatePerHour:
           type: ["number", "null"]
+        loads:
+          type: ["number", "null"]
+        quantityTons:
+          type: ["number", "null"]
         truckType:
           type: ["string", "null"]
         materialType:
+          type: ["string", "null"]
+        region:
           type: ["string", "null"]
         demandLevel:
           type: ["string", "null"]
         availableTrucks:
           type: ["integer", "null"]
+        truckShortageLevel:
+          type: ["string", "null"]
         trafficLevel:
           type: ["string", "null"]
         fuelSurcharge:
@@ -2904,6 +3005,16 @@ components:
           type: ["number", "null"]
         extraStops:
           type: ["integer", "null"]
+        bridgeTolls:
+          type: ["number", "null"]
+        permitFees:
+          type: ["number", "null"]
+        taxes:
+          type: ["number", "null"]
+        fees:
+          type: ["number", "null"]
+        fuelSurchargeAmount:
+          type: ["number", "null"]
         expiresAt:
           type: ["string", "null"]
           format: date-time
@@ -2975,6 +3086,110 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    MarketplaceFinancialQuote:
+      allOf:
+        - $ref: "#/components/schemas/MarketplaceQuote"
+        - type: object
+          required: [taxes, fees, fuelSurcharge, bridgeTolls, permitFees, finalInvoice, netMarketplaceRevenue, pricingExplanation]
+          properties:
+            taxes: { type: number }
+            fees: { type: number }
+            fuelSurcharge: { type: number }
+            bridgeTolls: { type: number }
+            permitFees: { type: number }
+            finalInvoice: { type: number }
+            netMarketplaceRevenue: { type: number }
+            pricingExplanation:
+              type: array
+              items:
+                $ref: "#/components/schemas/PricingBreakdownItem"
+
+    VendorSettlementInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [approved_invoice, pending_payout, paid, failed, partial_payout, adjustment, credit, debit]
+        adjustmentAmount: { type: number }
+        creditAmount: { type: number }
+        debitAmount: { type: number }
+        metadata:
+          type: object
+
+    VendorSettlement:
+      type: object
+      required: [id, vendorId, status]
+      properties:
+        id: { type: integer }
+        jobId: { type: ["integer", "null"] }
+        vendorId: { type: integer }
+        status: { type: string }
+        approvedInvoiceAmount: { type: number }
+        pendingPayoutAmount: { type: number }
+        paidAmount: { type: number }
+        failedAmount: { type: number }
+        adjustmentAmount: { type: number }
+        creditAmount: { type: number }
+        debitAmount: { type: number }
+        driverPayoutAmount: { type: number }
+        reconciliationStatus: { type: string }
+
+    CustomerBillingSummary:
+      type: object
+      required: [outstandingBalance, invoiceCount, paymentHistory, refundHistory]
+      properties:
+        outstandingBalance: { type: number }
+        invoiceCount: { type: integer }
+        paymentHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaymentTransaction"
+        refundHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/MarketplaceRefund"
+
+    MarketplaceFinancialDashboard:
+      type: object
+      required:
+        [
+          gmv,
+          commission,
+          marketplaceRevenue,
+          vendorPayouts,
+          outstandingInvoices,
+          refunds,
+          chargebacks,
+          averageJobValue,
+          averageMargin,
+          revenueByCustomer,
+          revenueByVendor,
+          revenueByRegion,
+          revenueByMaterial,
+        ]
+      properties:
+        gmv: { type: number }
+        commission: { type: number }
+        marketplaceRevenue: { type: number }
+        vendorPayouts: { type: number }
+        outstandingInvoices: { type: number }
+        refunds: { type: number }
+        chargebacks: { type: number }
+        averageJobValue: { type: number }
+        averageMargin: { type: number }
+        revenueByCustomer:
+          type: array
+          items: { type: object }
+        revenueByVendor:
+          type: array
+          items: { type: object }
+        revenueByRegion:
+          type: array
+          items: { type: object }
+        revenueByMaterial:
+          type: array
+          items: { type: object }
 
     PaymentTransaction:
       type: object

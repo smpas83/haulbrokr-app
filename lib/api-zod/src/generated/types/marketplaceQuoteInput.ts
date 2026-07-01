@@ -19,13 +19,21 @@ export interface MarketplaceQuoteInput {
   /** @nullable */
   baseRatePerHour?: number | null;
   /** @nullable */
+  loads?: number | null;
+  /** @nullable */
+  quantityTons?: number | null;
+  /** @nullable */
   truckType?: string | null;
   /** @nullable */
   materialType?: string | null;
   /** @nullable */
+  region?: string | null;
+  /** @nullable */
   demandLevel?: string | null;
   /** @nullable */
   availableTrucks?: number | null;
+  /** @nullable */
+  truckShortageLevel?: string | null;
   /** @nullable */
   trafficLevel?: string | null;
   fuelSurcharge?: boolean;
@@ -40,6 +48,16 @@ export interface MarketplaceQuoteInput {
   waitingTimeMinutes?: number | null;
   /** @nullable */
   extraStops?: number | null;
+  /** @nullable */
+  bridgeTolls?: number | null;
+  /** @nullable */
+  permitFees?: number | null;
+  /** @nullable */
+  taxes?: number | null;
+  /** @nullable */
+  fees?: number | null;
+  /** @nullable */
+  fuelSurchargeAmount?: number | null;
   /** @nullable */
   expiresAt?: Date | null;
 }

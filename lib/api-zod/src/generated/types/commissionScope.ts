@@ -14,5 +14,7 @@ export const CommissionScope = {
   customer: 'customer',
   vendor: 'vendor',
   project: 'project',
+  material: 'material',
+  region: 'region',
   emergency: 'emergency',
 } as const;

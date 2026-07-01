@@ -63,6 +63,7 @@ import type {
   CreateRatingRequest,
   CreditApplication,
   CreditApplicationInput,
+  CustomerBillingSummary,
   DashboardStats,
   DisconnectQuickBooks200,
   DocumentStatus,
@@ -99,6 +100,8 @@ import type {
   ListProjects200Item,
   ListRequestsParams,
   ListTrucksParams,
+  MarketplaceFinancialDashboard,
+  MarketplaceFinancialQuote,
   MarketplaceInvoice,
   MarketplaceQuote,
   MarketplaceQuoteInput,
@@ -143,6 +146,8 @@ import type {
   UserProfile,
   UserProfileInput,
   UserProfileUpdate,
+  VendorSettlement,
+  VendorSettlementInput,
   VerifyCheckoutInput,
   VerifyComplianceInput,
   VerifyMicrodepositsInput,
@@ -9077,6 +9082,77 @@ export const useCreateMarketplaceQuote = <TError = ErrorType<void>,
       return useMutation(getCreateMarketplaceQuoteMutationOptions(options));
     }
 
+export const getCreateMarketplaceFinancialQuoteUrl = () => {
+
+
+
+
+  return `/api/marketplace/financial/quote`
+}
+
+/**
+ * @summary Create a full financial quote with taxes, fees, surcharges, and invoice total
+ */
+export const createMarketplaceFinancialQuote = async (marketplaceQuoteInput: MarketplaceQuoteInput, options?: RequestInit): Promise<MarketplaceFinancialQuote> => {
+
+  return customFetch<MarketplaceFinancialQuote>(getCreateMarketplaceFinancialQuoteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      marketplaceQuoteInput,)
+  }
+);}
+
+
+
+
+export const getCreateMarketplaceFinancialQuoteMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMarketplaceFinancialQuote>>, TError,{data: BodyType<MarketplaceQuoteInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMarketplaceFinancialQuote>>, TError,{data: BodyType<MarketplaceQuoteInput>}, TContext> => {
+
+const mutationKey = ['createMarketplaceFinancialQuote'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMarketplaceFinancialQuote>>, {data: BodyType<MarketplaceQuoteInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMarketplaceFinancialQuote(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMarketplaceFinancialQuoteMutationResult = NonNullable<Awaited<ReturnType<typeof createMarketplaceFinancialQuote>>>
+    export type CreateMarketplaceFinancialQuoteMutationBody = BodyType<MarketplaceQuoteInput>
+    export type CreateMarketplaceFinancialQuoteMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a full financial quote with taxes, fees, surcharges, and invoice total
+ */
+export const useCreateMarketplaceFinancialQuote = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMarketplaceFinancialQuote>>, TError,{data: BodyType<MarketplaceQuoteInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createMarketplaceFinancialQuote>>,
+        TError,
+        {data: BodyType<MarketplaceQuoteInput>},
+        TContext
+      > => {
+      return useMutation(getCreateMarketplaceFinancialQuoteMutationOptions(options));
+    }
+
 export const getListCommissionRulesUrl = () => {
 
 
@@ -9819,6 +9895,309 @@ export const useCreateMarketplaceJobRefund = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getCreateMarketplaceJobRefundMutationOptions(options));
     }
+
+export const getCreateVendorSettlementUrl = (id: number,) => {
+
+
+
+
+  return `/api/marketplace/jobs/${id}/vendor-settlements`
+}
+
+/**
+ * @summary Create a vendor settlement record for a job
+ */
+export const createVendorSettlement = async (id: number,
+    vendorSettlementInput?: VendorSettlementInput, options?: RequestInit): Promise<VendorSettlement> => {
+
+  return customFetch<VendorSettlement>(getCreateVendorSettlementUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      vendorSettlementInput,)
+  }
+);}
+
+
+
+
+export const getCreateVendorSettlementMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createVendorSettlement>>, TError,{id: number;data?: BodyType<VendorSettlementInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createVendorSettlement>>, TError,{id: number;data?: BodyType<VendorSettlementInput>}, TContext> => {
+
+const mutationKey = ['createVendorSettlement'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createVendorSettlement>>, {id: number;data?: BodyType<VendorSettlementInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createVendorSettlement(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateVendorSettlementMutationResult = NonNullable<Awaited<ReturnType<typeof createVendorSettlement>>>
+    export type CreateVendorSettlementMutationBody = BodyType<VendorSettlementInput> | undefined
+    export type CreateVendorSettlementMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a vendor settlement record for a job
+ */
+export const useCreateVendorSettlement = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createVendorSettlement>>, TError,{id: number;data?: BodyType<VendorSettlementInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createVendorSettlement>>,
+        TError,
+        {id: number;data?: BodyType<VendorSettlementInput>},
+        TContext
+      > => {
+      return useMutation(getCreateVendorSettlementMutationOptions(options));
+    }
+
+export const getListVendorSettlementsUrl = () => {
+
+
+
+
+  return `/api/marketplace/vendor-settlements`
+}
+
+/**
+ * @summary List vendor settlements visible to the caller
+ */
+export const listVendorSettlements = async ( options?: RequestInit): Promise<VendorSettlement[]> => {
+
+  return customFetch<VendorSettlement[]>(getListVendorSettlementsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListVendorSettlementsQueryKey = () => {
+    return [
+    `/api/marketplace/vendor-settlements`
+    ] as const;
+    }
+
+
+export const getListVendorSettlementsQueryOptions = <TData = Awaited<ReturnType<typeof listVendorSettlements>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listVendorSettlements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListVendorSettlementsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listVendorSettlements>>> = ({ signal }) => listVendorSettlements({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listVendorSettlements>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListVendorSettlementsQueryResult = NonNullable<Awaited<ReturnType<typeof listVendorSettlements>>>
+export type ListVendorSettlementsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List vendor settlements visible to the caller
+ */
+
+export function useListVendorSettlements<TData = Awaited<ReturnType<typeof listVendorSettlements>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listVendorSettlements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListVendorSettlementsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetCustomerBillingSummaryUrl = () => {
+
+
+
+
+  return `/api/marketplace/customer-billing/summary`
+}
+
+/**
+ * @summary Get customer billing balance, payment history, and refund history
+ */
+export const getCustomerBillingSummary = async ( options?: RequestInit): Promise<CustomerBillingSummary> => {
+
+  return customFetch<CustomerBillingSummary>(getGetCustomerBillingSummaryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerBillingSummaryQueryKey = () => {
+    return [
+    `/api/marketplace/customer-billing/summary`
+    ] as const;
+    }
+
+
+export const getGetCustomerBillingSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerBillingSummary>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerBillingSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerBillingSummaryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerBillingSummary>>> = ({ signal }) => getCustomerBillingSummary({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerBillingSummary>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerBillingSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerBillingSummary>>>
+export type GetCustomerBillingSummaryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get customer billing balance, payment history, and refund history
+ */
+
+export function useGetCustomerBillingSummary<TData = Awaited<ReturnType<typeof getCustomerBillingSummary>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerBillingSummary>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerBillingSummaryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetMarketplaceFinancialDashboardUrl = () => {
+
+
+
+
+  return `/api/admin/marketplace/financial-dashboard`
+}
+
+/**
+ * @summary Get admin financial dashboard metrics
+ */
+export const getMarketplaceFinancialDashboard = async ( options?: RequestInit): Promise<MarketplaceFinancialDashboard> => {
+
+  return customFetch<MarketplaceFinancialDashboard>(getGetMarketplaceFinancialDashboardUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMarketplaceFinancialDashboardQueryKey = () => {
+    return [
+    `/api/admin/marketplace/financial-dashboard`
+    ] as const;
+    }
+
+
+export const getGetMarketplaceFinancialDashboardQueryOptions = <TData = Awaited<ReturnType<typeof getMarketplaceFinancialDashboard>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceFinancialDashboard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMarketplaceFinancialDashboardQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMarketplaceFinancialDashboard>>> = ({ signal }) => getMarketplaceFinancialDashboard({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceFinancialDashboard>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMarketplaceFinancialDashboardQueryResult = NonNullable<Awaited<ReturnType<typeof getMarketplaceFinancialDashboard>>>
+export type GetMarketplaceFinancialDashboardQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get admin financial dashboard metrics
+ */
+
+export function useGetMarketplaceFinancialDashboard<TData = Awaited<ReturnType<typeof getMarketplaceFinancialDashboard>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceFinancialDashboard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMarketplaceFinancialDashboardQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetMarketplaceFleetAvailabilityUrl = (params?: GetMarketplaceFleetAvailabilityParams,) => {
   const normalizedParams = new URLSearchParams();

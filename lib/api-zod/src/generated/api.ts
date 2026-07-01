@@ -2732,10 +2732,14 @@ export const CreateMarketplaceQuoteBody = zod.object({
   "estimatedHours": zod.number(),
   "trucksNeeded": zod.number().optional(),
   "baseRatePerHour": zod.number().nullish(),
+  "loads": zod.number().nullish(),
+  "quantityTons": zod.number().nullish(),
   "truckType": zod.string().nullish(),
   "materialType": zod.string().nullish(),
+  "region": zod.string().nullish(),
   "demandLevel": zod.string().nullish(),
   "availableTrucks": zod.number().nullish(),
+  "truckShortageLevel": zod.string().nullish(),
   "trafficLevel": zod.string().nullish(),
   "fuelSurcharge": zod.boolean().optional(),
   "nightHauling": zod.boolean().optional(),
@@ -2746,6 +2750,49 @@ export const CreateMarketplaceQuoteBody = zod.object({
   "weatherSeverity": zod.string().nullish(),
   "waitingTimeMinutes": zod.number().nullish(),
   "extraStops": zod.number().nullish(),
+  "bridgeTolls": zod.number().nullish(),
+  "permitFees": zod.number().nullish(),
+  "taxes": zod.number().nullish(),
+  "fees": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "expiresAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Create a full financial quote with taxes, fees, surcharges, and invoice total
+ */
+export const CreateMarketplaceFinancialQuoteBody = zod.object({
+  "customerId": zod.number().nullish(),
+  "vendorId": zod.number().nullish(),
+  "projectId": zod.number().nullish(),
+  "distanceMiles": zod.number(),
+  "estimatedHours": zod.number(),
+  "trucksNeeded": zod.number().optional(),
+  "baseRatePerHour": zod.number().nullish(),
+  "loads": zod.number().nullish(),
+  "quantityTons": zod.number().nullish(),
+  "truckType": zod.string().nullish(),
+  "materialType": zod.string().nullish(),
+  "region": zod.string().nullish(),
+  "demandLevel": zod.string().nullish(),
+  "availableTrucks": zod.number().nullish(),
+  "truckShortageLevel": zod.string().nullish(),
+  "trafficLevel": zod.string().nullish(),
+  "fuelSurcharge": zod.boolean().optional(),
+  "nightHauling": zod.boolean().optional(),
+  "weekend": zod.boolean().optional(),
+  "holiday": zod.boolean().optional(),
+  "emergencyDispatch": zod.boolean().optional(),
+  "remoteLocation": zod.boolean().optional(),
+  "weatherSeverity": zod.string().nullish(),
+  "waitingTimeMinutes": zod.number().nullish(),
+  "extraStops": zod.number().nullish(),
+  "bridgeTolls": zod.number().nullish(),
+  "permitFees": zod.number().nullish(),
+  "taxes": zod.number().nullish(),
+  "fees": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
   "expiresAt": zod.coerce.date().nullish()
 })
 
@@ -2759,8 +2806,9 @@ export const listCommissionRulesResponseOneRateMax = 1;
 
 
 export const ListCommissionRulesResponseItem = zod.object({
-  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'emergency']),
+  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'material', 'region', 'emergency']),
   "targetId": zod.number().nullish(),
+  "targetKey": zod.string().nullish(),
   "rate": zod.number().min(listCommissionRulesResponseOneRateMin).max(listCommissionRulesResponseOneRateMax),
   "priority": zod.number().optional(),
   "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
@@ -2785,8 +2833,9 @@ export const createCommissionRuleBodyRateMax = 1;
 
 
 export const CreateCommissionRuleBody = zod.object({
-  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'emergency']),
+  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'material', 'region', 'emergency']),
   "targetId": zod.number().nullish(),
+  "targetKey": zod.string().nullish(),
   "rate": zod.number().min(createCommissionRuleBodyRateMin).max(createCommissionRuleBodyRateMax),
   "priority": zod.number().optional(),
   "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
@@ -2809,8 +2858,9 @@ export const updateCommissionRuleBodyRateMax = 1;
 
 
 export const UpdateCommissionRuleBody = zod.object({
-  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'emergency']),
+  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'material', 'region', 'emergency']),
   "targetId": zod.number().nullish(),
+  "targetKey": zod.string().nullish(),
   "rate": zod.number().min(updateCommissionRuleBodyRateMin).max(updateCommissionRuleBodyRateMax),
   "priority": zod.number().optional(),
   "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
@@ -2825,8 +2875,9 @@ export const updateCommissionRuleResponseOneRateMax = 1;
 
 
 export const UpdateCommissionRuleResponse = zod.object({
-  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'emergency']),
+  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'material', 'region', 'emergency']),
   "targetId": zod.number().nullish(),
+  "targetKey": zod.string().nullish(),
   "rate": zod.number().min(updateCommissionRuleResponseOneRateMin).max(updateCommissionRuleResponseOneRateMax),
   "priority": zod.number().optional(),
   "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
@@ -2845,7 +2896,7 @@ export const UpdateCommissionRuleResponse = zod.object({
  * @summary List marketplace pricing rules
  */
 export const ListPricingRulesResponseItem = zod.object({
-  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee']),
+  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'per_load_rate', 'per_ton_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'truck_shortage_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee', 'bridge_toll_fee', 'permit_fee', 'tax_rate', 'platform_fee']),
   "label": zod.string(),
   "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
   "value": zod.number(),
@@ -2869,7 +2920,7 @@ export const ListPricingRulesResponse = zod.array(ListPricingRulesResponseItem)
  * @summary Create a marketplace pricing rule
  */
 export const CreatePricingRuleBody = zod.object({
-  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee']),
+  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'per_load_rate', 'per_ton_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'truck_shortage_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee', 'bridge_toll_fee', 'permit_fee', 'tax_rate', 'platform_fee']),
   "label": zod.string(),
   "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
   "value": zod.number(),
@@ -2891,7 +2942,7 @@ export const UpdatePricingRuleParams = zod.object({
 })
 
 export const UpdatePricingRuleBody = zod.object({
-  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee']),
+  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'per_load_rate', 'per_ton_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'truck_shortage_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee', 'bridge_toll_fee', 'permit_fee', 'tax_rate', 'platform_fee']),
   "label": zod.string(),
   "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
   "value": zod.number(),
@@ -2905,7 +2956,7 @@ export const UpdatePricingRuleBody = zod.object({
 })
 
 export const UpdatePricingRuleResponse = zod.object({
-  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee']),
+  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'per_load_rate', 'per_ton_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'truck_shortage_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee', 'bridge_toll_fee', 'permit_fee', 'tax_rate', 'platform_fee']),
   "label": zod.string(),
   "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
   "value": zod.number(),
@@ -3001,6 +3052,106 @@ export const CreateMarketplaceJobRefundParams = zod.object({
 export const CreateMarketplaceJobRefundBody = zod.object({
   "amountCents": zod.number().min(1).optional(),
   "reason": zod.string().nullish()
+})
+
+
+/**
+ * @summary Create a vendor settlement record for a job
+ */
+export const CreateVendorSettlementParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateVendorSettlementBody = zod.object({
+  "status": zod.enum(['approved_invoice', 'pending_payout', 'paid', 'failed', 'partial_payout', 'adjustment', 'credit', 'debit']).optional(),
+  "adjustmentAmount": zod.number().optional(),
+  "creditAmount": zod.number().optional(),
+  "debitAmount": zod.number().optional(),
+  "metadata": zod.object({
+
+}).passthrough().optional()
+})
+
+
+/**
+ * @summary List vendor settlements visible to the caller
+ */
+export const ListVendorSettlementsResponseItem = zod.object({
+  "id": zod.number(),
+  "jobId": zod.number().nullish(),
+  "vendorId": zod.number(),
+  "status": zod.string(),
+  "approvedInvoiceAmount": zod.number().optional(),
+  "pendingPayoutAmount": zod.number().optional(),
+  "paidAmount": zod.number().optional(),
+  "failedAmount": zod.number().optional(),
+  "adjustmentAmount": zod.number().optional(),
+  "creditAmount": zod.number().optional(),
+  "debitAmount": zod.number().optional(),
+  "driverPayoutAmount": zod.number().optional(),
+  "reconciliationStatus": zod.string().optional()
+})
+export const ListVendorSettlementsResponse = zod.array(ListVendorSettlementsResponseItem)
+
+
+/**
+ * @summary Get customer billing balance, payment history, and refund history
+ */
+export const GetCustomerBillingSummaryResponse = zod.object({
+  "outstandingBalance": zod.number(),
+  "invoiceCount": zod.number(),
+  "paymentHistory": zod.array(zod.object({
+  "id": zod.number(),
+  "jobId": zod.number().nullish(),
+  "kind": zod.string(),
+  "status": zod.string(),
+  "amountCents": zod.number(),
+  "amount": zod.number(),
+  "currency": zod.string().optional(),
+  "stripePaymentIntentId": zod.string().nullish(),
+  "stripeChargeId": zod.string().nullish(),
+  "stripeTransferId": zod.string().nullish(),
+  "stripeRefundId": zod.string().nullish(),
+  "stripeCheckoutSessionId": zod.string().nullish(),
+  "createdAt": zod.coerce.date().optional()
+})),
+  "refundHistory": zod.array(zod.object({
+  "id": zod.number(),
+  "jobId": zod.number().nullable(),
+  "amountCents": zod.number(),
+  "amount": zod.number(),
+  "reason": zod.string().nullish(),
+  "stripeRefundId": zod.string().nullish(),
+  "status": zod.string()
+}))
+})
+
+
+/**
+ * @summary Get admin financial dashboard metrics
+ */
+export const GetMarketplaceFinancialDashboardResponse = zod.object({
+  "gmv": zod.number(),
+  "commission": zod.number(),
+  "marketplaceRevenue": zod.number(),
+  "vendorPayouts": zod.number(),
+  "outstandingInvoices": zod.number(),
+  "refunds": zod.number(),
+  "chargebacks": zod.number(),
+  "averageJobValue": zod.number(),
+  "averageMargin": zod.number(),
+  "revenueByCustomer": zod.array(zod.object({
+
+}).passthrough()),
+  "revenueByVendor": zod.array(zod.object({
+
+}).passthrough()),
+  "revenueByRegion": zod.array(zod.object({
+
+}).passthrough()),
+  "revenueByMaterial": zod.array(zod.object({
+
+}).passthrough())
 })
 
 

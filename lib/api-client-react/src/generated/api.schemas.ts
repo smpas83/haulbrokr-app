@@ -17,6 +17,8 @@ export const CommissionScope = {
   customer: 'customer',
   vendor: 'vendor',
   project: 'project',
+  material: 'material',
+  region: 'region',
   emergency: 'emergency',
 } as const;
 
@@ -32,6 +34,8 @@ export interface CommissionRuleInput {
   scope: CommissionScope;
   /** @nullable */
   targetId?: number | null;
+  /** @nullable */
+  targetKey?: string | null;
   /**
      * @minimum 0
      * @maximum 1
@@ -96,9 +100,12 @@ export type PricingRuleCode = typeof PricingRuleCode[keyof typeof PricingRuleCod
 export const PricingRuleCode = {
   base_hourly_rate: 'base_hourly_rate',
   distance_mile_rate: 'distance_mile_rate',
+  per_load_rate: 'per_load_rate',
+  per_ton_rate: 'per_ton_rate',
   truck_type_multiplier: 'truck_type_multiplier',
   material_multiplier: 'material_multiplier',
   demand_multiplier: 'demand_multiplier',
+  truck_shortage_multiplier: 'truck_shortage_multiplier',
   available_trucks_multiplier: 'available_trucks_multiplier',
   traffic_multiplier: 'traffic_multiplier',
   fuel_surcharge_pct: 'fuel_surcharge_pct',
@@ -110,6 +117,10 @@ export const PricingRuleCode = {
   weather_surcharge_pct: 'weather_surcharge_pct',
   waiting_time_hourly_rate: 'waiting_time_hourly_rate',
   extra_stop_fee: 'extra_stop_fee',
+  bridge_toll_fee: 'bridge_toll_fee',
+  permit_fee: 'permit_fee',
+  tax_rate: 'tax_rate',
+  platform_fee: 'platform_fee',
 } as const;
 
 export type PricingValueType = typeof PricingValueType[keyof typeof PricingValueType];
@@ -168,13 +179,21 @@ export interface MarketplaceQuoteInput {
   /** @nullable */
   baseRatePerHour?: number | null;
   /** @nullable */
+  loads?: number | null;
+  /** @nullable */
+  quantityTons?: number | null;
+  /** @nullable */
   truckType?: string | null;
   /** @nullable */
   materialType?: string | null;
   /** @nullable */
+  region?: string | null;
+  /** @nullable */
   demandLevel?: string | null;
   /** @nullable */
   availableTrucks?: number | null;
+  /** @nullable */
+  truckShortageLevel?: string | null;
   /** @nullable */
   trafficLevel?: string | null;
   fuelSurcharge?: boolean;
@@ -189,6 +208,16 @@ export interface MarketplaceQuoteInput {
   waitingTimeMinutes?: number | null;
   /** @nullable */
   extraStops?: number | null;
+  /** @nullable */
+  bridgeTolls?: number | null;
+  /** @nullable */
+  permitFees?: number | null;
+  /** @nullable */
+  taxes?: number | null;
+  /** @nullable */
+  fees?: number | null;
+  /** @nullable */
+  fuelSurchargeAmount?: number | null;
   /** @nullable */
   expiresAt?: string | null;
 }
@@ -222,6 +251,58 @@ export interface MarketplaceQuote {
   createdAt?: string;
 }
 
+export type MarketplaceFinancialQuote = MarketplaceQuote & {
+  taxes: number;
+  fees: number;
+  fuelSurcharge: number;
+  bridgeTolls: number;
+  permitFees: number;
+  finalInvoice: number;
+  netMarketplaceRevenue: number;
+  pricingExplanation: PricingBreakdownItem[];
+};
+
+export type VendorSettlementInputStatus = typeof VendorSettlementInputStatus[keyof typeof VendorSettlementInputStatus];
+
+
+export const VendorSettlementInputStatus = {
+  approved_invoice: 'approved_invoice',
+  pending_payout: 'pending_payout',
+  paid: 'paid',
+  failed: 'failed',
+  partial_payout: 'partial_payout',
+  adjustment: 'adjustment',
+  credit: 'credit',
+  debit: 'debit',
+} as const;
+
+export type VendorSettlementInputMetadata = { [key: string]: unknown };
+
+export interface VendorSettlementInput {
+  status?: VendorSettlementInputStatus;
+  adjustmentAmount?: number;
+  creditAmount?: number;
+  debitAmount?: number;
+  metadata?: VendorSettlementInputMetadata;
+}
+
+export interface VendorSettlement {
+  id: number;
+  /** @nullable */
+  jobId?: number | null;
+  vendorId: number;
+  status: string;
+  approvedInvoiceAmount?: number;
+  pendingPayoutAmount?: number;
+  paidAmount?: number;
+  failedAmount?: number;
+  adjustmentAmount?: number;
+  creditAmount?: number;
+  debitAmount?: number;
+  driverPayoutAmount?: number;
+  reconciliationStatus?: string;
+}
+
 export interface PaymentTransaction {
   id: number;
   /** @nullable */
@@ -242,6 +323,50 @@ export interface PaymentTransaction {
   /** @nullable */
   stripeCheckoutSessionId?: string | null;
   createdAt?: string;
+}
+
+export interface MarketplaceRefund {
+  id: number;
+  /** @nullable */
+  jobId: number | null;
+  amountCents: number;
+  amount: number;
+  /** @nullable */
+  reason?: string | null;
+  /** @nullable */
+  stripeRefundId?: string | null;
+  status: string;
+}
+
+export interface CustomerBillingSummary {
+  outstandingBalance: number;
+  invoiceCount: number;
+  paymentHistory: PaymentTransaction[];
+  refundHistory: MarketplaceRefund[];
+}
+
+export type MarketplaceFinancialDashboardRevenueByCustomerItem = { [key: string]: unknown };
+
+export type MarketplaceFinancialDashboardRevenueByVendorItem = { [key: string]: unknown };
+
+export type MarketplaceFinancialDashboardRevenueByRegionItem = { [key: string]: unknown };
+
+export type MarketplaceFinancialDashboardRevenueByMaterialItem = { [key: string]: unknown };
+
+export interface MarketplaceFinancialDashboard {
+  gmv: number;
+  commission: number;
+  marketplaceRevenue: number;
+  vendorPayouts: number;
+  outstandingInvoices: number;
+  refunds: number;
+  chargebacks: number;
+  averageJobValue: number;
+  averageMargin: number;
+  revenueByCustomer: MarketplaceFinancialDashboardRevenueByCustomerItem[];
+  revenueByVendor: MarketplaceFinancialDashboardRevenueByVendorItem[];
+  revenueByRegion: MarketplaceFinancialDashboardRevenueByRegionItem[];
+  revenueByMaterial: MarketplaceFinancialDashboardRevenueByMaterialItem[];
 }
 
 export interface MarketplaceInvoice {
@@ -265,19 +390,6 @@ export interface MarketplaceRefundInput {
   amountCents?: number;
   /** @nullable */
   reason?: string | null;
-}
-
-export interface MarketplaceRefund {
-  id: number;
-  /** @nullable */
-  jobId: number | null;
-  amountCents: number;
-  amount: number;
-  /** @nullable */
-  reason?: string | null;
-  /** @nullable */
-  stripeRefundId?: string | null;
-  status: string;
 }
 
 export type FleetAvailabilityByTruckTypeItem = {
