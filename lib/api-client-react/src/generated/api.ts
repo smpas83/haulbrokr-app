@@ -39,6 +39,10 @@ import type {
   CheckoutSessionInput,
   ClockInTicket200,
   ClockOutTicket200,
+  CommissionPreview,
+  CommissionPreviewInput,
+  CommissionRule,
+  CommissionRuleInput,
   ComplianceInput,
   ComplianceRecord,
   ConnectQuickBooks200,
@@ -91,6 +95,8 @@ import type {
   ListProjects200Item,
   ListRequestsParams,
   ListTrucksParams,
+  MarketplaceQuote,
+  MarketplaceQuoteInput,
   OrgMember,
   OrgMembersResponse,
   OrganizationComplianceStatus,
@@ -102,6 +108,8 @@ import type {
   PayoutConnectLink,
   PayoutConnectLinkInput,
   PayoutStatus,
+  PricingRule,
+  PricingRuleInput,
   ProjectAssignment,
   ProjectAssignmentInput,
   RatingResponse,
@@ -8915,5 +8923,587 @@ export const useCreateDriverEvent = <TError = ErrorType<CreateDriverEvent422>,
         TContext
       > => {
       return useMutation(getCreateDriverEventMutationOptions(options));
+    }
+
+export const getPreviewMarketplaceCommissionUrl = () => {
+
+
+
+
+  return `/api/marketplace/commission/preview`
+}
+
+/**
+ * @summary Preview commission and payout amounts for a work amount
+ */
+export const previewMarketplaceCommission = async (commissionPreviewInput: CommissionPreviewInput, options?: RequestInit): Promise<CommissionPreview> => {
+
+  return customFetch<CommissionPreview>(getPreviewMarketplaceCommissionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      commissionPreviewInput,)
+  }
+);}
+
+
+
+
+export const getPreviewMarketplaceCommissionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewMarketplaceCommission>>, TError,{data: BodyType<CommissionPreviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof previewMarketplaceCommission>>, TError,{data: BodyType<CommissionPreviewInput>}, TContext> => {
+
+const mutationKey = ['previewMarketplaceCommission'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof previewMarketplaceCommission>>, {data: BodyType<CommissionPreviewInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  previewMarketplaceCommission(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PreviewMarketplaceCommissionMutationResult = NonNullable<Awaited<ReturnType<typeof previewMarketplaceCommission>>>
+    export type PreviewMarketplaceCommissionMutationBody = BodyType<CommissionPreviewInput>
+    export type PreviewMarketplaceCommissionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Preview commission and payout amounts for a work amount
+ */
+export const usePreviewMarketplaceCommission = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof previewMarketplaceCommission>>, TError,{data: BodyType<CommissionPreviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof previewMarketplaceCommission>>,
+        TError,
+        {data: BodyType<CommissionPreviewInput>},
+        TContext
+      > => {
+      return useMutation(getPreviewMarketplaceCommissionMutationOptions(options));
+    }
+
+export const getCreateMarketplaceQuoteUrl = () => {
+
+
+
+
+  return `/api/marketplace/quotes`
+}
+
+/**
+ * @summary Create a dynamic marketplace quote
+ */
+export const createMarketplaceQuote = async (marketplaceQuoteInput: MarketplaceQuoteInput, options?: RequestInit): Promise<MarketplaceQuote> => {
+
+  return customFetch<MarketplaceQuote>(getCreateMarketplaceQuoteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      marketplaceQuoteInput,)
+  }
+);}
+
+
+
+
+export const getCreateMarketplaceQuoteMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMarketplaceQuote>>, TError,{data: BodyType<MarketplaceQuoteInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMarketplaceQuote>>, TError,{data: BodyType<MarketplaceQuoteInput>}, TContext> => {
+
+const mutationKey = ['createMarketplaceQuote'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMarketplaceQuote>>, {data: BodyType<MarketplaceQuoteInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMarketplaceQuote(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMarketplaceQuoteMutationResult = NonNullable<Awaited<ReturnType<typeof createMarketplaceQuote>>>
+    export type CreateMarketplaceQuoteMutationBody = BodyType<MarketplaceQuoteInput>
+    export type CreateMarketplaceQuoteMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a dynamic marketplace quote
+ */
+export const useCreateMarketplaceQuote = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMarketplaceQuote>>, TError,{data: BodyType<MarketplaceQuoteInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createMarketplaceQuote>>,
+        TError,
+        {data: BodyType<MarketplaceQuoteInput>},
+        TContext
+      > => {
+      return useMutation(getCreateMarketplaceQuoteMutationOptions(options));
+    }
+
+export const getListCommissionRulesUrl = () => {
+
+
+
+
+  return `/api/admin/marketplace/commission-rules`
+}
+
+/**
+ * @summary List marketplace commission rules
+ */
+export const listCommissionRules = async ( options?: RequestInit): Promise<CommissionRule[]> => {
+
+  return customFetch<CommissionRule[]>(getListCommissionRulesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCommissionRulesQueryKey = () => {
+    return [
+    `/api/admin/marketplace/commission-rules`
+    ] as const;
+    }
+
+
+export const getListCommissionRulesQueryOptions = <TData = Awaited<ReturnType<typeof listCommissionRules>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCommissionRules>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCommissionRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCommissionRules>>> = ({ signal }) => listCommissionRules({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCommissionRules>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCommissionRulesQueryResult = NonNullable<Awaited<ReturnType<typeof listCommissionRules>>>
+export type ListCommissionRulesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List marketplace commission rules
+ */
+
+export function useListCommissionRules<TData = Awaited<ReturnType<typeof listCommissionRules>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCommissionRules>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCommissionRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateCommissionRuleUrl = () => {
+
+
+
+
+  return `/api/admin/marketplace/commission-rules`
+}
+
+/**
+ * @summary Create a marketplace commission rule
+ */
+export const createCommissionRule = async (commissionRuleInput: CommissionRuleInput, options?: RequestInit): Promise<CommissionRule> => {
+
+  return customFetch<CommissionRule>(getCreateCommissionRuleUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      commissionRuleInput,)
+  }
+);}
+
+
+
+
+export const getCreateCommissionRuleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommissionRule>>, TError,{data: BodyType<CommissionRuleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCommissionRule>>, TError,{data: BodyType<CommissionRuleInput>}, TContext> => {
+
+const mutationKey = ['createCommissionRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCommissionRule>>, {data: BodyType<CommissionRuleInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCommissionRule(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCommissionRuleMutationResult = NonNullable<Awaited<ReturnType<typeof createCommissionRule>>>
+    export type CreateCommissionRuleMutationBody = BodyType<CommissionRuleInput>
+    export type CreateCommissionRuleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a marketplace commission rule
+ */
+export const useCreateCommissionRule = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCommissionRule>>, TError,{data: BodyType<CommissionRuleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCommissionRule>>,
+        TError,
+        {data: BodyType<CommissionRuleInput>},
+        TContext
+      > => {
+      return useMutation(getCreateCommissionRuleMutationOptions(options));
+    }
+
+export const getUpdateCommissionRuleUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/marketplace/commission-rules/${id}`
+}
+
+/**
+ * @summary Update a marketplace commission rule
+ */
+export const updateCommissionRule = async (id: number,
+    commissionRuleInput: CommissionRuleInput, options?: RequestInit): Promise<CommissionRule> => {
+
+  return customFetch<CommissionRule>(getUpdateCommissionRuleUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      commissionRuleInput,)
+  }
+);}
+
+
+
+
+export const getUpdateCommissionRuleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCommissionRule>>, TError,{id: number;data: BodyType<CommissionRuleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCommissionRule>>, TError,{id: number;data: BodyType<CommissionRuleInput>}, TContext> => {
+
+const mutationKey = ['updateCommissionRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCommissionRule>>, {id: number;data: BodyType<CommissionRuleInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateCommissionRule(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCommissionRuleMutationResult = NonNullable<Awaited<ReturnType<typeof updateCommissionRule>>>
+    export type UpdateCommissionRuleMutationBody = BodyType<CommissionRuleInput>
+    export type UpdateCommissionRuleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a marketplace commission rule
+ */
+export const useUpdateCommissionRule = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCommissionRule>>, TError,{id: number;data: BodyType<CommissionRuleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCommissionRule>>,
+        TError,
+        {id: number;data: BodyType<CommissionRuleInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateCommissionRuleMutationOptions(options));
+    }
+
+export const getListPricingRulesUrl = () => {
+
+
+
+
+  return `/api/admin/marketplace/pricing-rules`
+}
+
+/**
+ * @summary List marketplace pricing rules
+ */
+export const listPricingRules = async ( options?: RequestInit): Promise<PricingRule[]> => {
+
+  return customFetch<PricingRule[]>(getListPricingRulesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPricingRulesQueryKey = () => {
+    return [
+    `/api/admin/marketplace/pricing-rules`
+    ] as const;
+    }
+
+
+export const getListPricingRulesQueryOptions = <TData = Awaited<ReturnType<typeof listPricingRules>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPricingRules>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPricingRulesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPricingRules>>> = ({ signal }) => listPricingRules({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPricingRules>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPricingRulesQueryResult = NonNullable<Awaited<ReturnType<typeof listPricingRules>>>
+export type ListPricingRulesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List marketplace pricing rules
+ */
+
+export function useListPricingRules<TData = Awaited<ReturnType<typeof listPricingRules>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPricingRules>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPricingRulesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreatePricingRuleUrl = () => {
+
+
+
+
+  return `/api/admin/marketplace/pricing-rules`
+}
+
+/**
+ * @summary Create a marketplace pricing rule
+ */
+export const createPricingRule = async (pricingRuleInput: PricingRuleInput, options?: RequestInit): Promise<PricingRule> => {
+
+  return customFetch<PricingRule>(getCreatePricingRuleUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      pricingRuleInput,)
+  }
+);}
+
+
+
+
+export const getCreatePricingRuleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPricingRule>>, TError,{data: BodyType<PricingRuleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPricingRule>>, TError,{data: BodyType<PricingRuleInput>}, TContext> => {
+
+const mutationKey = ['createPricingRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPricingRule>>, {data: BodyType<PricingRuleInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPricingRule(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePricingRuleMutationResult = NonNullable<Awaited<ReturnType<typeof createPricingRule>>>
+    export type CreatePricingRuleMutationBody = BodyType<PricingRuleInput>
+    export type CreatePricingRuleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a marketplace pricing rule
+ */
+export const useCreatePricingRule = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPricingRule>>, TError,{data: BodyType<PricingRuleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createPricingRule>>,
+        TError,
+        {data: BodyType<PricingRuleInput>},
+        TContext
+      > => {
+      return useMutation(getCreatePricingRuleMutationOptions(options));
+    }
+
+export const getUpdatePricingRuleUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/marketplace/pricing-rules/${id}`
+}
+
+/**
+ * @summary Update a marketplace pricing rule
+ */
+export const updatePricingRule = async (id: number,
+    pricingRuleInput: PricingRuleInput, options?: RequestInit): Promise<PricingRule> => {
+
+  return customFetch<PricingRule>(getUpdatePricingRuleUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      pricingRuleInput,)
+  }
+);}
+
+
+
+
+export const getUpdatePricingRuleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePricingRule>>, TError,{id: number;data: BodyType<PricingRuleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePricingRule>>, TError,{id: number;data: BodyType<PricingRuleInput>}, TContext> => {
+
+const mutationKey = ['updatePricingRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePricingRule>>, {id: number;data: BodyType<PricingRuleInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updatePricingRule(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePricingRuleMutationResult = NonNullable<Awaited<ReturnType<typeof updatePricingRule>>>
+    export type UpdatePricingRuleMutationBody = BodyType<PricingRuleInput>
+    export type UpdatePricingRuleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a marketplace pricing rule
+ */
+export const useUpdatePricingRule = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePricingRule>>, TError,{id: number;data: BodyType<PricingRuleInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePricingRule>>,
+        TError,
+        {id: number;data: BodyType<PricingRuleInput>},
+        TContext
+      > => {
+      return useMutation(getUpdatePricingRuleMutationOptions(options));
     }
 

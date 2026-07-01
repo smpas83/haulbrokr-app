@@ -9,6 +9,219 @@ export interface HealthStatus {
   status: string;
 }
 
+export type CommissionScope = typeof CommissionScope[keyof typeof CommissionScope];
+
+
+export const CommissionScope = {
+  global: 'global',
+  customer: 'customer',
+  vendor: 'vendor',
+  project: 'project',
+  emergency: 'emergency',
+} as const;
+
+export type CommissionRuleInputActive = typeof CommissionRuleInputActive[keyof typeof CommissionRuleInputActive];
+
+
+export const CommissionRuleInputActive = {
+  NUMBER_0: 0,
+  NUMBER_1: 1,
+} as const;
+
+export interface CommissionRuleInput {
+  scope: CommissionScope;
+  /** @nullable */
+  targetId?: number | null;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  rate: number;
+  priority?: number;
+  active?: CommissionRuleInputActive;
+  /** @nullable */
+  reason?: string | null;
+  effectiveFrom?: string;
+  /** @nullable */
+  effectiveTo?: string | null;
+}
+
+export type CommissionRule = CommissionRuleInput & ({
+  id: number;
+  /** @nullable */
+  createdByProfileId?: number | null;
+  createdAt: string;
+  updatedAt: string;
+});
+
+export interface MarketplaceAmounts {
+  workAmount: number;
+  platformCommission: number;
+  vendorPayout: number;
+  driverPayout: number;
+  marketplaceRevenue: number;
+  platformProfit: number;
+  customerTotal: number;
+  gmv: number;
+}
+
+export interface CommissionPreviewInput {
+  workAmount: number;
+  /** @nullable */
+  customerId?: number | null;
+  /** @nullable */
+  vendorId?: number | null;
+  /** @nullable */
+  projectId?: number | null;
+  emergency?: boolean;
+}
+
+export type CommissionPreviewCommission = {
+  /** @nullable */
+  ruleId: number | null;
+  scope: string;
+  rate: number;
+  /** @nullable */
+  reason?: string | null;
+};
+
+export interface CommissionPreview {
+  commission: CommissionPreviewCommission;
+  amounts: MarketplaceAmounts;
+}
+
+export type PricingRuleCode = typeof PricingRuleCode[keyof typeof PricingRuleCode];
+
+
+export const PricingRuleCode = {
+  base_hourly_rate: 'base_hourly_rate',
+  distance_mile_rate: 'distance_mile_rate',
+  truck_type_multiplier: 'truck_type_multiplier',
+  material_multiplier: 'material_multiplier',
+  demand_multiplier: 'demand_multiplier',
+  available_trucks_multiplier: 'available_trucks_multiplier',
+  traffic_multiplier: 'traffic_multiplier',
+  fuel_surcharge_pct: 'fuel_surcharge_pct',
+  night_surcharge_pct: 'night_surcharge_pct',
+  weekend_surcharge_pct: 'weekend_surcharge_pct',
+  holiday_surcharge_pct: 'holiday_surcharge_pct',
+  emergency_surcharge_pct: 'emergency_surcharge_pct',
+  remote_location_surcharge_pct: 'remote_location_surcharge_pct',
+  weather_surcharge_pct: 'weather_surcharge_pct',
+  waiting_time_hourly_rate: 'waiting_time_hourly_rate',
+  extra_stop_fee: 'extra_stop_fee',
+} as const;
+
+export type PricingValueType = typeof PricingValueType[keyof typeof PricingValueType];
+
+
+export const PricingValueType = {
+  fixed_amount: 'fixed_amount',
+  percent: 'percent',
+  multiplier: 'multiplier',
+} as const;
+
+export type PricingRuleInputActive = typeof PricingRuleInputActive[keyof typeof PricingRuleInputActive];
+
+
+export const PricingRuleInputActive = {
+  NUMBER_0: 0,
+  NUMBER_1: 1,
+} as const;
+
+export interface PricingRuleInput {
+  code: PricingRuleCode;
+  label: string;
+  valueType: PricingValueType;
+  value: number;
+  /** @nullable */
+  targetKey?: string | null;
+  /** @nullable */
+  minInput?: number | null;
+  /** @nullable */
+  maxInput?: number | null;
+  priority?: number;
+  active?: PricingRuleInputActive;
+  effectiveFrom?: string;
+  /** @nullable */
+  effectiveTo?: string | null;
+}
+
+export type PricingRule = PricingRuleInput & ({
+  id: number;
+  /** @nullable */
+  createdByProfileId?: number | null;
+  createdAt: string;
+  updatedAt: string;
+});
+
+export interface MarketplaceQuoteInput {
+  /** @nullable */
+  customerId?: number | null;
+  /** @nullable */
+  vendorId?: number | null;
+  /** @nullable */
+  projectId?: number | null;
+  distanceMiles: number;
+  estimatedHours: number;
+  trucksNeeded?: number;
+  /** @nullable */
+  baseRatePerHour?: number | null;
+  /** @nullable */
+  truckType?: string | null;
+  /** @nullable */
+  materialType?: string | null;
+  /** @nullable */
+  demandLevel?: string | null;
+  /** @nullable */
+  availableTrucks?: number | null;
+  /** @nullable */
+  trafficLevel?: string | null;
+  fuelSurcharge?: boolean;
+  nightHauling?: boolean;
+  weekend?: boolean;
+  holiday?: boolean;
+  emergencyDispatch?: boolean;
+  remoteLocation?: boolean;
+  /** @nullable */
+  weatherSeverity?: string | null;
+  /** @nullable */
+  waitingTimeMinutes?: number | null;
+  /** @nullable */
+  extraStops?: number | null;
+  /** @nullable */
+  expiresAt?: string | null;
+}
+
+export interface PricingBreakdownItem {
+  code: string;
+  label: string;
+  valueType: PricingValueType;
+  value: number;
+  amount: number;
+}
+
+export interface MarketplaceQuote {
+  id?: number;
+  status?: string;
+  customerQuote: number;
+  customerTotal: number;
+  vendorPayout: number;
+  driverPayout: number;
+  platformCommission: number;
+  marketplaceRevenue: number;
+  platformProfit: number;
+  gmv: number;
+  commissionRate: number;
+  /** @nullable */
+  commissionRuleId?: number | null;
+  commissionScope?: string;
+  pricingBreakdown: PricingBreakdownItem[];
+  /** @nullable */
+  expiresAt?: string | null;
+  createdAt?: string;
+}
+
 export type UserProfileRole = typeof UserProfileRole[keyof typeof UserProfileRole];
 
 
@@ -1397,6 +1610,7 @@ export type AdminAccessPermissionsItem = typeof AdminAccessPermissionsItem[keyof
 export const AdminAccessPermissionsItem = {
   overview: 'overview',
   payouts: 'payouts',
+  pricing: 'pricing',
   credit: 'credit',
   compliance: 'compliance',
   bins: 'bins',

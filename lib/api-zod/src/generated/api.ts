@@ -1429,7 +1429,7 @@ export const SubmitCreditApplicationResponse = zod.object({
 export const GetAdminAccessResponse = zod.object({
   "isAdmin": zod.boolean().describe('True when the caller has any staff role (at least one permission).'),
   "staffRole": zod.union([zod.literal('ap'),zod.literal('ar'),zod.literal('cfo'),zod.literal('cto'),zod.literal('ceo'),zod.literal('accounting'),zod.literal('it'),zod.literal(null)]).nullish().describe('The caller\'s resolved HaulBrokr staff role, or null if not staff.'),
-  "permissions": zod.array(zod.enum(['overview', 'payouts', 'credit', 'compliance', 'bins', 'view_staff', 'manage_staff'])).describe('The exact capabilities this staff role unlocks.')
+  "permissions": zod.array(zod.enum(['overview', 'payouts', 'pricing', 'credit', 'compliance', 'bins', 'view_staff', 'manage_staff'])).describe('The exact capabilities this staff role unlocks.')
 })
 
 
@@ -2688,5 +2688,239 @@ export const CreateDriverEventBody = zod.object({
   "url": zod.string()
 })).optional()
 })
+
+
+/**
+ * @summary Preview commission and payout amounts for a work amount
+ */
+export const PreviewMarketplaceCommissionBody = zod.object({
+  "workAmount": zod.number(),
+  "customerId": zod.number().nullish(),
+  "vendorId": zod.number().nullish(),
+  "projectId": zod.number().nullish(),
+  "emergency": zod.boolean().optional()
+})
+
+export const PreviewMarketplaceCommissionResponse = zod.object({
+  "commission": zod.object({
+  "ruleId": zod.number().nullable(),
+  "scope": zod.string(),
+  "rate": zod.number(),
+  "reason": zod.string().nullish()
+}),
+  "amounts": zod.object({
+  "workAmount": zod.number(),
+  "platformCommission": zod.number(),
+  "vendorPayout": zod.number(),
+  "driverPayout": zod.number(),
+  "marketplaceRevenue": zod.number(),
+  "platformProfit": zod.number(),
+  "customerTotal": zod.number(),
+  "gmv": zod.number()
+})
+})
+
+
+/**
+ * @summary Create a dynamic marketplace quote
+ */
+export const CreateMarketplaceQuoteBody = zod.object({
+  "customerId": zod.number().nullish(),
+  "vendorId": zod.number().nullish(),
+  "projectId": zod.number().nullish(),
+  "distanceMiles": zod.number(),
+  "estimatedHours": zod.number(),
+  "trucksNeeded": zod.number().optional(),
+  "baseRatePerHour": zod.number().nullish(),
+  "truckType": zod.string().nullish(),
+  "materialType": zod.string().nullish(),
+  "demandLevel": zod.string().nullish(),
+  "availableTrucks": zod.number().nullish(),
+  "trafficLevel": zod.string().nullish(),
+  "fuelSurcharge": zod.boolean().optional(),
+  "nightHauling": zod.boolean().optional(),
+  "weekend": zod.boolean().optional(),
+  "holiday": zod.boolean().optional(),
+  "emergencyDispatch": zod.boolean().optional(),
+  "remoteLocation": zod.boolean().optional(),
+  "weatherSeverity": zod.string().nullish(),
+  "waitingTimeMinutes": zod.number().nullish(),
+  "extraStops": zod.number().nullish(),
+  "expiresAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary List marketplace commission rules
+ */
+export const listCommissionRulesResponseOneRateMin = 0;
+export const listCommissionRulesResponseOneRateMax = 1;
+
+
+
+export const ListCommissionRulesResponseItem = zod.object({
+  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'emergency']),
+  "targetId": zod.number().nullish(),
+  "rate": zod.number().min(listCommissionRulesResponseOneRateMin).max(listCommissionRulesResponseOneRateMax),
+  "priority": zod.number().optional(),
+  "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
+  "reason": zod.string().nullish(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish()
+}).and(zod.object({
+  "id": zod.number(),
+  "createdByProfileId": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+export const ListCommissionRulesResponse = zod.array(ListCommissionRulesResponseItem)
+
+
+/**
+ * @summary Create a marketplace commission rule
+ */
+export const createCommissionRuleBodyRateMin = 0;
+export const createCommissionRuleBodyRateMax = 1;
+
+
+
+export const CreateCommissionRuleBody = zod.object({
+  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'emergency']),
+  "targetId": zod.number().nullish(),
+  "rate": zod.number().min(createCommissionRuleBodyRateMin).max(createCommissionRuleBodyRateMax),
+  "priority": zod.number().optional(),
+  "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
+  "reason": zod.string().nullish(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Update a marketplace commission rule
+ */
+export const UpdateCommissionRuleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateCommissionRuleBodyRateMin = 0;
+export const updateCommissionRuleBodyRateMax = 1;
+
+
+
+export const UpdateCommissionRuleBody = zod.object({
+  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'emergency']),
+  "targetId": zod.number().nullish(),
+  "rate": zod.number().min(updateCommissionRuleBodyRateMin).max(updateCommissionRuleBodyRateMax),
+  "priority": zod.number().optional(),
+  "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
+  "reason": zod.string().nullish(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish()
+})
+
+export const updateCommissionRuleResponseOneRateMin = 0;
+export const updateCommissionRuleResponseOneRateMax = 1;
+
+
+
+export const UpdateCommissionRuleResponse = zod.object({
+  "scope": zod.enum(['global', 'customer', 'vendor', 'project', 'emergency']),
+  "targetId": zod.number().nullish(),
+  "rate": zod.number().min(updateCommissionRuleResponseOneRateMin).max(updateCommissionRuleResponseOneRateMax),
+  "priority": zod.number().optional(),
+  "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
+  "reason": zod.string().nullish(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish()
+}).and(zod.object({
+  "id": zod.number(),
+  "createdByProfileId": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+
+
+/**
+ * @summary List marketplace pricing rules
+ */
+export const ListPricingRulesResponseItem = zod.object({
+  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee']),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "targetKey": zod.string().nullish(),
+  "minInput": zod.number().nullish(),
+  "maxInput": zod.number().nullish(),
+  "priority": zod.number().optional(),
+  "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish()
+}).and(zod.object({
+  "id": zod.number(),
+  "createdByProfileId": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+export const ListPricingRulesResponse = zod.array(ListPricingRulesResponseItem)
+
+
+/**
+ * @summary Create a marketplace pricing rule
+ */
+export const CreatePricingRuleBody = zod.object({
+  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee']),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "targetKey": zod.string().nullish(),
+  "minInput": zod.number().nullish(),
+  "maxInput": zod.number().nullish(),
+  "priority": zod.number().optional(),
+  "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Update a marketplace pricing rule
+ */
+export const UpdatePricingRuleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdatePricingRuleBody = zod.object({
+  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee']),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "targetKey": zod.string().nullish(),
+  "minInput": zod.number().nullish(),
+  "maxInput": zod.number().nullish(),
+  "priority": zod.number().optional(),
+  "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish()
+})
+
+export const UpdatePricingRuleResponse = zod.object({
+  "code": zod.enum(['base_hourly_rate', 'distance_mile_rate', 'truck_type_multiplier', 'material_multiplier', 'demand_multiplier', 'available_trucks_multiplier', 'traffic_multiplier', 'fuel_surcharge_pct', 'night_surcharge_pct', 'weekend_surcharge_pct', 'holiday_surcharge_pct', 'emergency_surcharge_pct', 'remote_location_surcharge_pct', 'weather_surcharge_pct', 'waiting_time_hourly_rate', 'extra_stop_fee']),
+  "label": zod.string(),
+  "valueType": zod.enum(['fixed_amount', 'percent', 'multiplier']),
+  "value": zod.number(),
+  "targetKey": zod.string().nullish(),
+  "minInput": zod.number().nullish(),
+  "maxInput": zod.number().nullish(),
+  "priority": zod.number().optional(),
+  "active": zod.union([zod.literal(0),zod.literal(1)]).optional(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish()
+}).and(zod.object({
+  "id": zod.number(),
+  "createdByProfileId": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
 
 
