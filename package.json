@@ -6,6 +6,7 @@
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --filter \"!./artifacts/haulbrokr-mobile\" --if-present run build",
+    "lint": "prettier --check package.json pnpm-workspace.yaml tsconfig.json tsconfig.base.json .github/workflows/ci.yml docs/ENGINEERING_STATUS.md --ignore-unknown",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "verify:deployment": "node scripts/verify-deployment-readiness.mjs"
