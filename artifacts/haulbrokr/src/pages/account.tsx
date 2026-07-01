@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { 
   Loader2, CheckCircle2, AlertCircle, Clock, ShieldAlert,
-  CreditCard, Banknote, HelpCircle, ShieldCheck, FileText, ArrowRight
+  CreditCard, Banknote, HelpCircle, ShieldCheck, FileText, ArrowRight, Wallet
 } from "lucide-react";
 import {
   useGetMyProfile, useUpdateMyProfile, getGetMyProfileQueryKey,
@@ -17,7 +17,8 @@ import {
   useGetPayoutAccount, useSetPayoutAccount, useUpdatePayoutAccount, getGetPayoutAccountQueryKey,
   useGetPayoutStatus, getGetPayoutStatusQueryKey, useConnectPayoutLink,
   useGetCompliance, useSubmitCompliance, useVerifyCompliance, getGetComplianceQueryKey,
-  useGetCreditApplication, useSubmitCreditApplication, getGetCreditApplicationQueryKey
+  useGetCreditApplication, useSubmitCreditApplication, getGetCreditApplicationQueryKey,
+  useGetBillingHistory, useGetWallet, useGetPayoutHistory, useGetDriverEarnings
 } from "@workspace/api-client-react";
 
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +51,19 @@ function StatusBadge({ status, text }: { status: "not_submitted"|"not_set"|"pend
     return <Badge variant="destructive" className="rounded-none"><AlertCircle className="w-3 h-3 mr-1"/> {text || "Rejected"}</Badge>;
   }
   return <Badge variant="secondary" className="rounded-none text-muted-foreground">{text || "Not Submitted"}</Badge>;
+}
+
+const currency = (value: unknown) =>
+  `$${Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+function IntegrationStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="border-2 border-border bg-muted/20 p-4">
+      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-1 text-2xl font-black tabular-nums">{value}</p>
+      {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
+    </div>
+  );
 }
 
 const profileSchema = z.object({
@@ -1627,6 +1641,173 @@ function CreditApplicationTab() {
   );
 }
 
+function BillingHistoryTab() {
+  const { data, isLoading } = useGetBillingHistory();
+  const billing = data as any;
+  const invoices = Array.isArray(billing?.invoices) ? billing.invoices : [];
+  const payments = Array.isArray(billing?.payments) ? billing.payments : [];
+  const refunds = Array.isArray(billing?.refunds) ? billing.refunds : [];
+
+  if (isLoading) return <Skeleton className="h-[320px] w-full" />;
+
+  return (
+    <Card className="rounded-none border-2">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Billing History</CardTitle>
+        <CardDescription>Invoices, payments, refunds, and outstanding customer balance from the marketplace ledger.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <IntegrationStat label="Outstanding Balance" value={currency(billing?.outstandingBalance)} sub="Open invoices less credits" />
+          <IntegrationStat label="Invoices" value={String(invoices.length)} sub="Generated from completed hauls" />
+          <IntegrationStat label="Refunds" value={currency(refunds.reduce((sum: number, r: any) => sum + Number(r.amount ?? 0), 0))} sub="Refund history" />
+        </div>
+        <div className="space-y-3">
+          <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Recent invoices</h3>
+          {invoices.length === 0 ? (
+            <div className="border-2 border-dashed border-border p-8 text-center text-sm text-muted-foreground">No invoices yet.</div>
+          ) : (
+            invoices.slice(0, 8).map((invoice: any) => (
+              <div key={invoice.id ?? invoice.invoiceNumber} className="flex items-center justify-between border border-border p-3">
+                <div>
+                  <p className="font-bold">{invoice.invoiceNumber ?? `Invoice #${invoice.id}`}</p>
+                  <p className="text-xs text-muted-foreground">Issued {invoice.issuedAt ? new Date(invoice.issuedAt).toLocaleDateString() : "—"}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-black tabular-nums">{currency(invoice.totalAmount)}</p>
+                  <Badge variant="outline" className="rounded-none capitalize">{String(invoice.status ?? "issued").replace(/_/g, " ")}</Badge>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground mb-3">Recent payments</h3>
+            {payments.slice(0, 5).map((payment: any) => (
+              <div key={payment.id} className="flex justify-between border-b py-2 text-sm">
+                <span>{payment.eventType ?? payment.type ?? "payment"}</span>
+                <span className="font-bold">{currency(payment.amount)}</span>
+              </div>
+            ))}
+            {payments.length === 0 && <p className="text-sm text-muted-foreground">No payment history yet.</p>}
+          </div>
+          <div>
+            <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground mb-3">Recent refunds</h3>
+            {refunds.slice(0, 5).map((refund: any) => (
+              <div key={refund.id} className="flex justify-between border-b py-2 text-sm">
+                <span>{refund.reason ?? "Refund"}</span>
+                <span className="font-bold">{currency(refund.amount)}</span>
+              </div>
+            ))}
+            {refunds.length === 0 && <p className="text-sm text-muted-foreground">No refunds recorded.</p>}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function WalletTab() {
+  const { data: walletData, isLoading: walletLoading } = useGetWallet();
+  const { data: payoutData, isLoading: payoutLoading } = useGetPayoutHistory();
+  const wallet = walletData as any;
+  const payouts = Array.isArray((payoutData as any)?.payouts) ? (payoutData as any).payouts : [];
+  const transactions = Array.isArray(wallet?.transactions) ? wallet.transactions : [];
+
+  if (walletLoading || payoutLoading) return <Skeleton className="h-[320px] w-full" />;
+
+  return (
+    <Card className="rounded-none border-2">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Wallet className="h-5 w-5" /> Wallet & Payouts</CardTitle>
+        <CardDescription>Provider balances and vendor payout lifecycle from the payout engine.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <IntegrationStat label="Available" value={currency(wallet?.availableBalance)} sub="Paid or released jobs" />
+          <IntegrationStat label="Pending" value={currency(wallet?.pendingBalance)} sub="Completed, not yet released" />
+          <IntegrationStat label="Lifetime" value={currency(wallet?.lifetimeEarnings)} sub="All earnings" />
+        </div>
+        <div className="space-y-3">
+          <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Payout history</h3>
+          {payouts.length === 0 ? (
+            <div className="border-2 border-dashed border-border p-8 text-center text-sm text-muted-foreground">No vendor payouts yet.</div>
+          ) : (
+            payouts.slice(0, 8).map((payout: any) => (
+              <div key={payout.id} className="flex items-center justify-between border border-border p-3">
+                <div>
+                  <p className="font-bold">Job #{payout.jobId}</p>
+                  <p className="text-xs text-muted-foreground">Created {payout.createdAt ? new Date(payout.createdAt).toLocaleDateString() : "—"}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-black tabular-nums">{currency(payout.netAmount)}</p>
+                  <Badge variant="outline" className="rounded-none capitalize">{String(payout.status ?? "pending").replace(/_/g, " ")}</Badge>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        {transactions.length > 0 && (
+          <div>
+            <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground mb-3">Wallet transactions</h3>
+            {transactions.slice(0, 6).map((tx: any) => (
+              <div key={tx.id} className="flex justify-between border-b py-2 text-sm">
+                <span>{tx.description ?? tx.type}</span>
+                <span className="font-bold">{currency(tx.amount)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function DriverEarningsTab() {
+  const { data, isLoading } = useGetDriverEarnings();
+  const earnings = data as any;
+  const rows = Array.isArray(earnings?.earnings) ? earnings.earnings : [];
+
+  if (isLoading) return <Skeleton className="h-[320px] w-full" />;
+
+  return (
+    <Card className="rounded-none border-2">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Banknote className="h-5 w-5" /> Driver Earnings</CardTitle>
+        <CardDescription>Daily, weekly, monthly, and lifetime earnings prepared for future direct driver payouts.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <IntegrationStat label="Today" value={currency(earnings?.dailyEarnings)} />
+          <IntegrationStat label="This Week" value={currency(earnings?.weeklyEarnings)} />
+          <IntegrationStat label="This Month" value={currency(earnings?.monthlyEarnings)} />
+          <IntegrationStat label="Lifetime" value={currency(earnings?.lifetimeEarnings)} />
+        </div>
+        <div className="space-y-3">
+          <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Earning history</h3>
+          {rows.length === 0 ? (
+            <div className="border-2 border-dashed border-border p-8 text-center text-sm text-muted-foreground">No driver earnings yet.</div>
+          ) : (
+            rows.slice(0, 8).map((row: any) => (
+              <div key={row.id} className="flex items-center justify-between border border-border p-3">
+                <div>
+                  <p className="font-bold">Job #{row.jobId}</p>
+                  <p className="text-xs text-muted-foreground">Earned {row.earnedAt ? new Date(row.earnedAt).toLocaleDateString() : "—"}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-black tabular-nums">{currency(row.netEarnings)}</p>
+                  <Badge variant="outline" className="rounded-none capitalize">{String(row.status ?? "pending").replace(/_/g, " ")}</Badge>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AccountPage() {
   const { data: profile, isLoading } = useGetMyProfile();
   const initialTab = typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("tab") ?? "status") : "status";
@@ -1641,6 +1822,7 @@ export default function AccountPage() {
 
   const isCustomer = profile?.role === "customer";
   const isProvider = profile?.role === "provider";
+  const isDriver = profile?.role === "driver";
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto animate-in fade-in duration-500">
@@ -1656,9 +1838,12 @@ export default function AccountPage() {
           {isProvider && <TabsTrigger value="w9" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">W-9 Form</TabsTrigger>}
           {isProvider && <TabsTrigger value="insurance" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Insurance</TabsTrigger>}
           {isProvider && <TabsTrigger value="payout" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payout Account</TabsTrigger>}
+          {isProvider && <TabsTrigger value="wallet" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Wallet</TabsTrigger>}
+          {(isProvider || isDriver) && <TabsTrigger value="earnings" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Earnings</TabsTrigger>}
           {isProvider && <TabsTrigger value="dotcdl" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">DOT / CDL</TabsTrigger>}
           {(isProvider || isCustomer) && <TabsTrigger value="documents" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
           {isCustomer && <TabsTrigger value="payment" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payment Method</TabsTrigger>}
+          {isCustomer && <TabsTrigger value="billing" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Billing</TabsTrigger>}
           {isCustomer && <TabsTrigger value="credit" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Credit Application</TabsTrigger>}
         </TabsList>
         
@@ -1667,9 +1852,12 @@ export default function AccountPage() {
         {isProvider && <TabsContent value="w9" className="mt-0"><W9Tab /></TabsContent>}
         {isProvider && <TabsContent value="insurance" className="mt-0"><InsuranceTab /></TabsContent>}
         {isProvider && <TabsContent value="payout" className="mt-0"><PayoutAccountTab /></TabsContent>}
+        {isProvider && <TabsContent value="wallet" className="mt-0"><WalletTab /></TabsContent>}
+        {(isProvider || isDriver) && <TabsContent value="earnings" className="mt-0"><DriverEarningsTab /></TabsContent>}
         {isProvider && <TabsContent value="dotcdl" className="mt-0"><DotCdlTab /></TabsContent>}
         {(isProvider || isCustomer) && <TabsContent value="documents" className="mt-0"><AccountDocuments /></TabsContent>}
         {isCustomer && <TabsContent value="payment" className="mt-0"><PaymentMethodTab /></TabsContent>}
+        {isCustomer && <TabsContent value="billing" className="mt-0"><BillingHistoryTab /></TabsContent>}
         {isCustomer && <TabsContent value="credit" className="mt-0"><CreditApplicationTab /></TabsContent>}
       </Tabs>
     </div>

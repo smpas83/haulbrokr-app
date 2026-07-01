@@ -2329,6 +2329,291 @@ paths:
               schema:
                 type: object
 
+  # ── Sprint 6 Marketplace Payments & Trust ────────────────────────────────
+  /stripe/connected-account:
+    get:
+      operationId: getStripeConnectedAccount
+      tags: [payments]
+      summary: Current vendor Stripe Connect account status
+      responses:
+        "200":
+          description: Connected account status
+          content:
+            application/json:
+              schema: { type: object }
+  /billing/history:
+    get:
+      operationId: getBillingHistory
+      tags: [billing]
+      summary: Customer invoices, payment history, refunds, and outstanding balance
+      responses:
+        "200":
+          description: Billing history
+          content:
+            application/json:
+              schema: { type: object }
+  /payouts/history:
+    get:
+      operationId: getPayoutHistory
+      tags: [payouts]
+      summary: Vendor payout history
+      responses:
+        "200":
+          description: Payout history
+          content:
+            application/json:
+              schema: { type: object }
+  /driver/earnings:
+    get:
+      operationId: getDriverEarnings
+      tags: [wallet]
+      summary: Driver earnings, wallet balance, and period totals
+      parameters:
+        - name: driverId
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Driver earnings summary
+          content:
+            application/json:
+              schema: { type: object }
+  /admin/jobs/{id}/refunds:
+    post:
+      operationId: createAdminJobRefund
+      tags: [admin, payments]
+      summary: Create a full or partial job refund
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount: { type: number }
+                reason: { type: string }
+      responses:
+        "201":
+          description: Refund recorded
+          content:
+            application/json:
+              schema: { type: object }
+  /admin/payouts/{id}:
+    patch:
+      operationId: updateAdminVendorPayout
+      tags: [admin, payouts]
+      summary: Update vendor payout lifecycle state
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, approved, paid, failed, cancelled, partial]
+                paidAmount: { type: number }
+                reason: { type: string }
+                adjustmentReason: { type: string }
+      responses:
+        "200":
+          description: Payout updated
+          content:
+            application/json:
+              schema: { type: object }
+  /admin/payments/reconciliation:
+    get:
+      operationId: listPaymentReconciliationEvents
+      tags: [admin, payments]
+      summary: List payment audit and reconciliation events
+      parameters:
+        - name: since
+          in: query
+          schema: { type: string, format: date-time }
+        - name: until
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Reconciliation events
+          content:
+            application/json:
+              schema: { type: object }
+    post:
+      operationId: createPaymentReconciliationEvent
+      tags: [admin, payments]
+      summary: Record a manual reconciliation event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "201":
+          description: Reconciliation event recorded
+          content:
+            application/json:
+              schema: { type: object }
+  /admin/financials:
+    get:
+      operationId: getAdminFinancials
+      tags: [admin, payments]
+      summary: Marketplace financial metrics and revenue groupings
+      parameters:
+        - name: since
+          in: query
+          schema: { type: string, format: date-time }
+        - name: until
+          in: query
+          schema: { type: string, format: date-time }
+        - name: groupBy
+          in: query
+          schema:
+            type: string
+            enum: [customer, vendor, region, material, truckType, date]
+      responses:
+        "200":
+          description: Marketplace financial metrics
+          content:
+            application/json:
+              schema: { type: object }
+  /profiles/{id}/review-stats:
+    get:
+      operationId: getProfileReviewStats
+      tags: [ratings]
+      summary: Profile review statistics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Review stats
+          content:
+            application/json:
+              schema: { type: object }
+  /reviews/{id}/flags:
+    post:
+      operationId: flagReview
+      tags: [ratings]
+      summary: Flag a review for moderation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "201":
+          description: Review flag created
+          content:
+            application/json:
+              schema: { type: object }
+  /admin/reviews/{id}/moderation:
+    patch:
+      operationId: moderateReview
+      tags: [admin, ratings]
+      summary: Moderate a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [visible, flagged, removed]
+                reason: { type: string }
+      responses:
+        "200":
+          description: Review moderated
+          content:
+            application/json:
+              schema: { type: object }
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List current user's notifications
+      responses:
+        "200":
+          description: Notification list
+          content:
+            application/json:
+              schema: { type: object }
+  /notifications/queue:
+    post:
+      operationId: queueNotification
+      tags: [notifications]
+      summary: Queue a notification delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "201":
+          description: Notification queued
+          content:
+            application/json:
+              schema: { type: object }
+  /notifications/{id}/retry:
+    post:
+      operationId: retryNotification
+      tags: [notifications]
+      summary: Retry a notification delivery
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Notification retry result
+          content:
+            application/json:
+              schema: { type: object }
+  /admin/notifications/process:
+    post:
+      operationId: processQueuedNotifications
+      tags: [admin, notifications]
+      summary: Process due queued notifications
+      responses:
+        "200":
+          description: Processed notifications
+          content:
+            application/json:
+              schema: { type: object }
+
 components:
   schemas:
     HealthStatus:

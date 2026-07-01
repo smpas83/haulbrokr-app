@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   useGetDashboardStats, useGetDashboardActivity,
-  useGetMyProfile, useGetAccountStatus
+  useGetMyProfile, useGetAccountStatus, useListNotifications
 } from "@workspace/api-client-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +78,7 @@ export default function DashboardPage() {
   const { data: profile } = useGetMyProfile();
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: activities, isLoading: activityLoading } = useGetDashboardActivity();
+  const { data: notificationsData, isLoading: notificationsLoading } = useListNotifications();
   const { data: accountStatus } = useGetAccountStatus();
 
   const isCustomer = profile?.role === "customer";
@@ -120,6 +121,7 @@ export default function DashboardPage() {
   }, [stats, isCustomer, isProvider]);
 
   const hasChartData = pieData.some(d => d.value > 0);
+  const notifications = Array.isArray((notificationsData as any)?.notifications) ? (notificationsData as any).notifications : [];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -365,6 +367,41 @@ export default function DashboardPage() {
               <div className="text-center py-10 text-muted-foreground">
                 <Activity className="mx-auto h-8 w-8 mb-3 opacity-20" />
                 <p className="text-sm">No recent activity</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Production Notifications */}
+        <Card className="rounded-none border-2 col-span-full lg:col-span-4">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-bold">Notifications</CardTitle>
+            <CardDescription>Queued marketplace events from payments, dispatch, reviews, and compliance</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {notificationsLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+              </div>
+            ) : notifications.length > 0 ? (
+              <div className="space-y-1">
+                {notifications.slice(0, 6).map((notification: any) => (
+                  <div key={notification.id} className="flex items-center gap-4 py-2.5 px-3 hover:bg-muted/40 transition-colors border-b border-border/40 last:border-0">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${notification.status === "failed" ? "bg-destructive" : notification.status === "sent" ? "bg-green-500" : "bg-primary"}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium leading-tight truncate">{notification.subject || notification.body}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {String(notification.eventType ?? "notification").replace(/_/g, " ")} · {notification.channel}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="rounded-none capitalize">{notification.status}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 text-muted-foreground">
+                <Activity className="mx-auto h-8 w-8 mb-3 opacity-20" />
+                <p className="text-sm">No queued notifications</p>
               </div>
             )}
           </CardContent>

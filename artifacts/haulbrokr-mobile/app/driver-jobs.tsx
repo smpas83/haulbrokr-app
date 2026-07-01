@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -29,6 +30,7 @@ import {
   useUploadFile,
   useSubmitEvidence,
   useJobEvidence,
+  useDriverEarnings,
   type JobStatusUpdateStatus,
 } from "@/hooks/useLiveApi";
 
@@ -47,6 +49,7 @@ export default function DriverJobsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const jobsQuery = useLiveJobs();
+  const earningsQuery = useDriverEarnings();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const topPad = Platform.OS === "web" ? 16 : insets.top + 4;
@@ -75,6 +78,27 @@ export default function DriverJobsScreen() {
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
           Check in, report status, and upload proof for jobs you're hauling.
         </Text>
+
+        <View style={[styles.earningsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.earningsStat}>
+            <Text style={[styles.earningsLabel, { color: colors.mutedForeground }]}>TODAY</Text>
+            <Text style={[styles.earningsValue, { color: colors.foreground }]}>
+              ${Number((earningsQuery.data as any)?.dailyEarnings ?? 0).toLocaleString()}
+            </Text>
+          </View>
+          <View style={styles.earningsStat}>
+            <Text style={[styles.earningsLabel, { color: colors.mutedForeground }]}>WEEK</Text>
+            <Text style={[styles.earningsValue, { color: colors.foreground }]}>
+              ${Number((earningsQuery.data as any)?.weeklyEarnings ?? 0).toLocaleString()}
+            </Text>
+          </View>
+          <View style={styles.earningsStat}>
+            <Text style={[styles.earningsLabel, { color: colors.mutedForeground }]}>WALLET</Text>
+            <Text style={[styles.earningsValue, { color: colors.primary }]}>
+              ${Number((earningsQuery.data as any)?.wallet?.availableBalance ?? 0).toLocaleString()}
+            </Text>
+          </View>
+        </View>
 
         {jobsQuery.isLoading ? (
           <View style={styles.centerBox}>
@@ -211,6 +235,23 @@ function DriverJobCard({
 
       {expanded && (
         <View style={[styles.body, { borderTopColor: colors.border }]}>
+          <View style={[styles.routeBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.routeLabel, { color: colors.mutedForeground }]}>ROUTE</Text>
+              <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>↑ {job.pickupAddress ?? "Pickup pending"}</Text>
+              <Text style={[styles.routeText, { color: colors.foreground }]} numberOfLines={1}>↓ {job.deliveryAddress ?? "Delivery pending"}</Text>
+            </View>
+            <Pressable
+              onPress={() => {
+                const destination = encodeURIComponent(job.deliveryAddress ?? job.pickupAddress ?? "");
+                if (destination) Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${destination}`);
+              }}
+              style={[styles.navBtn, { backgroundColor: colors.primary }]}
+            >
+              <Feather name="navigation" size={15} color={colors.primaryForeground} />
+            </Pressable>
+          </View>
+
           {/* Status timeline */}
           <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>STATUS</Text>
           <View style={styles.timeline}>
@@ -349,6 +390,10 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 16 },
   title: { fontSize: 22, fontFamily: "Inter_700Bold", marginBottom: 4 },
   subtitle: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 18, lineHeight: 19 },
+  earningsCard: { borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 12, flexDirection: "row", gap: 12 },
+  earningsStat: { flex: 1 },
+  earningsLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 4 },
+  earningsValue: { fontSize: 17, fontFamily: "Inter_700Bold" },
   centerBox: { paddingVertical: 48, alignItems: "center" },
   emptyCard: { borderWidth: 1, borderRadius: 12, padding: 28, alignItems: "center", gap: 10 },
   emptyTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
@@ -359,6 +404,10 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   cardMeta: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   body: { borderTopWidth: 1, marginTop: 14, paddingTop: 14 },
+  routeBox: { borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 14, flexDirection: "row", alignItems: "center", gap: 12 },
+  routeLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 6 },
+  routeText: { fontSize: 12, fontFamily: "Inter_500Medium", marginBottom: 2 },
+  navBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   sectionLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 10 },
   timeline: { gap: 10, marginBottom: 14 },
   timelineRow: { flexDirection: "row", alignItems: "center", gap: 10 },

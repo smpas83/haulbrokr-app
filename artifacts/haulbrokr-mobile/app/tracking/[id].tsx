@@ -18,10 +18,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { ACCENT } from "@/constants/theme";
-import { useLiveJobs, useLiveRequests, useUpdateJob } from "@/hooks/useLiveApi";
+import { useJobStatusUpdates, useLiveJobs, useLiveRequests, useUpdateJob } from "@/hooks/useLiveApi";
 import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
 
 const TRUCK_EMOJI = "🚛";
+const STATUS_ORDER = ["en_route", "arrived", "loading", "loaded", "dumping", "completed"];
+const STATUS_LABELS: Record<string, string> = {
+  en_route: "En Route",
+  arrived: "Arrived",
+  loading: "Loading",
+  loaded: "Loaded",
+  dumping: "Dumping",
+  completed: "Completed",
+};
 
 export default function TrackingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,6 +47,7 @@ export default function TrackingScreen() {
   const numericId = !isRequestId && id ? parseInt(id, 10) : null;
   const { data: liveJobsRaw } = useLiveJobs();
   const { data: liveRequestsRaw } = useLiveRequests({ mine: true, enabled: isRequestId });
+  const { data: statusUpdatesRaw } = useJobStatusUpdates(numericId);
 
   const liveJob =
     numericId != null && Array.isArray(liveJobsRaw)
@@ -54,6 +64,13 @@ export default function TrackingScreen() {
     ? liveRequestToViewJob(liveRequest)
     : jobs.find((j) => j.id === id);
   const isProvider = profile.role === "provider";
+  const statusUpdates = Array.isArray(statusUpdatesRaw) ? statusUpdatesRaw : [];
+  const latestStatus = statusUpdates.length ? statusUpdates[statusUpdates.length - 1]?.status : null;
+  const latestIdx = latestStatus ? Math.max(0, STATUS_ORDER.indexOf(latestStatus)) : 0;
+  const backendProgressPct = latestStatus === "completed"
+    ? 100
+    : Math.max(20, Math.min(95, Math.round(((latestIdx + 1) / STATUS_ORDER.length) * 100)));
+  const backendEta = Math.max(1, (STATUS_ORDER.length - latestIdx - 1) * 12);
   const areaLabel = (() => {
     const parts = userLocation.split(",");
     const city = parts[0]?.trim() ?? "Dallas";
@@ -67,7 +84,14 @@ export default function TrackingScreen() {
   const [eta, setEta] = useState(34); // minutes remaining
 
   useEffect(() => {
-    // Slowly animate truck toward delivery
+    if (isLiveJob) {
+      const value = backendProgressPct / 100;
+      progress.setValue(value);
+      setProgressPct(backendProgressPct);
+      setEta(backendEta);
+      return;
+    }
+    // Demo fallback: slowly animate truck toward delivery.
     Animated.timing(progress, {
       toValue: 0.9,
       duration: 60000, // 60s to get to 90%
@@ -81,7 +105,7 @@ export default function TrackingScreen() {
     }, 10000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [isLiveJob, backendProgressPct, backendEta]);
 
   if (!job) {
     return (
@@ -178,7 +202,7 @@ export default function TrackingScreen() {
             Live Tracking
           </Text>
           <Text style={[styles.headerSub, { color: ACCENT.green, fontFamily: "Inter_500Medium" }]}>
-            ● In Progress
+            ● {latestStatus ? STATUS_LABELS[latestStatus] ?? latestStatus : "In Progress"}
           </Text>
         </View>
         <View style={[styles.etaBadge, { backgroundColor: colors.primary }]}>

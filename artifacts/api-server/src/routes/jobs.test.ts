@@ -24,6 +24,19 @@ const h = vi.hoisted(() => ({
 vi.mock("@workspace/db", () => {
   const makeTable = (name: string) =>
     new Proxy({}, { get: (_t, p) => `${name}.${String(p)}` });
+  const jobsTable = makeTable("jobs");
+  const paymentMethodsTable = makeTable("paymentMethods");
+  const creditApplicationsTable = makeTable("creditApplications");
+  const profilesTable = makeTable("profiles");
+  const requestsTable = makeTable("requests");
+  const activityTable = makeTable("activity");
+  const paymentHistoryTable = makeTable("paymentHistory");
+  const invoiceDocumentsTable = makeTable("invoiceDocuments");
+  const vendorPayoutsTable = makeTable("vendorPayouts");
+  const driverEarningsTable = makeTable("driverEarnings");
+  const driverWalletTable = makeTable("driverWallet");
+  const refundHistoryTable = makeTable("refundHistory");
+  const ticketsTable = makeTable("tickets");
   const db = {
     select: () => ({
       from: (table: unknown) => ({
@@ -49,12 +62,19 @@ vi.mock("@workspace/db", () => {
   };
   return {
     db,
-    jobsTable: makeTable("jobs"),
-    paymentMethodsTable: makeTable("paymentMethods"),
-    creditApplicationsTable: makeTable("creditApplications"),
-    profilesTable: makeTable("profiles"),
-    requestsTable: makeTable("requests"),
-    activityTable: makeTable("activity"),
+    jobsTable,
+    paymentMethodsTable,
+    creditApplicationsTable,
+    profilesTable,
+    requestsTable,
+    activityTable,
+    paymentHistoryTable,
+    invoiceDocumentsTable,
+    vendorPayoutsTable,
+    driverEarningsTable,
+    driverWalletTable,
+    refundHistoryTable,
+    ticketsTable,
   };
 });
 
