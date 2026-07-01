@@ -16,6 +16,8 @@ vi.mock("@workspace/db", () => {
   const refundHistoryTable = makeTable("refundHistory");
   const jobsTable = makeTable("jobs");
   const vendorPayoutsTable = makeTable("vendorPayouts");
+  const driverEarningsTable = makeTable("driverEarnings");
+  const driverWalletTable = makeTable("driverWallet");
   const profilesTable = makeTable("profiles");
   const stripeConnectedAccountsTable = makeTable("stripeConnectedAccounts");
   const db = {
@@ -40,6 +42,18 @@ vi.mock("@workspace/db", () => {
         return { returning: () => Promise.resolve([row]) };
       },
     }),
+    update: (table: unknown) => ({
+      set: (vals: Record<string, unknown>) => ({
+        where: () => ({
+          returning: () => {
+            const row = h.rows.get(table)?.[0] ?? {};
+            const updated = { ...row, ...vals };
+            h.rows.set(table, [updated]);
+            return Promise.resolve([updated]);
+          },
+        }),
+      }),
+    }),
   };
   return {
     db,
@@ -48,6 +62,8 @@ vi.mock("@workspace/db", () => {
     refundHistoryTable,
     jobsTable,
     vendorPayoutsTable,
+    driverEarningsTable,
+    driverWalletTable,
     profilesTable,
     stripeConnectedAccountsTable,
   };
@@ -90,6 +106,8 @@ import {
   profilesTable,
   refundHistoryTable,
   vendorPayoutsTable,
+  driverEarningsTable,
+  driverWalletTable,
 } from "@workspace/db";
 
 function makeApp(): Express {
@@ -176,5 +194,41 @@ describe("marketplace finance routes", () => {
     expect(res.body.netRevenue).toBe(15);
     expect(res.body.completedPayouts).toBe(100);
     expect(res.body.groups[0]).toMatchObject({ label: "gravel", gmv: 115 });
+  });
+
+  it("updates payout lifecycle state and recalculates driver wallet", async () => {
+    h.rows.set(vendorPayoutsTable, [{
+      id: 5,
+      jobId: 10,
+      driverProfileId: 30,
+      netAmount: "100.00",
+      paidAmount: "0.00",
+      status: "pending",
+    }]);
+    h.rows.set(driverEarningsTable, [{ id: 1, driverProfileId: 30, jobId: 10, netEarnings: "100.00", status: "pending", earnedAt: new Date() }]);
+
+    const res = await request(makeApp())
+      .patch("/admin/payouts/5")
+      .send({ status: "paid" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("paid");
+    expect(res.body.paidAmount).toBe(100);
+  });
+
+  it("returns driver earnings summary with day, week, month, and lifetime totals", async () => {
+    h.profile = { id: 30, role: "driver", companyName: "Driver Co" };
+    h.rows.set(driverWalletTable, [{ driverProfileId: 30, pendingBalance: "100.00", availableBalance: "25.00", paidOutBalance: "0.00", lifetimeEarnings: "125.00" }]);
+    h.rows.set(driverEarningsTable, [
+      { driverProfileId: 30, netEarnings: "100.00", status: "pending", earnedAt: new Date() },
+      { driverProfileId: 30, netEarnings: "25.00", status: "available", earnedAt: new Date() },
+    ]);
+
+    const res = await request(makeApp()).get("/driver/earnings");
+
+    expect(res.status).toBe(200);
+    expect(res.body.driverProfileId).toBe(30);
+    expect(res.body.lifetimeEarnings).toBe(125);
+    expect(res.body.earnings).toHaveLength(2);
   });
 });

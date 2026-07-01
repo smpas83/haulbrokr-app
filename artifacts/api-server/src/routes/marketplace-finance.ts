@@ -2,6 +2,8 @@ import { Router, type IRouter } from "express";
 import { and, desc, eq, gte, lte } from "drizzle-orm";
 import {
   db,
+  driverEarningsTable,
+  driverWalletTable,
   invoiceDocumentsTable,
   jobsTable,
   paymentHistoryTable,
@@ -15,7 +17,7 @@ import { requireStaffOrProfile, attachStaffSession } from "../middlewares/staffA
 import { attachClerkProfileIfPresent } from "../middlewares/requireAuth";
 import { requirePermission } from "../middlewares/requireAdmin";
 import { getUncachableStripeClient } from "../lib/stripeClient";
-import { recordPaymentHistory, recordRefundHistory } from "../lib/marketplaceLedger";
+import { recalculateDriverWallet, recordPaymentHistory, recordRefundHistory } from "../lib/marketplaceLedger";
 
 const router: IRouter = Router();
 
@@ -113,6 +115,81 @@ router.get("/payouts/history", requireProfile, async (req, res): Promise<void> =
     .where(eq(vendorPayoutsTable.vendorProfileId, profile.id))
     .orderBy(desc(vendorPayoutsTable.createdAt));
   res.json({ payouts: payouts.map(serializeMoneyRow) });
+});
+
+router.get("/driver/earnings", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const driverId = profile.role === "provider" && req.query.driverId != null
+    ? parseInt(String(req.query.driverId), 10)
+    : profile.id;
+  if (!Number.isFinite(driverId)) { res.status(400).json({ error: "Invalid driver id" }); return; }
+
+  await recalculateDriverWallet(driverId);
+  const [wallet] = await db
+    .select()
+    .from(driverWalletTable)
+    .where(eq(driverWalletTable.driverProfileId, driverId));
+  const earnings = await db
+    .select()
+    .from(driverEarningsTable)
+    .where(eq(driverEarningsTable.driverProfileId, driverId))
+    .orderBy(desc(driverEarningsTable.earnedAt));
+
+  const now = new Date();
+  const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const weekStart = new Date(dayStart);
+  weekStart.setUTCDate(dayStart.getUTCDate() - dayStart.getUTCDay());
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const sumSince = (date: Date) => earnings
+    .filter((earning) => new Date(earning.earnedAt).getTime() >= date.getTime())
+    .reduce((sum, earning) => sum + toNumber(earning.netEarnings), 0);
+
+  res.json({
+    driverProfileId: driverId,
+    wallet: wallet ? serializeMoneyRow(wallet) : null,
+    dailyEarnings: sumSince(dayStart),
+    weeklyEarnings: sumSince(weekStart),
+    monthlyEarnings: sumSince(monthStart),
+    lifetimeEarnings: wallet ? toNumber(wallet.lifetimeEarnings) : earnings.reduce((sum, earning) => sum + toNumber(earning.netEarnings), 0),
+    earnings: earnings.map(serializeMoneyRow),
+  });
+});
+
+router.patch("/admin/payouts/:id", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
+  const payoutId = parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(payoutId)) { res.status(400).json({ error: "Invalid payout id" }); return; }
+  const status = String(req.body?.status ?? "");
+  const allowed = new Set(["pending", "approved", "paid", "failed", "cancelled", "partial"]);
+  if (!allowed.has(status)) { res.status(400).json({ error: "Invalid payout status." }); return; }
+
+  const [payout] = await db.select().from(vendorPayoutsTable).where(eq(vendorPayoutsTable.id, payoutId));
+  if (!payout) { res.status(404).json({ error: "Payout not found" }); return; }
+
+  const now = new Date();
+  const paidAmount = req.body?.paidAmount != null ? toNumber(req.body.paidAmount) : toNumber(payout.paidAmount);
+  const updates = {
+    status: status as "pending" | "approved" | "paid" | "failed" | "cancelled" | "partial",
+    paidAmount: status === "paid" ? String(toNumber(payout.netAmount)) : status === "partial" ? paidAmount.toFixed(2) : payout.paidAmount,
+    approvedAt: status === "approved" ? now : payout.approvedAt,
+    paidAt: status === "paid" || status === "partial" ? now : payout.paidAt,
+    cancelledAt: status === "cancelled" ? now : payout.cancelledAt,
+    failureReason: status === "failed" ? String(req.body?.reason ?? "Payout failed") : payout.failureReason,
+    adjustmentReason: req.body?.adjustmentReason != null ? String(req.body.adjustmentReason) : payout.adjustmentReason,
+  };
+
+  const [updated] = await db
+    .update(vendorPayoutsTable)
+    .set(updates)
+    .where(eq(vendorPayoutsTable.id, payoutId))
+    .returning();
+  if (updated.driverProfileId) {
+    const earningStatus = status === "paid" ? "available" : status === "cancelled" ? "cancelled" : status === "failed" ? "pending" : undefined;
+    if (earningStatus) {
+      await db.update(driverEarningsTable).set({ status: earningStatus }).where(eq(driverEarningsTable.jobId, updated.jobId));
+    }
+    await recalculateDriverWallet(updated.driverProfileId);
+  }
+  res.json(serializeMoneyRow(updated));
 });
 
 router.post("/admin/jobs/:id/refunds", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
