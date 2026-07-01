@@ -45,8 +45,8 @@ export default function TrackingScreen() {
   const isRequestId = typeof id === "string" && id.startsWith("req-");
   const requestNumericId = isRequestId ? parseInt(id.slice(4), 10) : null;
   const numericId = !isRequestId && id ? parseInt(id, 10) : null;
-  const { data: liveJobsRaw } = useLiveJobs();
-  const { data: liveRequestsRaw } = useLiveRequests({ mine: true, enabled: isRequestId });
+  const { data: liveJobsRaw, isLoading: loadingJobs, isError: jobsError } = useLiveJobs();
+  const { data: liveRequestsRaw, isLoading: loadingRequests, isError: requestsError } = useLiveRequests({ mine: true, enabled: isRequestId });
   const { data: statusUpdatesRaw } = useJobStatusUpdates(numericId);
 
   const liveJob =
@@ -107,6 +107,20 @@ export default function TrackingScreen() {
     return () => clearInterval(timer);
   }, [isLiveJob, backendProgressPct, backendEta]);
 
+  const liveLookupLoading = loadingJobs || (isRequestId && loadingRequests);
+  const liveLookupError = jobsError || (isRequestId && requestsError);
+
+  if (!job && liveLookupLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.center}>
+          <Feather name="loader" size={32} color={colors.primary} style={{ marginBottom: 12 }} />
+          <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 16 }}>Loading tracking…</Text>
+        </View>
+      </View>
+    );
+  }
+
   if (!job) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -120,9 +134,11 @@ export default function TrackingScreen() {
         </View>
         <View style={styles.center}>
           <Feather name="alert-circle" size={40} color={colors.mutedForeground} style={{ marginBottom: 12 }} />
-          <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 17, marginBottom: 6 }}>Tracking Not Found</Text>
+          <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 17, marginBottom: 6 }}>
+            {liveLookupError ? "Couldn't Load Tracking" : "Tracking Not Found"}
+          </Text>
           <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", paddingHorizontal: 32, marginBottom: 24 }}>
-            This tracking session may have ended or the link is no longer valid.
+            {liveLookupError ? "Check your connection and try again shortly." : "This tracking session may have ended or the link is no longer valid."}
           </Text>
           <Pressable onPress={() => router.replace("/(tabs)/jobs")} style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 }}>
             <Text style={{ color: colors.primaryForeground, fontFamily: "Inter_600SemiBold", fontSize: 15 }}>Browse All Loads</Text>

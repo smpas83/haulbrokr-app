@@ -104,6 +104,14 @@ export default function DriverJobsScreen() {
           <View style={styles.centerBox}>
             <ActivityIndicator color={colors.primary} />
           </View>
+        ) : jobsQuery.isError ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="alert-circle" size={32} color={colors.mutedForeground} />
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Couldn&apos;t load loads</Text>
+            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
+              Check your connection and pull to refresh, or try again shortly.
+            </Text>
+          </View>
         ) : activeJobs.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="truck" size={32} color={colors.mutedForeground} />
