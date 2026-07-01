@@ -61,8 +61,11 @@ import type {
   CreditApplicationInput,
   DashboardStats,
   DisconnectQuickBooks200,
+  DriverAvailability,
+  DriverAvailabilityInput,
   DumpSite,
   FlagCompletionInput,
+  FleetLiveResponse,
   GetBinOrder200,
   GetJobRating200,
   GetMyOrganization200,
@@ -73,6 +76,8 @@ import type {
   InsuranceSubmission,
   IssueTicketQr200,
   Job,
+  JobGeofence,
+  JobGeofenceInput,
   JobMessage,
   JobRequest,
   JobRequestInput,
@@ -86,11 +91,15 @@ import type {
   ListDumpSitesParams,
   ListFactoringRequests200Item,
   ListJobEvidence200Item,
+  ListJobLocationsParams,
   ListJobTickets200,
   ListJobsParams,
   ListProjects200Item,
   ListRequestsParams,
   ListTrucksParams,
+  LiveJobTracking,
+  LocationIngestInput,
+  LocationIngestResponse,
   OrgMember,
   OrgMembersResponse,
   OrganizationComplianceStatus,
@@ -125,6 +134,7 @@ import type {
   UserProfile,
   UserProfileInput,
   UserProfileUpdate,
+  VehicleLocation,
   VerifyCheckoutInput,
   VerifyComplianceInput,
   VerifyMicrodepositsInput,
@@ -6138,6 +6148,392 @@ export const useCreateJobStatusUpdate = <TError = ErrorType<unknown>,
       return useMutation(getCreateJobStatusUpdateMutationOptions(options));
     }
 
+export const getGetJobTrackingUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/tracking`
+}
+
+/**
+ * @summary Live customer/dispatcher tracking state for a job
+ */
+export const getJobTracking = async (id: number, options?: RequestInit): Promise<LiveJobTracking> => {
+
+  return customFetch<LiveJobTracking>(getGetJobTrackingUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetJobTrackingQueryKey = (id: number,) => {
+    return [
+    `/api/jobs/${id}/tracking`
+    ] as const;
+    }
+
+
+export const getGetJobTrackingQueryOptions = <TData = Awaited<ReturnType<typeof getJobTracking>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobTracking>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetJobTrackingQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobTracking>>> = ({ signal }) => getJobTracking(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getJobTracking>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetJobTrackingQueryResult = NonNullable<Awaited<ReturnType<typeof getJobTracking>>>
+export type GetJobTrackingQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Live customer/dispatcher tracking state for a job
+ */
+
+export function useGetJobTracking<TData = Awaited<ReturnType<typeof getJobTracking>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobTracking>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetJobTrackingQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListJobLocationsUrl = (id: number,
+    params?: ListJobLocationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/jobs/${id}/locations?${stringifiedParams}` : `/api/jobs/${id}/locations`
+}
+
+/**
+ * @summary Route history for a job
+ */
+export const listJobLocations = async (id: number,
+    params?: ListJobLocationsParams, options?: RequestInit): Promise<VehicleLocation[]> => {
+
+  return customFetch<VehicleLocation[]>(getListJobLocationsUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListJobLocationsQueryKey = (id: number,
+    params?: ListJobLocationsParams,) => {
+    return [
+    `/api/jobs/${id}/locations`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListJobLocationsQueryOptions = <TData = Awaited<ReturnType<typeof listJobLocations>>, TError = ErrorType<unknown>>(id: number,
+    params?: ListJobLocationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJobLocations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListJobLocationsQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listJobLocations>>> = ({ signal }) => listJobLocations(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listJobLocations>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListJobLocationsQueryResult = NonNullable<Awaited<ReturnType<typeof listJobLocations>>>
+export type ListJobLocationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Route history for a job
+ */
+
+export function useListJobLocations<TData = Awaited<ReturnType<typeof listJobLocations>>, TError = ErrorType<unknown>>(
+ id: number,
+    params?: ListJobLocationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJobLocations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListJobLocationsQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateJobGeofenceUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/geofences`
+}
+
+/**
+ * @summary Configure a pickup or delivery geofence for a job
+ */
+export const createJobGeofence = async (id: number,
+    jobGeofenceInput: JobGeofenceInput, options?: RequestInit): Promise<JobGeofence> => {
+
+  return customFetch<JobGeofence>(getCreateJobGeofenceUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      jobGeofenceInput,)
+  }
+);}
+
+
+
+
+export const getCreateJobGeofenceMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJobGeofence>>, TError,{id: number;data: BodyType<JobGeofenceInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createJobGeofence>>, TError,{id: number;data: BodyType<JobGeofenceInput>}, TContext> => {
+
+const mutationKey = ['createJobGeofence'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createJobGeofence>>, {id: number;data: BodyType<JobGeofenceInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createJobGeofence(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateJobGeofenceMutationResult = NonNullable<Awaited<ReturnType<typeof createJobGeofence>>>
+    export type CreateJobGeofenceMutationBody = BodyType<JobGeofenceInput>
+    export type CreateJobGeofenceMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Configure a pickup or delivery geofence for a job
+ */
+export const useCreateJobGeofence = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJobGeofence>>, TError,{id: number;data: BodyType<JobGeofenceInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createJobGeofence>>,
+        TError,
+        {id: number;data: BodyType<JobGeofenceInput>},
+        TContext
+      > => {
+      return useMutation(getCreateJobGeofenceMutationOptions(options));
+    }
+
+export const getUpdateMyDriverAvailabilityUrl = () => {
+
+
+
+
+  return `/api/drivers/me/availability`
+}
+
+/**
+ * @summary Set driver online/offline state and current ticket
+ */
+export const updateMyDriverAvailability = async (driverAvailabilityInput: DriverAvailabilityInput, options?: RequestInit): Promise<DriverAvailability> => {
+
+  return customFetch<DriverAvailability>(getUpdateMyDriverAvailabilityUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      driverAvailabilityInput,)
+  }
+);}
+
+
+
+
+export const getUpdateMyDriverAvailabilityMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyDriverAvailability>>, TError,{data: BodyType<DriverAvailabilityInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyDriverAvailability>>, TError,{data: BodyType<DriverAvailabilityInput>}, TContext> => {
+
+const mutationKey = ['updateMyDriverAvailability'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyDriverAvailability>>, {data: BodyType<DriverAvailabilityInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateMyDriverAvailability(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyDriverAvailabilityMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyDriverAvailability>>>
+    export type UpdateMyDriverAvailabilityMutationBody = BodyType<DriverAvailabilityInput>
+    export type UpdateMyDriverAvailabilityMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Set driver online/offline state and current ticket
+ */
+export const useUpdateMyDriverAvailability = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyDriverAvailability>>, TError,{data: BodyType<DriverAvailabilityInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyDriverAvailability>>,
+        TError,
+        {data: BodyType<DriverAvailabilityInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateMyDriverAvailabilityMutationOptions(options));
+    }
+
+export const getGetLiveFleetUrl = () => {
+
+
+
+
+  return `/api/fleet/live`
+}
+
+/**
+ * @summary Dispatcher live fleet operations summary
+ */
+export const getLiveFleet = async ( options?: RequestInit): Promise<FleetLiveResponse> => {
+
+  return customFetch<FleetLiveResponse>(getGetLiveFleetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLiveFleetQueryKey = () => {
+    return [
+    `/api/fleet/live`
+    ] as const;
+    }
+
+
+export const getGetLiveFleetQueryOptions = <TData = Awaited<ReturnType<typeof getLiveFleet>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLiveFleet>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLiveFleetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveFleet>>> = ({ signal }) => getLiveFleet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLiveFleet>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLiveFleetQueryResult = NonNullable<Awaited<ReturnType<typeof getLiveFleet>>>
+export type GetLiveFleetQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Dispatcher live fleet operations summary
+ */
+
+export function useGetLiveFleet<TData = Awaited<ReturnType<typeof getLiveFleet>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLiveFleet>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLiveFleetQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
 export const getApproveJobCompletionUrl = (id: number,) => {
 
 
@@ -8032,6 +8428,78 @@ export const useClockOutTicket = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getClockOutTicketMutationOptions(options));
+    }
+
+export const getCreateTicketLocationsUrl = (id: number,) => {
+
+
+
+
+  return `/api/tickets/${id}/locations`
+}
+
+/**
+ * @summary Ingest one or more live GPS pings for a ticket
+ */
+export const createTicketLocations = async (id: number,
+    locationIngestInput: LocationIngestInput, options?: RequestInit): Promise<LocationIngestResponse> => {
+
+  return customFetch<LocationIngestResponse>(getCreateTicketLocationsUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      locationIngestInput,)
+  }
+);}
+
+
+
+
+export const getCreateTicketLocationsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTicketLocations>>, TError,{id: number;data: BodyType<LocationIngestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTicketLocations>>, TError,{id: number;data: BodyType<LocationIngestInput>}, TContext> => {
+
+const mutationKey = ['createTicketLocations'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTicketLocations>>, {id: number;data: BodyType<LocationIngestInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createTicketLocations(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTicketLocationsMutationResult = NonNullable<Awaited<ReturnType<typeof createTicketLocations>>>
+    export type CreateTicketLocationsMutationBody = BodyType<LocationIngestInput>
+    export type CreateTicketLocationsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Ingest one or more live GPS pings for a ticket
+ */
+export const useCreateTicketLocations = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTicketLocations>>, TError,{id: number;data: BodyType<LocationIngestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTicketLocations>>,
+        TError,
+        {id: number;data: BodyType<LocationIngestInput>},
+        TContext
+      > => {
+      return useMutation(getCreateTicketLocationsMutationOptions(options));
     }
 
 export const getIssueTicketQrUrl = (id: number,) => {
