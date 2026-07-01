@@ -104,6 +104,12 @@ vi.mock("@workspace/db", () => {
     payoutAccountsTable: makeTable("payoutAccounts"),
     dotCdlTable: makeTable("dotCdl"),
     creditApplicationsTable: makeTable("creditApplications"),
+    paymentHistoryTable: makeTable("paymentHistory"),
+    invoiceDocumentsTable: makeTable("invoiceDocuments"),
+    vendorPayoutsTable: makeTable("vendorPayouts"),
+    driverEarningsTable: makeTable("driverEarnings"),
+    driverWalletTable: makeTable("driverWallet"),
+    refundHistoryTable: makeTable("refundHistory"),
   };
 });
 
