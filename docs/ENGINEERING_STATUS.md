@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/add-lint-release-gate-3455`
-Latest commit at status start: `da91e47d7d6178647069bce8c588f70695039b06`
+Latest verified milestone commit: `de32f5d`
 
 ## Completed milestones
 
@@ -25,11 +25,15 @@ Latest commit at status start: `da91e47d7d6178647069bce8c588f70695039b06`
 
 ## Build status
 
-- Pending current-branch verification.
+- Passing: `pnpm run build`
 
 ## Test status
 
-- Pending current-branch verification.
+- Passing: `pnpm run lint`
+- Passing: `pnpm run typecheck`
+- Passing: `PAYMENTS_MOCK_MODE=true pnpm --filter @workspace/api-server run test`
+- Passing: `pnpm --filter @workspace/haulbrokr run test`
+- Passing: `pnpm --filter @workspace/haulbrokr-mobile run test`
 
 ## Known blockers
 
