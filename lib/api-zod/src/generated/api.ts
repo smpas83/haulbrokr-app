@@ -2690,3 +2690,183 @@ export const CreateDriverEventBody = zod.object({
 })
 
 
+/**
+ * @summary Current vendor Stripe Connect account status
+ */
+export const GetStripeConnectedAccountResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Customer invoices, payment history, refunds, and outstanding balance
+ */
+export const GetBillingHistoryResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Vendor payout history
+ */
+export const GetPayoutHistoryResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Driver earnings, wallet balance, and period totals
+ */
+export const GetDriverEarningsQueryParams = zod.object({
+  "driverId": zod.coerce.number().optional()
+})
+
+export const GetDriverEarningsResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Create a full or partial job refund
+ */
+export const CreateAdminJobRefundParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateAdminJobRefundBody = zod.object({
+  "amount": zod.number(),
+  "reason": zod.string().optional()
+})
+
+
+/**
+ * @summary Update vendor payout lifecycle state
+ */
+export const UpdateAdminVendorPayoutParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateAdminVendorPayoutBody = zod.object({
+  "status": zod.enum(['pending', 'approved', 'paid', 'failed', 'cancelled', 'partial']),
+  "paidAmount": zod.number().optional(),
+  "reason": zod.string().optional(),
+  "adjustmentReason": zod.string().optional()
+})
+
+export const UpdateAdminVendorPayoutResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary List payment audit and reconciliation events
+ */
+export const ListPaymentReconciliationEventsQueryParams = zod.object({
+  "since": zod.date().optional(),
+  "until": zod.date().optional()
+})
+
+export const ListPaymentReconciliationEventsResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Record a manual reconciliation event
+ */
+export const CreatePaymentReconciliationEventBody = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Marketplace financial metrics and revenue groupings
+ */
+export const GetAdminFinancialsQueryParams = zod.object({
+  "since": zod.date().optional(),
+  "until": zod.date().optional(),
+  "groupBy": zod.enum(['customer', 'vendor', 'region', 'material', 'truckType', 'date']).optional()
+})
+
+export const GetAdminFinancialsResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Profile review statistics
+ */
+export const GetProfileReviewStatsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetProfileReviewStatsResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Flag a review for moderation
+ */
+export const FlagReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const FlagReviewBody = zod.object({
+  "reason": zod.string()
+})
+
+
+/**
+ * @summary Moderate a review
+ */
+export const ModerateReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ModerateReviewBody = zod.object({
+  "status": zod.enum(['visible', 'flagged', 'removed']),
+  "reason": zod.string().optional()
+})
+
+export const ModerateReviewResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary List current user's notifications
+ */
+export const ListNotificationsResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Queue a notification delivery
+ */
+export const QueueNotificationBody = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Retry a notification delivery
+ */
+export const RetryNotificationParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RetryNotificationResponse = zod.object({
+
+}).passthrough()
+
+
+/**
+ * @summary Process due queued notifications
+ */
+export const ProcessQueuedNotificationsResponse = zod.object({
+
+}).passthrough()
+
+
