@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/marketplace-engine-3455`
-Latest verified milestone commit: pending final verification
+Latest verified milestone commit: `efac73e`
 
 ## Completed milestones
 
@@ -21,7 +21,7 @@ Latest verified milestone commit: pending final verification
 
 ## Current work
 
-- Marketplace Engine sprint: final verification and production-readiness cleanup.
+- Marketplace Engine sprint backend foundations are complete; next work is live-service certification and UI wiring after product design approval.
 
 ## Next sprint
 
@@ -32,14 +32,18 @@ Latest verified milestone commit: pending final verification
 
 ## Build status
 
-- Pending final current-branch verification.
+- Passing: `pnpm run build`
 
 ## Test status
 
 - Passing: `pnpm run typecheck:libs`
 - Passing: `pnpm --filter @workspace/api-server run typecheck`
+- Passing: `pnpm run lint`
+- Passing: `pnpm run check:api-codegen`
+- Passing: `pnpm run typecheck`
 - Passing: `PAYMENTS_MOCK_MODE=true pnpm --filter @workspace/api-server run test`
-- Pending full lint, codegen freshness, monorepo typecheck, web/mobile tests, and production build.
+- Passing: `pnpm --filter @workspace/haulbrokr run test`
+- Passing: `pnpm --filter @workspace/haulbrokr-mobile run test`
 
 ## Coverage
 
