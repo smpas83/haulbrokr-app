@@ -10,6 +10,7 @@ out-tsc
 .expo-shared
 .turbo
 web-build
+static-build
 
 # dependencies
 node_modules
