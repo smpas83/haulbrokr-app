@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/marketplace-engine-3455`
-Latest commit: pending App Store remediation verification
+Latest commit: `50a4e92` (App Store remediation verified)
 
 ## Completed milestones
 
@@ -33,7 +33,7 @@ Latest commit: pending App Store remediation verification
 
 ## Current work
 
-- App Store rejection remediation is complete; final verification is in progress before resubmission.
+- App Store rejection remediation is complete and verified for resubmission.
 
 ## Next sprint
 
@@ -58,6 +58,7 @@ Latest commit: pending App Store remediation verification
 - Passing: `pnpm --filter @workspace/haulbrokr-mobile run test`
 - Passing: `pnpm --filter @workspace/haulbrokr-mobile run typecheck`
 - Passing: `pnpm --filter @workspace/haulbrokr-mobile exec vitest run test/account-signout.test.ts`
+- Passing: `EXPO_PUBLIC_DOMAIN=test.local pnpm --filter @workspace/haulbrokr-mobile run build`
 
 ## Coverage
 
