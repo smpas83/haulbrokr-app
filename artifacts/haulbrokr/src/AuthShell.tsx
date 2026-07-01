@@ -9,7 +9,6 @@ import { Layout } from "./components/layout";
 import { Toaster } from "@/components/ui/toaster";
 import { useGetMyProfile } from "@workspace/api-client-react";
 import { SignInPage, SignUpPage } from "./pages/auth";
-import LandingPage from "./pages/landing";
 
 const OnboardingPage = lazy(() => import("./pages/onboarding"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
@@ -160,10 +159,6 @@ function AuthShellRoutes() {
         <Suspense fallback={<AppLoader />}>
           <Switch>
             <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/">
-              <Show when="signed-in"><Redirect to="/dashboard" /></Show>
-              <Show when="signed-out"><LandingPage /></Show>
-            </Route>
             <Route path="/sign-up/*?" component={SignUpPage} />
 
             <Route path="/onboarding">
