@@ -7,9 +7,12 @@ export {
   ConnectQuickBooksBody,
   CreateBinOrderBody,
   CreateFactoringRequestBody,
+  CreateDriverEventBody,
   CreateJobEvidenceBody,
   CreateProjectBody,
+  ListJobLocationsParams,
   UpdateProjectBody,
   UpsertDriverDocBody,
   VerifyTicketQrBody,
 } from "./generated/api";
+export * from './generated/types';

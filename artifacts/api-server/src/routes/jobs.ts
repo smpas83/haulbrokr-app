@@ -1228,7 +1228,10 @@ router.post("/jobs/:id/assign", requireProfile, async (req, res): Promise<void> 
       return;
     }
     truckId = truck.id;
-    await db.update(trucksTable).set({ assignedDriverId: parsed.data.driverProfileId }).where(eq(trucksTable.id, truck.id));
+    await db.update(trucksTable).set({
+      assignedDriverId: parsed.data.driverProfileId,
+      isAvailable: false,
+    }).where(eq(trucksTable.id, truck.id));
   }
 
   const existing = await db.select({ ln: ticketsTable.loadNumber }).from(ticketsTable).where(eq(ticketsTable.jobId, jobId));

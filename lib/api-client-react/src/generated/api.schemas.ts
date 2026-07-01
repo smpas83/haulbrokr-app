@@ -1905,6 +1905,167 @@ export interface JobStatusUpdateInput {
   note?: string;
 }
 
+export interface VehicleLocation {
+  id: number;
+  jobId: number;
+  ticketId: number;
+  driverProfileId: number;
+  /** @nullable */
+  truckId?: number | null;
+  latitude: number;
+  longitude: number;
+  /** @nullable */
+  heading?: number | null;
+  /** @nullable */
+  speedMph?: number | null;
+  /** @nullable */
+  accuracyMeters?: number | null;
+  recordedAt: string;
+  createdAt: string;
+}
+
+export interface LocationPointInput {
+  latitude: number;
+  longitude: number;
+  heading?: number;
+  speedMph?: number;
+  accuracyMeters?: number;
+  recordedAt?: string;
+}
+
+export type LocationIngestInput = LocationPointInput | {
+  /** @minItems 1 */
+  locations: LocationPointInput[];
+};
+
+export type LocationIngestResponseTriggeredGeofencesItem = typeof LocationIngestResponseTriggeredGeofencesItem[keyof typeof LocationIngestResponseTriggeredGeofencesItem];
+
+
+export const LocationIngestResponseTriggeredGeofencesItem = {
+  pickup: 'pickup',
+  delivery: 'delivery',
+} as const;
+
+export interface LocationIngestResponse {
+  locations: VehicleLocation[];
+  latestLocation: VehicleLocation;
+  triggeredGeofences: LocationIngestResponseTriggeredGeofencesItem[];
+}
+
+export type JobGeofenceKind = typeof JobGeofenceKind[keyof typeof JobGeofenceKind];
+
+
+export const JobGeofenceKind = {
+  pickup: 'pickup',
+  delivery: 'delivery',
+} as const;
+
+export interface JobGeofence {
+  id: number;
+  jobId: number;
+  kind: JobGeofenceKind;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  /** @nullable */
+  label?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type JobGeofenceInputKind = typeof JobGeofenceInputKind[keyof typeof JobGeofenceInputKind];
+
+
+export const JobGeofenceInputKind = {
+  pickup: 'pickup',
+  delivery: 'delivery',
+} as const;
+
+export interface JobGeofenceInput {
+  kind: JobGeofenceInputKind;
+  latitude: number;
+  longitude: number;
+  /**
+     * @minimum 25
+     * @maximum 5000
+     */
+  radiusMeters?: number;
+  label?: string;
+}
+
+export interface LiveEta {
+  distanceMeters: number;
+  minutes: number;
+  estimatedArrivalAt: string;
+  source: string;
+}
+
+export interface LiveJobTracking {
+  jobId: number;
+  status: string;
+  pickupAddress: string;
+  deliveryAddress: string;
+  activeTickets: Ticket[];
+  latestLocation: VehicleLocation | null;
+  eta: LiveEta | null;
+  /** @nullable */
+  routeProgress: number | null;
+  geofences: JobGeofence[];
+}
+
+export interface DriverAvailabilityInput {
+  isOnline: boolean;
+  /** @nullable */
+  currentTicketId?: number | null;
+}
+
+export interface DriverAvailability {
+  driverProfileId: number;
+  isOnline: boolean;
+  /** @nullable */
+  currentTicketId: number | null;
+  /** @nullable */
+  lastLatitude: number | null;
+  /** @nullable */
+  lastLongitude: number | null;
+  lastSeenAt: string;
+  updatedAt: string;
+}
+
+export type FleetLiveTruckState = typeof FleetLiveTruckState[keyof typeof FleetLiveTruckState];
+
+
+export const FleetLiveTruckState = {
+  available: 'available',
+  unavailable: 'unavailable',
+  on_trip: 'on_trip',
+} as const;
+
+/**
+ * @nullable
+ */
+export type FleetLiveTruckDriver = { [key: string]: unknown } | null;
+
+/**
+ * @nullable
+ */
+export type FleetLiveTruckActiveTrip = { [key: string]: unknown } | null;
+
+export interface FleetLiveTruck {
+  truck: Truck;
+  state: FleetLiveTruckState;
+  /** @nullable */
+  driver: FleetLiveTruckDriver;
+  /** @nullable */
+  activeTrip: FleetLiveTruckActiveTrip;
+  latestLocation: VehicleLocation | null;
+}
+
+export interface FleetLiveResponse {
+  trucks: FleetLiveTruck[];
+  updatedAt: string;
+}
+
 export interface FlagCompletionInput {
   reason: string;
 }
@@ -2009,6 +2170,11 @@ export const ListDumpSitesType = {
   hazardous_waste: 'hazardous_waste',
   compost: 'compost',
 } as const;
+
+export type ListJobLocationsParams = {
+since?: string;
+ticketId?: number;
+};
 
 export type GetMyOrganization200 = { [key: string]: unknown };
 

@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and, or, sql, isNull } from "drizzle-orm";
 import crypto from "node:crypto";
-import { db, profilesTable, ticketsTable, type Profile, type Ticket, type Job } from "@workspace/db";
+import { db, profilesTable, ticketsTable, trucksTable, type Profile, type Ticket, type Job } from "@workspace/db";
 import { requireProfile, getRequestProfile } from "../middlewares/requireAuth";
 import { loadJobIfMember, DRIVER_SIDE, CUSTOMER_SIDE } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
@@ -191,6 +191,19 @@ router.post("/tickets/:id/clock-out", requireProfile, async (req, res): Promise<
     .set({ clockedOutAt: new Date(), status: "completed" })
     .where(eq(ticketsTable.id, id))
     .returning();
+  if (found.ticket.truckId != null) {
+    const [activeTicket] = await db
+      .select({ id: ticketsTable.id })
+      .from(ticketsTable)
+      .where(and(
+        eq(ticketsTable.truckId, found.ticket.truckId),
+        or(eq(ticketsTable.status, "pending"), eq(ticketsTable.status, "in_progress")),
+      ))
+      .limit(1);
+    if (!activeTicket) {
+      await db.update(trucksTable).set({ isAvailable: true }).where(eq(trucksTable.id, found.ticket.truckId));
+    }
+  }
   res.json(updated);
 });
 
