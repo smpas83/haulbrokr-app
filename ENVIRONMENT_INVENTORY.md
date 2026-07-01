@@ -32,6 +32,8 @@ Use this as the source of truth for staging and production configuration. Do not
 | `CORS_ALLOWED_ORIGINS` | Optional | API/Render | Release operator | `https://haulbrokr.com,https://www.haulbrokr.com` | Extra browser origins beyond built-in production origins. |
 | `AUTOMATION_KEY` | Optional | API | Release operator | 32+ random chars | Enables protected `/api/automation/*` jobs. Leave unset if unused. |
 | `LOG_LEVEL` | Optional | API | Render env | `info` | Pino log level. |
+| `API_RATE_LIMIT_WINDOW_MS` | Optional | API/Render | Release operator | `60000` | Rolling API rate-limit window per client IP. |
+| `API_RATE_LIMIT_MAX` | Optional | API/Render | Release operator | `300` | Maximum API requests per client IP per window. |
 
 ## Web / Vercel
 

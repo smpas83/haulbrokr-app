@@ -290,12 +290,13 @@ export type JobStatusUpdate = {
   createdAt: string;
 };
 
-export function useJobStatusUpdates(jobId: number | null) {
+export function useJobStatusUpdates(jobId: number | null, opts?: { refetchInterval?: number | false }) {
   const { getToken, isSignedIn } = useAuth();
   return useQuery<JobStatusUpdate[]>({
     queryKey: ["status-updates", jobId],
     queryFn: () => apiFetch(getToken, "GET", `/jobs/${jobId}/status-updates`),
     enabled: !!isSignedIn && !!jobId,
+    refetchInterval: opts?.refetchInterval,
   });
 }
 

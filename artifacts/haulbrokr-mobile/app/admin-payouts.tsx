@@ -1,17 +1,20 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator, Platform, Pressable, RefreshControl,
+  ActivityIndicator,
+  Pressable, RefreshControl,
   ScrollView, StyleSheet, Text, View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { useColors } from "@/hooks/useColors";
+import { LoadingCenter } from "@/components/LoadingCenter";
 import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/RefreshingIndicator";
 import { LastUpdated } from "@/components/LastUpdated";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import { ACCENT } from "@/constants/theme";
 import {
   useAdminAccess, useStuckPayouts, useRetryStuckPayout, useResetPayoutFailures,
@@ -25,7 +28,6 @@ function money(n: number | null): string {
 export default function AdminPayoutsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const access = useAdminAccess();
   const isAdmin = (access.data?.permissions ?? []).includes("payouts");
@@ -64,34 +66,28 @@ export default function AdminPayoutsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <RefreshingIndicator visible={isUpdating} />
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border, paddingTop: topPad + 12 }]}>
-        <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Feather name="arrow-left" size={20} color={colors.foreground} />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>Stuck Payouts</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-            {isAdmin ? `${items.length} awaiting release` : "Admin only"}
-          </Text>
-          {isAdmin && <LastUpdated timestamp={payouts.dataUpdatedAt || undefined} style={{ marginTop: 2 }} />}
-        </View>
-        <View style={[styles.headerIcon, { backgroundColor: colors.primary + "18" }]}>
-          <Feather name="dollar-sign" size={18} color={colors.primary} />
-        </View>
-      </View>
+      <ScreenHeader
+        title="Stuck Payouts"
+        icon="dollar-sign"
+        subtitle={
+          <View>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+              {isAdmin ? `${items.length} awaiting release` : "Admin only"}
+            </Text>
+            {isAdmin && <LastUpdated timestamp={payouts.dataUpdatedAt || undefined} style={{ marginTop: 2 }} />}
+          </View>
+        }
+      />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: 40 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e9a600" colors={["#e9a600"]} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
         }
       >
         {access.isLoading ? (
-          <View style={styles.emptyWrap}>
-            <ActivityIndicator color={colors.primary} />
-          </View>
+          <LoadingCenter style={styles.emptyWrap} />
         ) : !isAdmin ? (
           <View style={styles.emptyWrap}>
             <Feather name="shield-off" size={40} color={colors.mutedForeground} style={{ marginBottom: 12 }} />
@@ -101,9 +97,7 @@ export default function AdminPayoutsScreen() {
             </Text>
           </View>
         ) : payouts.isLoading ? (
-          <View style={styles.emptyWrap}>
-            <ActivityIndicator color={colors.primary} />
-          </View>
+          <LoadingCenter style={styles.emptyWrap} />
         ) : items.length === 0 ? (
           <View style={styles.emptyWrap}>
             <Feather name="check-circle" size={40} color={ACCENT.green} style={{ marginBottom: 12 }} />

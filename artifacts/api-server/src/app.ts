@@ -1,4 +1,5 @@
 import cookieParser from "cookie-parser";
+import crypto from "node:crypto";
 import express, { type Express } from "express";
 import cors, { type CorsOptions } from "cors";
 import pinoHttp from "pino-http";
@@ -15,8 +16,11 @@ import automationRouter from "./routes/automation";
 import stripeWebhooksRouter from "./routes/stripe-webhooks";
 import { errorHandler } from "./middlewares/errorHandler";
 import { logger } from "./lib/logger";
+import { apiRateLimit } from "./middlewares/apiRateLimit";
 
 const app: Express = express();
+
+app.set("trust proxy", 1);
 
 const DEFAULT_PRODUCTION_ORIGINS = [
   "https://haulbrokr.com",
@@ -74,12 +78,26 @@ app.use((_req, res, next) => {
 app.use(
   pinoHttp({
     logger,
+    genReqId(req, res) {
+      const existing = req.headers["x-request-id"];
+      const id = Array.isArray(existing) ? existing[0] : existing || crypto.randomUUID();
+      res.setHeader("X-Request-Id", id);
+      return id;
+    },
+    customSuccessMessage(req, res) {
+      return `${req.method} ${req.url?.split("?")[0]} completed with ${res.statusCode}`;
+    },
+    customErrorMessage(req, res) {
+      return `${req.method} ${req.url?.split("?")[0]} failed with ${res.statusCode}`;
+    },
     serializers: {
       req(req) {
         return {
           id: req.id,
           method: req.method,
           url: req.url?.split("?")[0],
+          remoteAddress: req.remoteAddress,
+          userAgent: req.headers["user-agent"],
         };
       },
       res(res) {
@@ -111,6 +129,7 @@ app.use(express.urlencoded({ extended: true }));
 // even when Clerk keys are absent/invalid. Mount it before clerkMiddleware.
 app.use("/api", healthRouter);
 app.use("/api", automationRouter);
+app.use("/api", apiRateLimit());
 
 app.use(
   clerkMiddleware((req) => ({
