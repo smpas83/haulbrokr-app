@@ -53,6 +53,8 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   { service: "render", variable: "PORT", required: true, description: "HTTP listen port (8080 on Render)." },
   { service: "render", variable: "NODE_ENV", required: true, description: "Must be production on Render." },
   { service: "render", variable: "CORS_ALLOWED_ORIGINS", required: false, description: "Optional comma-separated browser origins beyond haulbrokr.com/www/haulbrokr.vercel.app." },
+  { service: "render", variable: "API_RATE_LIMIT_WINDOW_MS", required: false, description: "Optional API rate-limit window in milliseconds (default 60000)." },
+  { service: "render", variable: "API_RATE_LIMIT_MAX", required: false, description: "Optional API requests per client per window (default 300)." },
 
   // Vercel (web app — validated at build/runtime on Vercel, documented for ops)
   { service: "vercel", variable: "VITE_CLERK_PUBLISHABLE_KEY", required: true, description: "Clerk publishable key baked into the Vercel web build." },
@@ -197,13 +199,13 @@ function validateStripe(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): v
   const webhook = envValue(env, "STRIPE_WEBHOOK_SECRET");
 
   if (!secret) pushMissing(issues, "stripe", "STRIPE_SECRET_KEY");
-  else if (!secret.startsWith("sk_")) {
-    pushInvalid(issues, "stripe", "STRIPE_SECRET_KEY", "STRIPE_SECRET_KEY must start with sk_.");
+  else if (!secret.startsWith("sk_live_")) {
+    pushInvalid(issues, "stripe", "STRIPE_SECRET_KEY", "STRIPE_SECRET_KEY must start with sk_live_ in production.");
   }
 
   if (!publishable) pushMissing(issues, "stripe", "STRIPE_PUBLISHABLE_KEY");
-  else if (!publishable.startsWith("pk_")) {
-    pushInvalid(issues, "stripe", "STRIPE_PUBLISHABLE_KEY", "STRIPE_PUBLISHABLE_KEY must start with pk_.");
+  else if (!publishable.startsWith("pk_live_")) {
+    pushInvalid(issues, "stripe", "STRIPE_PUBLISHABLE_KEY", "STRIPE_PUBLISHABLE_KEY must start with pk_live_ in production.");
   }
 
   if (!webhook) pushMissing(issues, "stripe", "STRIPE_WEBHOOK_SECRET");

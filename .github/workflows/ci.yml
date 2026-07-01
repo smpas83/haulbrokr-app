@@ -61,6 +61,33 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      - name: Deployment readiness config check
+        run: pnpm run verify:deployment
+        env:
+          TARGET_ENV: staging
+          SKIP_ENDPOINT_CHECKS: "1"
+          DATABASE_URL: postgres://haulbrokr:haulbrokr@localhost:5432/haulbrokr?sslmode=require
+          CLERK_SECRET_KEY: sk_test_ci_placeholder
+          CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
+          VITE_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
+          VITE_CLERK_PROXY_URL: https://haulbrokr.test/api/__clerk
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
+          STRIPE_SECRET_KEY: sk_test_ci_placeholder
+          STRIPE_PUBLISHABLE_KEY: pk_test_ci_placeholder
+          STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
+          RESEND_API_KEY: re_ci_placeholder
+          RESEND_FROM_EMAIL: noreply@haulbrokr.test
+          R2_ACCOUNT_ID: ci-account
+          R2_ACCESS_KEY_ID: ci-access-key
+          R2_SECRET_ACCESS_KEY: ci-secret-key
+          R2_BUCKET: haulbrokr-ci
+          R2_PUBLIC_URL: https://cdn.haulbrokr.test
+          PRIVATE_OBJECT_DIR: /private
+          PUBLIC_OBJECT_SEARCH_PATHS: /public
+          ADMIN_USER_IDS: user_ci_admin
+          EXPO_PUBLIC_DOMAIN: https://haulbrokr.test
+          GOOGLE_MAPS_API_KEY: ci-google-maps-key
+
       - name: API server tests
         run: pnpm --filter @workspace/api-server run test
 
