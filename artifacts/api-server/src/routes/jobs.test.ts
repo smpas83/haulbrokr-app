@@ -55,6 +55,8 @@ vi.mock("@workspace/db", () => {
     profilesTable: makeTable("profiles"),
     requestsTable: makeTable("requests"),
     activityTable: makeTable("activity"),
+    notificationDeliveriesTable: makeTable("notificationDeliveries"),
+    marketplacePaymentsTable: makeTable("marketplacePayments"),
   };
 });
 
@@ -71,6 +73,15 @@ vi.mock("../lib/payoutStatus", async (importActual) => {
 vi.mock("../lib/stripeClient", () => ({
   getUncachableStripeClient: vi.fn(),
   getStripePublishableKey: vi.fn(async () => "pk_test_123"),
+}));
+
+vi.mock("../lib/dynamicPricingEngine", () => ({
+  calculateDynamicPricingFromHours: (ratePerHour: number, hours: number) => {
+    const baseAmount = Math.round(ratePerHour * hours * 100) / 100;
+    return { baseAmount, surchargeTotal: 0, pricedAmount: baseAmount, appliedSurcharges: [] };
+  },
+  listActiveSurchargeConfigs: async () => [],
+  recordPricingCalculation: vi.fn(async () => undefined),
 }));
 
 // Inject an authenticated customer profile (id 1) without Clerk.

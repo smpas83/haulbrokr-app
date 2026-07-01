@@ -23,6 +23,10 @@ import { settleConfirmedPayout } from "../lib/payoutRetry";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { calculateCommissionFromHours, DEFAULT_COMMISSION_RATE, recordCommissionCalculation } from "../lib/commissionEngine";
+import { recordPaymentLedgerEntry } from "../lib/paymentLedger";
+import { calculateDynamicPricingFromHours, listActiveSurchargeConfigs, recordPricingCalculation } from "../lib/dynamicPricingEngine";
+import { sendNotification } from "../lib/notificationService";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -58,8 +62,6 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
-
-const DEFAULT_FEE_RATE = 0.15;
 
 function num(v: string | null | undefined): number | null {
   return v == null ? null : parseFloat(v);
@@ -151,6 +153,14 @@ async function notifyPayoutDelayed(
   }
 }
 
+async function safeRecordPaymentLedgerEntry(input: Parameters<typeof recordPaymentLedgerEntry>[0]): Promise<void> {
+  try {
+    await recordPaymentLedgerEntry(input);
+  } catch (err) {
+    console.error("Failed to record marketplace payment ledger entry", err);
+  }
+}
+
 /**
  * Broker-fee model: the customer is billed the work value PLUS a 15% broker fee.
  * HaulBrokr deducts that 15% from the customer's gross payment BEFORE the
@@ -161,10 +171,12 @@ async function notifyPayoutDelayed(
  *   gross = base + fee            (what the customer pays)
  */
 export function computeBreakdown(ratePerHour: number, hours: number, feeRate: number) {
-  const base = Math.round(ratePerHour * hours * 100) / 100;
-  const fee = Math.round(base * feeRate * 100) / 100;
-  const gross = Math.round((base + fee) * 100) / 100;
-  return { base, fee, gross };
+  const breakdown = calculateCommissionFromHours(ratePerHour, hours, feeRate);
+  return {
+    base: breakdown.workAmount,
+    fee: breakdown.platformCommission,
+    gross: breakdown.customerTotal,
+  };
 }
 
 /**
@@ -245,6 +257,35 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
     },
     { idempotencyKey: `job-transfer:${job.id}:${attempt}` },
   );
+
+  await safeRecordPaymentLedgerEntry({
+    jobId: job.id,
+    customerId: job.customerId,
+    vendorId: job.providerId,
+    type: "transfer",
+    status: "released",
+    amountCents: grossCents,
+    platformFeeCents: grossCents - netCents,
+    vendorPayoutCents: netCents,
+    paymentRail: customer.methodType,
+    stripePaymentIntentId: pi.id,
+    stripeTransferId: transfer.id,
+    description: `Released marketplace payment for job #${job.id}`,
+  });
+  await sendNotification({
+    eventType: "payment_complete",
+    recipientProfileId: job.customerId,
+    jobId: job.id,
+    subject: "Payment complete",
+    body: `Payment completed for job #${job.id}.`,
+  });
+  await sendNotification({
+    eventType: "payment_complete",
+    recipientProfileId: job.providerId,
+    jobId: job.id,
+    subject: "Payout released",
+    body: `Payout released for job #${job.id}.`,
+  });
 
   return { paymentIntentId: pi.id, transferId: transfer.id };
 }
@@ -489,17 +530,19 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
   await db.update(requestsTable).set({ status: "accepted" }).where(eq(requestsTable.id, job.requestId));
   await db.update(bidsTable).set({ status: "accepted" }).where(eq(bidsTable.id, job.bidId));
 
-  await db.insert(activityTable).values({
-    profileId: profile.id,
-    type: "job_accepted",
-    description: `Accepted awarded job #${job.id} — ${job.materialType} delivery`,
-    relatedId: job.id,
+  await sendNotification({
+    eventType: "driver_accepted",
+    recipientProfileId: profile.id,
+    jobId: job.id,
+    subject: "Job accepted",
+    body: `Accepted awarded job #${job.id} — ${job.materialType} delivery`,
   });
-  await db.insert(activityTable).values({
-    profileId: job.customerId,
-    type: "job_accepted",
-    description: `Hauler accepted job #${job.id} — ${job.materialType} delivery`,
-    relatedId: job.id,
+  await sendNotification({
+    eventType: "driver_accepted",
+    recipientProfileId: job.customerId,
+    jobId: job.id,
+    subject: "Hauler accepted your job",
+    body: `Hauler accepted job #${job.id} — ${job.materialType} delivery`,
   });
 
   const { customerCompany, providerCompany } = await companiesFor(updated);
@@ -603,6 +646,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   }
 
   const updates: Record<string, any> = { ...parsed.data };
+  let pricingBreakdownToRecord: Awaited<ReturnType<typeof calculateDynamicPricingFromHours>> | null = null;
   if (parsed.data.totalHours !== undefined) updates.totalHours = String(parsed.data.totalHours);
 
   if (parsed.data.status === "in_progress") {
@@ -612,8 +656,10 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     const hours = parsed.data.totalHours ?? (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
     if (hours != null) {
       const rate = parseFloat(existingJob.ratePerHour);
-      const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_FEE_RATE;
-      const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
+      const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_COMMISSION_RATE;
+      const pricingBreakdown = calculateDynamicPricingFromHours(rate, hours, await listActiveSurchargeConfigs());
+      pricingBreakdownToRecord = pricingBreakdown;
+      const { base, fee, gross } = computeBreakdown(pricingBreakdown.pricedAmount, 1, feeRate);
       updates.totalHours = String(hours);
       updates.totalAmount = String(base);
       updates.customerTotalAmount = String(gross);
@@ -634,12 +680,48 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   }
 
   if (parsed.data.status === "completed") {
+    if (updates.totalAmount != null && updates.platformFeeAmount != null && updates.customerTotalAmount != null && updates.providerNetAmount != null) {
+      const commissionRate = parseFloat(String(job.platformFeeRate ?? DEFAULT_COMMISSION_RATE));
+      if (pricingBreakdownToRecord) {
+        await recordPricingCalculation({
+          jobId: job.id,
+          breakdown: pricingBreakdownToRecord,
+        });
+      }
+      await recordCommissionCalculation({
+        jobId: job.id,
+        resolved: {
+          rate: commissionRate,
+          scopeType: "global",
+          scopeId: null,
+          configId: null,
+        },
+        breakdown: {
+          workAmount: parseFloat(String(updates.totalAmount)),
+          platformCommission: parseFloat(String(updates.platformFeeAmount)),
+          customerTotal: parseFloat(String(updates.customerTotalAmount)),
+          vendorPayout: parseFloat(String(updates.providerNetAmount)),
+          driverPayout: null,
+          internalProfit: parseFloat(String(updates.platformFeeAmount)),
+          marketplaceGmv: parseFloat(String(updates.customerTotalAmount)),
+          commissionRate,
+        },
+      });
+    }
     await db.update(requestsTable).set({ status: "completed" }).where(eq(requestsTable.id, job.requestId));
-    await db.insert(activityTable).values({
-      profileId: profile.id,
-      type: "job_completed",
-      description: `Completed job #${job.id} — ${job.materialType} delivery`,
-      relatedId: job.id,
+    await sendNotification({
+      eventType: "load_complete",
+      recipientProfileId: profile.id,
+      jobId: job.id,
+      subject: "Load complete",
+      body: `Completed job #${job.id} — ${job.materialType} delivery`,
+    });
+    await sendNotification({
+      eventType: "review_request",
+      recipientProfileId: job.customerId,
+      jobId: job.id,
+      subject: "Review requested",
+      body: `Job #${job.id} is complete — review the delivery and approve completion when ready.`,
     });
     await recordJobTimelineEvent(job.id, profile.id, "completed", { note: "Job marked complete" });
   } else if (parsed.data.status === "in_progress") {
@@ -1095,6 +1177,19 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
       res.status(502).json({ error: "Stripe did not return a Checkout URL." });
       return;
     }
+    await safeRecordPaymentLedgerEntry({
+      jobId: job.id,
+      customerId: job.customerId,
+      vendorId: job.providerId,
+      type: "checkout_session",
+      status: "pending",
+      amountCents: grossCents,
+      platformFeeCents: feeCents,
+      vendorPayoutCents: netCents,
+      paymentRail: "checkout",
+      stripeCheckoutSessionId: session.id,
+      description: `Started hosted Checkout for job #${job.id}`,
+    });
     res.json(CreateJobCheckoutSessionResponse.parse({ url: session.url }));
   } catch (err: any) {
     req.log?.error?.({ err }, "Create Checkout Session failed");
@@ -1184,6 +1279,37 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
         payoutAlertSentAt: null,
       })
       .where(eq(jobsTable.id, job.id)).returning();
+    const grossCents = Math.round(parseFloat(job.customerTotalAmount ?? "0") * 100);
+    const netCents = Math.round(parseFloat(job.providerNetAmount ?? "0") * 100);
+    await safeRecordPaymentLedgerEntry({
+      jobId: job.id,
+      customerId: job.customerId,
+      vendorId: job.providerId,
+      type: "checkout_session",
+      status: "released",
+      amountCents: grossCents,
+      platformFeeCents: grossCents - netCents,
+      vendorPayoutCents: netCents,
+      paymentRail: "checkout",
+      stripePaymentIntentId: paymentIntentId,
+      stripeCheckoutSessionId: session.id,
+      stripeTransferId: transferId,
+      description: `Released hosted Checkout payment for job #${job.id}`,
+    });
+    await sendNotification({
+      eventType: "payment_complete",
+      recipientProfileId: job.customerId,
+      jobId: job.id,
+      subject: "Payment complete",
+      body: `Payment completed for job #${job.id}.`,
+    });
+    await sendNotification({
+      eventType: "payment_complete",
+      recipientProfileId: job.providerId,
+      jobId: job.id,
+      subject: "Payout released",
+      body: `Payout released for job #${job.id}.`,
+    });
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(VerifyJobCheckoutResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {

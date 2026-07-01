@@ -23,6 +23,7 @@ vi.mock("@workspace/db", () => {
   const jobStatusUpdatesTable = makeTable("job_status_updates");
   const requestsTable = makeTable("requests");
   const activityTable = makeTable("activity");
+  const notificationDeliveriesTable = makeTable("notificationDeliveries");
   const profilesTable = makeTable("profiles");
 
   const thenable = (rows: unknown[], tableRef: unknown) => ({
@@ -70,7 +71,7 @@ vi.mock("@workspace/db", () => {
           h.timeline.push(row);
           return Promise.resolve(undefined);
         }
-        if (table === activityTable) {
+        if (table === activityTable || table === notificationDeliveriesTable) {
           return Promise.resolve(undefined);
         }
         return Promise.resolve(undefined);
@@ -107,6 +108,7 @@ vi.mock("@workspace/db", () => {
     jobStatusUpdatesTable,
     requestsTable,
     activityTable,
+    notificationDeliveriesTable,
     profilesTable,
   };
 });
