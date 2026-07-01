@@ -20,6 +20,13 @@ import { buildJobInvoicePdf, canDownloadJobInvoice, jobIsInvoiceEligible } from 
 import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
 import { checkProviderPayoutReadiness } from "../lib/payoutStatus";
 import { settleConfirmedPayout } from "../lib/payoutRetry";
+import {
+  createPendingPayoutForCompletedJob,
+  ensureInvoiceDocument,
+  markVendorPayoutFailed,
+  markVendorPayoutPaid,
+  recordPaymentHistory,
+} from "../lib/marketplaceLedger";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
@@ -635,6 +642,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
 
   if (parsed.data.status === "completed") {
     await db.update(requestsTable).set({ status: "completed" }).where(eq(requestsTable.id, job.requestId));
+    await createPendingPayoutForCompletedJob(job);
     await db.insert(activityTable).values({
       profileId: profile.id,
       type: "job_completed",
@@ -723,6 +731,14 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
     const [updated] = await db.update(jobsTable)
       .set({ paymentStatus: "invoiced", invoicedAt: now, paymentDueDate: due })
       .where(eq(jobsTable.id, job.id)).returning();
+    await ensureInvoiceDocument(updated);
+    await recordPaymentHistory(updated, {
+      type: "invoice",
+      status: "pending",
+      eventType: "invoice_created",
+      amount: updated.customerTotalAmount,
+      metadata: { dueAt: due.toISOString(), paymentTerms: pm!.methodType },
+    });
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
     return;
@@ -774,6 +790,14 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
         stripeTransferId: transferId,
       })
       .where(eq(jobsTable.id, job.id)).returning();
+    await recordPaymentHistory(updated, {
+      type: "payment_intent",
+      status: "succeeded",
+      eventType: "payment_received",
+      stripePaymentIntentId: paymentIntentId,
+      stripeTransferId: transferId,
+    });
+    await markVendorPayoutPaid(updated, transferId);
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {
@@ -785,6 +809,12 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
       const [updated] = await db.update(jobsTable)
         .set({ paymentStatus: "requires_action", paymentAttempts: attempt, stripePaymentIntentId: authPi })
         .where(eq(jobsTable.id, job.id)).returning();
+      await recordPaymentHistory(updated, {
+        type: "payment_intent",
+        status: "requires_action",
+        eventType: "payment_requires_action",
+        stripePaymentIntentId: authPi,
+      });
       await notifyPaymentRequiresAction(job);
       const { customerCompany, providerCompany } = await companiesFor(updated);
       res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
@@ -792,6 +822,13 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
     }
     req.log?.error?.({ err }, "Job charge failed");
     await db.update(jobsTable).set({ paymentStatus: "failed", paymentAttempts: attempt }).where(eq(jobsTable.id, job.id));
+    await recordPaymentHistory(job, {
+      type: "payment_intent",
+      status: "failed",
+      eventType: "payment_failed",
+      metadata: { message: err?.message ?? "Payment processing failed" },
+    });
+    await markVendorPayoutFailed(job, err?.message ?? "Payment processing failed");
     await notifyPaymentFailed(job);
     res.status(502).json({ error: err?.message ?? "Payment processing failed" });
   }
@@ -869,6 +906,14 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
         stripeTransferId: transferId,
       })
       .where(eq(jobsTable.id, job.id)).returning();
+    await recordPaymentHistory(updated, {
+      type: "payment_intent",
+      status: "succeeded",
+      eventType: "invoice_payment_received",
+      stripePaymentIntentId: paymentIntentId,
+      stripeTransferId: transferId,
+    });
+    await markVendorPayoutPaid(updated, transferId);
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {
@@ -879,6 +924,12 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
       const [updated] = await db.update(jobsTable)
         .set({ paymentStatus: "requires_action", paymentAttempts: attempt, stripePaymentIntentId: authPi })
         .where(eq(jobsTable.id, job.id)).returning();
+      await recordPaymentHistory(updated, {
+        type: "payment_intent",
+        status: "requires_action",
+        eventType: "invoice_payment_requires_action",
+        stripePaymentIntentId: authPi,
+      });
       await notifyPaymentRequiresAction(job);
       const { customerCompany, providerCompany } = await companiesFor(updated);
       res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
@@ -886,6 +937,13 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
     }
     req.log?.error?.({ err }, "Job payout release failed");
     await db.update(jobsTable).set({ paymentStatus: "failed", paymentAttempts: attempt }).where(eq(jobsTable.id, job.id));
+    await recordPaymentHistory(job, {
+      type: "payment_intent",
+      status: "failed",
+      eventType: "invoice_payment_failed",
+      metadata: { message: err?.message ?? "Payout release failed" },
+    });
+    await markVendorPayoutFailed(job, err?.message ?? "Payout release failed");
     await notifyPaymentFailed(job);
     res.status(502).json({ error: err?.message ?? "Payout release failed" });
   }
@@ -974,6 +1032,14 @@ router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promi
     // background stuck-payout retry so both use the same idempotency key (attempt
     // unchanged) and can never re-charge the customer.
     const updated = await settleConfirmedPayout({ ...job, providerNetAmount }, readiness.stripeAccountId, pi as any);
+    await recordPaymentHistory(updated, {
+      type: "transfer",
+      status: "succeeded",
+      eventType: "confirmed_payment_released",
+      stripePaymentIntentId: pi.id,
+      stripeTransferId: updated.stripeTransferId,
+    });
+    await markVendorPayoutPaid(updated, updated.stripeTransferId);
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(ConfirmJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {

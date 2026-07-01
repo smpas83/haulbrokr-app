@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db, payoutAccountsTable } from "@workspace/db";
+import { db, payoutAccountsTable, stripeConnectedAccountsTable } from "@workspace/db";
 import { getUncachableStripeClient } from "./stripeClient";
 
 export const PAYOUTS_NOT_CONNECTED_MSG =
@@ -136,6 +136,42 @@ export async function syncStripeStatus(stripeAccountId: string, profileId: numbe
       status: acct.payouts_enabled ? "verified" : "pending",
     })
     .where(eq(payoutAccountsTable.profileId, profileId));
+  try {
+    const status: "verified" | "restricted" | "pending" = acct.payouts_enabled
+      ? "verified"
+      : acct.requirements?.disabled_reason
+        ? "restricted"
+        : "pending";
+    const capabilities = acct.capabilities as Record<string, unknown> | null | undefined;
+    const accountValues = {
+      profileId,
+      stripeAccountId,
+      status,
+      chargesEnabled: !!acct.charges_enabled,
+      payoutsEnabled: !!acct.payouts_enabled,
+      detailsSubmitted: !!acct.details_submitted,
+      verificationStatus: acct.requirements?.disabled_reason ?? null,
+      requirementsJson: JSON.stringify(buildPayoutRequirements(acct)),
+      payoutSchedule: acct.settings?.payouts?.schedule?.interval ?? "standard",
+      instantPayoutsEligible: capabilities?.instant_payouts === "active",
+      lastSyncedAt: new Date(),
+    };
+    const [existing] = await db
+      .select()
+      .from(stripeConnectedAccountsTable)
+      .where(eq(stripeConnectedAccountsTable.profileId, profileId));
+    if (existing) {
+      await db
+        .update(stripeConnectedAccountsTable)
+        .set(accountValues)
+        .where(eq(stripeConnectedAccountsTable.id, existing.id));
+    } else {
+      await db.insert(stripeConnectedAccountsTable).values(accountValues);
+    }
+  } catch {
+    // Keep Connect readiness resilient: the legacy payout_accounts row remains
+    // the operational gate, while this mirror supports audit/admin visibility.
+  }
   return acct;
 }
 

@@ -2126,3 +2126,108 @@ export type CreateDriverEvent201 = { [key: string]: unknown };
 
 export type CreateDriverEvent422 = { [key: string]: unknown };
 
+export type GetStripeConnectedAccount200 = { [key: string]: unknown };
+
+export type GetBillingHistory200 = { [key: string]: unknown };
+
+export type GetPayoutHistory200 = { [key: string]: unknown };
+
+export type GetDriverEarningsParams = {
+driverId?: number;
+};
+
+export type GetDriverEarnings200 = { [key: string]: unknown };
+
+export type CreateAdminJobRefundBody = {
+  amount: number;
+  reason?: string;
+};
+
+export type CreateAdminJobRefund201 = { [key: string]: unknown };
+
+export type UpdateAdminVendorPayoutBodyStatus = typeof UpdateAdminVendorPayoutBodyStatus[keyof typeof UpdateAdminVendorPayoutBodyStatus];
+
+
+export const UpdateAdminVendorPayoutBodyStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  paid: 'paid',
+  failed: 'failed',
+  cancelled: 'cancelled',
+  partial: 'partial',
+} as const;
+
+export type UpdateAdminVendorPayoutBody = {
+  status: UpdateAdminVendorPayoutBodyStatus;
+  paidAmount?: number;
+  reason?: string;
+  adjustmentReason?: string;
+};
+
+export type UpdateAdminVendorPayout200 = { [key: string]: unknown };
+
+export type ListPaymentReconciliationEventsParams = {
+since?: string;
+until?: string;
+};
+
+export type ListPaymentReconciliationEvents200 = { [key: string]: unknown };
+
+export type CreatePaymentReconciliationEventBody = { [key: string]: unknown };
+
+export type CreatePaymentReconciliationEvent201 = { [key: string]: unknown };
+
+export type GetAdminFinancialsParams = {
+since?: string;
+until?: string;
+groupBy?: GetAdminFinancialsGroupBy;
+};
+
+export type GetAdminFinancialsGroupBy = typeof GetAdminFinancialsGroupBy[keyof typeof GetAdminFinancialsGroupBy];
+
+
+export const GetAdminFinancialsGroupBy = {
+  customer: 'customer',
+  vendor: 'vendor',
+  region: 'region',
+  material: 'material',
+  truckType: 'truckType',
+  date: 'date',
+} as const;
+
+export type GetAdminFinancials200 = { [key: string]: unknown };
+
+export type GetProfileReviewStats200 = { [key: string]: unknown };
+
+export type FlagReviewBody = {
+  reason: string;
+};
+
+export type FlagReview201 = { [key: string]: unknown };
+
+export type ModerateReviewBodyStatus = typeof ModerateReviewBodyStatus[keyof typeof ModerateReviewBodyStatus];
+
+
+export const ModerateReviewBodyStatus = {
+  visible: 'visible',
+  flagged: 'flagged',
+  removed: 'removed',
+} as const;
+
+export type ModerateReviewBody = {
+  status: ModerateReviewBodyStatus;
+  reason?: string;
+};
+
+export type ModerateReview200 = { [key: string]: unknown };
+
+export type ListNotifications200 = { [key: string]: unknown };
+
+export type QueueNotificationBody = { [key: string]: unknown };
+
+export type QueueNotification201 = { [key: string]: unknown };
+
+export type RetryNotification200 = { [key: string]: unknown };
+
+export type ProcessQueuedNotifications200 = { [key: string]: unknown };
+
