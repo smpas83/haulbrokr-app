@@ -195,9 +195,9 @@ async function notifyPayoutDelayed(
 
 /**
  * Broker-fee model: the customer is billed the work value PLUS the configured
- * marketplace commission. HaulBrokr deducts that commission from the customer's gross payment BEFORE the
- * provider/driver is paid, so the driver receives the full work value (net) and
- * HaulBrokr retains the fee.
+ * marketplace commission. HaulBrokr deducts that commission from the customer's
+ * gross payment BEFORE the provider/driver is paid, so the driver receives the
+ * full work value (net) and HaulBrokr retains the fee.
  *   base  = ratePerHour * hours   (work value → provider net)
  *   fee   = base * feeRate        (HaulBrokr's retained profit)
  *   gross = base + fee            (what the customer pays)
@@ -218,8 +218,9 @@ export function computeBreakdown(
 /**
  * Funds the provider's net payout via Stripe Connect using separate
  * charge + transfer: charge the customer the GROSS on the platform account,
- * then transfer ONLY the net to the provider's connected account. The 15%
- * broker fee therefore never leaves the platform — it is retained by design.
+ * then transfer ONLY the net to the provider's connected account. The configured
+ * marketplace commission therefore never leaves the platform — it is retained by
+ * design.
  */
 interface CustomerInstrument {
   stripeCustomerId: string | null;
@@ -552,21 +553,17 @@ router.get(
       return;
     }
     if (!jobIsInvoiceEligible(job)) {
-      res
-        .status(400)
-        .json({
-          error: "Invoices are available only for completed or invoiced jobs.",
-        });
+      res.status(400).json({
+        error: "Invoices are available only for completed or invoiced jobs.",
+      });
       return;
     }
 
     const staff = await isAdmin(req);
     if (!staff && !(await canDownloadJobInvoice(job, profile))) {
-      res
-        .status(403)
-        .json({
-          error: "You do not have permission to download this invoice.",
-        });
+      res.status(403).json({
+        error: "You do not have permission to download this invoice.",
+      });
       return;
     }
 
@@ -772,12 +769,10 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     profile.role === "driver" &&
     (await isDriverAssignedToJob(params.data.id, profile.id));
   if (!isProvider && !isAssignedDriver) {
-    res
-      .status(403)
-      .json({
-        error:
-          "Only the hauling company or an assigned driver can update this job.",
-      });
+    res.status(403).json({
+      error:
+        "Only the hauling company or an assigned driver can update this job.",
+    });
     return;
   }
   if (
@@ -910,12 +905,10 @@ router.post(
       return;
     }
     if (job.customerTotalAmount == null || job.providerNetAmount == null) {
-      res
-        .status(400)
-        .json({
-          error:
-            "Job has no computed amount. Mark it completed with hours first.",
-        });
+      res.status(400).json({
+        error:
+          "Job has no computed amount. Mark it completed with hours first.",
+      });
       return;
     }
     if (job.paymentStatus === "paid" || job.paymentStatus === "released") {
@@ -926,11 +919,9 @@ router.post(
     // retried through /release, not re-charged — re-charging would reset the
     // invoice instead of re-attempting the deferred payout.
     if (job.paymentStatus === "failed" && job.invoicedAt != null) {
-      res
-        .status(409)
-        .json({
-          error: "This job has an open invoice. Release the payout to retry.",
-        });
+      res.status(409).json({
+        error: "This job has an open invoice. Release the payout to retry.",
+      });
       return;
     }
 
@@ -987,12 +978,10 @@ router.post(
     // charged. Block here with a clear message so the customer finishes verifying
     // (Account → payment method) before we attempt to capture funds.
     if (pm?.methodType === "ach" && pm.verificationStatus === "pending") {
-      res
-        .status(409)
-        .json({
-          error:
-            "Your bank account is still being verified. Finish verifying it in Account before paying.",
-        });
+      res.status(409).json({
+        error:
+          "Your bank account is still being verified. Finish verifying it in Account before paying.",
+      });
       return;
     }
 
@@ -1146,12 +1135,10 @@ router.post(
       custPm?.methodType === "ach" &&
       custPm.verificationStatus === "pending"
     ) {
-      res
-        .status(409)
-        .json({
-          error:
-            "The bank account on file is still being verified. Finish verifying it in Account before releasing payment.",
-        });
+      res.status(409).json({
+        error:
+          "The bank account on file is still being verified. Finish verifying it in Account before releasing payment.",
+      });
       return;
     }
 
@@ -1336,12 +1323,10 @@ router.post(
     const stripe = await getUncachableStripeClient();
     const pi = await stripe.paymentIntents.retrieve(job.stripePaymentIntentId);
     if (pi.status !== "succeeded") {
-      res
-        .status(409)
-        .json({
-          error:
-            "Payment has not been authenticated yet. Please complete the confirmation and try again.",
-        });
+      res.status(409).json({
+        error:
+          "Payment has not been authenticated yet. Please complete the confirmation and try again.",
+      });
       return;
     }
 
@@ -1437,12 +1422,10 @@ router.post(
       return;
     }
     if (job.customerTotalAmount == null || job.providerNetAmount == null) {
-      res
-        .status(400)
-        .json({
-          error:
-            "Job has no computed amount. Mark it completed with hours first.",
-        });
+      res.status(400).json({
+        error:
+          "Job has no computed amount. Mark it completed with hours first.",
+      });
       return;
     }
     // Same double-payment guard as /charge: a job that is already paid, released,
@@ -1452,12 +1435,10 @@ router.post(
       return;
     }
     if (job.paymentStatus === "requires_action") {
-      res
-        .status(409)
-        .json({
-          error:
-            "This job has a payment awaiting card authentication. Finish confirming it before starting a new checkout.",
-        });
+      res.status(409).json({
+        error:
+          "This job has a payment awaiting card authentication. Finish confirming it before starting a new checkout.",
+      });
       return;
     }
 
@@ -1594,12 +1575,10 @@ router.post(
       return;
     }
     if (job.customerTotalAmount == null || job.providerNetAmount == null) {
-      res
-        .status(400)
-        .json({
-          error:
-            "Job has no computed amount. Mark it completed with hours first.",
-        });
+      res.status(400).json({
+        error:
+          "Job has no computed amount. Mark it completed with hours first.",
+      });
       return;
     }
 
@@ -1615,20 +1594,16 @@ router.post(
       // The session must belong to THIS job — guards against a session id for a
       // different job being replayed against this one.
       if (session.metadata?.jobId !== String(job.id)) {
-        res
-          .status(409)
-          .json({
-            error: "This checkout session does not belong to this job.",
-          });
+        res.status(409).json({
+          error: "This checkout session does not belong to this job.",
+        });
         return;
       }
       if (session.payment_status !== "paid") {
         // Abandoned / not completed — leave the job untouched and still payable.
-        res
-          .status(409)
-          .json({
-            error: "This checkout has not been paid. The job is still payable.",
-          });
+        res.status(409).json({
+          error: "This checkout has not been paid. The job is still payable.",
+        });
         return;
       }
 
@@ -1735,12 +1710,9 @@ router.post(
       return;
     }
     if (!DRIVER_SIDE.has(profile.role) || !isOrgManager(profile)) {
-      res
-        .status(403)
-        .json({
-          error:
-            "Only a provider owner or admin can assign drivers and trucks.",
-        });
+      res.status(403).json({
+        error: "Only a provider owner or admin can assign drivers and trucks.",
+      });
       return;
     }
     const job = await loadJobIfMember(jobId, profile);
@@ -1873,11 +1845,9 @@ router.post(
       return;
     }
     if (!DRIVER_SIDE.has(profile.role)) {
-      res
-        .status(403)
-        .json({
-          error: "Only drivers and providers can report status updates.",
-        });
+      res.status(403).json({
+        error: "Only drivers and providers can report status updates.",
+      });
       return;
     }
     const job = await loadJobIfMember(jobId, profile);
@@ -1914,12 +1884,10 @@ router.post(
       })
       .returning();
 
-    res
-      .status(201)
-      .json({
-        ...update,
-        actorName: profile.contactName ?? profile.companyName,
-      });
+    res.status(201).json({
+      ...update,
+      actorName: profile.contactName ?? profile.companyName,
+    });
   },
 );
 
@@ -1946,19 +1914,15 @@ router.post(
       return;
     }
     if (job.status !== "completed") {
-      res
-        .status(409)
-        .json({
-          error: "The job must be marked completed before it can be reviewed.",
-        });
+      res.status(409).json({
+        error: "The job must be marked completed before it can be reviewed.",
+      });
       return;
     }
     if (!(await canReviewCompletion(job, profile))) {
-      res
-        .status(403)
-        .json({
-          error: "You are not assigned to review this job's completion.",
-        });
+      res.status(403).json({
+        error: "You are not assigned to review this job's completion.",
+      });
       return;
     }
 
@@ -2004,19 +1968,15 @@ router.post(
       return;
     }
     if (job.status !== "completed") {
-      res
-        .status(409)
-        .json({
-          error: "The job must be marked completed before it can be reviewed.",
-        });
+      res.status(409).json({
+        error: "The job must be marked completed before it can be reviewed.",
+      });
       return;
     }
     if (!(await canReviewCompletion(job, profile))) {
-      res
-        .status(403)
-        .json({
-          error: "You are not assigned to review this job's completion.",
-        });
+      res.status(403).json({
+        error: "You are not assigned to review this job's completion.",
+      });
       return;
     }
 
