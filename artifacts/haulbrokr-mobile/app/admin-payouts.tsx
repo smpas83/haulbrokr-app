@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable, RefreshControl,
   ScrollView, StyleSheet, Text, View,
 } from "react-native";
