@@ -3,11 +3,12 @@ import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 
 import { Layout } from "./components/layout";
 import { Toaster } from "@/components/ui/toaster";
-import { useGetMyProfile } from "@workspace/api-client-react";
+import { Button } from "@/components/ui/button";
+import { useGetAdminAccess, useGetMyProfile } from "@workspace/api-client-react";
 import { SignInPage, SignUpPage } from "./pages/auth";
 import LandingPage from "./pages/landing";
 
@@ -100,6 +101,23 @@ function AppLoader() {
   );
 }
 
+function ShellErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="max-w-lg w-full border-2 border-border bg-card p-8 text-center space-y-4">
+        <AlertTriangle className="h-10 w-10 text-destructive mx-auto" />
+        <div>
+          <h1 className="text-2xl font-black tracking-tight">Couldn&apos;t load your account</h1>
+          <p className="text-sm text-muted-foreground mt-2">{message}</p>
+        </div>
+        <Button className="rounded-none font-bold" onClick={onRetry}>
+          <RefreshCw className="h-4 w-4 mr-2" /> Retry
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
   const qc = useQueryClient();
@@ -116,7 +134,7 @@ function ClerkQueryClientCacheInvalidator() {
 }
 
 function RequireProfile({ children }: { children: React.ReactNode }) {
-  const { data: profile, isLoading, error } = useGetMyProfile();
+  const { data: profile, isLoading, error, refetch } = useGetMyProfile();
 
   if (isLoading) {
     return <AppLoader />;
@@ -126,11 +144,34 @@ function RequireProfile({ children }: { children: React.ReactNode }) {
     return <Redirect to="/onboarding" />;
   }
 
+  if (error) {
+    const status = (error as any).status;
+    if (status === 401 || status === 403) return <Redirect to="/sign-in" />;
+    return (
+      <ShellErrorState
+        message="Your session or the network may have expired. Retry, or sign in again if the problem continues."
+        onRetry={() => refetch()}
+      />
+    );
+  }
+
   if (profile) {
     return <Layout>{children}</Layout>;
   }
 
-  return null;
+  return (
+    <ShellErrorState
+      message="No profile was returned for this session."
+      onRetry={() => refetch()}
+    />
+  );
+}
+
+function RequireStaffRoute({ children }: { children: React.ReactNode }) {
+  const { data: adminAccess, isLoading } = useGetAdminAccess();
+  if (isLoading) return <AppLoader />;
+  if (!adminAccess?.isAdmin) return <Redirect to="/dashboard" />;
+  return <>{children}</>;
 }
 
 function AuthShellRoutes() {
@@ -253,7 +294,7 @@ function AuthShellRoutes() {
             </Route>
 
             <Route path="/integrations">
-              <Show when="signed-in"><RequireProfile><IntegrationsPage /></RequireProfile></Show>
+              <Show when="signed-in"><RequireProfile><RequireStaffRoute><IntegrationsPage /></RequireStaffRoute></RequireProfile></Show>
               <Show when="signed-out"><Redirect to="/sign-in" /></Show>
             </Route>
 
