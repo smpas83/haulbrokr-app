@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/apiFetch";
+import { getGetAdminFinancialsQueryKey, useGetAdminFinancials } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,7 +12,7 @@ import {
 import {
   DollarSign, TrendingUp, Banknote, Briefcase, Activity, PackageCheck,
   ClipboardList, FileStack, XCircle, Truck, Users, UserCog, HardHat,
-  MapPin, ArrowRight, Search, ChevronRight, Building2, Phone, Mail, Globe, Loader2, Download, CalendarRange,
+  MapPin, ArrowRight, Search, ChevronRight, Building2, Phone, Mail, Globe, Loader2, Download, CalendarRange, Wallet,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -753,11 +754,13 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
     queryFn: () => apiFetch<AdminOverviewV2>("/admin/overview"),
     enabled,
   });
+  const financials = useGetAdminFinancials(undefined, { query: { queryKey: getGetAdminFinancialsQueryKey(), enabled } });
 
   if (overview.isLoading) {
     return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">{Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}</div>;
   }
   const d = overview.data;
+  const finance = financials.data as any;
   if (!d) return <div className="text-sm text-muted-foreground py-8 text-center">Couldn't load platform stats. Try refreshing.</div>;
 
   return (
@@ -768,6 +771,10 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
         <MetricCard accent icon={<TrendingUp className="w-3.5 h-3.5" />} label="Broker-fee revenue" value={money(d.brokerFees)} hint="15% platform fee on all jobs" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (broker fees)" })} />
         <MetricCard accent icon={<Banknote className="w-3.5 h-3.5" />} label="Profit realised" value={money(d.realisedProfit)} hint="Broker fees on paid-out jobs" onClick={() => setDrill({ kind: "jobs", status: "completed", title: "Completed jobs" })} />
         <MetricCard icon={<Activity className="w-3.5 h-3.5" />} label="Avg job value" value={money(d.avgJobValue)} hint="GMV · total jobs" />
+        <MetricCard icon={<Wallet className="w-3.5 h-3.5" />} label="Pending payouts" value={money(finance?.pendingPayouts ?? 0)} hint="Vendor payout queue" />
+        <MetricCard icon={<PackageCheck className="w-3.5 h-3.5" />} label="Completed payouts" value={money(finance?.completedPayouts ?? 0)} hint="Paid vendor ledger" />
+        <MetricCard icon={<XCircle className="w-3.5 h-3.5" />} label="Refunds / chargebacks" value={`${money(finance?.refunds ?? 0)} / ${money(finance?.chargebacks ?? 0)}`} hint="Trust operations" />
+        <MetricCard icon={<TrendingUp className="w-3.5 h-3.5" />} label="Average margin" value={`${Math.round(Number(finance?.averageMargin ?? 0) * 100)}%`} hint="Net revenue ÷ GMV" />
       </Section>
 
       <Section title="Jobs funnel">

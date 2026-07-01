@@ -790,6 +790,26 @@ export function useLiveActivity() {
     queryKey: ["dashboard", "activity"],
     queryFn: () => apiFetch(getToken, "GET", "/dashboard/activity"),
     enabled: !!isSignedIn,
+    refetchInterval: 30000,
+  });
+}
+
+export function useNotifications() {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => apiFetch(getToken, "GET", "/notifications"),
+    enabled: !!isSignedIn,
+    refetchInterval: 30000,
+  });
+}
+
+export function useDriverEarnings() {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery({
+    queryKey: ["driver", "earnings"],
+    queryFn: () => apiFetch(getToken, "GET", "/driver/earnings"),
+    enabled: !!isSignedIn,
   });
 }
 

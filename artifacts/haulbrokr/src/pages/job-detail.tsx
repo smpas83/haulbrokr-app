@@ -13,6 +13,7 @@ import {
   useGetPaymentMethod, useSetPaymentMethod, useUpdatePaymentMethod, getGetPaymentMethodQueryKey,
   useAssignJob, useApproveJobCompletion, useFlagJobCompletion,
   useListJobStatusUpdates, useListOrgMembers, useListTrucks, getListJobStatusUpdatesQueryKey,
+  useGetJobRating, useCreateJobRating, getGetJobRatingQueryKey,
   type Job
 } from "@workspace/api-client-react";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
@@ -1145,6 +1146,71 @@ function CompletionReviewPanel({ job }: { job: Job }) {
   );
 }
 
+function RatingPanel({ job, canRate }: { job: Job; canRate: boolean }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data, isLoading } = useGetJobRating(job.id, { query: { queryKey: getGetJobRatingQueryKey(job.id), enabled: canRate && job.status === "completed" } });
+  const createRating = useCreateJobRating();
+  const [stars, setStars] = useState(5);
+  const [comment, setComment] = useState("");
+  const rating = data as any;
+  const mine = rating?.mine;
+  if (!canRate || job.status !== "completed") return null;
+
+  const submit = () => {
+    createRating.mutate(
+      { id: job.id, data: { stars, comment: comment.trim() || undefined } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getGetJobRatingQueryKey(job.id) });
+          toast({ title: "Review submitted" });
+        },
+        onError: (e: any) => toast({ title: e?.message ?? "Could not submit review", variant: "destructive" }),
+      },
+    );
+  };
+
+  return (
+    <div className="border-t-2 border-border p-6 md:p-8 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-lg flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-muted-foreground" /> Rating &amp; Review
+        </h3>
+        {mine && <Badge variant="outline" className="rounded-none">Submitted</Badge>}
+      </div>
+      {isLoading ? (
+        <Skeleton className="h-24 w-full" />
+      ) : mine ? (
+        <div className="bg-muted/30 border-2 border-border p-4">
+          <p className="font-bold">{mine.stars} / 5 stars</p>
+          <p className="text-sm text-muted-foreground mt-1">{mine.comment || "No written comment."}</p>
+        </div>
+      ) : (
+        <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Five-star rating</Label>
+            <Select value={String(stars)} onValueChange={(value) => setStars(Number(value))}>
+              <SelectTrigger className="rounded-none mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[5, 4, 3, 2, 1].map((value) => (
+                  <SelectItem key={value} value={String(value)}>{value} star{value === 1 ? "" : "s"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Written comment</Label>
+            <Textarea className="rounded-none mt-1" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Share how this haul went." />
+          </div>
+          <Button className="rounded-none font-bold" disabled={createRating.isPending} onClick={submit}>
+            {createRating.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Submit Review
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function JobDetailPage() {
   const params = useParams();
   const id = Number(params.id);
@@ -1464,6 +1530,10 @@ export default function JobDetailPage() {
 
         {job.status === "completed" && isCustomer && (
           <CompletionReviewPanel job={job} />
+        )}
+
+        {job.status === "completed" && (
+          <RatingPanel job={job} canRate={isCustomer || isProvider || isDriver} />
         )}
 
         {job.status === "completed" && (
