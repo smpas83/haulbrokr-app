@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/add-lint-release-gate-3455`
-Latest verified milestone commit: `de32f5d`
+Latest verified milestone commit: `a02a4cb`
 
 ## Completed milestones
 
@@ -10,10 +10,12 @@ Latest verified milestone commit: `de32f5d`
 - Added a root lint gate for release-control files that were already referenced by the go-live checklist.
 - Added the lint gate to GitHub Actions so release checks and CI are aligned.
 - Formatted `pnpm-workspace.yaml` so the new lint gate starts green.
+- Fixed regenerated `@workspace/api-zod` exports for `CreateDriverEventBody`.
+- Added an API codegen freshness gate to CI so generated Zod schemas and React Query clients cannot drift silently.
 
 ## Current work
 
-- Phase 1 stabilization: align documented release gates with enforceable repository automation.
+- Phase 1 stabilization: align documented release gates and generated-contract checks with enforceable repository automation.
 
 ## Next priorities
 
@@ -30,6 +32,7 @@ Latest verified milestone commit: `de32f5d`
 ## Test status
 
 - Passing: `pnpm run lint`
+- Passing: `pnpm run check:api-codegen`
 - Passing: `pnpm run typecheck`
 - Passing: `PAYMENTS_MOCK_MODE=true pnpm --filter @workspace/api-server run test`
 - Passing: `pnpm --filter @workspace/haulbrokr run test`
