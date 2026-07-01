@@ -87,6 +87,30 @@ export const jobsTable = pgTable("jobs", {
     precision: 12,
     scale: 2,
   }),
+  driverPayoutAmount: numeric("driver_payout_amount", {
+    precision: 12,
+    scale: 2,
+  })
+    .notNull()
+    .default("0"),
+  taxesAmount: numeric("taxes_amount", { precision: 12, scale: 2 })
+    .notNull()
+    .default("0"),
+  feesAmount: numeric("fees_amount", { precision: 12, scale: 2 })
+    .notNull()
+    .default("0"),
+  fuelSurchargeAmount: numeric("fuel_surcharge_amount", {
+    precision: 12,
+    scale: 2,
+  })
+    .notNull()
+    .default("0"),
+  gmvAmount: numeric("gmv_amount", { precision: 12, scale: 2 }),
+  netMarketplaceRevenueAmount: numeric("net_marketplace_revenue_amount", {
+    precision: 12,
+    scale: 2,
+  }),
+  finalInvoiceId: integer("final_invoice_id"),
   paymentStatus: jobPaymentStatusEnum("payment_status")
     .notNull()
     .default("unpaid"),

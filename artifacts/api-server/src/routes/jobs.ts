@@ -815,6 +815,12 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
       updates.customerTotalAmount = String(gross);
       updates.platformFeeAmount = String(fee);
       updates.providerNetAmount = String(base);
+      updates.driverPayoutAmount = "0";
+      updates.taxesAmount = existingJob.taxesAmount ?? "0";
+      updates.feesAmount = existingJob.feesAmount ?? "0";
+      updates.fuelSurchargeAmount = existingJob.fuelSurchargeAmount ?? "0";
+      updates.gmvAmount = String(gross);
+      updates.netMarketplaceRevenueAmount = String(fee);
     }
   }
 

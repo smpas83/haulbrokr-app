@@ -11,10 +11,13 @@ export type PricingInput = CommissionContext & {
   estimatedHours: number;
   trucksNeeded?: number;
   baseRatePerHour?: number | null;
+  loads?: number | null;
+  quantityTons?: number | null;
   truckType?: string | null;
   materialType?: string | null;
   demandLevel?: string | null;
   availableTrucks?: number | null;
+  truckShortageLevel?: string | null;
   trafficLevel?: string | null;
   fuelSurcharge?: boolean | null;
   nightHauling?: boolean | null;
@@ -25,6 +28,8 @@ export type PricingInput = CommissionContext & {
   weatherSeverity?: string | null;
   waitingTimeMinutes?: number | null;
   extraStops?: number | null;
+  bridgeTolls?: number | null;
+  permitFees?: number | null;
 };
 
 export type PricingBreakdownItem = {
@@ -67,10 +72,16 @@ function inputValueForRule(
   switch (code) {
     case "available_trucks_multiplier":
       return input.availableTrucks ?? null;
+    case "truck_shortage_multiplier":
+      return input.availableTrucks ?? null;
     case "waiting_time_hourly_rate":
       return input.waitingTimeMinutes ?? 0;
     case "extra_stop_fee":
       return input.extraStops ?? 0;
+    case "per_load_rate":
+      return input.loads ?? 0;
+    case "per_ton_rate":
+      return input.quantityTons ?? 0;
     default:
       return null;
   }
@@ -85,6 +96,8 @@ function targetMatches(rule: PricingRule, input: PricingInput): boolean {
       return rule.targetKey === input.materialType;
     case "demand_multiplier":
       return rule.targetKey === input.demandLevel;
+    case "truck_shortage_multiplier":
+      return rule.targetKey === input.truckShortageLevel;
     case "traffic_multiplier":
       return rule.targetKey === input.trafficLevel;
     case "weather_surcharge_pct":
@@ -125,6 +138,14 @@ function ruleApplies(rule: PricingRule, input: PricingInput): boolean {
       return (input.waitingTimeMinutes ?? 0) > 0;
     case "extra_stop_fee":
       return (input.extraStops ?? 0) > 0;
+    case "per_load_rate":
+      return (input.loads ?? 0) > 0;
+    case "per_ton_rate":
+      return (input.quantityTons ?? 0) > 0;
+    case "bridge_toll_fee":
+      return true;
+    case "permit_fee":
+      return true;
     default:
       return true;
   }
@@ -150,6 +171,7 @@ function activeModifierRules(
     "truck_type_multiplier",
     "material_multiplier",
     "demand_multiplier",
+    "truck_shortage_multiplier",
     "available_trucks_multiplier",
     "traffic_multiplier",
     "fuel_surcharge_pct",
@@ -190,8 +212,12 @@ export async function computeDynamicQuote(
   const rules = await loadActivePricingRules(now);
   const baseRateRule = bestRule(rules, "base_hourly_rate", input);
   const distanceRule = bestRule(rules, "distance_mile_rate", input);
+  const perLoadRule = bestRule(rules, "per_load_rate", input);
+  const perTonRule = bestRule(rules, "per_ton_rate", input);
   const waitingRule = bestRule(rules, "waiting_time_hourly_rate", input);
   const extraStopRule = bestRule(rules, "extra_stop_fee", input);
+  const bridgeTollRule = bestRule(rules, "bridge_toll_fee", input);
+  const permitRule = bestRule(rules, "permit_fee", input);
 
   const baseRate = input.baseRatePerHour ?? num(baseRateRule?.value);
   if (baseRate == null || baseRate <= 0) {
@@ -226,6 +252,24 @@ export async function computeDynamicQuote(
     });
   }
 
+  for (const quantityRule of [perLoadRule, perTonRule]) {
+    if (!quantityRule) continue;
+    const rate = num(quantityRule.value) ?? 0;
+    const quantity =
+      quantityRule.code === "per_load_rate"
+        ? (input.loads ?? 0)
+        : (input.quantityTons ?? 0);
+    const amount = roundMoney(rate * quantity);
+    vendorWorkAmount = roundMoney(vendorWorkAmount + amount);
+    breakdown.push({
+      code: quantityRule.code,
+      label: quantityRule.label,
+      valueType: quantityRule.valueType,
+      value: rate,
+      amount,
+    });
+  }
+
   if (waitingRule) {
     const hourly = num(waitingRule.value) ?? 0;
     const amount = roundMoney(hourly * ((input.waitingTimeMinutes ?? 0) / 60));
@@ -248,6 +292,24 @@ export async function computeDynamicQuote(
       label: extraStopRule.label,
       valueType: extraStopRule.valueType,
       value: fee,
+      amount,
+    });
+  }
+
+  for (const feeRule of [bridgeTollRule, permitRule]) {
+    if (!feeRule) continue;
+    const configured = num(feeRule.value) ?? 0;
+    const passedAmount =
+      feeRule.code === "bridge_toll_fee"
+        ? (input.bridgeTolls ?? 0)
+        : (input.permitFees ?? 0);
+    const amount = roundMoney(passedAmount > 0 ? passedAmount : configured);
+    vendorWorkAmount = roundMoney(vendorWorkAmount + amount);
+    breakdown.push({
+      code: feeRule.code,
+      label: feeRule.label,
+      valueType: feeRule.valueType,
+      value: configured,
       amount,
     });
   }
@@ -281,6 +343,8 @@ export async function computeDynamicQuote(
     customerId: input.customerId,
     vendorId: input.vendorId,
     projectId: input.projectId,
+    materialType: input.materialType,
+    region: input.region,
     emergency: input.emergencyDispatch ?? input.emergency,
     now,
   });

@@ -21,15 +21,20 @@ export const commissionRuleScopeEnum = pgEnum("commission_rule_scope", [
   "customer",
   "vendor",
   "project",
+  "material",
+  "region",
   "emergency",
 ]);
 
 export const pricingRuleCodeEnum = pgEnum("pricing_rule_code", [
   "base_hourly_rate",
   "distance_mile_rate",
+  "per_load_rate",
+  "per_ton_rate",
   "truck_type_multiplier",
   "material_multiplier",
   "demand_multiplier",
+  "truck_shortage_multiplier",
   "available_trucks_multiplier",
   "traffic_multiplier",
   "fuel_surcharge_pct",
@@ -41,6 +46,10 @@ export const pricingRuleCodeEnum = pgEnum("pricing_rule_code", [
   "weather_surcharge_pct",
   "waiting_time_hourly_rate",
   "extra_stop_fee",
+  "bridge_toll_fee",
+  "permit_fee",
+  "tax_rate",
+  "platform_fee",
 ]);
 
 export const pricingValueTypeEnum = pgEnum("pricing_value_type", [
@@ -90,12 +99,38 @@ export const payoutTransferStatusEnum = pgEnum("payout_transfer_status", [
   "reversed",
 ]);
 
+export const vendorSettlementStatusEnum = pgEnum("vendor_settlement_status", [
+  "approved_invoice",
+  "pending_payout",
+  "paid",
+  "failed",
+  "partial_payout",
+  "adjustment",
+  "credit",
+  "debit",
+]);
+
+export const financialTransactionTypeEnum = pgEnum(
+  "financial_transaction_type",
+  [
+    "customer_charge",
+    "customer_credit",
+    "vendor_payout",
+    "vendor_adjustment",
+    "platform_commission",
+    "tax",
+    "fee",
+    "refund",
+  ],
+);
+
 export const commissionRulesTable = pgTable(
   "commission_rules",
   {
     id: serial("id").primaryKey(),
     scope: commissionRuleScopeEnum("scope").notNull().default("global"),
     targetId: integer("target_id"),
+    targetKey: text("target_key"),
     rate: numeric("rate", { precision: 5, scale: 4 }).notNull(),
     priority: integer("priority").notNull().default(0),
     active: integer("active").notNull().default(1),
@@ -123,6 +158,37 @@ export const commissionRulesTable = pgTable(
     targetIdx: index("commission_rules_target_idx").on(
       table.scope,
       table.targetId,
+      table.targetKey,
+    ),
+  }),
+);
+
+export const commissionSettingsTable = pgTable(
+  "commission_settings",
+  {
+    id: serial("id").primaryKey(),
+    scope: commissionRuleScopeEnum("scope").notNull().default("global"),
+    targetKey: text("target_key"),
+    targetId: integer("target_id"),
+    rate: numeric("rate", { precision: 5, scale: 4 }).notNull().default("0.20"),
+    active: integer("active").notNull().default(1),
+    reason: text("reason"),
+    createdByProfileId: integer("created_by_profile_id").references(
+      () => profilesTable.id,
+    ),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    scopeIdx: index("commission_settings_scope_idx").on(
+      table.scope,
+      table.targetId,
+      table.targetKey,
     ),
   }),
 );
@@ -227,6 +293,36 @@ export const marketplaceQuotesTable = pgTable(
   }),
 );
 
+export const pricingEventsTable = pgTable(
+  "pricing_events",
+  {
+    id: serial("id").primaryKey(),
+    quoteId: integer("quote_id").references(() => marketplaceQuotesTable.id),
+    jobId: integer("job_id").references(() => jobsTable.id),
+    input: jsonb("input").notNull(),
+    explanation: jsonb("explanation").notNull(),
+    customerQuote: numeric("customer_quote", {
+      precision: 12,
+      scale: 2,
+    }).notNull(),
+    vendorPayout: numeric("vendor_payout", {
+      precision: 12,
+      scale: 2,
+    }).notNull(),
+    platformMargin: numeric("platform_margin", {
+      precision: 12,
+      scale: 2,
+    }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    jobIdx: index("pricing_events_job_idx").on(table.jobId, table.createdAt),
+    quoteIdx: index("pricing_events_quote_idx").on(table.quoteId),
+  }),
+);
+
 export const marketplaceAuditLogsTable = pgTable(
   "marketplace_audit_logs",
   {
@@ -252,6 +348,33 @@ export const marketplaceAuditLogsTable = pgTable(
       table.entityId,
     ),
     createdAtIdx: index("marketplace_audit_created_at_idx").on(table.createdAt),
+  }),
+);
+
+export const financialAuditLogsTable = pgTable(
+  "financial_audit_logs",
+  {
+    id: serial("id").primaryKey(),
+    actorProfileId: integer("actor_profile_id").references(
+      () => profilesTable.id,
+    ),
+    action: text("action").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    before: jsonb("before"),
+    after: jsonb("after"),
+    metadata: jsonb("metadata"),
+    idempotencyKey: text("idempotency_key").unique(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    entityIdx: index("financial_audit_entity_idx").on(
+      table.entityType,
+      table.entityId,
+    ),
+    createdAtIdx: index("financial_audit_created_at_idx").on(table.createdAt),
   }),
 );
 
@@ -296,6 +419,39 @@ export const paymentTransactionsTable = pgTable(
   }),
 );
 
+export const marketplaceTransactionsTable = pgTable(
+  "marketplace_transactions",
+  {
+    id: serial("id").primaryKey(),
+    jobId: integer("job_id").references(() => jobsTable.id),
+    customerId: integer("customer_id").references(() => profilesTable.id),
+    vendorId: integer("vendor_id").references(() => profilesTable.id),
+    type: financialTransactionTypeEnum("type").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").notNull().default("usd"),
+    status: paymentTransactionStatusEnum("status").notNull().default("pending"),
+    idempotencyKey: text("idempotency_key").unique(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    jobIdx: index("marketplace_transactions_job_idx").on(
+      table.jobId,
+      table.createdAt,
+    ),
+    customerIdx: index("marketplace_transactions_customer_idx").on(
+      table.customerId,
+      table.createdAt,
+    ),
+    vendorIdx: index("marketplace_transactions_vendor_idx").on(
+      table.vendorId,
+      table.createdAt,
+    ),
+  }),
+);
+
 export const stripeWebhookEventsTable = pgTable("stripe_webhook_events", {
   id: serial("id").primaryKey(),
   stripeEventId: text("stripe_event_id").notNull().unique(),
@@ -334,6 +490,98 @@ export const invoicesTable = pgTable("invoices", {
     .$onUpdate(() => new Date()),
 });
 
+export const customerInvoicesTable = pgTable(
+  "customer_invoices",
+  {
+    id: serial("id").primaryKey(),
+    jobId: integer("job_id").references(() => jobsTable.id),
+    customerId: integer("customer_id")
+      .notNull()
+      .references(() => profilesTable.id),
+    invoiceNumber: text("invoice_number").notNull().unique(),
+    status: invoiceStatusEnum("status").notNull().default("open"),
+    subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
+    taxes: numeric("taxes", { precision: 12, scale: 2 }).notNull().default("0"),
+    fees: numeric("fees", { precision: 12, scale: 2 }).notNull().default("0"),
+    credits: numeric("credits", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    refunds: numeric("refunds", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
+    outstandingBalance: numeric("outstanding_balance", {
+      precision: 12,
+      scale: 2,
+    }).notNull(),
+    statementJson: jsonb("statement_json"),
+    dueDate: timestamp("due_date", { withTimezone: true }),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    customerIdx: index("customer_invoices_customer_idx").on(
+      table.customerId,
+      table.status,
+    ),
+    jobIdx: index("customer_invoices_job_idx").on(table.jobId),
+  }),
+);
+
+export const invoiceItemsTable = pgTable(
+  "invoice_items",
+  {
+    id: serial("id").primaryKey(),
+    invoiceId: integer("invoice_id")
+      .notNull()
+      .references(() => customerInvoicesTable.id),
+    kind: text("kind").notNull(),
+    description: text("description").notNull(),
+    quantity: numeric("quantity", { precision: 12, scale: 4 })
+      .notNull()
+      .default("1"),
+    unitAmount: numeric("unit_amount", { precision: 12, scale: 2 }).notNull(),
+    totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    invoiceIdx: index("invoice_items_invoice_idx").on(table.invoiceId),
+  }),
+);
+
+export const paymentHistoryTable = pgTable(
+  "payment_history",
+  {
+    id: serial("id").primaryKey(),
+    jobId: integer("job_id").references(() => jobsTable.id),
+    customerId: integer("customer_id").references(() => profilesTable.id),
+    invoiceId: integer("invoice_id").references(() => customerInvoicesTable.id),
+    amountCents: integer("amount_cents").notNull(),
+    status: paymentTransactionStatusEnum("status").notNull(),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    stripeChargeId: text("stripe_charge_id"),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    customerIdx: index("payment_history_customer_idx").on(
+      table.customerId,
+      table.createdAt,
+    ),
+  }),
+);
+
 export const refundsTable = pgTable(
   "refunds",
   {
@@ -355,6 +603,30 @@ export const refundsTable = pgTable(
   },
   (table) => ({
     jobIdx: index("refunds_job_idx").on(table.jobId),
+  }),
+);
+
+export const refundHistoryTable = pgTable(
+  "refund_history",
+  {
+    id: serial("id").primaryKey(),
+    jobId: integer("job_id").references(() => jobsTable.id),
+    customerId: integer("customer_id").references(() => profilesTable.id),
+    amountCents: integer("amount_cents").notNull(),
+    reason: text("reason"),
+    stripeRefundId: text("stripe_refund_id"),
+    status: refundStatusEnum("status").notNull().default("pending"),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    customerIdx: index("refund_history_customer_idx").on(
+      table.customerId,
+      table.createdAt,
+    ),
+    jobIdx: index("refund_history_job_idx").on(table.jobId),
   }),
 );
 
@@ -383,6 +655,74 @@ export const payoutTransfersTable = pgTable(
       table.providerProfileId,
       table.status,
     ),
+  }),
+);
+
+export const vendorSettlementsTable = pgTable(
+  "vendor_settlements",
+  {
+    id: serial("id").primaryKey(),
+    jobId: integer("job_id").references(() => jobsTable.id),
+    vendorId: integer("vendor_id")
+      .notNull()
+      .references(() => profilesTable.id),
+    status: vendorSettlementStatusEnum("status")
+      .notNull()
+      .default("approved_invoice"),
+    approvedInvoiceAmount: numeric("approved_invoice_amount", {
+      precision: 12,
+      scale: 2,
+    })
+      .notNull()
+      .default("0"),
+    pendingPayoutAmount: numeric("pending_payout_amount", {
+      precision: 12,
+      scale: 2,
+    })
+      .notNull()
+      .default("0"),
+    paidAmount: numeric("paid_amount", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    failedAmount: numeric("failed_amount", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    adjustmentAmount: numeric("adjustment_amount", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    creditAmount: numeric("credit_amount", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    debitAmount: numeric("debit_amount", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    driverPayoutAmount: numeric("driver_payout_amount", {
+      precision: 12,
+      scale: 2,
+    })
+      .notNull()
+      .default("0"),
+    reconciliationStatus: text("reconciliation_status")
+      .notNull()
+      .default("unreconciled"),
+    payoutTransferId: integer("payout_transfer_id").references(
+      () => payoutTransfersTable.id,
+    ),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => ({
+    vendorIdx: index("vendor_settlements_vendor_idx").on(
+      table.vendorId,
+      table.status,
+    ),
+    jobIdx: index("vendor_settlements_job_idx").on(table.jobId),
   }),
 );
 

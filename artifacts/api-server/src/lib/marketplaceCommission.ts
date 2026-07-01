@@ -15,12 +15,16 @@ export type CommissionScope =
   | "customer"
   | "vendor"
   | "project"
+  | "material"
+  | "region"
   | "emergency";
 
 export type CommissionContext = {
   customerId?: number | null;
   vendorId?: number | null;
   projectId?: number | null;
+  materialType?: string | null;
+  region?: string | null;
   emergency?: boolean | null;
   now?: Date;
 };
@@ -63,6 +67,8 @@ function targetMatches(
   if (rule.scope === "customer") return rule.targetId === context.customerId;
   if (rule.scope === "vendor") return rule.targetId === context.vendorId;
   if (rule.scope === "project") return rule.targetId === context.projectId;
+  if (rule.scope === "material") return rule.targetKey === context.materialType;
+  if (rule.scope === "region") return rule.targetKey === context.region;
   return false;
 }
 
@@ -72,6 +78,8 @@ function specificity(scope: CommissionRule["scope"]): number {
     project: 40,
     customer: 30,
     vendor: 20,
+    material: 15,
+    region: 15,
     global: 10,
   }[scope];
 }

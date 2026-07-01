@@ -381,6 +381,14 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
         platformFeeAmount: String(estimatedAmounts.platformCommission),
         customerTotalAmount: String(estimatedAmounts.customerTotal),
         providerNetAmount: String(estimatedAmounts.vendorPayout),
+        driverPayoutAmount: String(estimatedAmounts.driverPayout),
+        taxesAmount: "0",
+        feesAmount: "0",
+        fuelSurchargeAmount: "0",
+        gmvAmount: String(estimatedAmounts.gmv),
+        netMarketplaceRevenueAmount: String(
+          estimatedAmounts.marketplaceRevenue,
+        ),
         notes: request.notes,
       })
       .returning();

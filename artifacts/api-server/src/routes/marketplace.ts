@@ -3,15 +3,23 @@ import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import {
   activityTable,
   commissionRulesTable,
+  commissionSettingsTable,
+  customerInvoicesTable,
   db,
+  financialAuditLogsTable,
   invoicesTable,
+  invoiceItemsTable,
   jobStatusUpdatesTable,
   jobsTable,
   marketplaceQuotesTable,
+  marketplaceTransactionsTable,
   paymentTransactionsTable,
+  pricingEventsTable,
   pricingRulesTable,
+  refundHistoryTable,
   refundsTable,
   trucksTable,
+  vendorSettlementsTable,
 } from "@workspace/db";
 import { z } from "zod/v4";
 import {
@@ -37,6 +45,10 @@ import {
   recordPaymentTransaction,
 } from "../lib/marketplacePayments";
 import { computeDocumentStatus } from "../lib/documentStatus";
+import {
+  computeFinancialQuote,
+  recordFinancialAudit,
+} from "../lib/financialEngine";
 
 const router: IRouter = Router();
 
@@ -45,9 +57,18 @@ router.use(attachClerkProfileIfPresent);
 
 const commissionRuleBody = z.object({
   scope: z
-    .enum(["global", "customer", "vendor", "project", "emergency"])
+    .enum([
+      "global",
+      "customer",
+      "vendor",
+      "project",
+      "material",
+      "region",
+      "emergency",
+    ])
     .default("global"),
   targetId: z.number().int().positive().nullable().optional(),
+  targetKey: z.string().min(1).nullable().optional(),
   rate: z.number().min(0).max(1),
   priority: z.number().int().default(0),
   active: z.number().int().min(0).max(1).default(1),
@@ -60,9 +81,12 @@ const pricingRuleBody = z.object({
   code: z.enum([
     "base_hourly_rate",
     "distance_mile_rate",
+    "per_load_rate",
+    "per_ton_rate",
     "truck_type_multiplier",
     "material_multiplier",
     "demand_multiplier",
+    "truck_shortage_multiplier",
     "available_trucks_multiplier",
     "traffic_multiplier",
     "fuel_surcharge_pct",
@@ -74,6 +98,10 @@ const pricingRuleBody = z.object({
     "weather_surcharge_pct",
     "waiting_time_hourly_rate",
     "extra_stop_fee",
+    "bridge_toll_fee",
+    "permit_fee",
+    "tax_rate",
+    "platform_fee",
   ]),
   label: z.string().min(1),
   valueType: z.enum(["fixed_amount", "percent", "multiplier"]),
@@ -103,10 +131,14 @@ const quoteBody = z.object({
   estimatedHours: z.number().positive(),
   trucksNeeded: z.number().int().positive().default(1),
   baseRatePerHour: z.number().positive().nullable().optional(),
+  loads: z.number().min(0).nullable().optional(),
+  quantityTons: z.number().min(0).nullable().optional(),
   truckType: z.string().nullable().optional(),
   materialType: z.string().nullable().optional(),
+  region: z.string().nullable().optional(),
   demandLevel: z.string().nullable().optional(),
   availableTrucks: z.number().int().min(0).nullable().optional(),
+  truckShortageLevel: z.string().nullable().optional(),
   trafficLevel: z.string().nullable().optional(),
   fuelSurcharge: z.boolean().optional(),
   nightHauling: z.boolean().optional(),
@@ -117,7 +149,31 @@ const quoteBody = z.object({
   weatherSeverity: z.string().nullable().optional(),
   waitingTimeMinutes: z.number().min(0).nullable().optional(),
   extraStops: z.number().int().min(0).nullable().optional(),
+  bridgeTolls: z.number().min(0).nullable().optional(),
+  permitFees: z.number().min(0).nullable().optional(),
+  taxes: z.number().min(0).nullable().optional(),
+  fees: z.number().min(0).nullable().optional(),
+  fuelSurchargeAmount: z.number().min(0).nullable().optional(),
   expiresAt: z.coerce.date().nullable().optional(),
+});
+
+const settlementBody = z.object({
+  status: z
+    .enum([
+      "approved_invoice",
+      "pending_payout",
+      "paid",
+      "failed",
+      "partial_payout",
+      "adjustment",
+      "credit",
+      "debit",
+    ])
+    .optional(),
+  adjustmentAmount: z.number().optional(),
+  creditAmount: z.number().optional(),
+  debitAmount: z.number().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const refundBody = z.object({
@@ -195,6 +251,12 @@ function serializeRefund(row: any) {
   };
 }
 
+function serializeMoneyRow(row: any, fields: string[]) {
+  const out = { ...row };
+  for (const field of fields) out[field] = num(row[field]);
+  return out;
+}
+
 router.get(
   "/admin/marketplace/commission-rules",
   requireStaffOrProfile,
@@ -224,6 +286,7 @@ router.post(
       .values({
         ...parsed.data,
         targetId: parsed.data.targetId ?? null,
+        targetKey: parsed.data.targetKey ?? null,
         rate: String(parsed.data.rate),
         reason: parsed.data.reason ?? null,
         createdByProfileId: actorProfileId,
@@ -265,6 +328,8 @@ router.patch(
     if (parsed.data.rate != null) updates.rate = String(parsed.data.rate);
     if (parsed.data.targetId !== undefined)
       updates.targetId = parsed.data.targetId;
+    if (parsed.data.targetKey !== undefined)
+      updates.targetKey = parsed.data.targetKey;
     const [rule] = await db
       .update(commissionRulesTable)
       .set(updates)
@@ -483,6 +548,72 @@ router.post(
   },
 );
 
+router.post(
+  "/marketplace/financial/quote",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const parsed = quoteBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const profile = getRequestProfile(req);
+    const input = {
+      ...parsed.data,
+      customerId:
+        parsed.data.customerId ??
+        (profile.role === "customer" ? profile.id : null),
+      vendorId:
+        parsed.data.vendorId ??
+        (profile.role === "provider" ? profile.id : null),
+      emergency: parsed.data.emergencyDispatch ?? false,
+    };
+    try {
+      const calculation = await computeFinancialQuote(input);
+      const [quoteRow] = await db
+        .insert(marketplaceQuotesTable)
+        .values({
+          customerId: input.customerId ?? null,
+          vendorId: input.vendorId ?? null,
+          projectId: input.projectId ?? null,
+          input,
+          pricingBreakdown: calculation.pricingExplanation,
+          commissionRuleId: calculation.commissionRuleId,
+          commissionRate: String(calculation.commissionRate),
+          vendorPayout: String(calculation.vendorPayout),
+          driverPayout: String(calculation.driverPayout),
+          platformCommission: String(calculation.platformCommission),
+          marketplaceRevenue: String(calculation.netMarketplaceRevenue),
+          platformProfit: String(calculation.platformProfit),
+          customerTotal: String(calculation.customerTotal),
+          gmv: String(calculation.gmv),
+          expiresAt: parsed.data.expiresAt ?? null,
+        })
+        .returning();
+      await db.insert(pricingEventsTable).values({
+        quoteId: quoteRow.id,
+        input,
+        explanation: calculation.pricingExplanation,
+        customerQuote: String(calculation.customerQuote),
+        vendorPayout: String(calculation.vendorPayout),
+        platformMargin: String(calculation.platformProfit),
+      });
+      await recordFinancialAudit({
+        actorProfileId: profile.id,
+        action: "financial_quote.create",
+        entityType: "marketplace_quote",
+        entityId: quoteRow.id,
+        after: calculation,
+      });
+      res.status(201).json({ id: quoteRow.id, ...calculation });
+    } catch (err: any) {
+      res
+        .status(409)
+        .json({ error: err?.message ?? "Could not calculate financial quote" });
+    }
+  },
+);
+
 router.get(
   "/marketplace/jobs/:id/transactions",
   requireProfile,
@@ -644,6 +775,233 @@ router.post(
       })
       .returning();
     res.status(201).json(serializeRefund(row));
+  },
+);
+
+router.post(
+  "/marketplace/jobs/:id/vendor-settlements",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const profile = getRequestProfile(req);
+    const rawId = Array.isArray(req.params.id)
+      ? req.params.id[0]
+      : req.params.id;
+    const jobId = Number.parseInt(rawId, 10);
+    const parsed = settlementBody.safeParse(req.body ?? {});
+    if (!Number.isFinite(jobId) || !parsed.success) {
+      res
+        .status(400)
+        .json({
+          error: parsed.success ? "Invalid job id" : parsed.error.message,
+        });
+      return;
+    }
+    const job = await loadJobIfMember(jobId, profile);
+    if (!job) {
+      res.status(404).json({ error: "Job not found" });
+      return;
+    }
+    if (job.providerId !== profile.id && !profile.staffRole) {
+      res
+        .status(403)
+        .json({ error: "Only the vendor or staff can create a settlement." });
+      return;
+    }
+    const [settlement] = await db
+      .insert(vendorSettlementsTable)
+      .values({
+        jobId: job.id,
+        vendorId: job.providerId,
+        status:
+          parsed.data.status ??
+          (job.paymentStatus === "released" ? "paid" : "approved_invoice"),
+        approvedInvoiceAmount: job.providerNetAmount ?? "0",
+        pendingPayoutAmount:
+          job.paymentStatus === "released"
+            ? "0"
+            : (job.providerNetAmount ?? "0"),
+        paidAmount:
+          job.paymentStatus === "released"
+            ? (job.providerNetAmount ?? "0")
+            : "0",
+        adjustmentAmount: String(parsed.data.adjustmentAmount ?? 0),
+        creditAmount: String(parsed.data.creditAmount ?? 0),
+        debitAmount: String(parsed.data.debitAmount ?? 0),
+        driverPayoutAmount: job.driverPayoutAmount ?? "0",
+        reconciliationStatus:
+          job.paymentStatus === "released" ? "reconciled" : "unreconciled",
+        metadata: parsed.data.metadata ?? null,
+      })
+      .returning();
+    await recordFinancialAudit({
+      actorProfileId: profile.id,
+      action: "vendor_settlement.create",
+      entityType: "vendor_settlement",
+      entityId: settlement.id,
+      after: settlement,
+    });
+    res
+      .status(201)
+      .json(
+        serializeMoneyRow(settlement, [
+          "approvedInvoiceAmount",
+          "pendingPayoutAmount",
+          "paidAmount",
+          "failedAmount",
+          "adjustmentAmount",
+          "creditAmount",
+          "debitAmount",
+          "driverPayoutAmount",
+        ]),
+      );
+  },
+);
+
+router.get(
+  "/marketplace/vendor-settlements",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const profile = getRequestProfile(req);
+    const rows = await db
+      .select()
+      .from(vendorSettlementsTable)
+      .where(eq(vendorSettlementsTable.vendorId, profile.id))
+      .orderBy(desc(vendorSettlementsTable.createdAt));
+    res.json(
+      rows.map((row) =>
+        serializeMoneyRow(row, [
+          "approvedInvoiceAmount",
+          "pendingPayoutAmount",
+          "paidAmount",
+          "failedAmount",
+          "adjustmentAmount",
+          "creditAmount",
+          "debitAmount",
+          "driverPayoutAmount",
+        ]),
+      ),
+    );
+  },
+);
+
+router.get(
+  "/marketplace/customer-billing/summary",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const profile = getRequestProfile(req);
+    const [invoiceAgg] = await db
+      .select({
+        outstandingBalance: sql<number>`coalesce(sum(${customerInvoicesTable.outstandingBalance}), 0)`,
+        invoiceCount: sql<number>`count(*)`,
+      })
+      .from(customerInvoicesTable)
+      .where(eq(customerInvoicesTable.customerId, profile.id));
+    const payments = await db
+      .select()
+      .from(marketplaceTransactionsTable)
+      .where(
+        and(
+          eq(marketplaceTransactionsTable.customerId, profile.id),
+          inArray(marketplaceTransactionsTable.type, [
+            "customer_charge",
+            "customer_credit",
+          ]),
+        ),
+      )
+      .orderBy(desc(marketplaceTransactionsTable.createdAt));
+    const refunds = await db
+      .select()
+      .from(refundHistoryTable)
+      .where(eq(refundHistoryTable.customerId, profile.id))
+      .orderBy(desc(refundHistoryTable.createdAt));
+    res.json({
+      outstandingBalance: Number(invoiceAgg?.outstandingBalance ?? 0),
+      invoiceCount: Number(invoiceAgg?.invoiceCount ?? 0),
+      paymentHistory: payments.map(serializeTransaction),
+      refundHistory: refunds.map(serializeRefund),
+    });
+  },
+);
+
+router.get(
+  "/admin/marketplace/financial-dashboard",
+  requireStaffOrProfile,
+  requirePermission("pricing"),
+  async (_req, res): Promise<void> => {
+    const [
+      [jobAgg],
+      [invoiceAgg],
+      [refundAgg],
+      byCustomer,
+      byVendor,
+      byRegion,
+      byMaterial,
+    ] = await Promise.all([
+      db
+        .select({
+          gmv: sql<number>`coalesce(sum(coalesce(${jobsTable.gmvAmount}, ${jobsTable.customerTotalAmount}, 0)), 0)`,
+          commission: sql<number>`coalesce(sum(coalesce(${jobsTable.platformFeeAmount}, 0)), 0)`,
+          revenue: sql<number>`coalesce(sum(coalesce(${jobsTable.netMarketplaceRevenueAmount}, ${jobsTable.platformFeeAmount}, 0)), 0)`,
+          vendorPayouts: sql<number>`coalesce(sum(coalesce(${jobsTable.providerNetAmount}, 0)), 0)`,
+          averageJobValue: sql<number>`coalesce(avg(coalesce(${jobsTable.customerTotalAmount}, 0)), 0)`,
+          averageMargin: sql<number>`coalesce(avg(coalesce(${jobsTable.platformFeeAmount}, 0)), 0)`,
+        })
+        .from(jobsTable),
+      db
+        .select({
+          outstandingInvoices: sql<number>`coalesce(sum(${customerInvoicesTable.outstandingBalance}), 0)`,
+        })
+        .from(customerInvoicesTable),
+      db
+        .select({
+          refunds: sql<number>`coalesce(sum(${refundHistoryTable.amountCents}) / 100.0, 0)`,
+        })
+        .from(refundHistoryTable),
+      db
+        .select({
+          customerId: jobsTable.customerId,
+          revenue: sql<number>`coalesce(sum(coalesce(${jobsTable.netMarketplaceRevenueAmount}, ${jobsTable.platformFeeAmount}, 0)), 0)`,
+        })
+        .from(jobsTable)
+        .groupBy(jobsTable.customerId),
+      db
+        .select({
+          vendorId: jobsTable.providerId,
+          revenue: sql<number>`coalesce(sum(coalesce(${jobsTable.netMarketplaceRevenueAmount}, ${jobsTable.platformFeeAmount}, 0)), 0)`,
+        })
+        .from(jobsTable)
+        .groupBy(jobsTable.providerId),
+      db
+        .select({
+          region: jobsTable.deliveryAddress,
+          revenue: sql<number>`coalesce(sum(coalesce(${jobsTable.netMarketplaceRevenueAmount}, ${jobsTable.platformFeeAmount}, 0)), 0)`,
+        })
+        .from(jobsTable)
+        .groupBy(jobsTable.deliveryAddress),
+      db
+        .select({
+          material: jobsTable.materialType,
+          revenue: sql<number>`coalesce(sum(coalesce(${jobsTable.netMarketplaceRevenueAmount}, ${jobsTable.platformFeeAmount}, 0)), 0)`,
+        })
+        .from(jobsTable)
+        .groupBy(jobsTable.materialType),
+    ]);
+
+    res.json({
+      gmv: Number(jobAgg?.gmv ?? 0),
+      commission: Number(jobAgg?.commission ?? 0),
+      marketplaceRevenue: Number(jobAgg?.revenue ?? 0),
+      vendorPayouts: Number(jobAgg?.vendorPayouts ?? 0),
+      outstandingInvoices: Number(invoiceAgg?.outstandingInvoices ?? 0),
+      refunds: Number(refundAgg?.refunds ?? 0),
+      chargebacks: 0,
+      averageJobValue: Number(jobAgg?.averageJobValue ?? 0),
+      averageMargin: Number(jobAgg?.averageMargin ?? 0),
+      revenueByCustomer: byCustomer,
+      revenueByVendor: byVendor,
+      revenueByRegion: byRegion,
+      revenueByMaterial: byMaterial,
+    });
   },
 );
 
