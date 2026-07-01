@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/marketplace-engine-3455`
-Latest verified milestone commit: `efac73e`
+Latest verified milestone commit: `a6c362f`
 
 ## Completed milestones
 
