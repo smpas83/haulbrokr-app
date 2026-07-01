@@ -1,7 +1,10 @@
 import {
   db,
+  invoicesTable,
   paymentTransactionsTable,
   payoutTransfersTable,
+  refundsTable,
+  type Job,
 } from "@workspace/db";
 
 type TransactionKind =
@@ -77,3 +80,76 @@ export async function recordPayoutTransfer(input: {
     console.error("Failed to record payout transfer", err);
   }
 }
+
+function invoiceNumber(jobId: number, at = new Date()): string {
+  return `INV-${at.getFullYear()}-${String(jobId).padStart(4, "0")}`;
+}
+
+function moneyToCents(
+  value: string | number | null | undefined,
+): number | null {
+  if (value == null) return null;
+  const parsed = typeof value === "number" ? value : Number.parseFloat(value);
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) : null;
+}
+
+export async function recordInvoiceForJob(
+  job: Pick<
+    Job,
+    | "id"
+    | "providerNetAmount"
+    | "totalAmount"
+    | "platformFeeAmount"
+    | "customerTotalAmount"
+    | "paymentDueDate"
+    | "paidAt"
+  >,
+): Promise<void> {
+  const subtotal = job.providerNetAmount ?? job.totalAmount;
+  if (
+    subtotal == null ||
+    job.platformFeeAmount == null ||
+    job.customerTotalAmount == null
+  )
+    return;
+  try {
+    await db.insert(invoicesTable).values({
+      jobId: job.id,
+      invoiceNumber: invoiceNumber(job.id),
+      status: job.paidAt ? "paid" : "open",
+      subtotal,
+      platformFeeAmount: job.platformFeeAmount,
+      totalAmount: job.customerTotalAmount,
+      dueDate: job.paymentDueDate ?? null,
+      paidAt: job.paidAt ?? null,
+    });
+  } catch (err) {
+    console.error("Failed to record marketplace invoice", err);
+  }
+}
+
+export async function recordRefund(input: {
+  jobId: number;
+  paymentTransactionId?: number | null;
+  amountCents: number;
+  reason?: string | null;
+  stripeRefundId?: string | null;
+  status?: "pending" | "succeeded" | "failed";
+  initiatedByProfileId?: number | null;
+}): Promise<void> {
+  try {
+    await db.insert(refundsTable).values({
+      jobId: input.jobId,
+      paymentTransactionId: input.paymentTransactionId ?? null,
+      amountCents: input.amountCents,
+      reason: input.reason ?? null,
+      stripeRefundId: input.stripeRefundId ?? null,
+      status: input.status ?? "pending",
+      initiatedByProfileId: input.initiatedByProfileId ?? null,
+    });
+  } catch (err) {
+    console.error("Failed to record marketplace refund", err);
+  }
+}
+
+export { moneyToCents };

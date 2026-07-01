@@ -2513,6 +2513,157 @@ paths:
               schema:
                 $ref: "#/components/schemas/PricingRule"
 
+  /marketplace/jobs/{id}/transactions:
+    get:
+      operationId: listMarketplaceJobTransactions
+      tags: [marketplace]
+      summary: List payment ledger rows for a marketplace job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Payment transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentTransaction"
+
+  /marketplace/invoices:
+    get:
+      operationId: listMarketplaceInvoices
+      tags: [marketplace]
+      summary: List marketplace invoice records visible to the caller
+      responses:
+        "200":
+          description: Invoice records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketplaceInvoice"
+
+  /marketplace/invoices/{id}:
+    get:
+      operationId: getMarketplaceInvoice
+      tags: [marketplace]
+      summary: Get a marketplace invoice record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Invoice record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceInvoice"
+
+  /marketplace/jobs/{id}/refunds:
+    post:
+      operationId: createMarketplaceJobRefund
+      tags: [marketplace]
+      summary: Create a Stripe refund for a marketplace job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketplaceRefundInput"
+      responses:
+        "201":
+          description: Refund created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceRefund"
+
+  /marketplace/fleet-availability:
+    get:
+      operationId: getMarketplaceFleetAvailability
+      tags: [marketplace]
+      summary: Get available truck capacity counts for marketplace pricing
+      parameters:
+        - name: providerId
+          in: query
+          schema: { type: integer }
+        - name: truckType
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Fleet availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetAvailability"
+
+  /marketplace/notifications:
+    get:
+      operationId: listMarketplaceNotifications
+      tags: [marketplace]
+      summary: List paginated marketplace notifications for the caller
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100 }
+        - name: cursor
+          in: query
+          schema: { type: integer }
+        - name: type
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationFeed"
+
+  /marketplace/jobs/{id}/trips:
+    get:
+      operationId: getMarketplaceJobTripTimeline
+      tags: [marketplace]
+      summary: Get trip timeline updates for a marketplace job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Trip timeline
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripTimeline"
+
+  /marketplace/document-status:
+    get:
+      operationId: getMarketplaceDocumentStatus
+      tags: [marketplace]
+      summary: Get marketplace document/compliance status for the caller
+      responses:
+        "200":
+          description: Document status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentStatus"
+
 components:
   schemas:
     HealthStatus:
@@ -2824,6 +2975,127 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    PaymentTransaction:
+      type: object
+      required: [id, kind, status, amountCents, amount]
+      properties:
+        id: { type: integer }
+        jobId: { type: ["integer", "null"] }
+        kind: { type: string }
+        status: { type: string }
+        amountCents: { type: integer }
+        amount: { type: number }
+        currency: { type: string }
+        stripePaymentIntentId: { type: ["string", "null"] }
+        stripeChargeId: { type: ["string", "null"] }
+        stripeTransferId: { type: ["string", "null"] }
+        stripeRefundId: { type: ["string", "null"] }
+        stripeCheckoutSessionId: { type: ["string", "null"] }
+        createdAt:
+          type: string
+          format: date-time
+
+    MarketplaceInvoice:
+      type: object
+      required:
+        [
+          id,
+          jobId,
+          invoiceNumber,
+          status,
+          subtotal,
+          platformFeeAmount,
+          totalAmount,
+        ]
+      properties:
+        id: { type: integer }
+        jobId: { type: integer }
+        invoiceNumber: { type: string }
+        status: { type: string }
+        subtotal: { type: number }
+        platformFeeAmount: { type: number }
+        totalAmount: { type: number }
+        dueDate:
+          type: ["string", "null"]
+          format: date-time
+        paidAt:
+          type: ["string", "null"]
+          format: date-time
+        externalRef: { type: ["string", "null"] }
+
+    MarketplaceRefundInput:
+      type: object
+      properties:
+        amountCents:
+          type: integer
+          minimum: 1
+        reason:
+          type: ["string", "null"]
+
+    MarketplaceRefund:
+      type: object
+      required: [id, jobId, amountCents, amount, status]
+      properties:
+        id: { type: integer }
+        jobId: { type: ["integer", "null"] }
+        amountCents: { type: integer }
+        amount: { type: number }
+        reason: { type: ["string", "null"] }
+        stripeRefundId: { type: ["string", "null"] }
+        status: { type: string }
+
+    FleetAvailability:
+      type: object
+      required: [totalAvailable, byTruckType]
+      properties:
+        totalAvailable: { type: integer }
+        byTruckType:
+          type: array
+          items:
+            type: object
+            required: [truckType, availableTrucks]
+            properties:
+              truckType: { type: string }
+              availableTrucks: { type: integer }
+
+    NotificationFeed:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        nextCursor:
+          type: ["integer", "null"]
+
+    TripTimeline:
+      type: object
+      required: [jobId, status, timeline]
+      properties:
+        jobId: { type: integer }
+        status: { type: string }
+        timeline:
+          type: array
+          items:
+            type: object
+
+    DocumentStatus:
+      type: object
+      required: [profileId, role, complete, gated, missing, items]
+      properties:
+        profileId: { type: integer }
+        role: { type: string }
+        complete: { type: boolean }
+        gated: { type: boolean }
+        missing:
+          type: array
+          items: { type: string }
+        items:
+          type: array
+          items:
+            type: object
 
     # ── User Profile ──────────────────────────────────────────────────────────
     UserProfile:

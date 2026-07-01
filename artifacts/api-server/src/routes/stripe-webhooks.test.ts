@@ -44,6 +44,9 @@ vi.mock("@workspace/db", () => {
     jobsTable: makeTable("jobs"),
     payoutAccountsTable: makeTable("payoutAccounts"),
     activityTable: makeTable("activity"),
+    stripeWebhookEventsTable: makeTable("stripeWebhookEvents"),
+    paymentTransactionsTable: makeTable("paymentTransactions"),
+    refundsTable: makeTable("refunds"),
   };
 });
 
@@ -90,8 +93,15 @@ import {
   handleAccountUpdated,
   handleStripeEvent,
 } from "../lib/stripeWebhooks";
-import { jobsTable, payoutAccountsTable } from "@workspace/db";
-import { checkProviderPayoutReadiness, syncStripeStatus } from "../lib/payoutStatus";
+import {
+  jobsTable,
+  payoutAccountsTable,
+  stripeWebhookEventsTable,
+} from "@workspace/db";
+import {
+  checkProviderPayoutReadiness,
+  syncStripeStatus,
+} from "../lib/payoutStatus";
 import { settleConfirmedPayout } from "../lib/payoutRetry";
 
 const WEBHOOK_SECRET = "whsec_test_secret";
@@ -152,7 +162,11 @@ describe("POST / (stripe webhook route)", () => {
   });
 
   it("returns 400 when signature verification fails", async () => {
-    const payload = JSON.stringify({ id: "evt_bad", type: "payment_intent.succeeded", data: { object: {} } });
+    const payload = JSON.stringify({
+      id: "evt_bad",
+      type: "payment_intent.succeeded",
+      data: { object: {} },
+    });
     const res = await request(makeApp())
       .post("/")
       .set("Content-Type", "application/json")
@@ -192,11 +206,47 @@ describe("POST / (stripe webhook route)", () => {
       action: "already_finalized",
     });
   });
+
+  it("skips duplicate verified events already marked handled", async () => {
+    h.rows.set(stripeWebhookEventsTable, [
+      { stripeEventId: "evt_1", handled: 1 },
+    ]);
+    const event = {
+      id: "evt_1",
+      type: "payment_intent.succeeded",
+      data: {
+        object: {
+          id: "pi_action_1",
+          metadata: { jobId: "10" },
+        },
+      },
+    };
+    const payload = JSON.stringify(event);
+    const signature = Stripe.webhooks.generateTestHeaderString({
+      payload,
+      secret: WEBHOOK_SECRET,
+    });
+
+    const res = await request(makeApp())
+      .post("/")
+      .set("Content-Type", "application/json")
+      .set("Stripe-Signature", signature)
+      .send(payload);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      received: true,
+      handled: true,
+      action: "duplicate_event_skipped",
+    });
+  });
 });
 
 describe("handlePaymentIntentSucceeded", () => {
   it("is idempotent when the job is already released", async () => {
-    h.rows.set(jobsTable, [baseJob({ paymentStatus: "released", stripeTransferId: "tr_existing" })]);
+    h.rows.set(jobsTable, [
+      baseJob({ paymentStatus: "released", stripeTransferId: "tr_existing" }),
+    ]);
     const result = await handlePaymentIntentSucceeded({
       id: "pi_action_1",
       metadata: { jobId: "10" },
@@ -221,7 +271,9 @@ describe("handlePaymentIntentSucceeded", () => {
   });
 
   it("finalizes checkout destination charges without a transfer call", async () => {
-    h.rows.set(jobsTable, [baseJob({ paymentStatus: "unpaid", stripePaymentIntentId: null })]);
+    h.rows.set(jobsTable, [
+      baseJob({ paymentStatus: "unpaid", stripePaymentIntentId: null }),
+    ]);
     const result = await handlePaymentIntentSucceeded({
       id: "pi_checkout_1",
       metadata: { jobId: "10", kind: "checkout" },
@@ -240,7 +292,10 @@ describe("handlePaymentIntentSucceeded", () => {
   });
 
   it("returns job_not_found when metadata has no job id", async () => {
-    const result = await handlePaymentIntentSucceeded({ id: "pi_x", metadata: {} } as any);
+    const result = await handlePaymentIntentSucceeded({
+      id: "pi_x",
+      metadata: {},
+    } as any);
     expect(result).toEqual({ handled: false, reason: "job_not_found" });
   });
 });
@@ -257,11 +312,21 @@ describe("handlePaymentIntentPaymentFailed", () => {
       paymentStatus: "failed",
       stripePaymentIntentId: "pi_action_1",
     });
-    expect(h.inserts.at(-1)).toMatchObject({
-      profileId: 1,
-      type: "payment_failed",
-      relatedId: 10,
-    });
+    expect(h.inserts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          profileId: 1,
+          type: "payment_failed",
+          relatedId: 10,
+        }),
+        expect.objectContaining({
+          jobId: 10,
+          kind: "charge",
+          status: "failed",
+          stripePaymentIntentId: "pi_action_1",
+        }),
+      ]),
+    );
   });
 
   it("does not overwrite an already released job", async () => {
@@ -290,7 +355,10 @@ describe("handleCheckoutSessionCompleted", () => {
           latest_charge: { id: "ch_checkout_1", transfer: "tr_checkout_1" },
         }) as any,
     );
-    expect(result).toEqual({ handled: true, action: "checkout_session_finalized" });
+    expect(result).toEqual({
+      handled: true,
+      action: "checkout_session_finalized",
+    });
     expect(h.updates.at(-1)).toMatchObject({
       paymentStatus: "released",
       stripePaymentIntentId: "pi_checkout_1",
@@ -307,7 +375,10 @@ describe("handleCheckoutSessionCompleted", () => {
       } as any,
       vi.fn(),
     );
-    expect(result).toEqual({ handled: true, action: "checkout_unpaid_skipped" });
+    expect(result).toEqual({
+      handled: true,
+      action: "checkout_unpaid_skipped",
+    });
     expect(h.updates).toHaveLength(0);
   });
 });
@@ -323,8 +394,13 @@ describe("handleAccountUpdated", () => {
   });
 
   it("falls back to payout_accounts lookup when metadata is missing", async () => {
-    h.rows.set(payoutAccountsTable, [{ profileId: 7, stripeAccountId: "acct_123" }]);
-    const result = await handleAccountUpdated({ id: "acct_123", metadata: {} } as any);
+    h.rows.set(payoutAccountsTable, [
+      { profileId: 7, stripeAccountId: "acct_123" },
+    ]);
+    const result = await handleAccountUpdated({
+      id: "acct_123",
+      metadata: {},
+    } as any);
     expect(result).toEqual({ handled: true, action: "payout_status_synced" });
     expect(syncStripeStatus).toHaveBeenCalledWith("acct_123", 7);
   });
@@ -332,7 +408,10 @@ describe("handleAccountUpdated", () => {
 
 describe("handleStripeEvent", () => {
   it("ignores unsupported event types", async () => {
-    const result = await handleStripeEvent({ type: "customer.created", data: { object: {} } } as any);
+    const result = await handleStripeEvent({
+      type: "customer.created",
+      data: { object: {} },
+    } as any);
     expect(result).toEqual({ handled: false, reason: "ignored_event_type" });
   });
 });

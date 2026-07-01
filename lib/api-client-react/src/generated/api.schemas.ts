@@ -222,6 +222,101 @@ export interface MarketplaceQuote {
   createdAt?: string;
 }
 
+export interface PaymentTransaction {
+  id: number;
+  /** @nullable */
+  jobId?: number | null;
+  kind: string;
+  status: string;
+  amountCents: number;
+  amount: number;
+  currency?: string;
+  /** @nullable */
+  stripePaymentIntentId?: string | null;
+  /** @nullable */
+  stripeChargeId?: string | null;
+  /** @nullable */
+  stripeTransferId?: string | null;
+  /** @nullable */
+  stripeRefundId?: string | null;
+  /** @nullable */
+  stripeCheckoutSessionId?: string | null;
+  createdAt?: string;
+}
+
+export interface MarketplaceInvoice {
+  id: number;
+  jobId: number;
+  invoiceNumber: string;
+  status: string;
+  subtotal: number;
+  platformFeeAmount: number;
+  totalAmount: number;
+  /** @nullable */
+  dueDate?: string | null;
+  /** @nullable */
+  paidAt?: string | null;
+  /** @nullable */
+  externalRef?: string | null;
+}
+
+export interface MarketplaceRefundInput {
+  /** @minimum 1 */
+  amountCents?: number;
+  /** @nullable */
+  reason?: string | null;
+}
+
+export interface MarketplaceRefund {
+  id: number;
+  /** @nullable */
+  jobId: number | null;
+  amountCents: number;
+  amount: number;
+  /** @nullable */
+  reason?: string | null;
+  /** @nullable */
+  stripeRefundId?: string | null;
+  status: string;
+}
+
+export type FleetAvailabilityByTruckTypeItem = {
+  truckType: string;
+  availableTrucks: number;
+};
+
+export interface FleetAvailability {
+  totalAvailable: number;
+  byTruckType: FleetAvailabilityByTruckTypeItem[];
+}
+
+export type NotificationFeedItemsItem = { [key: string]: unknown };
+
+export interface NotificationFeed {
+  items: NotificationFeedItemsItem[];
+  /** @nullable */
+  nextCursor: number | null;
+}
+
+export type TripTimelineTimelineItem = { [key: string]: unknown };
+
+export interface TripTimeline {
+  jobId: number;
+  status: string;
+  timeline: TripTimelineTimelineItem[];
+}
+
+export type DocumentStatusItemsItem = { [key: string]: unknown };
+
+export interface DocumentStatus {
+  profileId: number;
+  role: string;
+  complete: boolean;
+  gated: boolean;
+  missing: string[];
+  items: DocumentStatusItemsItem[];
+}
+
 export type UserProfileRole = typeof UserProfileRole[keyof typeof UserProfileRole];
 
 
@@ -2339,4 +2434,19 @@ export type CreateDriverEventBody = {
 export type CreateDriverEvent201 = { [key: string]: unknown };
 
 export type CreateDriverEvent422 = { [key: string]: unknown };
+
+export type GetMarketplaceFleetAvailabilityParams = {
+providerId?: number;
+truckType?: string;
+};
+
+export type ListMarketplaceNotificationsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+cursor?: number;
+type?: string;
+};
 

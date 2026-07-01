@@ -18,16 +18,20 @@ Latest verified milestone commit: `efac73e`
 - Added backend marketplace APIs for quote creation, commission preview, and admin rule configuration.
 - Extended Stripe payment paths to persist checkout session IDs, charge IDs, and payment/transfer ledger records.
 - Snapshotted estimated commission, GMV, customer total, platform commission, and vendor payout when bids are awarded.
+- Added marketplace read APIs for payment transactions, invoice records, refunds, fleet availability, notifications, trip timelines, and document status.
+- Added Stripe refund execution with refund/ledger persistence and no card-data storage.
+- Added Stripe webhook event persistence and duplicate-event skipping for idempotent webhook processing.
+- Wired net-terms billing to persist invoice records.
 
 ## Current work
 
-- Marketplace Engine sprint backend foundations are complete; next work is live-service certification and UI wiring after product design approval.
+- Marketplace Engine sprint backend foundations and marketplace API coverage are complete; next work is live-service certification and UI wiring after product design approval.
 
 ## Next sprint
 
 1. Sprint 4 Live Operations: Google Maps, realtime GPS tracking, dispatcher command center, fleet map, driver trip tracking, customer live tracking, geofencing, and ETA updates.
 2. Wire marketplace quote outputs into customer/provider UI after product design approves placement and copy.
-3. Add refund execution endpoints and webhook idempotency processing on top of the new ledger tables.
+3. Add refund, invoice, and payment-ledger UI wiring after product design approves placement and copy.
 4. Move production database rollout from `drizzle-kit push` to generated, reviewed migrations.
 
 ## Build status
@@ -48,7 +52,7 @@ Latest verified milestone commit: `efac73e`
 ## Coverage
 
 - Unit coverage added for commission resolution, marketplace amount math, dynamic pricing rules, and audit logging.
-- Route-level coverage added for quote creation and admin commission configuration.
+- Route-level coverage added for quote creation, admin commission configuration, transaction reads, invoice reads, refunds, fleet availability, notifications, trip timelines, document status, and webhook idempotency.
 - Existing award-flow coverage now verifies job award financial snapshots.
 
 ## Known blockers

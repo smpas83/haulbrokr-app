@@ -43,6 +43,7 @@ import {
   computeJobAmounts,
 } from "../lib/marketplaceCommission";
 import {
+  recordInvoiceForJob,
   recordPaymentTransaction,
   recordPayoutTransfer,
 } from "../lib/marketplacePayments";
@@ -869,7 +870,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
 /**
  * POST /jobs/:id/charge — customer pays for a completed job.
  * - Instant methods (credit_card / ach): charge gross, immediately transfer net
- *   to the provider (15% retained). Marks job released.
+ *   to the provider (commission retained). Marks job released.
  * - Net terms (net_15/30/45): create an invoice with a due date. No money moves
  *   and the provider is NOT paid until the customer's invoice is paid (release).
  */
@@ -965,6 +966,7 @@ router.post(
         })
         .where(eq(jobsTable.id, job.id))
         .returning();
+      await recordInvoiceForJob(updated);
       const { customerCompany, providerCompany } = await companiesFor(updated);
       res.json(
         ChargeJobResponse.parse(

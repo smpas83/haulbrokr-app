@@ -2924,3 +2924,152 @@ export const UpdatePricingRuleResponse = zod.object({
 }))
 
 
+/**
+ * @summary List payment ledger rows for a marketplace job
+ */
+export const ListMarketplaceJobTransactionsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListMarketplaceJobTransactionsResponseItem = zod.object({
+  "id": zod.number(),
+  "jobId": zod.number().nullish(),
+  "kind": zod.string(),
+  "status": zod.string(),
+  "amountCents": zod.number(),
+  "amount": zod.number(),
+  "currency": zod.string().optional(),
+  "stripePaymentIntentId": zod.string().nullish(),
+  "stripeChargeId": zod.string().nullish(),
+  "stripeTransferId": zod.string().nullish(),
+  "stripeRefundId": zod.string().nullish(),
+  "stripeCheckoutSessionId": zod.string().nullish(),
+  "createdAt": zod.coerce.date().optional()
+})
+export const ListMarketplaceJobTransactionsResponse = zod.array(ListMarketplaceJobTransactionsResponseItem)
+
+
+/**
+ * @summary List marketplace invoice records visible to the caller
+ */
+export const ListMarketplaceInvoicesResponseItem = zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "invoiceNumber": zod.string(),
+  "status": zod.string(),
+  "subtotal": zod.number(),
+  "platformFeeAmount": zod.number(),
+  "totalAmount": zod.number(),
+  "dueDate": zod.coerce.date().nullish(),
+  "paidAt": zod.coerce.date().nullish(),
+  "externalRef": zod.string().nullish()
+})
+export const ListMarketplaceInvoicesResponse = zod.array(ListMarketplaceInvoicesResponseItem)
+
+
+/**
+ * @summary Get a marketplace invoice record
+ */
+export const GetMarketplaceInvoiceParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetMarketplaceInvoiceResponse = zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "invoiceNumber": zod.string(),
+  "status": zod.string(),
+  "subtotal": zod.number(),
+  "platformFeeAmount": zod.number(),
+  "totalAmount": zod.number(),
+  "dueDate": zod.coerce.date().nullish(),
+  "paidAt": zod.coerce.date().nullish(),
+  "externalRef": zod.string().nullish()
+})
+
+
+/**
+ * @summary Create a Stripe refund for a marketplace job
+ */
+export const CreateMarketplaceJobRefundParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const CreateMarketplaceJobRefundBody = zod.object({
+  "amountCents": zod.number().min(1).optional(),
+  "reason": zod.string().nullish()
+})
+
+
+/**
+ * @summary Get available truck capacity counts for marketplace pricing
+ */
+export const GetMarketplaceFleetAvailabilityQueryParams = zod.object({
+  "providerId": zod.coerce.number().optional(),
+  "truckType": zod.coerce.string().optional()
+})
+
+export const GetMarketplaceFleetAvailabilityResponse = zod.object({
+  "totalAvailable": zod.number(),
+  "byTruckType": zod.array(zod.object({
+  "truckType": zod.string(),
+  "availableTrucks": zod.number()
+}))
+})
+
+
+/**
+ * @summary List paginated marketplace notifications for the caller
+ */
+export const listMarketplaceNotificationsQueryLimitMax = 100;
+
+
+
+export const ListMarketplaceNotificationsQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(listMarketplaceNotificationsQueryLimitMax).optional(),
+  "cursor": zod.coerce.number().optional(),
+  "type": zod.coerce.string().optional()
+})
+
+export const ListMarketplaceNotificationsResponse = zod.object({
+  "items": zod.array(zod.object({
+
+}).passthrough()),
+  "nextCursor": zod.number().nullable()
+})
+
+
+/**
+ * @summary Get trip timeline updates for a marketplace job
+ */
+export const GetMarketplaceJobTripTimelineParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetMarketplaceJobTripTimelineResponse = zod.object({
+  "jobId": zod.number(),
+  "status": zod.string(),
+  "timeline": zod.array(zod.object({
+
+}).passthrough())
+})
+
+
+/**
+ * @summary Get marketplace document/compliance status for the caller
+ */
+export const GetMarketplaceDocumentStatusResponse = zod.object({
+  "profileId": zod.number(),
+  "role": zod.string(),
+  "complete": zod.boolean(),
+  "gated": zod.boolean(),
+  "missing": zod.array(zod.string()),
+  "items": zod.array(zod.object({
+
+}).passthrough())
+})
+
+

@@ -65,10 +65,13 @@ import type {
   CreditApplicationInput,
   DashboardStats,
   DisconnectQuickBooks200,
+  DocumentStatus,
   DumpSite,
   FlagCompletionInput,
+  FleetAvailability,
   GetBinOrder200,
   GetJobRating200,
+  GetMarketplaceFleetAvailabilityParams,
   GetMyOrganization200,
   GetProject200,
   GetQuickBooksStatus200,
@@ -92,17 +95,23 @@ import type {
   ListJobEvidence200Item,
   ListJobTickets200,
   ListJobsParams,
+  ListMarketplaceNotificationsParams,
   ListProjects200Item,
   ListRequestsParams,
   ListTrucksParams,
+  MarketplaceInvoice,
   MarketplaceQuote,
   MarketplaceQuoteInput,
+  MarketplaceRefund,
+  MarketplaceRefundInput,
+  NotificationFeed,
   OrgMember,
   OrgMembersResponse,
   OrganizationComplianceStatus,
   PaymentConfirmation,
   PaymentMethod,
   PaymentMethodInput,
+  PaymentTransaction,
   PayoutAccount,
   PayoutAccountInput,
   PayoutConnectLink,
@@ -121,6 +130,7 @@ import type {
   StuckPayoutItem,
   SyncQuickBooks200,
   Ticket,
+  TripTimeline,
   Truck,
   TruckInput,
   TruckUpdate,
@@ -9506,4 +9516,629 @@ export const useUpdatePricingRule = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getUpdatePricingRuleMutationOptions(options));
     }
+
+export const getListMarketplaceJobTransactionsUrl = (id: number,) => {
+
+
+
+
+  return `/api/marketplace/jobs/${id}/transactions`
+}
+
+/**
+ * @summary List payment ledger rows for a marketplace job
+ */
+export const listMarketplaceJobTransactions = async (id: number, options?: RequestInit): Promise<PaymentTransaction[]> => {
+
+  return customFetch<PaymentTransaction[]>(getListMarketplaceJobTransactionsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMarketplaceJobTransactionsQueryKey = (id: number,) => {
+    return [
+    `/api/marketplace/jobs/${id}/transactions`
+    ] as const;
+    }
+
+
+export const getListMarketplaceJobTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof listMarketplaceJobTransactions>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceJobTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMarketplaceJobTransactionsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMarketplaceJobTransactions>>> = ({ signal }) => listMarketplaceJobTransactions(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceJobTransactions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMarketplaceJobTransactionsQueryResult = NonNullable<Awaited<ReturnType<typeof listMarketplaceJobTransactions>>>
+export type ListMarketplaceJobTransactionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List payment ledger rows for a marketplace job
+ */
+
+export function useListMarketplaceJobTransactions<TData = Awaited<ReturnType<typeof listMarketplaceJobTransactions>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceJobTransactions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMarketplaceJobTransactionsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListMarketplaceInvoicesUrl = () => {
+
+
+
+
+  return `/api/marketplace/invoices`
+}
+
+/**
+ * @summary List marketplace invoice records visible to the caller
+ */
+export const listMarketplaceInvoices = async ( options?: RequestInit): Promise<MarketplaceInvoice[]> => {
+
+  return customFetch<MarketplaceInvoice[]>(getListMarketplaceInvoicesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMarketplaceInvoicesQueryKey = () => {
+    return [
+    `/api/marketplace/invoices`
+    ] as const;
+    }
+
+
+export const getListMarketplaceInvoicesQueryOptions = <TData = Awaited<ReturnType<typeof listMarketplaceInvoices>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceInvoices>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMarketplaceInvoicesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMarketplaceInvoices>>> = ({ signal }) => listMarketplaceInvoices({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceInvoices>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMarketplaceInvoicesQueryResult = NonNullable<Awaited<ReturnType<typeof listMarketplaceInvoices>>>
+export type ListMarketplaceInvoicesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List marketplace invoice records visible to the caller
+ */
+
+export function useListMarketplaceInvoices<TData = Awaited<ReturnType<typeof listMarketplaceInvoices>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceInvoices>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMarketplaceInvoicesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetMarketplaceInvoiceUrl = (id: number,) => {
+
+
+
+
+  return `/api/marketplace/invoices/${id}`
+}
+
+/**
+ * @summary Get a marketplace invoice record
+ */
+export const getMarketplaceInvoice = async (id: number, options?: RequestInit): Promise<MarketplaceInvoice> => {
+
+  return customFetch<MarketplaceInvoice>(getGetMarketplaceInvoiceUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMarketplaceInvoiceQueryKey = (id: number,) => {
+    return [
+    `/api/marketplace/invoices/${id}`
+    ] as const;
+    }
+
+
+export const getGetMarketplaceInvoiceQueryOptions = <TData = Awaited<ReturnType<typeof getMarketplaceInvoice>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceInvoice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMarketplaceInvoiceQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMarketplaceInvoice>>> = ({ signal }) => getMarketplaceInvoice(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceInvoice>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMarketplaceInvoiceQueryResult = NonNullable<Awaited<ReturnType<typeof getMarketplaceInvoice>>>
+export type GetMarketplaceInvoiceQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a marketplace invoice record
+ */
+
+export function useGetMarketplaceInvoice<TData = Awaited<ReturnType<typeof getMarketplaceInvoice>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceInvoice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMarketplaceInvoiceQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateMarketplaceJobRefundUrl = (id: number,) => {
+
+
+
+
+  return `/api/marketplace/jobs/${id}/refunds`
+}
+
+/**
+ * @summary Create a Stripe refund for a marketplace job
+ */
+export const createMarketplaceJobRefund = async (id: number,
+    marketplaceRefundInput?: MarketplaceRefundInput, options?: RequestInit): Promise<MarketplaceRefund> => {
+
+  return customFetch<MarketplaceRefund>(getCreateMarketplaceJobRefundUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      marketplaceRefundInput,)
+  }
+);}
+
+
+
+
+export const getCreateMarketplaceJobRefundMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMarketplaceJobRefund>>, TError,{id: number;data?: BodyType<MarketplaceRefundInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMarketplaceJobRefund>>, TError,{id: number;data?: BodyType<MarketplaceRefundInput>}, TContext> => {
+
+const mutationKey = ['createMarketplaceJobRefund'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMarketplaceJobRefund>>, {id: number;data?: BodyType<MarketplaceRefundInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createMarketplaceJobRefund(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMarketplaceJobRefundMutationResult = NonNullable<Awaited<ReturnType<typeof createMarketplaceJobRefund>>>
+    export type CreateMarketplaceJobRefundMutationBody = BodyType<MarketplaceRefundInput> | undefined
+    export type CreateMarketplaceJobRefundMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a Stripe refund for a marketplace job
+ */
+export const useCreateMarketplaceJobRefund = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMarketplaceJobRefund>>, TError,{id: number;data?: BodyType<MarketplaceRefundInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createMarketplaceJobRefund>>,
+        TError,
+        {id: number;data?: BodyType<MarketplaceRefundInput>},
+        TContext
+      > => {
+      return useMutation(getCreateMarketplaceJobRefundMutationOptions(options));
+    }
+
+export const getGetMarketplaceFleetAvailabilityUrl = (params?: GetMarketplaceFleetAvailabilityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/marketplace/fleet-availability?${stringifiedParams}` : `/api/marketplace/fleet-availability`
+}
+
+/**
+ * @summary Get available truck capacity counts for marketplace pricing
+ */
+export const getMarketplaceFleetAvailability = async (params?: GetMarketplaceFleetAvailabilityParams, options?: RequestInit): Promise<FleetAvailability> => {
+
+  return customFetch<FleetAvailability>(getGetMarketplaceFleetAvailabilityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMarketplaceFleetAvailabilityQueryKey = (params?: GetMarketplaceFleetAvailabilityParams,) => {
+    return [
+    `/api/marketplace/fleet-availability`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMarketplaceFleetAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof getMarketplaceFleetAvailability>>, TError = ErrorType<unknown>>(params?: GetMarketplaceFleetAvailabilityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceFleetAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMarketplaceFleetAvailabilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMarketplaceFleetAvailability>>> = ({ signal }) => getMarketplaceFleetAvailability(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceFleetAvailability>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMarketplaceFleetAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof getMarketplaceFleetAvailability>>>
+export type GetMarketplaceFleetAvailabilityQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get available truck capacity counts for marketplace pricing
+ */
+
+export function useGetMarketplaceFleetAvailability<TData = Awaited<ReturnType<typeof getMarketplaceFleetAvailability>>, TError = ErrorType<unknown>>(
+ params?: GetMarketplaceFleetAvailabilityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceFleetAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMarketplaceFleetAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListMarketplaceNotificationsUrl = (params?: ListMarketplaceNotificationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/marketplace/notifications?${stringifiedParams}` : `/api/marketplace/notifications`
+}
+
+/**
+ * @summary List paginated marketplace notifications for the caller
+ */
+export const listMarketplaceNotifications = async (params?: ListMarketplaceNotificationsParams, options?: RequestInit): Promise<NotificationFeed> => {
+
+  return customFetch<NotificationFeed>(getListMarketplaceNotificationsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMarketplaceNotificationsQueryKey = (params?: ListMarketplaceNotificationsParams,) => {
+    return [
+    `/api/marketplace/notifications`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListMarketplaceNotificationsQueryOptions = <TData = Awaited<ReturnType<typeof listMarketplaceNotifications>>, TError = ErrorType<unknown>>(params?: ListMarketplaceNotificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMarketplaceNotificationsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMarketplaceNotifications>>> = ({ signal }) => listMarketplaceNotifications(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceNotifications>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMarketplaceNotificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listMarketplaceNotifications>>>
+export type ListMarketplaceNotificationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List paginated marketplace notifications for the caller
+ */
+
+export function useListMarketplaceNotifications<TData = Awaited<ReturnType<typeof listMarketplaceNotifications>>, TError = ErrorType<unknown>>(
+ params?: ListMarketplaceNotificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMarketplaceNotifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMarketplaceNotificationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetMarketplaceJobTripTimelineUrl = (id: number,) => {
+
+
+
+
+  return `/api/marketplace/jobs/${id}/trips`
+}
+
+/**
+ * @summary Get trip timeline updates for a marketplace job
+ */
+export const getMarketplaceJobTripTimeline = async (id: number, options?: RequestInit): Promise<TripTimeline> => {
+
+  return customFetch<TripTimeline>(getGetMarketplaceJobTripTimelineUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMarketplaceJobTripTimelineQueryKey = (id: number,) => {
+    return [
+    `/api/marketplace/jobs/${id}/trips`
+    ] as const;
+    }
+
+
+export const getGetMarketplaceJobTripTimelineQueryOptions = <TData = Awaited<ReturnType<typeof getMarketplaceJobTripTimeline>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceJobTripTimeline>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMarketplaceJobTripTimelineQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMarketplaceJobTripTimeline>>> = ({ signal }) => getMarketplaceJobTripTimeline(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceJobTripTimeline>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMarketplaceJobTripTimelineQueryResult = NonNullable<Awaited<ReturnType<typeof getMarketplaceJobTripTimeline>>>
+export type GetMarketplaceJobTripTimelineQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get trip timeline updates for a marketplace job
+ */
+
+export function useGetMarketplaceJobTripTimeline<TData = Awaited<ReturnType<typeof getMarketplaceJobTripTimeline>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceJobTripTimeline>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMarketplaceJobTripTimelineQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetMarketplaceDocumentStatusUrl = () => {
+
+
+
+
+  return `/api/marketplace/document-status`
+}
+
+/**
+ * @summary Get marketplace document/compliance status for the caller
+ */
+export const getMarketplaceDocumentStatus = async ( options?: RequestInit): Promise<DocumentStatus> => {
+
+  return customFetch<DocumentStatus>(getGetMarketplaceDocumentStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMarketplaceDocumentStatusQueryKey = () => {
+    return [
+    `/api/marketplace/document-status`
+    ] as const;
+    }
+
+
+export const getGetMarketplaceDocumentStatusQueryOptions = <TData = Awaited<ReturnType<typeof getMarketplaceDocumentStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceDocumentStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMarketplaceDocumentStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMarketplaceDocumentStatus>>> = ({ signal }) => getMarketplaceDocumentStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceDocumentStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMarketplaceDocumentStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getMarketplaceDocumentStatus>>>
+export type GetMarketplaceDocumentStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get marketplace document/compliance status for the caller
+ */
+
+export function useGetMarketplaceDocumentStatus<TData = Awaited<ReturnType<typeof getMarketplaceDocumentStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMarketplaceDocumentStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMarketplaceDocumentStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 

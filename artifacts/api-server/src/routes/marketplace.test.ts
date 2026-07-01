@@ -11,6 +11,13 @@ const h = vi.hoisted(() => ({
   } as Record<string, unknown>,
   pricingRules: [] as Record<string, unknown>[],
   commissionRules: [] as Record<string, unknown>[],
+  jobs: [] as Record<string, unknown>[],
+  transactions: [] as Record<string, unknown>[],
+  invoices: [] as Record<string, unknown>[],
+  refunds: [] as Record<string, unknown>[],
+  trucks: [] as Record<string, unknown>[],
+  activity: [] as Record<string, unknown>[],
+  statusUpdates: [] as Record<string, unknown>[],
   inserts: [] as { table: unknown; row: Record<string, unknown> }[],
   nextId: 1,
 }));
@@ -22,29 +29,65 @@ vi.mock("@workspace/db", () => {
   const pricingRulesTable = makeTable("pricingRules");
   const marketplaceQuotesTable = makeTable("marketplaceQuotes");
   const marketplaceAuditLogsTable = makeTable("marketplaceAuditLogs");
+  const paymentTransactionsTable = makeTable("paymentTransactions");
+  const invoicesTable = makeTable("invoices");
+  const refundsTable = makeTable("refunds");
+  const trucksTable = makeTable("trucks");
+  const activityTable = makeTable("activity");
+  const jobStatusUpdatesTable = makeTable("jobStatusUpdates");
+  const jobsTable = makeTable("jobs");
+  const payoutTransfersTable = makeTable("payoutTransfers");
+
+  function rowsFor(table: unknown) {
+    if (table === pricingRulesTable) return h.pricingRules;
+    if (table === commissionRulesTable) return h.commissionRules;
+    if (table === paymentTransactionsTable) return h.transactions;
+    if (table === invoicesTable) return h.invoices;
+    if (table === trucksTable) return h.trucks;
+    if (table === activityTable) return h.activity;
+    if (table === jobStatusUpdatesTable) return h.statusUpdates;
+    if (table === jobsTable) return h.jobs;
+    return [];
+  }
+
+  function chain(table: unknown) {
+    const rows = () => Promise.resolve(rowsFor(table));
+    return {
+      where: () => ({
+        orderBy: () => ({
+          limit: rows,
+          then: (resolve: any, reject: any) => rows().then(resolve, reject),
+        }),
+        limit: rows,
+        groupBy: rows,
+        then: (resolve: any, reject: any) => rows().then(resolve, reject),
+      }),
+      orderBy: () => ({
+        limit: rows,
+        then: (resolve: any, reject: any) => rows().then(resolve, reject),
+      }),
+      groupBy: rows,
+      limit: rows,
+      then: (resolve: any, reject: any) => rows().then(resolve, reject),
+    };
+  }
+
   return {
     commissionRulesTable,
     pricingRulesTable,
     marketplaceQuotesTable,
     marketplaceAuditLogsTable,
+    paymentTransactionsTable,
+    invoicesTable,
+    refundsTable,
+    trucksTable,
+    activityTable,
+    jobStatusUpdatesTable,
+    jobsTable,
+    payoutTransfersTable,
     db: {
       select: () => ({
-        from: (table: unknown) => ({
-          where: () => {
-            if (table === pricingRulesTable)
-              return Promise.resolve(h.pricingRules);
-            if (table === commissionRulesTable)
-              return Promise.resolve(h.commissionRules);
-            return Promise.resolve([]);
-          },
-          orderBy: () => {
-            if (table === pricingRulesTable)
-              return Promise.resolve(h.pricingRules);
-            if (table === commissionRulesTable)
-              return Promise.resolve(h.commissionRules);
-            return Promise.resolve([]);
-          },
-        }),
+        from: chain,
       }),
       insert: (table: unknown) => ({
         values: (row: Record<string, unknown>) => {
@@ -102,6 +145,30 @@ vi.mock("../middlewares/requireAdmin", () => ({
   requirePermission: () => (_req: any, _res: any, next: any) => next(),
 }));
 
+vi.mock("../lib/access", () => ({
+  loadJobIfMember: async (jobId: number) =>
+    h.jobs.find((job) => job.id === jobId) ?? null,
+}));
+
+vi.mock("../lib/stripeClient", () => ({
+  getUncachableStripeClient: vi.fn(async () => ({
+    refunds: {
+      create: vi.fn(async () => ({ id: "re_test_1", status: "succeeded" })),
+    },
+  })),
+}));
+
+vi.mock("../lib/documentStatus", () => ({
+  computeDocumentStatus: vi.fn(async (profile: any) => ({
+    profileId: profile.id,
+    role: profile.role,
+    complete: true,
+    gated: false,
+    missing: [],
+    items: [],
+  })),
+}));
+
 import marketplaceRouter from "./marketplace";
 
 function makeApp(): Express {
@@ -146,6 +213,51 @@ beforeEach(() => {
       reason: "global",
     },
   ];
+  h.jobs = [
+    {
+      id: 10,
+      customerId: 1,
+      providerId: 2,
+      status: "completed",
+      customerTotalAmount: "300.00",
+      providerNetAmount: "250.00",
+      stripePaymentIntentId: "pi_1",
+      stripeChargeId: "ch_1",
+    },
+  ];
+  h.transactions = [
+    {
+      id: 1,
+      jobId: 10,
+      kind: "charge",
+      status: "succeeded",
+      amountCents: 30000,
+      createdAt: new Date("2026-07-01T00:00:00Z"),
+    },
+  ];
+  h.invoices = [
+    {
+      id: 1,
+      jobId: 10,
+      invoiceNumber: "INV-2026-0010",
+      status: "open",
+      subtotal: "250.00",
+      platformFeeAmount: "50.00",
+      totalAmount: "300.00",
+      createdAt: new Date("2026-07-01T00:00:00Z"),
+    },
+  ];
+  h.refunds = [];
+  h.trucks = [{ truckType: "dump_truck", availableTrucks: 3 }];
+  h.activity = [
+    {
+      id: 7,
+      profileId: 1,
+      type: "payment_failed",
+      description: "Payment failed",
+    },
+  ];
+  h.statusUpdates = [{ id: 8, jobId: 10, status: "loaded", note: "Loaded" }];
   h.inserts = [];
   h.nextId = 1;
 });
@@ -199,5 +311,99 @@ describe("POST /admin/marketplace/commission-rules", () => {
         }),
       ]),
     );
+  });
+});
+
+describe("marketplace financial APIs", () => {
+  it("lists job payment transactions for a job member", async () => {
+    const res = await request(makeApp()).get(
+      "/marketplace/jobs/10/transactions",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toMatchObject({
+      kind: "charge",
+      status: "succeeded",
+      amount: 300,
+    });
+  });
+
+  it("returns invoice records with numeric totals", async () => {
+    const res = await request(makeApp()).get("/marketplace/invoices/1");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      invoiceNumber: "INV-2026-0010",
+      subtotal: 250,
+      platformFeeAmount: 50,
+      totalAmount: 300,
+    });
+  });
+
+  it("creates a Stripe refund and records marketplace refund/ledger rows", async () => {
+    const res = await request(makeApp())
+      .post("/marketplace/jobs/10/refunds")
+      .send({
+        amountCents: 10000,
+        reason: "Customer adjustment",
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      amount: 100,
+      stripeRefundId: "re_test_1",
+    });
+    expect(h.inserts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          row: expect.objectContaining({ kind: "refund", amountCents: 10000 }),
+        }),
+        expect.objectContaining({
+          row: expect.objectContaining({
+            stripeRefundId: "re_test_1",
+            amountCents: 10000,
+          }),
+        }),
+      ]),
+    );
+  });
+});
+
+describe("marketplace status APIs", () => {
+  it("returns fleet availability aggregates", async () => {
+    const res = await request(makeApp()).get("/marketplace/fleet-availability");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      totalAvailable: 3,
+      byTruckType: [{ truckType: "dump_truck", availableTrucks: 3 }],
+    });
+  });
+
+  it("returns paginated marketplace notifications", async () => {
+    const res = await request(makeApp()).get(
+      "/marketplace/notifications?limit=10",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.items[0]).toMatchObject({ type: "payment_failed" });
+  });
+
+  it("returns job trip timeline", async () => {
+    const res = await request(makeApp()).get("/marketplace/jobs/10/trips");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      jobId: 10,
+      status: "completed",
+      timeline: [expect.objectContaining({ status: "loaded" })],
+    });
+  });
+
+  it("returns document status for the authenticated profile", async () => {
+    const res = await request(makeApp()).get("/marketplace/document-status");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ profileId: 1, complete: true });
   });
 });
