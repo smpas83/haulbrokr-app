@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/marketplace-engine-3455`
-Latest commit: `50a4e92` (App Store remediation verified)
+Latest commit: `81bb329` (App Store remediation verified at `50a4e92`)
 
 ## Completed milestones
 
