@@ -16,9 +16,47 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "haulbrokr",
-      "buildNumber": "1",
+      "buildNumber": "3",
       "usesAppleSignIn": true,
       "icon": "./assets/images/app-icon-ios.png",
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyCollectedDataTypes": [
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeUserID",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePreciseLocation",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhotosorVideos",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePaymentInfo",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          }
+        ],
+        "NSPrivacyAccessedAPITypes": []
+      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "HaulBrokr uses your location to show nearby jobs and calculate distances.",
         "NSCameraUsageDescription": "HaulBrokr uses the camera to upload photos for job documentation.",
@@ -76,9 +114,7 @@
         {
           "android": {
             "packagingOptions": {
-              "exclude": [
-                "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
-              ]
+              "exclude": ["META-INF/versions/9/OSGI-INF/MANIFEST.MF"]
             }
           },
           "ios": {

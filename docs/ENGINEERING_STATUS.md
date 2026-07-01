@@ -2,7 +2,7 @@
 
 Updated: 2026-07-01
 Branch: `cursor/marketplace-engine-3455`
-Latest commit: `b11dc27` (financial engine verified at `283f8aa`)
+Latest commit: pending App Store remediation verification
 
 ## Completed milestones
 
@@ -27,10 +27,13 @@ Latest commit: `b11dc27` (financial engine verified at `283f8aa`)
 - Expanded dynamic pricing to support hourly, distance, per-load, per-ton, truck shortage, bridge toll, permit fee, taxes, fees, and pass-through surcharges.
 - Added financial quote, vendor settlement, customer billing summary, and admin financial dashboard APIs.
 - Added immutable financial audit and marketplace transaction helpers for settlements, invoices, and payment history.
+- Fixed App Review 2.1(a) sign-out rejection by routing both Account tab sign-out controls through one direct Clerk sign-out path.
+- Added iOS privacy manifest metadata declaring no tracking and App Store review notes for correcting App Privacy labels under Guideline 5.1.2(i).
+- Bumped iOS build number to `3` for resubmission after rejected build `2`.
 
 ## Current work
 
-- Marketplace Financial Engine backend is complete; next work is live-service certification and UI wiring after product design approval.
+- App Store rejection remediation is complete; final verification is in progress before resubmission.
 
 ## Next sprint
 
@@ -53,12 +56,15 @@ Latest commit: `b11dc27` (financial engine verified at `283f8aa`)
 - Passing: `PAYMENTS_MOCK_MODE=true pnpm --filter @workspace/api-server run test`
 - Passing: `pnpm --filter @workspace/haulbrokr run test`
 - Passing: `pnpm --filter @workspace/haulbrokr-mobile run test`
+- Passing: `pnpm --filter @workspace/haulbrokr-mobile run typecheck`
+- Passing: `pnpm --filter @workspace/haulbrokr-mobile exec vitest run test/account-signout.test.ts`
 
 ## Coverage
 
 - Unit coverage added for commission resolution, marketplace amount math, dynamic pricing rules, and audit logging.
 - Route-level coverage added for quote creation, financial quote creation, admin commission configuration, transaction reads, invoice reads, refunds, vendor settlements, billing summaries, financial dashboard APIs, fleet availability, notifications, trip timelines, document status, and webhook idempotency.
 - Existing award-flow coverage now verifies job award financial snapshots.
+- Mobile account sign-out helper coverage verifies successful navigation to sign-in and error handling without relying on native alert button callbacks.
 
 ## Known blockers
 
@@ -66,3 +72,4 @@ Latest commit: `b11dc27` (financial engine verified at `283f8aa`)
 - Broad `prettier --check . --ignore-unknown` currently reports existing formatting drift across hundreds of files; the production gate is intentionally scoped until a dedicated formatting milestone is scheduled.
 - Stripe live keys are required before live payment intents, ACH debits, refunds, receipts, and vendor payouts can be certified against real Connect accounts.
 - Google Maps live GPS, push notifications, QuickBooks live sync, and offline field recovery remain documented launch gaps.
+- App Store Connect App Privacy Information must be updated so collected data is not marked as used for tracking before resubmitting.
