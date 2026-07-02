@@ -1,9 +1,7 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-import BinsPage from "@/pages/bins";
 
 /**
  * The bins page is the deep-link target of a bin notification: tapping a
@@ -42,6 +40,33 @@ const ORDERS = [
   },
 ];
 
+const CATALOG = [
+  {
+    id: "temporary_20_yard",
+    serviceType: "temporary",
+    binSize: "20_yard",
+    binType: "roll_off",
+    size: "20-Yard",
+    type: "Roll-Off",
+    description: "20 cubic yards",
+    priceRange: "$350-480",
+    priceUnit: "week",
+    bestFor: "Medium renovations",
+    estimateCents: 41500,
+  },
+];
+
+vi.mock("@workspace/api-client-react", () => ({
+  getListBinOrdersQueryKey: () => ["/api/bin-orders"],
+  useCreateBinOrder: () => ({ mutate: vi.fn(), isPending: false }),
+  useListBinCatalog: () => ({ data: CATALOG, isLoading: false }),
+  useListBinOrders: () => ({ data: ORDERS, isLoading: false, refetch: vi.fn() }),
+}));
+
+// vi.mock is hoisted before this import, so BinsPage loads with generated API
+// hooks mocked. The test remains focused on URL-param to highlight behavior.
+import BinsPage from "@/pages/bins";
+
 function renderBins() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -52,15 +77,6 @@ function renderBins() {
 }
 
 describe("Bins page — deep-linked order highlight", () => {
-  beforeEach(() => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        ({ ok: true, status: 200, statusText: "OK", json: async () => ORDERS }) as Response,
-      ),
-    );
-  });
-
   it("highlights only the order matching ?order=<id>", async () => {
     window.history.replaceState({}, "", `/bins?order=${BIN_ORDER_ID}`);
 

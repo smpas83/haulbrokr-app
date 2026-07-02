@@ -21,16 +21,19 @@ interface NavItem {
 
 function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; onClick?: () => void }) {
   return (
-    <Link href={item.href} onClick={onClick}>
-      <div className={cn(
+    <Link
+      href={item.href}
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={cn(
         "flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer",
         active
           ? "bg-sidebar-primary text-sidebar-primary-foreground"
           : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-      )}>
-        <item.icon className="h-4 w-4 flex-shrink-0" />
-        {item.label}
-      </div>
+      )}
+    >
+      <item.icon className="h-4 w-4 flex-shrink-0" />
+      {item.label}
     </Link>
   );
 }
@@ -148,7 +151,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-sidebar-foreground">
+              <Button variant="ghost" size="icon" className="text-sidebar-foreground" aria-label="Open navigation menu">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -174,16 +177,19 @@ export function Layout({ children }: { children: ReactNode }) {
             {visibleNav.map((item) => {
               const active = location === item.href || location.startsWith(`${item.href}/`);
               return (
-                <Link key={item.href} href={item.href} className="flex-1">
-                  <div className={cn(
-                    "flex flex-col items-center justify-center h-full gap-1 text-[10px] font-semibold transition-colors",
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex flex-1 flex-col items-center justify-center h-full gap-1 text-[10px] font-semibold transition-colors",
                     active
                       ? "text-sidebar-primary"
                       : "text-sidebar-foreground/50"
-                  )}>
-                    <item.icon className={cn("h-5 w-5", active && "text-sidebar-primary")} />
-                    <span className="leading-none">{item.label.split(" ")[0]}</span>
-                  </div>
+                  )}
+                >
+                  <item.icon className={cn("h-5 w-5", active && "text-sidebar-primary")} />
+                  <span className="leading-none">{item.label.split(" ")[0]}</span>
                 </Link>
               );
             })}

@@ -1,11 +1,17 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   Trash2, Package, Calendar as CalendarIcon, MapPin, Navigation,
   Loader2, CheckCircle, AlertCircle, X, Plus, RefreshCw, Clock, ChevronRight
 } from "lucide-react";
+import {
+  getListBinOrdersQueryKey,
+  useCreateBinOrder,
+  useListBinCatalog,
+  useListBinOrders,
+} from "@workspace/api-client-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,18 +23,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const resp = await fetch(`${BASE}/api${path}`, {
-    ...options,
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-  });
-  if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
-  return resp.json();
-}
+import { apiFetch } from "@/lib/apiFetch";
+import { getBinOrderStatusLabel, getBinOrderStatusStyle } from "@/lib/bin-orders";
+import { useReverseGeocode } from "@/hooks/use-reverse-geocode";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +34,8 @@ interface BinOrder {
   serviceType: string;
   binSize: string;
   binType: string;
+  binSizeLabel?: string;
+  binTypeLabel?: string;
   quantity: number;
   deliveryAddress: string;
   deliveryDate: string;
@@ -49,25 +48,7 @@ interface BinOrder {
   createdAt: string;
 }
 
-// ── Catalog Data ─────────────────────────────────────────────────────────────
-
-const ROLL_OFF_SIZES = [
-  { id: "10_yard", label: "10-Yard", desc: "Small cleanouts, garage purges", dims: "14' L × 7.5' W × 3.5' H", est: 395, icon: "🏠" },
-  { id: "20_yard", label: "20-Yard", desc: "Roofing, deck tear-outs, medium renos", dims: "22' L × 7.5' W × 4' H", est: 525, icon: "🏗️" },
-  { id: "30_yard", label: "30-Yard", desc: "Large remodels, new construction debris", dims: "22' L × 7.5' W × 5.5' H", est: 675, icon: "🏢" },
-  { id: "40_yard", label: "40-Yard", desc: "Demo projects, major commercial jobs", dims: "22' L × 7.5' W × 8' H", est: 875, icon: "🏭" },
-];
-
-const PERM_SIZES = [
-  { id: "2_yard", label: "2-Yard Front-Load", desc: "Small office, boutique, café", dims: "6' L × 4.5' W × 3.5' H", pickups: "1–2×/week", est: 145, icon: "🏪" },
-  { id: "4_yard", label: "4-Yard Front-Load", desc: "Mid-size office, retail store", dims: "6' L × 5' W × 5' H", pickups: "1–3×/week", est: 195, icon: "🏬" },
-  { id: "6_yard", label: "6-Yard Front-Load", desc: "Restaurant, grocery, apartment complex", dims: "6' L × 5.5' W × 6' H", pickups: "2–5×/week", est: 275, icon: "🏢" },
-  { id: "8_yard", label: "8-Yard Front-Load", desc: "Large commercial facility, mall", dims: "6' L × 6' W × 7' H", pickups: "3–6×/week", est: 345, icon: "🏭" },
-  { id: "10_yard_perm", label: "10-Yard Open-Top", desc: "Construction site, manufacturing plant", dims: "14' L × 7.5' W × 3.5' H", pickups: "On-call or scheduled", est: 420, icon: "🏗️" },
-  { id: "20_yard_perm", label: "20-Yard Open-Top", desc: "Industrial facility, large warehouse", dims: "22' L × 7.5' W × 4' H", pickups: "On-call or scheduled", est: 560, icon: "🏭" },
-  { id: "30_yard_perm", label: "30-Yard Open-Top", desc: "Demo contractor, transfer station", dims: "22' L × 7.5' W × 5.5' H", pickups: "On-call or scheduled", est: 710, icon: "🏗️" },
-  { id: "40_yard_perm", label: "40-Yard Compactor", desc: "High-volume commercial / industrial compactor", dims: "22' L × 8' W × 8' H", pickups: "On-call or scheduled", est: 920, icon: "⚙️" },
-];
+type BinServiceType = "temporary" | "permanent";
 
 const PROVIDERS = [
   { id: "any", label: "Best Available", desc: "We find the best rate for you" },
@@ -79,73 +60,74 @@ const PROVIDERS = [
   { id: "advanced", label: "Advanced Disposal", desc: "Southeast US" },
 ];
 
-const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-  delivered: "bg-green-100 text-green-800 border-green-200",
-  picked_up: "bg-gray-100 text-gray-700 border-gray-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
+interface BinCatalogItem {
+  id: string;
+  serviceType: BinServiceType;
+  binSize: string;
+  binType: string;
+  size: string;
+  type: string;
+  description: string;
+  priceRange: string;
+  priceUnit: string;
+  bestFor: string;
+  estimateCents: number;
+}
+
+interface BinCatalogCard {
+  id: string;
+  label: string;
+  desc: string;
+  dims: string;
+  pickups?: string;
+  est: number;
+  icon: string;
+  binType: string;
+}
+
+const BIN_ICON: Record<string, string> = {
+  "10_yard": "🏠",
+  "20_yard": "🏗️",
+  "30_yard": "🏢",
+  "40_yard": "🏭",
+  "2_yard": "🏪",
+  "4_yard": "🏬",
+  "6_yard": "🏢",
+  "8_yard": "🏭",
+  "10_yard_perm": "🏗️",
+  "20_yard_perm": "🏭",
+  "30_yard_perm": "🏗️",
+  "40_yard_perm": "⚙️",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending Confirmation",
-  confirmed: "Confirmed",
-  delivered: "Delivered",
-  picked_up: "Picked Up",
-  cancelled: "Cancelled",
-};
-
-// ── Location Hook ─────────────────────────────────────────────────────────────
-
-function useReverseGeocode() {
-  const [loading, setLoading] = useState(false);
-
-  const getAddress = useCallback(async (): Promise<string | null> => {
-    if (!navigator.geolocation) return null;
-    setLoading(true);
-    try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-      );
-      const { latitude, longitude } = pos.coords;
-      const resp = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const data = await resp.json();
-      const a = data.address || {};
-      const parts = [
-        a.house_number,
-        a.road,
-        a.city || a.town || a.village || a.county,
-        a.state,
-        a.postcode,
-      ].filter(Boolean);
-      return parts.join(", ") || data.display_name || null;
-    } catch {
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  return { getAddress, loading };
+function toCatalogCard(item: BinCatalogItem): BinCatalogCard {
+  return {
+    id: item.binSize,
+    label: `${item.size} ${item.type}`.trim(),
+    desc: item.bestFor,
+    dims: item.description,
+    pickups: item.priceUnit === "mo" ? "Monthly service" : undefined,
+    est: Math.round(item.estimateCents / 100),
+    icon: BIN_ICON[item.binSize] ?? "🚛",
+    binType: item.binType,
+  };
 }
 
 // ── Bin Card ──────────────────────────────────────────────────────────────────
 
 function BinCard({ bin, selected, onSelect, type }: {
-  bin: typeof ROLL_OFF_SIZES[0];
+  bin: BinCatalogCard;
   selected: boolean;
   onSelect: () => void;
-  type: "temporary" | "permanent";
+  type: BinServiceType;
 }) {
   return (
     <button
       type="button"
       onClick={onSelect}
+      aria-pressed={selected}
       className={cn(
-        "w-full text-left border-2 p-4 transition-all hover:border-primary group",
+        "w-full text-left border-2 p-4 transition-all hover:border-primary group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         selected ? "border-primary bg-primary/5" : "border-border bg-card"
       )}
     >
@@ -157,11 +139,9 @@ function BinCard({ bin, selected, onSelect, type }: {
             {selected && <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />}
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{bin.desc}</p>
-          {"dims" in bin && (
-            <p className="text-xs text-muted-foreground/60 mt-1">{(bin as any).dims}</p>
-          )}
-          {"pickups" in bin && (
-            <p className="text-xs text-muted-foreground/60 mt-1">Service: {(bin as any).pickups}</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">{bin.dims}</p>
+          {bin.pickups && (
+            <p className="text-xs text-muted-foreground/60 mt-1">Service: {bin.pickups}</p>
           )}
         </div>
         <div className="text-right flex-shrink-0">
@@ -182,7 +162,7 @@ export default function BinsPage() {
   const queryClient = useQueryClient();
   const { getAddress, loading: geoLoading } = useReverseGeocode();
 
-  const [tab, setTab] = useState<"temporary" | "permanent">("temporary");
+  const [tab, setTab] = useState<BinServiceType>("temporary");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [deliveryAddress, setDeliveryAddress] = useState("");
@@ -193,10 +173,14 @@ export default function BinsPage() {
   const [notes, setNotes] = useState("");
   const [showForm, setShowForm] = useState(false);
 
-  const { data: orders = [], isLoading: ordersLoading, refetch } = useQuery<BinOrder[]>({
-    queryKey: ["bin-orders"],
-    queryFn: () => apiFetch("/bin-orders"),
+  const ordersQuery = useListBinOrders<BinOrder[]>();
+  const catalogQuery = useListBinCatalog<BinCatalogItem[]>({
+    query: { staleTime: 5 * 60_000 } as any,
   });
+  const orders: BinOrder[] = ordersQuery.data ?? [];
+  const binCatalog: BinCatalogItem[] = catalogQuery.data ?? [];
+  const { isLoading: ordersLoading, refetch } = ordersQuery;
+  const { isLoading: catalogLoading } = catalogQuery;
 
   // Deep-link target: bin status notifications in the activity feed link here as
   // /bins?order=<uuid>. Scroll the matching card into view and briefly highlight
@@ -222,20 +206,20 @@ export default function BinsPage() {
     return () => clearTimeout(t);
   }, [highlightedOrderId, ordersLoading, orders]);
 
-  const createOrder = useMutation({
-    mutationFn: (payload: object) =>
-      apiFetch("/bin-orders", { method: "POST", body: JSON.stringify(payload) }),
-    onSuccess: () => {
-      toast({ title: "Bin service requested!", description: "A provider will confirm your order shortly." });
-      queryClient.invalidateQueries({ queryKey: ["bin-orders"] });
-      setShowForm(false);
-      setSelectedSize("");
-      setDeliveryAddress("");
-      setDeliveryDate(undefined);
-      setPickupDate(undefined);
-      setNotes("");
+  const createOrder = useCreateBinOrder({
+    mutation: {
+      onSuccess: () => {
+        toast({ title: "Bin service requested!", description: "A provider will confirm your order shortly." });
+        queryClient.invalidateQueries({ queryKey: getListBinOrdersQueryKey() });
+        setShowForm(false);
+        setSelectedSize("");
+        setDeliveryAddress("");
+        setDeliveryDate(undefined);
+        setPickupDate(undefined);
+        setNotes("");
+      },
+      onError: () => toast({ title: "Failed to submit", variant: "destructive" }),
     },
-    onError: () => toast({ title: "Failed to submit", variant: "destructive" }),
   });
 
   const cancelOrder = useMutation({
@@ -243,7 +227,7 @@ export default function BinsPage() {
       apiFetch(`/bin-orders/${id}/cancel`, { method: "PATCH" }),
     onSuccess: () => {
       toast({ title: "Order cancelled" });
-      queryClient.invalidateQueries({ queryKey: ["bin-orders"] });
+      queryClient.invalidateQueries({ queryKey: getListBinOrdersQueryKey() });
     },
   });
 
@@ -262,23 +246,26 @@ export default function BinsPage() {
     if (!deliveryAddress.trim()) { toast({ title: "Please enter a delivery address", variant: "destructive" }); return; }
     if (!deliveryDate) { toast({ title: "Please select a delivery date", variant: "destructive" }); return; }
 
-    const binType = tab === "temporary" ? "roll_off" : "front_load";
+    const selectedBin = catalog.find((bin) => bin.id === selectedSize);
+    const binType = selectedBin?.binType ?? (tab === "temporary" ? "roll_off" : "front_load");
 
     createOrder.mutate({
-      serviceType: tab,
-      binSize: selectedSize,
-      binType,
-      quantity,
-      deliveryAddress: deliveryAddress.trim(),
-      deliveryDate: deliveryDate.toISOString(),
-      pickupDate: pickupDate?.toISOString(),
-      wasteType,
-      preferredProvider: provider,
-      notes: notes.trim() || undefined,
+      data: {
+        serviceType: tab,
+        binSize: selectedSize,
+        binType,
+        quantity,
+        deliveryAddress: deliveryAddress.trim(),
+        deliveryDate: deliveryDate.toISOString(),
+        pickupDate: pickupDate?.toISOString(),
+        wasteType,
+        preferredProvider: provider,
+        notes: notes.trim() || undefined,
+      },
     });
   }
 
-  const catalog = tab === "temporary" ? ROLL_OFF_SIZES : PERM_SIZES;
+  const catalog = binCatalog.filter((bin) => bin.serviceType === tab).map(toCatalogCard);
   const activeOrders = orders.filter(o => !["cancelled", "picked_up"].includes(o.status));
   const pastOrders = orders.filter(o => ["cancelled", "picked_up"].includes(o.status));
 
@@ -311,9 +298,16 @@ export default function BinsPage() {
               <Package className="h-5 w-5 text-primary" />
               <span className="font-black text-lg">Configure Your Order</span>
             </div>
-            <button onClick={() => setShowForm(false)} className="text-muted-foreground hover:text-foreground">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Close order form"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setShowForm(false)}
+            >
               <X className="h-5 w-5" />
-            </button>
+            </Button>
           </div>
 
           <div className="p-5 md:p-8 space-y-8">
@@ -323,9 +317,10 @@ export default function BinsPage() {
               <div className="flex mt-2 border-2 border-border">
                 <button
                   type="button"
+                  aria-pressed={tab === "temporary"}
                   onClick={() => { setTab("temporary"); setSelectedSize(""); }}
                   className={cn(
-                    "flex-1 py-3 px-4 font-bold text-sm transition-colors",
+                    "flex-1 py-3 px-4 font-bold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                     tab === "temporary" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-muted"
                   )}
                 >
@@ -333,9 +328,10 @@ export default function BinsPage() {
                 </button>
                 <button
                   type="button"
+                  aria-pressed={tab === "permanent"}
                   onClick={() => { setTab("permanent"); setSelectedSize(""); }}
                   className={cn(
-                    "flex-1 py-3 px-4 font-bold text-sm transition-colors border-l-2 border-border",
+                    "flex-1 py-3 px-4 font-bold text-sm transition-colors border-l-2 border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                     tab === "permanent" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-muted"
                   )}
                 >
@@ -355,7 +351,11 @@ export default function BinsPage() {
                 Select Bin Size
               </Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                {catalog.map((bin) => (
+                {catalogLoading ? (
+                  <div className="col-span-full flex justify-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : catalog.map((bin) => (
                   <BinCard
                     key={bin.id}
                     bin={bin}
@@ -667,10 +667,14 @@ function OrderCard({ order, onCancel, cancelling, past, highlighted, cardRef }: 
           className="space-y-2 flex-1 min-w-0 group cursor-pointer"
         >
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-black group-hover:text-primary transition-colors">{sizeLabels[order.binSize] ?? order.binSize}</span>
+            <span className="font-black group-hover:text-primary transition-colors">
+              {order.binSizeLabel
+                ? `${order.binSizeLabel} ${order.binTypeLabel ?? ""}`.trim()
+                : sizeLabels[order.binSize] ?? order.binSize}
+            </span>
             <span className="text-muted-foreground text-sm">× {order.quantity}</span>
-            <Badge variant="outline" className={cn("rounded-none border text-[10px] uppercase tracking-wider font-bold", STATUS_STYLE[order.status] || "")}>
-              {STATUS_LABEL[order.status] ?? order.status}
+            <Badge variant="outline" className={cn("rounded-none border text-[10px] uppercase tracking-wider font-bold", getBinOrderStatusStyle(order.status))}>
+              {getBinOrderStatusLabel(order.status)}
             </Badge>
           </div>
 

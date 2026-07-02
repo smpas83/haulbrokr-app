@@ -44,13 +44,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { storagePublicUrl, uploadFileToStorage } from "@/lib/storageUpload";
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const url = path.startsWith("/api") ? path : `/api${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url, { ...options, headers: { "Content-Type": "application/json", ...options?.headers } });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Request failed"); }
-  return res.json();
-}
+import { apiFetch } from "@/lib/apiFetch";
 
 function PhotoFileInput({
   id,
@@ -180,7 +174,7 @@ function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean
             <div key={e.id} className="bg-muted/20 border border-border p-4 space-y-2">
               {e.photoUrl && (
                 <div>
-                  <img src={e.photoUrl} alt={e.photoCaption || "Delivery photo"} className="max-h-48 object-cover border border-border w-full" onError={(ev) => (ev.currentTarget.style.display = "none")} />
+                  <img src={e.photoUrl} alt={e.photoCaption || "Delivery photo"} className="max-h-48 object-cover border border-border w-full" loading="lazy" decoding="async" onError={(ev) => (ev.currentTarget.style.display = "none")} />
                   {e.photoCaption && <p className="text-xs text-muted-foreground mt-1 italic">{e.photoCaption}</p>}
                 </div>
               )}
@@ -719,7 +713,7 @@ function HaulTicketsPanel({ jobId }: { jobId: number }) {
             {t.weightTons != null && <p className="text-sm">Weight: {t.weightTons} tons</p>}
             {t.notes && <p className="text-sm text-muted-foreground">{t.notes}</p>}
             {t.photoUrl && (
-              <img src={t.photoUrl} alt={`Load #${t.loadNumber} ticket`} className="max-h-48 object-cover border border-border w-full" onError={(ev) => (ev.currentTarget.style.display = "none")} />
+              <img src={t.photoUrl} alt={`Load #${t.loadNumber} ticket`} className="max-h-48 object-cover border border-border w-full" loading="lazy" decoding="async" onError={(ev) => (ev.currentTarget.style.display = "none")} />
             )}
             {t.clockedInAt && (
               <p className="text-xs text-muted-foreground">Checked in {format(new Date(t.clockedInAt), "MMM d, h:mm a")}</p>

@@ -1,28 +1,23 @@
 import { useState } from "react";
 import { useParams, useLocation, Link } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   ArrowLeft, Trash2, MapPin, Calendar as CalendarIcon, Clock, Package,
   Truck, FileText, Loader2, X, CheckCircle, Circle, XCircle, AlertCircle,
 } from "lucide-react";
+import {
+  getGetBinOrderQueryKey,
+  getListBinOrdersQueryKey,
+  useGetBinOrder,
+} from "@workspace/api-client-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const resp = await fetch(`${BASE}/api${path}`, {
-    ...options,
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-  });
-  if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
-  return resp.json();
-}
+import { apiFetch } from "@/lib/apiFetch";
+import { getBinOrderStatusLabel, getBinOrderStatusStyle } from "@/lib/bin-orders";
 
 interface BinOrder {
   id: string;
@@ -44,22 +39,6 @@ interface BinOrder {
   createdAt: string;
   updatedAt?: string;
 }
-
-const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-  delivered: "bg-green-100 text-green-800 border-green-200",
-  picked_up: "bg-gray-100 text-gray-700 border-gray-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending Confirmation",
-  confirmed: "Confirmed",
-  delivered: "Delivered",
-  picked_up: "Picked Up",
-  cancelled: "Cancelled",
-};
 
 const PROVIDER_LABEL: Record<string, string> = {
   any: "Best Available",
@@ -97,11 +76,7 @@ export default function BinDetailPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: order, isLoading, isError } = useQuery<BinOrder>({
-    queryKey: ["bin-order", id],
-    queryFn: () => apiFetch(`/bin-orders/${id}`),
-    enabled: !!id,
-  });
+  const { data: order, isLoading, isError } = useGetBinOrder<BinOrder>(id);
 
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -109,8 +84,8 @@ export default function BinDetailPage() {
     mutationFn: () => apiFetch(`/bin-orders/${id}/cancel`, { method: "PATCH" }),
     onSuccess: () => {
       toast({ title: "Order cancelled" });
-      queryClient.invalidateQueries({ queryKey: ["bin-order", id] });
-      queryClient.invalidateQueries({ queryKey: ["bin-orders"] });
+      queryClient.invalidateQueries({ queryKey: getGetBinOrderQueryKey(id) });
+      queryClient.invalidateQueries({ queryKey: getListBinOrdersQueryKey() });
       setConfirmCancel(false);
     },
     onError: () => toast({ title: "Failed to cancel order", variant: "destructive" }),
@@ -169,10 +144,10 @@ export default function BinDetailPage() {
               variant="outline"
               className={cn(
                 "rounded-none border text-[10px] uppercase tracking-wider font-bold",
-                STATUS_STYLE[order.status] || "",
+                getBinOrderStatusStyle(order.status),
               )}
             >
-              {STATUS_LABEL[order.status] ?? order.status}
+              {getBinOrderStatusLabel(order.status)}
             </Badge>
           </div>
           {order.estimatedCost && (
