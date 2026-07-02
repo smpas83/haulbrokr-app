@@ -10,8 +10,13 @@ import {
   driverDocumentsTable,
 } from "@workspace/db";
 import { requireAutomationKey } from "../middlewares/requireAutomationKey";
+import { collectProductionReadiness } from "../lib/productionReadiness";
 
 const router: IRouter = Router();
+
+router.get("/automation/readiness", requireAutomationKey, (_req, res): void => {
+  res.json(collectProductionReadiness());
+});
 
 /**
  * Read-only aggregate digest for the external automation layer.
