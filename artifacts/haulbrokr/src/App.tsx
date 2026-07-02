@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from 'wouter';
+import { lazy, Suspense, useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from 'wouter';
 import { Loader2 } from "lucide-react";
 
 import { AuthenticationUnavailable } from "@/components/auth-unavailable";
@@ -49,17 +49,21 @@ function PublicRouter() {
 }
 
 function AuthUnavailableRoute() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const isAuthRoute =
+    location.startsWith("/sign-in") || location.startsWith("/sign-up");
 
-  if (location.startsWith("/sign-in") || location.startsWith("/sign-up")) {
-    return <AuthenticationUnavailable />;
-  }
+  useEffect(() => {
+    if (isAuthRoute) {
+      return;
+    }
 
-  return (
-    <Redirect
-      to={`/sign-in?redirect_url=${encodeURIComponent(location || "/")}`}
-    />
-  );
+    setLocation(`/sign-in?redirect_url=${encodeURIComponent(location || "/")}`, {
+      replace: true,
+    });
+  }, [isAuthRoute, location, setLocation]);
+
+  return <AuthenticationUnavailable />;
 }
 
 function App() {
