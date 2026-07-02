@@ -175,7 +175,10 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-primary/20 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-20 max-w-[1680px] items-center justify-between px-4 sm:px-6 lg:px-10">
           <a href="/" aria-label="HaulBrokr home" className="shrink-0">
-            <img src="/haulbrokr-logo.png" alt="HaulBrokr" className="h-9 w-auto sm:h-11" width="1024" height="576" />
+            <picture>
+              <source type="image/webp" srcSet="/haulbrokr-logo-512.webp" />
+              <img src="/haulbrokr-logo.png" alt="HaulBrokr" className="h-9 w-auto sm:h-11" width="1024" height="576" />
+            </picture>
           </a>
           <nav aria-label="Primary navigation" className="hidden items-center gap-7 lg:flex">
             {navItems.map((item) => (
@@ -198,7 +201,10 @@ export default function LandingPage() {
       <main>
         <section className="relative isolate min-h-[calc(100svh-5rem)] overflow-hidden" aria-labelledby="hero-title">
           <div className="absolute inset-0 -z-10">
-            <img src="/opengraph.jpg" alt="Dump truck hauling through a construction environment at dusk" className="h-full w-full object-cover opacity-70" width="1024" height="576" fetchPriority="high" />
+            <picture className="block h-full w-full">
+              <source type="image/webp" srcSet="/homepage-hero-640.webp 640w, /homepage-hero-1024.webp 1024w" sizes="100vw" />
+              <img src="/opengraph.jpg" alt="Dump truck hauling through a construction environment at dusk" className="h-full w-full object-cover opacity-70" width="1024" height="576" fetchPriority="high" />
+            </picture>
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/88 to-background/25" />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/75" />
             <div className="homepage-carbon absolute inset-0 opacity-25" aria-hidden="true" />
@@ -482,7 +488,10 @@ export default function LandingPage() {
 
         <section className="relative overflow-hidden py-24 sm:py-36" aria-labelledby="cta-title">
           <div className="absolute inset-0 -z-10">
-            <img src="/opengraph.jpg" alt="" className="h-full w-full object-cover opacity-35" width="1024" height="576" loading="lazy" />
+            <picture className="block h-full w-full">
+              <source type="image/webp" srcSet="/homepage-hero-640.webp 640w, /homepage-hero-1024.webp 1024w" sizes="100vw" />
+              <img src="/opengraph.jpg" alt="" className="h-full w-full object-cover opacity-35" width="1024" height="576" loading="lazy" />
+            </picture>
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/55" />
             <div className="homepage-carbon absolute inset-0 opacity-20" aria-hidden="true" />
           </div>
@@ -506,7 +515,10 @@ export default function LandingPage() {
       <footer className="border-t border-border bg-background py-16" aria-label="Footer">
         <div className="mx-auto grid max-w-[1680px] gap-10 px-4 sm:px-6 lg:grid-cols-[1.2fr_2fr] lg:px-10">
           <div>
-            <img src="/haulbrokr-logo.png" alt="HaulBrokr" className="h-12 w-auto" width="1024" height="576" loading="lazy" />
+            <picture>
+              <source type="image/webp" srcSet="/haulbrokr-logo-512.webp" />
+              <img src="/haulbrokr-logo.png" alt="HaulBrokr" className="h-12 w-auto" width="1024" height="576" loading="lazy" />
+            </picture>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
               HaulBrokr is the premium nationwide marketplace for dump truck hauling.
             </p>

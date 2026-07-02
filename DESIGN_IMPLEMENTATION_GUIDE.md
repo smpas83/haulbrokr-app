@@ -15,11 +15,11 @@ The migration is limited to the signed-out `/` homepage route. Authenticated das
 - Existing Tailwind/tw-animate classes for fade and slide transitions.
 - Existing design tokens from `src/index.css` for primary, background, foreground, border, card, muted, and ring colors.
 - Existing public logo asset: `/haulbrokr-logo.png`.
-- Existing truck hero asset: `/opengraph.jpg`.
+- Existing truck hero asset: `/opengraph.jpg`, with optimized WebP derivatives for homepage delivery.
 
 ## Remaining design packages
 
-- Final production hero photography should be supplied as dedicated AVIF/WebP crops for desktop, tablet, and mobile. The current implementation reuses the existing Open Graph truck image.
+- Final production hero photography should be supplied as dedicated AVIF/WebP crops for desktop, tablet, and mobile. The current implementation reuses the existing Open Graph truck image with generated WebP derivatives.
 - Named web animation wrapper components (`FadeIn`, `SlideUp`, `PageTransition`, `LoadingTransition`) are not present in the web package. The page uses the existing Tailwind/tw-animate animation infrastructure instead.
 - A public live-map data contract is not exposed for signed-out visitors. The homepage map is a presentation layer using existing marketplace concepts and does not call protected backend endpoints.
 
@@ -27,12 +27,13 @@ The migration is limited to the signed-out `/` homepage route. Authenticated das
 
 - The interactive map is a styled public preview, not a live unauthenticated map.
 - App Store, Google Play, Social, Careers, and some footer links currently route to existing sign-up or support destinations until final public URLs are provided.
-- The existing Open Graph truck image is a JPG and is reused in two lazy-loaded places; dedicated responsive WebP/AVIF assets would improve LCP and bandwidth.
+- The existing Open Graph truck image is still the visual source; dedicated original photography would improve art direction beyond the generated WebP derivatives.
 
 ## Performance notes
 
 - The hero image is loaded eagerly with `fetchPriority="high"` because it is the LCP candidate.
 - Secondary truck imagery is lazy-loaded.
+- The homepage prefers `/homepage-hero-1024.webp`, `/homepage-hero-640.webp`, and `/haulbrokr-logo-512.webp` with original JPG/PNG fallbacks.
 - The authenticated shell remains code-split behind the existing `AuthShell` lazy import.
 - Counter animation respects `prefers-reduced-motion`.
 - No backend calls were added to the public homepage.
