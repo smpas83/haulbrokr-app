@@ -1,4 +1,4 @@
-import { useSSO } from "@clerk/expo";
+import { useAuth, useSSO } from "@clerk/expo";
 import { useSignIn, useSignUp } from "@clerk/expo/legacy";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -8,6 +8,7 @@ import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  DevSettings,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +22,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { clearClerkClientJwt } from "@/lib/clerkTokenCache";
+
 type Mode = "signin" | "signup";
 type Step = "email" | "otp";
 
@@ -29,10 +32,12 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
+  const { isLoaded: authLoaded } = useAuth();
   const { isLoaded: signInLoaded, signIn, setActive: setSignInActive } = useSignIn();
   const { isLoaded: signUpLoaded, signUp, setActive: setSignUpActive } = useSignUp();
   const { startSSOFlow } = useSSO();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
+  const [resettingAuth, setResettingAuth] = useState(false);
 
   // Preload browser on Android so OAuth pops faster
   useEffect(() => {
@@ -80,7 +85,24 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clerkReady = signInLoaded && signUpLoaded && !!signIn && !!signUp && !!setSignInActive && !!setSignUpActive;
+  const clerkReady = authLoaded && signInLoaded && signUpLoaded && !!signIn && !!signUp && !!setSignInActive && !!setSignUpActive;
+
+  const handleResetAuth = async () => {
+    setResettingAuth(true);
+    setError("");
+    try {
+      await clearClerkClientJwt();
+      if (Platform.OS === "web") {
+        window.location.reload();
+        return;
+      }
+      DevSettings.reload();
+    } catch (err: any) {
+      setError(err?.message ?? "Could not reset authentication data.");
+    } finally {
+      setResettingAuth(false);
+    }
+  };
 
   const handleSendCode = async () => {
     setError("");
@@ -335,7 +357,20 @@ export default function SignInScreen() {
             </Pressable>
 
             {!clerkReady && (
-              <Text style={styles.initText}>Authentication initialising…</Text>
+              <>
+                <Text style={styles.initText}>Authentication initialising…</Text>
+                <Pressable
+                  onPress={handleResetAuth}
+                  disabled={resettingAuth}
+                  style={styles.resetBtn}
+                >
+                  {resettingAuth ? (
+                    <ActivityIndicator size="small" color="#e9a600" />
+                  ) : (
+                    <Text style={styles.resetText}>Stuck here? Reset saved auth data</Text>
+                  )}
+                </Pressable>
+              </>
             )}
           </>
         ) : (
@@ -484,6 +519,15 @@ const styles = StyleSheet.create({
   initText: {
     color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 12,
     textAlign: "center", marginTop: -4,
+  },
+  resetBtn: {
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  resetText: {
+    color: "#e9a600", fontFamily: "Inter_600SemiBold", fontSize: 12,
+    textAlign: "center",
   },
   codeHint: {
     flexDirection: "row", alignItems: "center", gap: 6,
