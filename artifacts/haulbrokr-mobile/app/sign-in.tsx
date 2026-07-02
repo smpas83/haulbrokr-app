@@ -1,5 +1,4 @@
-import { useAuth, useSSO } from "@clerk/expo";
-import { useSignIn, useSignUp } from "@clerk/expo/legacy";
+import { useAuth, useClerk, useSSO } from "@clerk/expo";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as AuthSession from "expo-auth-session";
@@ -22,7 +21,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { clearClerkClientJwt } from "@/lib/clerkTokenCache";
+import { clearClerkActiveSession, clearClerkClientJwt, markClerkActiveSession } from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
 type Step = "email" | "otp";
@@ -33,8 +32,10 @@ WebBrowser.maybeCompleteAuthSession();
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
   const { isLoaded: authLoaded } = useAuth();
-  const { isLoaded: signInLoaded, signIn, setActive: setSignInActive } = useSignIn();
-  const { isLoaded: signUpLoaded, signUp, setActive: setSignUpActive } = useSignUp();
+  const clerk = useClerk();
+  const signIn = clerk.client?.signIn;
+  const signUp = clerk.client?.signUp;
+  const setActive = clerk.setActive?.bind(clerk);
   const { startSSOFlow } = useSSO();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
@@ -57,6 +58,7 @@ export default function SignInScreen() {
       });
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
+        await markClerkActiveSession();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         // New users land in onboarding to pick a role; returning users go home.
         // The root /index route already routes signed-in users without a profile to /onboarding.
@@ -85,13 +87,14 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clerkReady = authLoaded && signInLoaded && signUpLoaded && !!signIn && !!signUp && !!setSignInActive && !!setSignUpActive;
+  const clerkReady = authLoaded && !!signIn && !!signUp && !!setActive;
 
   const handleResetAuth = async () => {
     setResettingAuth(true);
     setError("");
     try {
       await clearClerkClientJwt();
+      await clearClerkActiveSession();
       if (Platform.OS === "web") {
         window.location.reload();
         return;
@@ -185,7 +188,7 @@ export default function SignInScreen() {
       setError("Please enter the 6-digit code from your email.");
       return;
     }
-    if (!clerkReady || !signIn || !signUp || !setSignInActive || !setSignUpActive) {
+    if (!clerkReady || !signIn || !signUp || !setActive) {
       setError("Authentication is initialising. Please wait a moment.");
       return;
     }
@@ -199,7 +202,8 @@ export default function SignInScreen() {
         });
         if (result.status === "complete") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await setSignInActive({ session: result.createdSessionId });
+          await setActive({ session: result.createdSessionId });
+          await markClerkActiveSession();
           router.replace("/" as any);
         } else {
           setError("Sign-in incomplete. Please try again.");
@@ -208,7 +212,8 @@ export default function SignInScreen() {
         const result = await signUp.attemptEmailAddressVerification({ code: code.trim() });
         if (result.status === "complete") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await setSignUpActive({ session: result.createdSessionId });
+          await setActive({ session: result.createdSessionId });
+          await markClerkActiveSession();
           router.replace("/onboarding" as any);
         } else {
           setError("Verification incomplete. Please try again.");

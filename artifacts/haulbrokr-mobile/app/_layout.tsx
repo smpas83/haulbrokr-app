@@ -21,7 +21,7 @@ import { AppProvider } from "@/context/AppContext";
 import { ClerkAuthProvider } from "@/context/ClerkAuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { useMyProfile } from "@/hooks/useLiveApi";
-import { recoverStaleClientJwtOnStartup, tokenCache } from "@/lib/clerkTokenCache";
+import { recoverStaleClientJwtOnStartup, syncClerkSessionStorage, tokenCache } from "@/lib/clerkTokenCache";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,6 +38,16 @@ if (Platform.OS !== "web") {
     const subscription = AppState.addEventListener("change", onAppStateChange);
     return () => subscription.remove();
   });
+}
+
+function ClerkSessionStorageSync() {
+  const { isSignedIn, isLoaded } = useAuth();
+
+  useEffect(() => {
+    void syncClerkSessionStorage(isLoaded, !!isSignedIn);
+  }, [isLoaded, isSignedIn]);
+
+  return null;
 }
 
 function AuthGate({ children }: { children: React.ReactNode }) {
@@ -133,6 +143,7 @@ export default function RootLayout() {
         <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
           <QueryClientProvider client={queryClient}>
             <ClerkAuthProvider>
+              <ClerkSessionStorageSync />
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
                   <LanguageProvider>

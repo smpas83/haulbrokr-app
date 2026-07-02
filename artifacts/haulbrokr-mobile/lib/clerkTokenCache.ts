@@ -8,8 +8,11 @@ export const CLERK_CLIENT_JWT_KEY = "__clerk_client_jwt";
 /** Set while sign-out is in progress so a crash mid-flow still clears stale JWT on next launch. */
 export const CLERK_SIGNOUT_PENDING_KEY = "@haulbrokr/clerk_signout_pending";
 
-/** One-time recovery for devices stuck with a stale client JWT from before sign-out was fixed. */
-const STALE_JWT_RECOVERY_KEY = "@haulbrokr/clerk_stale_jwt_recovery_v1";
+/** Tracks that the user completed sign-in; used after Clerk has loaded. */
+export const CLERK_ACTIVE_SESSION_KEY = "@haulbrokr/clerk_active_session";
+
+/** One-time cleanup for installs stuck before session-marker recovery shipped. */
+const STALE_JWT_RECOVERY_KEY = "@haulbrokr/clerk_stale_jwt_recovery_v2";
 
 const secureStoreOpts: SecureStore.SecureStoreOptions = {
   keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
@@ -19,7 +22,6 @@ async function deleteToken(key: string) {
   try {
     await SecureStore.deleteItemAsync(key, secureStoreOpts);
   } catch {
-    // Tokens from older builds may lack keychain options.
     try {
       await SecureStore.deleteItemAsync(key);
     } catch {}
@@ -48,11 +50,7 @@ export const tokenCache = clerkTokenCache
     }
   : undefined;
 
-/**
- * Remove the persisted client JWT before sign-out.
- * Clerk signOut() clears in-memory state but does not clear SecureStore; stale
- * JWTs block the post-sign-out reload (isLoaded stays false).
- */
+/** Remove the persisted client JWT. Required before sign-out completes on native. */
 export async function clearClerkClientJwt() {
   await deleteToken(CLERK_CLIENT_JWT_KEY);
 }
@@ -65,9 +63,17 @@ export async function clearClerkSignOutPending() {
   await AsyncStorage.removeItem(CLERK_SIGNOUT_PENDING_KEY);
 }
 
+export async function markClerkActiveSession() {
+  await AsyncStorage.setItem(CLERK_ACTIVE_SESSION_KEY, "1");
+}
+
+export async function clearClerkActiveSession() {
+  await AsyncStorage.removeItem(CLERK_ACTIVE_SESSION_KEY);
+}
+
 /**
- * Clear orphaned client JWT before Clerk mounts.
- * Handles interrupted sign-outs and one-time recovery for pre-fix stale tokens.
+ * Clear stale client JWT before Clerk mounts.
+ * Handles interrupted sign-outs and one-time recovery for pre-fix installs.
  */
 export async function recoverStaleClientJwtOnStartup() {
   const [pendingSignOut, recoveredBefore, clientJwt] = await Promise.all([
@@ -88,6 +94,16 @@ export async function recoverStaleClientJwtOnStartup() {
 
   await Promise.all([
     AsyncStorage.removeItem(CLERK_SIGNOUT_PENDING_KEY),
+    AsyncStorage.removeItem(CLERK_ACTIVE_SESSION_KEY),
     AsyncStorage.setItem(STALE_JWT_RECOVERY_KEY, "1"),
   ]);
+}
+
+/**
+ * After Clerk loads for a signed-in user, persist a session marker so startup
+ * recovery can distinguish stale JWT leftovers from active sessions.
+ */
+export async function syncClerkSessionStorage(isLoaded: boolean, isSignedIn: boolean) {
+  if (!isLoaded || !isSignedIn) return;
+  await markClerkActiveSession();
 }

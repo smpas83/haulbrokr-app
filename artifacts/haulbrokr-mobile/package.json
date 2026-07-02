@@ -5,6 +5,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "dev": "sh scripts/dev.sh",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
     "check:web-build": "node scripts/check-web-build.js",
@@ -33,6 +35,7 @@
     "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.11",
     "expo-crypto": "~15.0.9",
+    "expo-dev-client": "~6.0.12",
     "expo-font": "~14.0.12",
     "expo-glass-effect": "~0.1.4",
     "expo-haptics": "~15.0.8",
