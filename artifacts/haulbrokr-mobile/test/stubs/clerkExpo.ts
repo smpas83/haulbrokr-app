@@ -10,6 +10,10 @@ let authState = { ...defaultAuthState };
 
 export const useAuth = () => authState;
 
+export const useClerk = () => ({
+  signOut: authState.signOut,
+});
+
 export const useUser = () => ({
   isLoaded: authState.isLoaded,
   isSignedIn: authState.isSignedIn,

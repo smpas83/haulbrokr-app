@@ -109,6 +109,22 @@ describe("AccountScreen sign-out", () => {
     expect(replace).toHaveBeenCalledWith("/sign-in");
   });
 
+  it("uses the same sign-out flow from the header icon", async () => {
+    const signOut = vi.fn(async () => {});
+    (ClerkExpo as any).__setAuthState({ signOut });
+    const replace = vi.spyOn(router, "replace").mockImplementation(() => {});
+    vi.spyOn(Alert, "alert").mockImplementation((_title, _message, buttons?: AlertButton[]) => {
+      buttons?.find((button) => button.text === "Sign Out")?.onPress?.();
+    });
+
+    render(<AccountScreen />);
+
+    fireEvent.click(screen.getByLabelText("Header sign out"));
+
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
+    expect(replace).toHaveBeenCalledWith("/sign-in");
+  });
+
   it("surfaces Clerk signOut failures without navigating away", async () => {
     const signOut = vi.fn(async () => {
       throw new Error("session revoke failed");
