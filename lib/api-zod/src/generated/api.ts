@@ -282,6 +282,8 @@ export const ListRequestsResponseItem = zod.object({
   "quantityTons": zod.number(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string().describe('Local start time in HH:mm (24-hour) format'),
   "estimatedHours": zod.number(),
@@ -309,6 +311,8 @@ export const CreateRequestBody = zod.object({
   "quantityTons": zod.number(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().optional(),
+  "dropoffInstructions": zod.string().optional(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string().regex(createRequestBodyStartTimeRegExp).describe('Local start time in HH:mm (24-hour) format'),
   "estimatedHours": zod.number().min(createRequestBodyEstimatedHoursMin),
@@ -334,6 +338,8 @@ export const GetRequestResponse = zod.object({
   "quantityTons": zod.number(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string().describe('Local start time in HH:mm (24-hour) format'),
   "estimatedHours": zod.number(),
@@ -363,6 +369,8 @@ export const UpdateRequestBody = zod.object({
   "quantityTons": zod.number().optional(),
   "pickupAddress": zod.string().optional(),
   "deliveryAddress": zod.string().optional(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date().optional(),
   "startTime": zod.string().regex(updateRequestBodyStartTimeRegExp).optional(),
   "estimatedHours": zod.number().optional(),
@@ -380,6 +388,8 @@ export const UpdateRequestResponse = zod.object({
   "quantityTons": zod.number(),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string().describe('Local start time in HH:mm (24-hour) format'),
   "estimatedHours": zod.number(),
@@ -505,6 +515,8 @@ export const ListJobsResponseItem = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -554,6 +566,8 @@ export const GetJobResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -608,6 +622,8 @@ export const UpdateJobResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -656,6 +672,8 @@ export const AcceptJobResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -704,6 +722,8 @@ export const DeclineJobResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -864,10 +884,67 @@ export const ListDumpSitesResponseItem = zod.object({
   "zip": zod.string(),
   "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost']),
   "phone": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "hours": zod.string().nullish(),
+  "acceptedMaterials": zod.array(zod.string()).optional(),
+  "tippingFeeDetails": zod.string().nullish(),
+  "paymentMethods": zod.string().nullish(),
+  "instructions": zod.string().nullish(),
   "isActive": zod.boolean(),
   "fullAddress": zod.string().optional()
 })
 export const ListDumpSitesResponse = zod.array(ListDumpSitesResponseItem)
+
+
+/**
+ * @summary Add a new dropoff facility
+ */
+export const CreateDumpSiteBody = zod.object({
+  "name": zod.string(),
+  "address": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "zip": zod.string(),
+  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost']),
+  "phone": zod.string().optional(),
+  "latitude": zod.number().optional(),
+  "longitude": zod.number().optional(),
+  "hours": zod.string().optional(),
+  "acceptedMaterials": zod.array(zod.string()).optional(),
+  "tippingFeeDetails": zod.string().optional(),
+  "paymentMethods": zod.string().optional(),
+  "instructions": zod.string().optional(),
+  "isActive": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Get a dropoff facility by ID
+ */
+export const GetDumpSiteParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetDumpSiteResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "zip": zod.string(),
+  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost']),
+  "phone": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "hours": zod.string().nullish(),
+  "acceptedMaterials": zod.array(zod.string()).optional(),
+  "tippingFeeDetails": zod.string().nullish(),
+  "paymentMethods": zod.string().nullish(),
+  "instructions": zod.string().nullish(),
+  "isActive": zod.boolean(),
+  "fullAddress": zod.string().optional()
+})
 
 
 /**
@@ -1880,6 +1957,8 @@ export const ChargeJobResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -1928,6 +2007,8 @@ export const ReleaseJobPaymentResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -1990,6 +2071,8 @@ export const ConfirmJobPaymentResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -2058,6 +2141,8 @@ export const VerifyJobCheckoutResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -2201,6 +2286,8 @@ export const ApproveJobCompletionResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),
@@ -2253,6 +2340,8 @@ export const FlagJobCompletionResponse = zod.object({
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
   "pickupAddress": zod.string(),
   "deliveryAddress": zod.string(),
+  "dropoffFacilityId": zod.number().nullish(),
+  "dropoffInstructions": zod.string().nullish(),
   "scheduledDate": zod.coerce.date(),
   "startTime": zod.string(),
   "estimatedHours": zod.number(),

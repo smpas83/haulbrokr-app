@@ -73,6 +73,8 @@ export * from './creditApplicationStatus';
 export * from './dashboardStats';
 export * from './disconnectQuickBooks200';
 export * from './dumpSite';
+export * from './dumpSiteInput';
+export * from './dumpSiteInputType';
 export * from './dumpSiteType';
 export * from './flagCompletionInput';
 export * from './getBinOrder200';

@@ -18,6 +18,10 @@ export interface JobRequest {
   quantityTons: number;
   pickupAddress: string;
   deliveryAddress: string;
+  /** @nullable */
+  dropoffFacilityId?: number | null;
+  /** @nullable */
+  dropoffInstructions?: string | null;
   scheduledDate: Date;
   /** Local start time in HH:mm (24-hour) format */
   startTime: string;

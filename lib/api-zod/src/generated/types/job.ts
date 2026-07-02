@@ -25,6 +25,10 @@ export interface Job {
   truckType: JobTruckType;
   pickupAddress: string;
   deliveryAddress: string;
+  /** @nullable */
+  dropoffFacilityId?: number | null;
+  /** @nullable */
+  dropoffInstructions?: string | null;
   scheduledDate: Date;
   startTime: string;
   estimatedHours: number;

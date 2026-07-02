@@ -14,6 +14,8 @@ export interface JobRequestInput {
   quantityTons: number;
   pickupAddress: string;
   deliveryAddress: string;
+  dropoffFacilityId?: number;
+  dropoffInstructions?: string;
   scheduledDate: Date;
   /**
      * Local start time in HH:mm (24-hour) format
