@@ -29,7 +29,7 @@ if [ -n "$CLERK_PUBLISHABLE_KEY" ]; then
 fi
 
 if [ -n "$PORT" ]; then
-  exec pnpm exec expo start --localhost --port "$PORT" --non-interactive
+  exec pnpm exec expo start --go --localhost --port "$PORT" --non-interactive
 else
-  exec pnpm exec expo start --localhost --non-interactive
+  exec pnpm exec expo start --go --localhost --non-interactive
 fi
