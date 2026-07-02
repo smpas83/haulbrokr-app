@@ -8,11 +8,8 @@ export const CLERK_CLIENT_JWT_KEY = "__clerk_client_jwt";
 /** Set while sign-out is in progress so a crash mid-flow still clears stale JWT on next launch. */
 export const CLERK_SIGNOUT_PENDING_KEY = "@haulbrokr/clerk_signout_pending";
 
-/** Tracks that the user completed sign-in; used after Clerk has loaded. */
+/** Set after a successful sign-in; absent means any persisted client JWT is stale. */
 export const CLERK_ACTIVE_SESSION_KEY = "@haulbrokr/clerk_active_session";
-
-/** One-time cleanup for installs stuck before session-marker recovery shipped. */
-const STALE_JWT_RECOVERY_KEY = "@haulbrokr/clerk_stale_jwt_recovery_v2";
 
 const secureStoreOpts: SecureStore.SecureStoreOptions = {
   keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
@@ -71,38 +68,36 @@ export async function clearClerkActiveSession() {
   await AsyncStorage.removeItem(CLERK_ACTIVE_SESSION_KEY);
 }
 
+/** Wipe all Clerk local auth state (SecureStore + AsyncStorage markers). */
+export async function resetAllClerkLocalState() {
+  await Promise.all([
+    clearClerkClientJwt(),
+    AsyncStorage.multiRemove([CLERK_SIGNOUT_PENDING_KEY, CLERK_ACTIVE_SESSION_KEY]),
+  ]);
+}
+
 /**
- * Clear stale client JWT before Clerk mounts.
- * Handles interrupted sign-outs and one-time recovery for pre-fix installs.
+ * Before Clerk mounts: remove orphaned client JWT (persisted JWT without an
+ * active session marker). This is the root cause of isLoaded staying false.
  */
 export async function recoverStaleClientJwtOnStartup() {
-  const [pendingSignOut, recoveredBefore, clientJwt] = await Promise.all([
+  const [pendingSignOut, hasActiveSession, clientJwt] = await Promise.all([
     AsyncStorage.getItem(CLERK_SIGNOUT_PENDING_KEY),
-    AsyncStorage.getItem(STALE_JWT_RECOVERY_KEY),
+    AsyncStorage.getItem(CLERK_ACTIVE_SESSION_KEY),
     readClientJwt(),
   ]);
 
-  const shouldClear =
-    pendingSignOut === "1" ||
-    (!recoveredBefore && !!clientJwt);
+  const orphanedJwt = !!clientJwt && hasActiveSession !== "1";
+  const shouldClear = pendingSignOut === "1" || orphanedJwt;
 
   if (!shouldClear) {
     return;
   }
 
-  await clearClerkClientJwt();
-
-  await Promise.all([
-    AsyncStorage.removeItem(CLERK_SIGNOUT_PENDING_KEY),
-    AsyncStorage.removeItem(CLERK_ACTIVE_SESSION_KEY),
-    AsyncStorage.setItem(STALE_JWT_RECOVERY_KEY, "1"),
-  ]);
+  await resetAllClerkLocalState();
 }
 
-/**
- * After Clerk loads for a signed-in user, persist a session marker so startup
- * recovery can distinguish stale JWT leftovers from active sessions.
- */
+/** After Clerk loads for a signed-in user, persist the session marker. */
 export async function syncClerkSessionStorage(isLoaded: boolean, isSignedIn: boolean) {
   if (!isLoaded || !isSignedIn) return;
   await markClerkActiveSession();

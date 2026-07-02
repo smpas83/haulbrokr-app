@@ -21,7 +21,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { clearClerkActiveSession, clearClerkClientJwt, markClerkActiveSession } from "@/lib/clerkTokenCache";
+import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
 type Step = "email" | "otp";
@@ -88,13 +88,13 @@ export default function SignInScreen() {
   const [error, setError] = useState("");
 
   const clerkReady = authLoaded && !!signIn && !!signUp && !!setActive;
+  const authStuck = authLoaded && (!signIn || !signUp);
 
   const handleResetAuth = async () => {
     setResettingAuth(true);
     setError("");
     try {
-      await clearClerkClientJwt();
-      await clearClerkActiveSession();
+      await resetAllClerkLocalState();
       if (Platform.OS === "web") {
         window.location.reload();
         return;
@@ -363,7 +363,11 @@ export default function SignInScreen() {
 
             {!clerkReady && (
               <>
-                <Text style={styles.initText}>Authentication initialising…</Text>
+                <Text style={styles.initText}>
+                  {authStuck
+                    ? "Clerk could not start. Enable Native applications in the Clerk dashboard, then reset below."
+                    : "Authentication initialising…"}
+                </Text>
                 <Pressable
                   onPress={handleResetAuth}
                   disabled={resettingAuth}
@@ -372,7 +376,7 @@ export default function SignInScreen() {
                   {resettingAuth ? (
                     <ActivityIndicator size="small" color="#e9a600" />
                   ) : (
-                    <Text style={styles.resetText}>Stuck here? Reset saved auth data</Text>
+                    <Text style={styles.resetText}>Reset saved auth data</Text>
                   )}
                 </Pressable>
               </>

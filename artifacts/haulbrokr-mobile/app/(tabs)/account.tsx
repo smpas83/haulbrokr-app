@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { useAuth } from "@clerk/expo";
-import { clearClerkActiveSession, clearClerkClientJwt, clearClerkSignOutPending, markClerkSignOutPending } from "@/lib/clerkTokenCache";
+import { clearClerkSignOutPending, markClerkSignOutPending, resetAllClerkLocalState } from "@/lib/clerkTokenCache";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/RefreshingIndicator";
@@ -341,8 +341,7 @@ export default function AccountScreen() {
                   { text: "Sign Out", style: "destructive", onPress: async () => {
                     try {
                       await markClerkSignOutPending();
-                      await clearClerkActiveSession();
-                      await clearClerkClientJwt();
+                      await resetAllClerkLocalState();
                       await signOut();
                       await clearClerkSignOutPending();
                     } catch (err: any) {
@@ -1018,8 +1017,7 @@ export default function AccountScreen() {
               { text: "Sign Out", style: "destructive", onPress: async () => {
                 try {
                   await markClerkSignOutPending();
-                  await clearClerkActiveSession();
-                  await clearClerkClientJwt();
+                  await resetAllClerkLocalState();
                   await signOut();
                   await clearClerkSignOutPending();
                 } catch (err: any) {
