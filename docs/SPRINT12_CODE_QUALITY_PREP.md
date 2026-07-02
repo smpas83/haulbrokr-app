@@ -30,6 +30,15 @@ Scope: appearance-preserving cleanup for the current HaulBrokr implementation so
 - Added `loading="lazy"` and `decoding="async"` to job evidence and load-ticket photos.
 - Added a five-minute stale time to the bin catalog query because catalog/pricing metadata is shared reference data.
 
+Measured production build output after chunking:
+
+- `vendor-react`: 325.22 kB, 101.84 kB gzip.
+- `vendor-charts`: 391.98 kB, 106.21 kB gzip.
+- `vendor-clerk`: 122.96 kB, 32.17 kB gzip.
+- `vendor-radix`: 121.49 kB, 37.75 kB gzip.
+- `vendor-stripe`: 12.62 kB, 4.72 kB gzip.
+- `auth-shell`: 137.62 kB, 39.12 kB gzip.
+
 ## Accessibility changes
 
 - Sidebar and mobile bottom navigation links now expose `aria-current="page"`.
