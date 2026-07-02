@@ -1,10 +1,12 @@
-import { lazy, Suspense, useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
+import { lazy, Suspense, useEffect, useRef, type ReactNode } from "react";
+import { ClerkProvider, Show, useClerk } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
+import { AuthenticationUnavailable } from "@/components/auth-unavailable";
+import { runtimeConfig } from "@/lib/runtimeConfig";
 import { Layout } from "./components/layout";
 import { Toaster } from "@/components/ui/toaster";
 import { useGetMyProfile } from "@workspace/api-client-react";
@@ -35,13 +37,11 @@ const NotFoundPage = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const clerkPubKey = runtimeConfig.clerkPublishableKey;
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || "/" : path;
 }
-
-if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
 
 const clerkAppearance = {
   theme: shadcn,
@@ -115,7 +115,7 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
-function RequireProfile({ children }: { children: React.ReactNode }) {
+function RequireProfile({ children }: { children: ReactNode }) {
   const { data: profile, isLoading, error } = useGetMyProfile();
 
   if (isLoading) {
@@ -135,6 +135,11 @@ function RequireProfile({ children }: { children: React.ReactNode }) {
 
 function AuthShellRoutes() {
   const [, setLocation] = useLocation();
+
+  if (!clerkPubKey) {
+    return <AuthenticationUnavailable />;
+  }
+
   return (
     <ClerkProvider
       publishableKey={clerkPubKey}

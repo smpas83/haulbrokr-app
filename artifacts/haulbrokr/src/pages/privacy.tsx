@@ -190,9 +190,11 @@ export default function PrivacyPage() {
         </div>
         <div className="flex items-center justify-center gap-6 mb-4 text-sm font-semibold">
           <a href="/" className="hover:text-primary">Home</a>
+          <a href="/about" className="hover:text-primary">About</a>
           <a href="/support" className="hover:text-primary">Support</a>
+          <a href="/contact" className="hover:text-primary">Contact</a>
           <a href="/privacy" className="hover:text-primary">Privacy</a>
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-primary">Contact</a>
+          <a href="/terms" className="hover:text-primary">Terms</a>
         </div>
         <p>© {new Date().getFullYear()} HaulBrokr Logistics. All rights reserved.</p>
       </footer>

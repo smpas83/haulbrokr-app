@@ -127,7 +127,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="bg-black py-14"><div className="container mx-auto px-4"><div className="flex flex-col items-center gap-6 text-center"><picture><source type="image/webp" srcSet={logoWebp} /><img src={logo} alt="HaulBrokr" className="h-9 w-auto" width="400" height="225" /></picture><div className="flex items-center gap-6 text-sm font-bold text-white/50"><a href="/support" className="hover:text-[#ff6a00]">Support</a><a href="/privacy" className="hover:text-[#ff6a00]">Privacy</a><a href="mailto:info@haulbrokr.com" className="hover:text-[#ff6a00]">Contact</a></div><p className="text-sm text-white/35">© {new Date().getFullYear()} HaulBrokr Logistics. All rights reserved.</p></div></div></footer>
+      <footer className="bg-black py-14"><div className="container mx-auto px-4"><div className="flex flex-col items-center gap-6 text-center"><picture><source type="image/webp" srcSet={logoWebp} /><img src={logo} alt="HaulBrokr" className="h-9 w-auto" width="400" height="225" /></picture><div className="flex flex-wrap items-center justify-center gap-6 text-sm font-bold text-white/50"><a href="/about" className="hover:text-[#ff6a00]">About</a><a href="/support" className="hover:text-[#ff6a00]">Support</a><a href="/contact" className="hover:text-[#ff6a00]">Contact</a><a href="/privacy" className="hover:text-[#ff6a00]">Privacy</a><a href="/terms" className="hover:text-[#ff6a00]">Terms</a></div><p className="text-sm text-white/35">© {new Date().getFullYear()} HaulBrokr Logistics. All rights reserved.</p></div></div></footer>
     </div>
   );
 }

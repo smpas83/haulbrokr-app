@@ -45,6 +45,12 @@ function resolveBasePath(required: boolean): string {
 
 const knownSpaRoutes = new Set([
   "/",
+  "/landing",
+  "/about",
+  "/contact",
+  "/support",
+  "/privacy",
+  "/terms",
   "/sign-in",
   "/sign-up",
   "/onboarding",
@@ -81,7 +87,7 @@ const knownSpaPrefixes = [
 ];
 
 /**
- * In dev mode, route /support and /privacy to their own HTML entry files, and
+ * In dev mode, route public pages to their own HTML entry files, and
  * return 404.html (with a 404 status) for any path that doesn't match a known
  * app route so dev behaviour mirrors the production static-server config.
  */
@@ -92,13 +98,18 @@ function publicRoutesDevMiddleware(): Plugin {
       server.middlewares.use((req, res, next) => {
         const url = req.url ?? "/";
         const stripped = url.split("?")[0];
+        const publicHtmlRoutes = new Set([
+          "/landing",
+          "/about",
+          "/contact",
+          "/support",
+          "/privacy",
+          "/terms",
+        ]);
 
-        if (stripped === "/support" || stripped === "/support/") {
-          req.url = "/support.html";
-          return next();
-        }
-        if (stripped === "/privacy" || stripped === "/privacy/") {
-          req.url = "/privacy.html";
+        const publicRoute = stripped.replace(/\/$/, "");
+        if (publicHtmlRoutes.has(publicRoute)) {
+          req.url = `${publicRoute}.html`;
           return next();
         }
 
@@ -158,21 +169,19 @@ export default defineConfig(async ({ command }) => {
   },
   root: path.resolve(import.meta.dirname),
   build: {
+    modulePreload: false,
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     rollupOptions: {
       input: {
         main: path.resolve(import.meta.dirname, "index.html"),
+        landing: path.resolve(import.meta.dirname, "landing.html"),
+        about: path.resolve(import.meta.dirname, "about.html"),
+        contact: path.resolve(import.meta.dirname, "contact.html"),
         support: path.resolve(import.meta.dirname, "support.html"),
         privacy: path.resolve(import.meta.dirname, "privacy.html"),
+        terms: path.resolve(import.meta.dirname, "terms.html"),
         notFound: path.resolve(import.meta.dirname, "404.html"),
-      },
-      output: {
-        manualChunks: {
-          "auth-shell": [
-            path.resolve(import.meta.dirname, "src/AuthShell.tsx"),
-          ],
-        },
       },
     },
   },
