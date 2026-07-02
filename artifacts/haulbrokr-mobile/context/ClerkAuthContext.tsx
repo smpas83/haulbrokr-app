@@ -1,6 +1,7 @@
-import { useAuth, useUser } from "@clerk/expo";
+import { useAuth } from "@clerk/expo";
 import { setAuthTokenGetter, setBaseUrl } from "@workspace/api-client-react";
-import React, { createContext, useContext, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import React, { createContext, useContext, useEffect, useRef } from "react";
 
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 
@@ -20,6 +21,16 @@ const ClerkAuthContext = createContext<ClerkAuthContextType>({
 
 export function ClerkAuthProvider({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded, getToken, userId } = useAuth();
+  const queryClient = useQueryClient();
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    const nextUserId = userId ?? null;
+    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== nextUserId) {
+      queryClient.clear();
+    }
+    prevUserIdRef.current = nextUserId;
+  }, [userId, queryClient]);
 
   useEffect(() => {
     setBaseUrl(API_BASE);
