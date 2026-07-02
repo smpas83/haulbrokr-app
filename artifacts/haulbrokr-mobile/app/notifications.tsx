@@ -10,6 +10,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useLiveActivity } from "@/hooks/useLiveApi";
 import { useColors } from "@/hooks/useColors";
 import { liveActivityToView, type ActivityView, type LiveActivity } from "@/lib/liveJob";
+import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/RefreshingIndicator";
 
 const LAST_READ_KEY = "notif:lastReadAt";
 
@@ -53,6 +54,7 @@ export default function NotificationsScreen() {
   }, [data, lastReadAt]);
 
   const unread = items.filter((n) => !n.read).length;
+  const isUpdating = isRefreshingPillVisible({ isFetching, isLoading, refreshing });
 
   const markAllRead = async () => {
     const now = Date.now();
@@ -82,6 +84,7 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <RefreshingIndicator visible={isUpdating} />
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border, paddingTop: topPad + 12 }]}>
         <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Feather name="arrow-left" size={20} color={colors.foreground} />
@@ -111,13 +114,6 @@ export default function NotificationsScreen() {
         {isLoading && (
           <View style={styles.empty}>
             <ActivityIndicator color={colors.primary} />
-          </View>
-        )}
-
-        {!isLoading && isFetching && !refreshing && (
-          <View style={[styles.refreshPill, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <ActivityIndicator size="small" color={colors.mutedForeground} />
-            <Text style={[styles.refreshPillText, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>Updating…</Text>
           </View>
         )}
 

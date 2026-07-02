@@ -8,7 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  EmptyStatePanel,
+  ErrorStatePanel,
+  LiveRefreshBadge,
+  LoadingCardGrid,
+  PageTransition,
+} from "@/components/realtime/microinteractions";
+import { liveQueryOptions } from "@/hooks/use-realtime-feedback";
 
 const STATUS_COLORS: Record<string, string> = {
   open: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
@@ -42,7 +49,9 @@ export default function RequestsPage() {
 
   const isCustomer = profile?.role === "customer";
 
-  const { data: requests, isLoading } = useListRequests();
+  const { data: requests, isLoading, isFetching, isError } = useListRequests(undefined, {
+    query: liveQueryOptions as any,
+  });
 
   const filtered = useMemo(() => {
     if (!requests) return [];
@@ -70,7 +79,7 @@ export default function RequestsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto">
+    <PageTransition className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -83,14 +92,17 @@ export default function RequestsPage() {
               : "Browse open requests from construction sites."}
           </p>
         </div>
-        {isCustomer && (
-          <Link href="/requests/new">
-            <Button className="font-bold rounded-none h-10 px-5" data-testid="btn-new-request">
-              <Plus className="mr-2 h-4 w-4" />
-              New Request
-            </Button>
-          </Link>
-        )}
+        <div className="flex flex-wrap gap-3">
+          <LiveRefreshBadge isFetching={isFetching} />
+          {isCustomer && (
+            <Link href="/requests/new">
+              <Button className="font-bold rounded-none h-10 px-5" data-testid="btn-new-request">
+                <Plus className="mr-2 h-4 w-4" />
+                New Request
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Filter Bar */}
@@ -170,18 +182,16 @@ export default function RequestsPage() {
       </div>
 
       {/* Results */}
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-36 w-full rounded-none" />
-          ))}
-        </div>
+      {isError ? (
+        <ErrorStatePanel title="Requests unavailable" description="The job board could not be refreshed." />
+      ) : isLoading ? (
+        <LoadingCardGrid count={4} className="space-y-4" itemClassName="h-36" />
       ) : filtered.length > 0 ? (
         <div className="space-y-3">
           {filtered.map(request => (
             <div
               key={request.id}
-              className="bg-card border-2 border-border hover:border-primary transition-colors group"
+              className="hb-feed-item bg-card border-2 border-border hover:border-primary transition-colors group"
             >
               <div className="p-5 flex flex-col md:flex-row gap-5">
                 {/* Main Info */}
@@ -252,16 +262,18 @@ export default function RequestsPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-card border-2 border-dashed border-border p-12 text-center">
-          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-30" />
-          <h3 className="text-lg font-bold mb-1">No requests found</h3>
-          <p className="text-muted-foreground text-sm mb-6">
-            {activeFilters > 0
+        <EmptyStatePanel
+          icon={FileText}
+          title="No requests found"
+          description={
+            activeFilters > 0
               ? "No requests match your current filters."
               : isCustomer
                 ? "You haven't posted any job requests yet."
-                : "There are no open job requests on the board right now."}
-          </p>
+                : "There are no open job requests on the board right now."
+          }
+          className="p-12"
+        >
           <div className="flex gap-3 justify-center">
             {activeFilters > 0 && (
               <Button variant="outline" className="rounded-none border-2" onClick={clearFilters}>
@@ -274,8 +286,8 @@ export default function RequestsPage() {
               </Link>
             )}
           </div>
-        </div>
+        </EmptyStatePanel>
       )}
-    </div>
+    </PageTransition>
   );
 }
