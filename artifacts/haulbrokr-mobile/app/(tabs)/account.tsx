@@ -9,7 +9,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
-import { useAuth } from "@clerk/expo";
+import { useClerk } from "@clerk/expo";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/RefreshingIndicator";
@@ -46,7 +46,7 @@ export default function AccountScreen() {
   const [notifBids, setNotifBids] = useState(true);
   const [notifJobs, setNotifJobs] = useState(true);
   const [notifPayments, setNotifPayments] = useState(true);
-  const { signOut } = useAuth();
+  const { signOut } = useClerk();
   const complianceQuery = useCompliance();
   const submitCompliance = useSubmitCompliance();
   const verifyCompliance = useVerifyCompliance();
@@ -140,6 +140,23 @@ export default function AccountScreen() {
     setRefreshing(true);
     Promise.all([complianceQuery.refetch(), qbStatus.refetch(), payoutStatus.refetch()]).finally(() => setRefreshing(false));
   }, [complianceQuery, qbStatus, payoutStatus]);
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await signOut();
+      router.replace("/sign-in" as any);
+    } catch (err: any) {
+      Alert.alert("Sign out failed", err?.message ?? "Please try again.");
+    }
+  }, [signOut]);
+
+  const confirmSignOut = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Sign Out", style: "destructive", onPress: handleSignOut },
+    ]);
+  }, [handleSignOut]);
 
   // Subtle "Updating…" pill for a background refetch over cached account data
   // (e.g. the foreground refetch after reopening the app), excluding the manual
@@ -333,20 +350,9 @@ export default function AccountScreen() {
               <Text style={[styles.ratingLabel, { color: "#8ba0b8", fontFamily: "Inter_400Regular" }]}>Rating</Text>
             </View>
             <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-                  { text: "Cancel", style: "cancel" },
-                  { text: "Sign Out", style: "destructive", onPress: async () => {
-                    try {
-                      await signOut();
-                      router.replace("/sign-in" as any);
-                    } catch (err: any) {
-                      Alert.alert("Sign out failed", err?.message ?? "Please try again.");
-                    }
-                  }},
-                ]);
-              }}
+              onPress={confirmSignOut}
+              accessibilityRole="button"
+              accessibilityLabel="Header sign out"
               hitSlop={10}
               style={styles.headerSignOut}
             >
@@ -1007,20 +1013,9 @@ export default function AccountScreen() {
       {/* Sign Out */}
       <Animated.View entering={FadeInDown.delay(400).springify()}>
         <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-              { text: "Cancel", style: "cancel" },
-              { text: "Sign Out", style: "destructive", onPress: async () => {
-                try {
-                  await signOut();
-                  router.replace("/sign-in" as any);
-                } catch (err: any) {
-                  Alert.alert("Sign out failed", err?.message ?? "Please try again.");
-                }
-              }},
-            ]);
-          }}
+          onPress={confirmSignOut}
+          accessibilityRole="button"
+          accessibilityLabel="Sign Out"
           style={[styles.signOutBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <Feather name="log-out" size={18} color={colors.destructive} />
