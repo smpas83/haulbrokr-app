@@ -2645,6 +2645,30 @@ components:
           type: integer
         budgetPerHour:
           type: ["number", "null"]
+        projectId:
+          type: ["integer", "null"]
+        facilityId:
+          type: ["integer", "null"]
+        facilityName:
+          type: ["string", "null"]
+        facilityCoordinates:
+          type: ["string", "null"]
+        facilityInstructions:
+          type: ["string", "null"]
+        facilityAcceptedMaterials:
+          type: ["string", "null"]
+        facilitySafetyNotes:
+          type: ["string", "null"]
+        facilityOperatingHours:
+          type: ["string", "null"]
+        facilityPricingMetadata:
+          type: ["string", "null"]
+        facilityPhone:
+          type: ["string", "null"]
+        brokerNotes:
+          type: ["string", "null"]
+        driverInstructions:
+          type: ["string", "null"]
         notes:
           type: ["string", "null"]
         bidCount:
@@ -2683,6 +2707,31 @@ components:
           type: integer
         budgetPerHour:
           type: number
+        projectId:
+          type: integer
+        facilityId:
+          type: integer
+        facilityName:
+          type: string
+        facilityCoordinates:
+          type: string
+          description: Facility coordinates as "lat,lng" when supplied by a maps client.
+        facilityInstructions:
+          type: string
+        facilityAcceptedMaterials:
+          type: string
+        facilitySafetyNotes:
+          type: string
+        facilityOperatingHours:
+          type: string
+        facilityPricingMetadata:
+          type: string
+        facilityPhone:
+          type: string
+        brokerNotes:
+          type: string
+        driverInstructions:
+          type: string
         notes:
           type: string
 
@@ -2716,6 +2765,30 @@ components:
           type: integer
         budgetPerHour:
           type: number
+        projectId:
+          type: integer
+        facilityId:
+          type: integer
+        facilityName:
+          type: string
+        facilityCoordinates:
+          type: string
+        facilityInstructions:
+          type: string
+        facilityAcceptedMaterials:
+          type: string
+        facilitySafetyNotes:
+          type: string
+        facilityOperatingHours:
+          type: string
+        facilityPricingMetadata:
+          type: string
+        facilityPhone:
+          type: string
+        brokerNotes:
+          type: string
+        driverInstructions:
+          type: string
         notes:
           type: string
 
@@ -2845,6 +2918,28 @@ components:
           format: date-time
         projectId:
           type: ["integer", "null"]
+        facilityId:
+          type: ["integer", "null"]
+        facilityName:
+          type: ["string", "null"]
+        facilityCoordinates:
+          type: ["string", "null"]
+        facilityInstructions:
+          type: ["string", "null"]
+        facilityAcceptedMaterials:
+          type: ["string", "null"]
+        facilitySafetyNotes:
+          type: ["string", "null"]
+        facilityOperatingHours:
+          type: ["string", "null"]
+        facilityPricingMetadata:
+          type: ["string", "null"]
+        facilityPhone:
+          type: ["string", "null"]
+        brokerNotes:
+          type: ["string", "null"]
+        driverInstructions:
+          type: ["string", "null"]
         completionApproval:
           type: ["string", "null"]
           enum: [pending, approved, flagged, null]
@@ -2901,7 +2996,7 @@ components:
           type: integer
         type:
           type: string
-          enum: [request_posted, bid_placed, bid_awarded, bid_accepted, job_accepted, job_declined, job_started, job_completed, payment_failed, payment_requires_action, application_approved, application_rejected, payout_delayed, payout_stuck_alert, bin_confirmed, bin_delivered, bin_picked_up, bin_cancelled]
+          enum: [request_posted, bid_placed, bid_awarded, bid_accepted, job_accepted, job_declined, job_started, job_completed, delivery_evidence_submitted, driver_event_rejected, payment_failed, payment_requires_action, application_approved, application_rejected, payout_delayed, payout_stuck_alert, bin_confirmed, bin_delivered, bin_picked_up, bin_cancelled]
         description:
           type: string
         relatedId:

@@ -177,6 +177,7 @@ function baseJob(overrides: Record<string, unknown> = {}) {
     notes: "Use the south gate after 7am.",
     createdAt: new Date("2026-05-01T00:00:00Z"),
     paymentStatus: "unpaid",
+    completionApproval: "approved",
     customerTotalAmount: "115.00",
     providerNetAmount: "100.00",
     totalHours: "1",

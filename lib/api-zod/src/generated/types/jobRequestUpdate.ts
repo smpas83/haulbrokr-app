@@ -22,5 +22,17 @@ export interface JobRequestUpdate {
   estimatedHours?: number;
   trucksNeeded?: number;
   budgetPerHour?: number;
+  projectId?: number;
+  facilityId?: number;
+  facilityName?: string;
+  facilityCoordinates?: string;
+  facilityInstructions?: string;
+  facilityAcceptedMaterials?: string;
+  facilitySafetyNotes?: string;
+  facilityOperatingHours?: string;
+  facilityPricingMetadata?: string;
+  facilityPhone?: string;
+  brokerNotes?: string;
+  driverInstructions?: string;
   notes?: string;
 }

@@ -379,6 +379,30 @@ export interface JobRequest {
   /** @nullable */
   budgetPerHour?: number | null;
   /** @nullable */
+  projectId?: number | null;
+  /** @nullable */
+  facilityId?: number | null;
+  /** @nullable */
+  facilityName?: string | null;
+  /** @nullable */
+  facilityCoordinates?: string | null;
+  /** @nullable */
+  facilityInstructions?: string | null;
+  /** @nullable */
+  facilityAcceptedMaterials?: string | null;
+  /** @nullable */
+  facilitySafetyNotes?: string | null;
+  /** @nullable */
+  facilityOperatingHours?: string | null;
+  /** @nullable */
+  facilityPricingMetadata?: string | null;
+  /** @nullable */
+  facilityPhone?: string | null;
+  /** @nullable */
+  brokerNotes?: string | null;
+  /** @nullable */
+  driverInstructions?: string | null;
+  /** @nullable */
   notes?: string | null;
   bidCount?: number;
   createdAt: string;
@@ -435,6 +459,19 @@ export interface JobRequestInput {
   estimatedHours: number;
   trucksNeeded: number;
   budgetPerHour?: number;
+  projectId?: number;
+  facilityId?: number;
+  facilityName?: string;
+  /** Facility coordinates as "lat,lng" when supplied by a maps client. */
+  facilityCoordinates?: string;
+  facilityInstructions?: string;
+  facilityAcceptedMaterials?: string;
+  facilitySafetyNotes?: string;
+  facilityOperatingHours?: string;
+  facilityPricingMetadata?: string;
+  facilityPhone?: string;
+  brokerNotes?: string;
+  driverInstructions?: string;
   notes?: string;
 }
 
@@ -500,6 +537,18 @@ export interface JobRequestUpdate {
   estimatedHours?: number;
   trucksNeeded?: number;
   budgetPerHour?: number;
+  projectId?: number;
+  facilityId?: number;
+  facilityName?: string;
+  facilityCoordinates?: string;
+  facilityInstructions?: string;
+  facilityAcceptedMaterials?: string;
+  facilitySafetyNotes?: string;
+  facilityOperatingHours?: string;
+  facilityPricingMetadata?: string;
+  facilityPhone?: string;
+  brokerNotes?: string;
+  driverInstructions?: string;
   notes?: string;
 }
 
@@ -652,6 +701,28 @@ export interface Job {
   /** @nullable */
   projectId?: number | null;
   /** @nullable */
+  facilityId?: number | null;
+  /** @nullable */
+  facilityName?: string | null;
+  /** @nullable */
+  facilityCoordinates?: string | null;
+  /** @nullable */
+  facilityInstructions?: string | null;
+  /** @nullable */
+  facilityAcceptedMaterials?: string | null;
+  /** @nullable */
+  facilitySafetyNotes?: string | null;
+  /** @nullable */
+  facilityOperatingHours?: string | null;
+  /** @nullable */
+  facilityPricingMetadata?: string | null;
+  /** @nullable */
+  facilityPhone?: string | null;
+  /** @nullable */
+  brokerNotes?: string | null;
+  /** @nullable */
+  driverInstructions?: string | null;
+  /** @nullable */
   completionApproval?: JobCompletionApproval;
   /** @nullable */
   approvedByProfileId?: number | null;
@@ -700,6 +771,8 @@ export const ActivityItemType = {
   job_declined: 'job_declined',
   job_started: 'job_started',
   job_completed: 'job_completed',
+  delivery_evidence_submitted: 'delivery_evidence_submitted',
+  driver_event_rejected: 'driver_event_rejected',
   payment_failed: 'payment_failed',
   payment_requires_action: 'payment_requires_action',
   application_approved: 'application_approved',
