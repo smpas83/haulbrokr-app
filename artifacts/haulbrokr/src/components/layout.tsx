@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Truck, ClipboardList, Briefcase, LayoutDashboard,
-  LogOut, Loader2, Settings, Menu, X, Trash2,
+  LogOut, Settings, Menu, X, Trash2,
   FolderOpen, DollarSign, Plug, ShieldCheck, Building2
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/react";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { DocumentGateBanner } from "@/components/documents";
+import { LoadingSpinner } from "@/components/design-system";
 
 interface NavItem {
   href: string;
@@ -92,7 +93,7 @@ export function Layout({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-muted/30">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <LoadingSpinner />
       </div>
     );
   }

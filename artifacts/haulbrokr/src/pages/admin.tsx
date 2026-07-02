@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import {
-  Loader2, CheckCircle2, AlertCircle, Clock, ShieldAlert,
+  CheckCircle2, AlertCircle, Clock, ShieldAlert,
   ShieldCheck, CreditCard, Truck, Building2, X, Banknote, ArrowRight, RotateCcw,
   Users, UserCog, Package, MapPin, Calendar, PackageCheck,
   LayoutDashboard, DollarSign, TrendingUp, Briefcase, Activity, UserPlus, Lock,
@@ -24,10 +24,22 @@ import {
 
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/apiFetch";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  EmptyState as DesignEmptyState,
+  LoadingSpinner,
+  MetricCard,
+  PrimaryButton as Button,
+  Skeleton,
+  StatusPill,
+} from "@/components/design-system";
+import { AdminDashboardLayout } from "@/components/design-system/layouts";
+import { PageTransition } from "@/components/design-system/animation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -82,7 +94,7 @@ function ReviewActions({
               disabled={isPending || !note.trim()}
               onClick={() => onSubmit("reject", note.trim())}
             >
-              {isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <AlertCircle className="w-4 h-4 mr-1" />}
+              {isPending ? <LoadingSpinner className="w-4 h-4 mr-1" /> : <AlertCircle className="w-4 h-4 mr-1" />}
               Confirm Rejection
             </Button>
             <Button
@@ -102,7 +114,7 @@ function ReviewActions({
             disabled={isPending || approveDisabled}
             onClick={() => onSubmit("approve")}
           >
-            {isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : approveIcon}
+            {isPending ? <LoadingSpinner className="w-4 h-4 mr-1" /> : approveIcon}
             {approveLabel}
           </Button>
           <Button
@@ -121,15 +133,15 @@ function ReviewActions({
 
 function ReviewBadge({ status }: { status: string }) {
   if (status === "verified" || status === "approved") {
-    return <Badge className="bg-green-500 hover:bg-green-600 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1" /> {status === "verified" ? "Verified" : "Approved"}</Badge>;
+    return <StatusPill intent="success"><CheckCircle2 className="w-3 h-3 mr-1" /> {status === "verified" ? "Verified" : "Approved"}</StatusPill>;
   }
   if (status === "pending") {
-    return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none"><Clock className="w-3 h-3 mr-1" /> Pending Review</Badge>;
+    return <StatusPill intent="warning"><Clock className="w-3 h-3 mr-1" /> Pending Review</StatusPill>;
   }
   if (status === "rejected") {
-    return <Badge variant="destructive" className="rounded-none"><AlertCircle className="w-3 h-3 mr-1" /> Rejected</Badge>;
+    return <StatusPill intent="danger"><AlertCircle className="w-3 h-3 mr-1" /> Rejected</StatusPill>;
   }
-  return <Badge variant="secondary" className="rounded-none text-muted-foreground">{status.replace(/_/g, " ")}</Badge>;
+  return <StatusPill intent="secondary">{status.replace(/_/g, " ")}</StatusPill>;
 }
 
 function Field({ label, value }: { label: string; value?: ReactNode }) {
@@ -289,12 +301,12 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
         </div>
         <div className="flex flex-col items-end gap-2">
           {item.canBid ? (
-            <Badge className="bg-green-500 hover:bg-green-600 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1" /> Can bid</Badge>
+            <StatusPill intent="success"><CheckCircle2 className="w-3 h-3 mr-1" /> Can bid</StatusPill>
           ) : (
             <Badge variant="secondary" className="rounded-none">Not eligible to bid</Badge>
           )}
           {item.hasPendingReview && (
-            <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none"><Clock className="w-3 h-3 mr-1" /> Review needed</Badge>
+            <StatusPill intent="warning"><Clock className="w-3 h-3 mr-1" /> Review needed</StatusPill>
           )}
         </div>
       </CardHeader>
@@ -521,13 +533,13 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
           </CardDescription>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none">
+          <StatusPill intent="warning">
             <Clock className="w-3 h-3 mr-1" /> Stuck
-          </Badge>
+          </StatusPill>
           {item.payoutAlertSentAt != null && (
-            <Badge className="bg-red-600 hover:bg-red-700 text-white rounded-none">
+            <StatusPill intent="danger">
               <ShieldAlert className="w-3 h-3 mr-1" /> Alerted
-            </Badge>
+            </StatusPill>
           )}
         </div>
       </CardHeader>
@@ -545,7 +557,7 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
           <Field
             label="Retry Failures"
             value={
-              <span className={item.payoutRetryFailures > 0 ? "text-red-600 font-semibold" : undefined}>
+              <span className={item.payoutRetryFailures > 0 ? "text-destructive font-semibold" : undefined}>
                 {item.payoutRetryFailures}
               </span>
             }
@@ -558,7 +570,7 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
           </p>
           <div className="flex flex-wrap gap-2">
             <Button className="rounded-none" disabled={retry.isPending} onClick={release}>
-              {retry.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Banknote className="w-4 h-4 mr-1" />}
+              {retry.isPending ? <LoadingSpinner className="w-4 h-4 mr-1" /> : <Banknote className="w-4 h-4 mr-1" />}
               Release Payout
             </Button>
             <Button
@@ -568,7 +580,7 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
               onClick={acknowledge}
               title="Clear the failure count and alert after resolving the underlying issue"
             >
-              {reset.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-1" />}
+              {reset.isPending ? <LoadingSpinner className="w-4 h-4 mr-1" /> : <RotateCcw className="w-4 h-4 mr-1" />}
               Reset Failures
             </Button>
           </div>
@@ -656,7 +668,7 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
               onClick={() => setRole(null)}
               title="Remove staff access"
             >
-              {update.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+              {update.isPending ? <LoadingSpinner className="w-4 h-4" /> : <X className="w-4 h-4" />}
             </Button>
           </div>
         ) : (
@@ -795,17 +807,17 @@ const BIN_NEXT_ACTION: Record<
 function BinStatusBadge({ displayStatus }: { displayStatus: string }) {
   switch (displayStatus) {
     case "pending":
-      return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+      return <StatusPill intent="warning"><Clock className="w-3 h-3 mr-1" /> Pending</StatusPill>;
     case "confirmed":
-      return <Badge className="bg-blue-500 hover:bg-blue-600 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1" /> Confirmed</Badge>;
+      return <StatusPill intent="primary"><CheckCircle2 className="w-3 h-3 mr-1" /> Confirmed</StatusPill>;
     case "active":
-      return <Badge className="bg-green-500 hover:bg-green-600 rounded-none"><Truck className="w-3 h-3 mr-1" /> Delivered</Badge>;
+      return <StatusPill intent="success"><Truck className="w-3 h-3 mr-1" /> Delivered</StatusPill>;
     case "completed":
-      return <Badge variant="secondary" className="rounded-none"><PackageCheck className="w-3 h-3 mr-1" /> Picked Up</Badge>;
+      return <StatusPill intent="secondary"><PackageCheck className="w-3 h-3 mr-1" /> Picked Up</StatusPill>;
     case "cancelled":
-      return <Badge variant="destructive" className="rounded-none"><X className="w-3 h-3 mr-1" /> Cancelled</Badge>;
+      return <StatusPill intent="danger"><X className="w-3 h-3 mr-1" /> Cancelled</StatusPill>;
     default:
-      return <Badge variant="secondary" className="rounded-none">{displayStatus.replace(/_/g, " ")}</Badge>;
+      return <StatusPill intent="secondary">{displayStatus.replace(/_/g, " ")}</StatusPill>;
   }
 }
 
@@ -873,7 +885,7 @@ function BinOrderCard({ order }: { order: BinOrder }) {
         <div className="pt-2 border-t">
           {next ? (
             <Button className="rounded-none" disabled={advance.isPending} onClick={move}>
-              {advance.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ArrowRight className="w-4 h-4 mr-1" />}
+              {advance.isPending ? <LoadingSpinner className="w-4 h-4 mr-1" /> : <ArrowRight className="w-4 h-4 mr-1" />}
               {next.label}
             </Button>
           ) : (
@@ -911,10 +923,11 @@ function BinOrdersPanel({ enabled }: { enabled: boolean }) {
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="text-center py-16 text-muted-foreground border-2 border-dashed">
-      <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-40" />
-      <p className="text-sm">{label}</p>
-    </div>
+    <DesignEmptyState
+      className="py-16"
+      icon={<CheckCircle2 className="w-8 h-8 opacity-40" />}
+      title={label}
+    />
   );
 }
 
@@ -931,17 +944,7 @@ function StatCard({
   hint?: string;
   accent?: boolean;
 }) {
-  return (
-    <Card className="rounded-none border-2">
-      <CardContent className="pt-6">
-        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {icon} {label}
-        </div>
-        <div className={`mt-2 text-2xl font-bold tracking-tight ${accent ? "text-primary" : ""}`}>{value}</div>
-        {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
-      </CardContent>
-    </Card>
-  );
+  return <MetricCard icon={icon} label={label} value={value} hint={hint} accent={accent} />;
 }
 
 // A pending-review tile that doubles as a jump link into the relevant tab.
@@ -964,9 +967,9 @@ function ReviewQueueTile({
           {icon} {label}
         </div>
         {count > 0 ? (
-          <Badge className="bg-amber-500 text-amber-950 rounded-none">{count}</Badge>
+          <StatusPill intent="warning">{count}</StatusPill>
         ) : (
-          <Badge variant="secondary" className="rounded-none text-muted-foreground">0</Badge>
+          <StatusPill intent="secondary">0</StatusPill>
         )}
       </div>
       <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
@@ -1054,7 +1057,7 @@ function OverviewPanel({
             icon={<Banknote className="w-3.5 h-3.5" />}
             label="Stuck Payouts"
             value={
-              <span className={data.stuckPayouts > 0 ? "text-red-600" : undefined}>
+              <span className={data.stuckPayouts > 0 ? "text-destructive" : undefined}>
                 {data.stuckPayouts.toLocaleString()}
               </span>
             }
@@ -1129,7 +1132,7 @@ export default function AdminPage() {
   if (accessLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <LoadingSpinner />
       </div>
     );
   }
@@ -1171,7 +1174,8 @@ export default function AdminPage() {
   const activeTab = tab ?? defaultTab;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <AdminDashboardLayout>
+      <PageTransition className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -1209,7 +1213,7 @@ export default function AdminPage() {
             <TabsTrigger value="compliance" className="rounded-none gap-2">
               <Truck className="w-4 h-4" /> Carriers
               {pendingCompliance > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-none ml-1">{pendingCompliance}</Badge>
+                <StatusPill intent="warning" className="ml-1">{pendingCompliance}</StatusPill>
               )}
             </TabsTrigger>
           )}
@@ -1217,7 +1221,7 @@ export default function AdminPage() {
             <TabsTrigger value="credit" className="rounded-none gap-2">
               <CreditCard className="w-4 h-4" /> Credit
               {pendingCredit > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-none ml-1">{pendingCredit}</Badge>
+                <StatusPill intent="warning" className="ml-1">{pendingCredit}</StatusPill>
               )}
             </TabsTrigger>
           )}
@@ -1225,7 +1229,7 @@ export default function AdminPage() {
             <TabsTrigger value="payouts" className="rounded-none gap-2">
               <Banknote className="w-4 h-4" /> Payouts
               {payoutItems.length > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-none ml-1">{payoutItems.length}</Badge>
+                <StatusPill intent="warning" className="ml-1">{payoutItems.length}</StatusPill>
               )}
             </TabsTrigger>
           )}
@@ -1233,7 +1237,7 @@ export default function AdminPage() {
             <TabsTrigger value="bins" className="rounded-none gap-2">
               <Package className="w-4 h-4" /> Bin Orders
               {openBins > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-none ml-1">{openBins}</Badge>
+                <StatusPill intent="warning" className="ml-1">{openBins}</StatusPill>
               )}
             </TabsTrigger>
           )}
@@ -1298,6 +1302,7 @@ export default function AdminPage() {
           </TabsContent>
         )}
       </Tabs>
-    </div>
+      </PageTransition>
+    </AdminDashboardLayout>
   );
 }

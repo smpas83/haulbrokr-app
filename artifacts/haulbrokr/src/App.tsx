@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter } from 'wouter';
-import { Loader2 } from "lucide-react";
 
+import { LoadingSpinner } from "@/components/design-system";
+import { PublicLayout } from "@/components/design-system/layouts";
 import SupportPage from "./pages/support";
 import PrivacyPage from "./pages/privacy";
 
@@ -12,7 +13,7 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 function AppLoader() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <LoadingSpinner />
     </div>
   );
 }
@@ -20,8 +21,12 @@ function AppLoader() {
 function PublicRouter() {
   return (
     <Switch>
-      <Route path="/support" component={SupportPage} />
-      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/support">
+        <PublicLayout><SupportPage /></PublicLayout>
+      </Route>
+      <Route path="/privacy">
+        <PublicLayout><PrivacyPage /></PublicLayout>
+      </Route>
       <Route>
         <Suspense fallback={<AppLoader />}>
           <AuthShell />

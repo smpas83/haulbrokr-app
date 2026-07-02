@@ -3,9 +3,14 @@ import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 
-import { Layout } from "./components/layout";
+import { LoadingSpinner } from "@/components/design-system";
+import {
+  CustomerDashboardLayout,
+  DispatcherDashboardLayout,
+  DriverDashboardLayout,
+  FleetDashboardLayout,
+} from "@/components/design-system/layouts";
 import { Toaster } from "@/components/ui/toaster";
 import { useGetMyProfile } from "@workspace/api-client-react";
 import { SignInPage, SignUpPage } from "./pages/auth";
@@ -95,7 +100,7 @@ const clerkAppearance = {
 function AppLoader() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <LoadingSpinner />
     </div>
   );
 }
@@ -127,7 +132,16 @@ function RequireProfile({ children }: { children: React.ReactNode }) {
   }
 
   if (profile) {
-    return <Layout>{children}</Layout>;
+    const DashboardLayout =
+      profile.role === "customer"
+        ? CustomerDashboardLayout
+        : profile.role === "driver"
+          ? DriverDashboardLayout
+          : profile.role === "provider"
+            ? FleetDashboardLayout
+            : DispatcherDashboardLayout;
+
+    return <DashboardLayout>{children}</DashboardLayout>;
   }
 
   return null;
