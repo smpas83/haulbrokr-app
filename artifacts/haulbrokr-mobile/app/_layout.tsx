@@ -21,6 +21,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider } from "@/context/AppContext";
 import { ClerkAuthProvider } from "@/context/ClerkAuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { ThemeProvider } from "@/theme";
 import { useMyProfile } from "@/hooks/useLiveApi";
 
 SplashScreen.preventAutoHideAsync();
@@ -96,7 +97,8 @@ export default function RootLayout() {
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
                   <LanguageProvider>
-                    <AppProvider>
+                    <ThemeProvider>
+                      <AppProvider>
                       <AuthGate>
                         <Stack screenOptions={{ headerShown: false }}>
                           <Stack.Screen name="(tabs)" />
@@ -122,6 +124,7 @@ export default function RootLayout() {
                         </Stack>
                       </AuthGate>
                     </AppProvider>
+                    </ThemeProvider>
                   </LanguageProvider>
                 </KeyboardProvider>
               </GestureHandlerRootView>
