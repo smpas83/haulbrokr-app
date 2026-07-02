@@ -6,6 +6,22 @@ import { ticketsTable } from "./tickets";
 import { profilesTable } from "./profiles";
 
 export const jobStatusUpdateTypeEnum = pgEnum("job_status_update_type", [
+  "job_created",
+  "driver_assigned",
+  "driver_replaced",
+  "driver_accepted",
+  "driver_arrived",
+  "loading_started",
+  "loading_finished",
+  "departed_pickup",
+  "arrived_facility",
+  "scale_ticket_uploaded",
+  "ai_verification_complete",
+  "broker_approved",
+  "invoice_created",
+  "payment_initiated",
+  "payment_completed",
+  "partial_completed",
   "en_route", "arrived", "loading", "loaded", "dumping",
   "checked_in", "started", "ticket_uploaded", "photo_uploaded", "completed",
 ]);

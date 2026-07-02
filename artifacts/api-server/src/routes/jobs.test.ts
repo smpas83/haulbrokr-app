@@ -55,6 +55,7 @@ vi.mock("@workspace/db", () => {
     profilesTable: makeTable("profiles"),
     requestsTable: makeTable("requests"),
     activityTable: makeTable("activity"),
+    jobStatusUpdatesTable: makeTable("jobStatusUpdates"),
   };
 });
 

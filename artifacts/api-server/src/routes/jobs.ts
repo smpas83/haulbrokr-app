@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { z } from "zod";
 import { eq, and, or, sql, inArray } from "drizzle-orm";
 import {
   db,
@@ -13,6 +14,7 @@ import {
   trucksTable,
   jobStatusUpdatesTable,
   driverDocumentsTable,
+  ratingsTable,
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isAdmin } from "../middlewares/requireAdmin";
@@ -23,6 +25,8 @@ import { settleConfirmedPayout } from "../lib/payoutRetry";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { computeMarketplacePricing, pricingForAudience } from "../lib/pricing";
+import { pricingAudienceForProfile } from "./pricing";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -161,10 +165,13 @@ async function notifyPayoutDelayed(
  *   gross = base + fee            (what the customer pays)
  */
 export function computeBreakdown(ratePerHour: number, hours: number, feeRate: number) {
-  const base = Math.round(ratePerHour * hours * 100) / 100;
-  const fee = Math.round(base * feeRate * 100) / 100;
-  const gross = Math.round((base + fee) * 100) / 100;
-  return { base, fee, gross };
+  const breakdown = computeMarketplacePricing({
+    driverRatePerHour: ratePerHour,
+    estimatedHours: hours,
+    brokerMarginType: "percentage",
+    brokerMarginValue: feeRate,
+  });
+  return { base: breakdown.driverPay, fee: breakdown.brokerMargin, gross: breakdown.customerTotal };
 }
 
 /**
@@ -351,6 +358,34 @@ router.get("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   res.json(GetJobResponse.parse(serializeJob(job, customerCompany, providerCompany)));
 });
 
+router.get("/jobs/:id/pricing-breakdown", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const jobId = parseInt(raw, 10);
+  if (!Number.isFinite(jobId)) {
+    res.status(400).json({ error: "Invalid job id" });
+    return;
+  }
+  const job = await loadJobIfMember(jobId, profile);
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  const hours = job.totalHours != null ? parseFloat(job.totalHours) : parseFloat(job.estimatedHours);
+  const breakdown = computeMarketplacePricing({
+    driverRatePerHour: parseFloat(job.ratePerHour),
+    estimatedHours: hours,
+    brokerMarginType: (job.brokerMarginType === "fixed" ? "fixed" : "percentage"),
+    brokerMarginValue: job.brokerMarginValue != null
+      ? parseFloat(job.brokerMarginValue)
+      : (job.platformFeeRate != null ? parseFloat(job.platformFeeRate) : DEFAULT_FEE_RATE),
+    pricingRules: job.pricingRules,
+  });
+
+  res.json(pricingForAudience(breakdown, pricingAudienceForProfile(profile)));
+});
+
 /**
  * GET /jobs/:id/carrier-documents — the awarded carrier's shareable compliance
  * documents (COI / W-9 / DOT authority) for a job. Visible to the job's customer
@@ -501,6 +536,7 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
     description: `Hauler accepted job #${job.id} — ${job.materialType} delivery`,
     relatedId: job.id,
   });
+  await recordJobTimelineEvent(job.id, profile.id, "driver_accepted", { note: "Awarded hauler accepted the job" });
 
   const { customerCompany, providerCompany } = await companiesFor(updated);
   res.json(AcceptJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
@@ -612,13 +648,20 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     const hours = parsed.data.totalHours ?? (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
     if (hours != null) {
       const rate = parseFloat(existingJob.ratePerHour);
-      const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_FEE_RATE;
-      const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
+      const breakdown = computeMarketplacePricing({
+        driverRatePerHour: rate,
+        estimatedHours: hours,
+        brokerMarginType: existingJob.brokerMarginType === "fixed" ? "fixed" : "percentage",
+        brokerMarginValue: existingJob.brokerMarginValue != null
+          ? parseFloat(existingJob.brokerMarginValue)
+          : (existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_FEE_RATE),
+        pricingRules: existingJob.pricingRules,
+      });
       updates.totalHours = String(hours);
-      updates.totalAmount = String(base);
-      updates.customerTotalAmount = String(gross);
-      updates.platformFeeAmount = String(fee);
-      updates.providerNetAmount = String(base);
+      updates.totalAmount = String(breakdown.driverPay);
+      updates.customerTotalAmount = String(breakdown.customerTotal);
+      updates.platformFeeAmount = String(breakdown.brokerProfit);
+      updates.providerNetAmount = String(breakdown.driverPay);
     }
   }
 
@@ -723,6 +766,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
     const [updated] = await db.update(jobsTable)
       .set({ paymentStatus: "invoiced", invoicedAt: now, paymentDueDate: due })
       .where(eq(jobsTable.id, job.id)).returning();
+    await recordJobTimelineEvent(job.id, profile.id, "invoice_created", { note: `Invoice created with ${days}-day terms` });
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
     return;
@@ -774,6 +818,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
         stripeTransferId: transferId,
       })
       .where(eq(jobsTable.id, job.id)).returning();
+    await recordJobTimelineEvent(job.id, profile.id, "payment_completed", { note: "Customer payment captured and provider payout released" });
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {
@@ -786,6 +831,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
         .set({ paymentStatus: "requires_action", paymentAttempts: attempt, stripePaymentIntentId: authPi })
         .where(eq(jobsTable.id, job.id)).returning();
       await notifyPaymentRequiresAction(job);
+      await recordJobTimelineEvent(job.id, profile.id, "payment_initiated", { note: "Payment requires customer authentication" });
       const { customerCompany, providerCompany } = await companiesFor(updated);
       res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
       return;
@@ -869,6 +915,7 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
         stripeTransferId: transferId,
       })
       .where(eq(jobsTable.id, job.id)).returning();
+    await recordJobTimelineEvent(job.id, profile.id, "payment_completed", { note: "Deferred invoice payment captured and payout released" });
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {
@@ -880,6 +927,7 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
         .set({ paymentStatus: "requires_action", paymentAttempts: attempt, stripePaymentIntentId: authPi })
         .where(eq(jobsTable.id, job.id)).returning();
       await notifyPaymentRequiresAction(job);
+      await recordJobTimelineEvent(job.id, profile.id, "payment_initiated", { note: "Deferred payout release requires customer authentication" });
       const { customerCompany, providerCompany } = await companiesFor(updated);
       res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
       return;
@@ -1184,6 +1232,7 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
         payoutAlertSentAt: null,
       })
       .where(eq(jobsTable.id, job.id)).returning();
+    await recordJobTimelineEvent(job.id, profile.id, "payment_completed", { note: "Checkout payment verified" });
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(VerifyJobCheckoutResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {
@@ -1196,7 +1245,143 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
   }
 });
 
+router.get("/jobs/:id/dispatch-recommendations", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const jobId = parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
+  const job = await loadJobIfMember(jobId, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  if (!DRIVER_SIDE.has(profile.role) && !profile.staffRole) {
+    res.status(403).json({ error: "Only dispatchers, provider managers, or staff can request dispatch recommendations." });
+    return;
+  }
+
+  const [providerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.providerId));
+  const drivers = providerProfile?.organizationId
+    ? await db.select().from(profilesTable).where(and(
+      eq(profilesTable.organizationId, providerProfile.organizationId),
+      or(eq(profilesTable.role, "driver"), eq(profilesTable.id, job.providerId))!,
+    ))
+    : await db.select().from(profilesTable).where(eq(profilesTable.id, job.providerId));
+  const trucks = await db.select().from(trucksTable).where(eq(trucksTable.ownerId, job.providerId));
+
+  const recommendations = [];
+  for (const driver of drivers) {
+    const assignedTruck = trucks.find((truck) => truck.assignedDriverId === driver.id);
+    const compatibleTrucks = trucks.filter((truck) =>
+      truck.isAvailable
+      && truck.truckType === job.truckType
+      && (truck.assignedDriverId == null || truck.assignedDriverId === driver.id)
+    );
+    const bestTruck = assignedTruck?.truckType === job.truckType && assignedTruck.isAvailable
+      ? assignedTruck
+      : compatibleTrucks[0] ?? assignedTruck ?? trucks.find((truck) => truck.isAvailable) ?? null;
+    const activeTickets = await db.select({ id: ticketsTable.id }).from(ticketsTable).where(and(
+      eq(ticketsTable.driverProfileId, driver.id),
+      inArray(ticketsTable.status, ["pending", "in_progress"]),
+    ));
+    const completedTickets = await db.select({ id: ticketsTable.id }).from(ticketsTable).where(and(
+      eq(ticketsTable.driverProfileId, driver.id),
+      inArray(ticketsTable.status, ["completed", "verified"]),
+    ));
+    const ratingRows = await db.select({ stars: ratingsTable.stars }).from(ratingsTable).where(eq(ratingsTable.rateeProfileId, driver.id));
+    const avgRating = ratingRows.length
+      ? ratingRows.reduce((sum, row) => sum + Number(row.stars), 0) / ratingRows.length
+      : null;
+    const customerHistory = await db.select({ id: jobsTable.id }).from(jobsTable).where(and(
+      eq(jobsTable.customerId, job.customerId),
+      eq(jobsTable.providerId, driver.id),
+    ));
+
+    const availabilityScore = bestTruck?.isAvailable ? 25 : 0;
+    const truckTypeScore = bestTruck?.truckType === job.truckType ? 20 : 0;
+    const capacityScore = bestTruck && parseFloat(bestTruck.capacityTons) >= 0 ? Math.min(15, parseFloat(bestTruck.capacityTons)) : 0;
+    const workloadScore = Math.max(0, 20 - activeTickets.length * 5);
+    const ratingScore = avgRating == null ? 7.5 : Math.min(15, avgRating * 3);
+    const historyScore = customerHistory.length > 0 ? 5 : 0;
+    const score = Math.round((availabilityScore + truckTypeScore + capacityScore + workloadScore + ratingScore + historyScore) * 100) / 100;
+
+    recommendations.push({
+      driverProfileId: driver.id,
+      driverName: driver.contactName ?? driver.companyName,
+      truckId: bestTruck?.id ?? null,
+      truckType: bestTruck?.truckType ?? null,
+      score,
+      rankFactors: {
+        distanceMiles: null,
+        etaMinutes: null,
+        availability: bestTruck?.isAvailable ?? false,
+        acceptanceRate: completedTickets.length + activeTickets.length > 0
+          ? completedTickets.length / (completedTickets.length + activeTickets.length)
+          : null,
+        rating: avgRating,
+        capacityTons: bestTruck?.capacityTons != null ? parseFloat(bestTruck.capacityTons) : null,
+        truckTypeMatch: bestTruck?.truckType === job.truckType,
+        currentWorkload: activeTickets.length,
+        pastCustomerHistory: customerHistory.length,
+        traffic: null,
+        routeEfficiency: null,
+      },
+      dataAvailability: {
+        liveLocation: false,
+        traffic: false,
+        routeEfficiency: false,
+      },
+    });
+  }
+
+  recommendations.sort((a, b) => b.score - a.score);
+  res.json({
+    jobId,
+    brokerApprovalRequired: true,
+    recommendations: recommendations.map((candidate, index) => ({ ...candidate, rank: index + 1 })),
+  });
+});
+
 // ── Driver / truck assignment ───────────────────────────────────────────────
+const bulkAssignBody = z.object({
+  assignments: z.array(z.object({
+    driverProfileId: z.number().int().positive(),
+    truckId: z.number().int().positive().nullable().optional(),
+  })).min(1).max(100),
+});
+
+const replaceDriverBody = z.object({
+  driverProfileId: z.number().int().positive(),
+  truckId: z.number().int().positive().nullable().optional(),
+  reason: z.string().min(1).max(500).optional(),
+});
+
+const completeTicketBody = z.object({
+  weightTons: z.number().nonnegative().optional(),
+  notes: z.string().max(1000).optional(),
+});
+
+async function validateAssignmentTarget(
+  job: typeof jobsTable.$inferSelect,
+  driverProfileId: number,
+  truckIdInput?: number | null,
+): Promise<{ ok: true; truckId: number | null } | { ok: false; error: string }> {
+  const [driver] = await db.select().from(profilesTable).where(eq(profilesTable.id, driverProfileId));
+  const [providerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.providerId));
+  const driverOk = driver && (
+    driver.id === job.providerId ||
+    (driver.role === "driver" && driver.organizationId != null && driver.organizationId === providerProfile?.organizationId)
+  );
+  if (!driverOk) return { ok: false, error: "Driver is not part of your company." };
+
+  if (truckIdInput == null) return { ok: true, truckId: null };
+  const [truck] = await db.select().from(trucksTable).where(eq(trucksTable.id, truckIdInput));
+  if (!truck || truck.ownerId !== job.providerId) return { ok: false, error: "Truck is not part of your fleet." };
+  await db.update(trucksTable).set({ assignedDriverId: driverProfileId }).where(eq(trucksTable.id, truck.id));
+  return { ok: true, truckId: truck.id };
+}
+
+async function nextLoadNumber(jobId: number): Promise<number> {
+  const existing = await db.select({ ln: ticketsTable.loadNumber }).from(ticketsTable).where(eq(ticketsTable.jobId, jobId));
+  return existing.reduce((m, r) => Math.max(m, r.ln), 0) + 1;
+}
+
 router.post("/jobs/:id/assign", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
   const jobId = parseInt(String(req.params.id), 10);
@@ -1211,40 +1396,152 @@ router.post("/jobs/:id/assign", requireProfile, async (req, res): Promise<void> 
   const parsed = AssignJobBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  // Driver must belong to the provider organisation (or be the provider owner).
-  const [driver] = await db.select().from(profilesTable).where(eq(profilesTable.id, parsed.data.driverProfileId));
-  const [providerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.providerId));
-  const driverOk = driver && (
-    driver.id === job.providerId ||
-    (driver.role === "driver" && driver.organizationId != null && driver.organizationId === providerProfile?.organizationId)
-  );
-  if (!driverOk) { res.status(400).json({ error: "Driver is not part of your company." }); return; }
-
-  let truckId: number | null = null;
-  if (parsed.data.truckId != null) {
-    const [truck] = await db.select().from(trucksTable).where(eq(trucksTable.id, parsed.data.truckId));
-    if (!truck || truck.ownerId !== job.providerId) {
-      res.status(400).json({ error: "Truck is not part of your fleet." });
-      return;
-    }
-    truckId = truck.id;
-    await db.update(trucksTable).set({ assignedDriverId: parsed.data.driverProfileId }).where(eq(trucksTable.id, truck.id));
-  }
-
-  const existing = await db.select({ ln: ticketsTable.loadNumber }).from(ticketsTable).where(eq(ticketsTable.jobId, jobId));
-  const nextLoad = existing.reduce((m, r) => Math.max(m, r.ln), 0) + 1;
+  const target = await validateAssignmentTarget(job, parsed.data.driverProfileId, parsed.data.truckId);
+  if (!target.ok) { res.status(400).json({ error: target.error }); return; }
+  const nextLoad = await nextLoadNumber(jobId);
 
   const [ticket] = await db.insert(ticketsTable).values({
     jobId,
     driverProfileId: parsed.data.driverProfileId,
-    truckId,
+    truckId: target.truckId,
     loadNumber: nextLoad,
     status: "pending",
   }).returning();
+  await recordJobTimelineEvent(jobId, profile.id, "driver_assigned", {
+    ticketId: ticket.id,
+    note: `Assigned driver #${parsed.data.driverProfileId}${target.truckId ? ` to truck #${target.truckId}` : ""}`,
+  });
 
   res.status(201).json({
     ...ticket,
     weightTons: ticket.weightTons != null ? parseFloat(ticket.weightTons) : null,
+  });
+});
+
+router.post("/jobs/:id/bulk-assign", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const jobId = parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
+  if (!DRIVER_SIDE.has(profile.role) || !isOrgManager(profile)) {
+    res.status(403).json({ error: "Only a provider owner or admin can bulk dispatch drivers and trucks." });
+    return;
+  }
+  const job = await loadJobIfMember(jobId, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  const parsed = bulkAssignBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const existing = await db.select({ id: ticketsTable.id }).from(ticketsTable).where(eq(ticketsTable.jobId, jobId));
+  const remaining = Math.max(0, job.trucksAssigned - existing.length);
+  if (parsed.data.assignments.length > remaining) {
+    res.status(409).json({ error: `Only ${remaining} truck assignment(s) remain for this job.` });
+    return;
+  }
+
+  let loadNumber = await nextLoadNumber(jobId);
+  const tickets = [];
+  for (const assignment of parsed.data.assignments) {
+    const target = await validateAssignmentTarget(job, assignment.driverProfileId, assignment.truckId);
+    if (!target.ok) { res.status(400).json({ error: target.error }); return; }
+    const [ticket] = await db.insert(ticketsTable).values({
+      jobId,
+      driverProfileId: assignment.driverProfileId,
+      truckId: target.truckId,
+      loadNumber: loadNumber++,
+      status: "pending",
+    }).returning();
+    await recordJobTimelineEvent(jobId, profile.id, "driver_assigned", {
+      ticketId: ticket.id,
+      note: `Bulk assigned driver #${assignment.driverProfileId}${target.truckId ? ` to truck #${target.truckId}` : ""}`,
+    });
+    tickets.push({
+      ...ticket,
+      weightTons: ticket.weightTons != null ? parseFloat(ticket.weightTons) : null,
+    });
+  }
+
+  res.status(201).json({
+    jobId,
+    trucksAssigned: job.trucksAssigned,
+    assignedCount: existing.length + tickets.length,
+    remaining: Math.max(0, job.trucksAssigned - existing.length - tickets.length),
+    tickets,
+  });
+});
+
+router.patch("/jobs/:id/tickets/:ticketId/replace-driver", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const jobId = parseInt(String(req.params.id), 10);
+  const ticketId = parseInt(String(req.params.ticketId), 10);
+  if (!Number.isFinite(jobId) || !Number.isFinite(ticketId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  if (!DRIVER_SIDE.has(profile.role) || !isOrgManager(profile)) {
+    res.status(403).json({ error: "Only a provider owner or admin can replace drivers." });
+    return;
+  }
+  const job = await loadJobIfMember(jobId, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  const parsed = replaceDriverBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId));
+  if (!ticket || ticket.jobId !== jobId) { res.status(404).json({ error: "Ticket not found" }); return; }
+
+  const target = await validateAssignmentTarget(job, parsed.data.driverProfileId, parsed.data.truckId);
+  if (!target.ok) { res.status(400).json({ error: target.error }); return; }
+  const [updated] = await db.update(ticketsTable).set({
+    driverProfileId: parsed.data.driverProfileId,
+    truckId: target.truckId,
+    status: "pending",
+  }).where(eq(ticketsTable.id, ticketId)).returning();
+  await recordJobTimelineEvent(jobId, profile.id, "driver_replaced", {
+    ticketId,
+    note: parsed.data.reason ?? `Replaced driver on ticket #${ticketId}`,
+  });
+  res.json({
+    ...updated,
+    weightTons: updated.weightTons != null ? parseFloat(updated.weightTons) : null,
+  });
+});
+
+router.post("/jobs/:id/tickets/:ticketId/complete", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const jobId = parseInt(String(req.params.id), 10);
+  const ticketId = parseInt(String(req.params.ticketId), 10);
+  if (!Number.isFinite(jobId) || !Number.isFinite(ticketId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const job = await loadJobIfMember(jobId, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  const [ticket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, ticketId));
+  if (!ticket || ticket.jobId !== jobId) { res.status(404).json({ error: "Ticket not found" }); return; }
+  if (profile.role === "driver" && ticket.driverProfileId !== profile.id) {
+    res.status(403).json({ error: "Drivers can only complete their own load tickets." });
+    return;
+  }
+  const parsed = completeTicketBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const [updated] = await db.update(ticketsTable).set({
+    status: "completed",
+    clockedOutAt: new Date(),
+    weightTons: parsed.data.weightTons != null ? String(parsed.data.weightTons) : ticket.weightTons,
+    notes: parsed.data.notes ?? ticket.notes,
+  }).where(eq(ticketsTable.id, ticketId)).returning();
+
+  const allTickets = await db.select({ status: ticketsTable.status }).from(ticketsTable).where(eq(ticketsTable.jobId, jobId));
+  const completedCount = allTickets.filter((row) => row.status === "completed" || row.status === "verified").length;
+  const allComplete = allTickets.length > 0 && completedCount === allTickets.length;
+  await recordJobTimelineEvent(jobId, profile.id, allComplete ? "completed" : "partial_completed", {
+    ticketId,
+    note: allComplete ? "All assigned load tickets completed" : `Completed ${completedCount} of ${job.trucksAssigned} assigned load tickets`,
+  });
+
+  res.json({
+    jobId,
+    allComplete,
+    completedCount,
+    trucksAssigned: job.trucksAssigned,
+    ticket: {
+      ...updated,
+      weightTons: updated.weightTons != null ? parseFloat(updated.weightTons) : null,
+    },
   });
 });
 
@@ -1275,6 +1572,41 @@ router.get("/jobs/:id/status-updates", requireProfile, async (req, res): Promise
 
   const enriched = rows.map(({ actorCompany, actorName, ...r }) => ({ ...r, actorName: actorName ?? actorCompany }));
   res.json(ListJobStatusUpdatesResponse.parse(enriched));
+});
+
+router.get("/jobs/:id/timeline", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const jobId = parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
+  const job = await loadJobIfMember(jobId, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+
+  const rows = await db
+    .select({
+      id: jobStatusUpdatesTable.id,
+      jobId: jobStatusUpdatesTable.jobId,
+      ticketId: jobStatusUpdatesTable.ticketId,
+      actorProfileId: jobStatusUpdatesTable.actorProfileId,
+      status: jobStatusUpdatesTable.status,
+      note: jobStatusUpdatesTable.note,
+      createdAt: jobStatusUpdatesTable.createdAt,
+      actorName: profilesTable.contactName,
+      actorCompany: profilesTable.companyName,
+    })
+    .from(jobStatusUpdatesTable)
+    .leftJoin(profilesTable, eq(profilesTable.id, jobStatusUpdatesTable.actorProfileId))
+    .where(eq(jobStatusUpdatesTable.jobId, jobId))
+    .orderBy(sql`${jobStatusUpdatesTable.createdAt} asc`);
+
+  const events = rows.map(({ actorCompany, actorName, ...r }) => ({
+    ...r,
+    actorName: actorName ?? actorCompany,
+    immutable: true,
+  }));
+  res.json({
+    jobId,
+    events,
+  });
 });
 
 router.post("/jobs/:id/status-updates", requireProfile, async (req, res): Promise<void> => {
