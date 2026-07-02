@@ -175,7 +175,7 @@ export default function BinsPage() {
 
   const ordersQuery = useListBinOrders<BinOrder[]>();
   const catalogQuery = useListBinCatalog<BinCatalogItem[]>({
-    query: { staleTime: 5 * 60_000 },
+    query: { staleTime: 5 * 60_000 } as any,
   });
   const orders: BinOrder[] = ordersQuery.data ?? [];
   const binCatalog: BinCatalogItem[] = catalogQuery.data ?? [];
