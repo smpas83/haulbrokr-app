@@ -15,40 +15,20 @@ import {
   useGetMyProfile, useGetAccountStatus
 } from "@workspace/api-client-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
+  EmptyState, Notification, Panel, PrimaryButton, Skeleton, StatCard,
+} from "@/components/design-system";
+import { HoverCard, PageTransition } from "@/components/design-system/animation";
 
-const AMBER = "#e9a800";
-const NAVY = "#1c2333";
-const CHART_COLORS = [AMBER, "#3b82f6", "#22c55e", "#ef4444", "#8b5cf6", "#f97316"];
-
-function StatCard({
-  title, value, icon: Icon, accent, sub
-}: {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  accent?: boolean;
-  sub?: string;
-}) {
-  return (
-    <Card className={`rounded-none border-2 ${accent ? "border-primary/30 bg-primary/5" : ""}`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className={`text-sm font-semibold uppercase tracking-wider ${accent ? "text-primary" : "text-muted-foreground"}`}>
-          {title}
-        </CardTitle>
-        <Icon className={`h-4 w-4 ${accent ? "text-primary" : "text-muted-foreground"}`} />
-      </CardHeader>
-      <CardContent>
-        <div className={`text-3xl font-black tracking-tight ${accent ? "text-primary" : ""}`}>{value}</div>
-        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-      </CardContent>
-    </Card>
-  );
-}
+const CHART_COLORS = [
+  "var(--chart-primary)",
+  "var(--chart-secondary)",
+  "var(--chart-success)",
+  "var(--chart-danger)",
+  "var(--chart-accent)",
+  "var(--chart-warning)",
+];
 
 const CustomBarTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -122,7 +102,7 @@ export default function DashboardPage() {
   const hasChartData = pieData.some(d => d.value > 0);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <PageTransition className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -134,18 +114,18 @@ export default function DashboardPage() {
         <div className="flex gap-3">
           {isCustomer && (
             <Link href="/requests/new">
-              <Button className="h-10 px-5 font-bold shadow-sm rounded-none" data-testid="button-new-request">
+              <PrimaryButton className="h-10 px-5 shadow-sm" data-testid="button-new-request">
                 <Plus className="mr-2 h-4 w-4" />
                 Post Job Request
-              </Button>
+              </PrimaryButton>
             </Link>
           )}
           {isProvider && (
             <Link href="/requests">
-              <Button className="h-10 px-5 font-bold shadow-sm rounded-none" data-testid="button-browse-jobs">
+              <PrimaryButton className="h-10 px-5 shadow-sm" data-testid="button-browse-jobs">
                 <Truck className="mr-2 h-4 w-4" />
                 Browse Open Jobs
-              </Button>
+              </PrimaryButton>
             </Link>
           )}
         </div>
@@ -153,19 +133,15 @@ export default function DashboardPage() {
 
       {/* Compliance Warning */}
       {accountStatus && !canOperate && (
-        <Alert className="rounded-none border-2 border-amber-500/50 bg-amber-500/10">
-          <ShieldAlert className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-700 font-bold">Action Required</AlertTitle>
-          <AlertDescription className="text-amber-700/80">
-            {isProvider
-              ? "Complete your W-9 and insurance verification to start bidding on jobs."
-              : "Complete your profile to post job requests."}
-            {" "}
-            <Link href="/account">
-              <span className="underline font-semibold cursor-pointer">Go to Account →</span>
-            </Link>
-          </AlertDescription>
-        </Alert>
+        <Notification title="Action Required" intent="warning" icon={<ShieldAlert className="h-4 w-4 text-warning" />}>
+          {isProvider
+            ? "Complete your W-9 and insurance verification to start bidding on jobs."
+            : "Complete your profile to post job requests."}
+          {" "}
+          <Link href="/account">
+            <span className="underline font-semibold cursor-pointer">Go to Account →</span>
+          </Link>
+        </Notification>
       )}
 
       {/* Stat Cards */}
@@ -222,19 +198,19 @@ export default function DashboardPage() {
                 <BarChart data={barData} barCategoryGap="35%">
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: "#6b7280", fontSize: 12, fontWeight: 600 }}
+                    tick={{ fill: "hsl(var(--muted-foreground))" }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     allowDecimals={false}
-                    tick={{ fill: "#6b7280", fontSize: 11 }}
+                    tick={{ fill: "hsl(var(--muted-foreground))" }}
                     axisLine={false}
                     tickLine={false}
                     width={24}
                   />
-                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "rgba(233,168,0,0.08)" }} />
-                  <Bar dataKey="events" fill={AMBER} radius={[2, 2, 0, 0]} maxBarSize={40} />
+                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "hsl(var(--primary) / 0.08)" }} />
+                  <Bar dataKey="events" fill="var(--chart-primary)" radius={[2, 2, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -278,9 +254,12 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-[180px] text-muted-foreground">
-                <CircleCheck className="h-10 w-10 mb-3 opacity-20" />
-                <p className="text-sm">No job data yet</p>
-                <p className="text-xs mt-1">Post or bid on a job to see stats</p>
+                <EmptyState
+                  className="h-full border-0 bg-transparent p-0"
+                  icon={<CircleCheck className="h-10 w-10 opacity-20" />}
+                  title="No job data yet"
+                  description="Post or bid on a job to see stats"
+                />
               </div>
             )}
           </CardContent>
@@ -314,18 +293,18 @@ export default function DashboardPage() {
                   const dotClass = isFailure
                     ? "bg-destructive"
                     : isActionNeeded
-                      ? "bg-amber-500"
+                      ? "bg-warning"
                       : isApproved
-                        ? "bg-green-500"
+                        ? "bg-success"
                         : isBin
-                          ? "bg-violet-500"
+                          ? "bg-accent"
                           : "bg-primary";
                   const textClass = isFailure
                     ? "text-destructive"
                     : isActionNeeded
-                      ? "text-amber-600 dark:text-amber-400"
+                      ? "text-warning"
                       : isApproved
-                        ? "text-green-600 dark:text-green-400"
+                        ? "text-success"
                         : "";
                   const binHref = isBin && activity.relatedBinOrderId != null
                     ? `/bins?order=${encodeURIComponent(activity.relatedBinOrderId)}`
@@ -345,7 +324,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       {isLink && (
-                        <ArrowUpRight className={`h-4 w-4 flex-shrink-0 ${isFailure ? "text-destructive" : isActionNeeded ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
+                        <ArrowUpRight className={`h-4 w-4 flex-shrink-0 ${isFailure ? "text-destructive" : isActionNeeded ? "text-warning" : "text-muted-foreground"}`} />
                       )}
                     </>
                   );
@@ -362,10 +341,11 @@ export default function DashboardPage() {
                 })}
               </div>
             ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                <Activity className="mx-auto h-8 w-8 mb-3 opacity-20" />
-                <p className="text-sm">No recent activity</p>
-              </div>
+              <EmptyState
+                className="border-0 bg-transparent py-10"
+                icon={<Activity className="h-8 w-8 opacity-20" />}
+                title="No recent activity"
+              />
             )}
           </CardContent>
         </Card>
@@ -375,82 +355,84 @@ export default function DashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-bold">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent>
+            <Panel className="space-y-2">
             {isCustomer && (
               <>
                 <Link href="/requests/new">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
+                  <HoverCard className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
                     <div className="flex items-center gap-3">
                       <Plus className="h-4 w-4 text-primary" />
                       <span className="font-semibold text-sm">Post a new request</span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
+                  </HoverCard>
                 </Link>
                 <Link href="/requests">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
+                  <HoverCard className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
                     <div className="flex items-center gap-3">
                       <ClipboardList className="h-4 w-4 text-primary" />
                       <span className="font-semibold text-sm">Review open bids</span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
+                  </HoverCard>
                 </Link>
                 <Link href="/jobs">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
+                  <HoverCard className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
                     <div className="flex items-center gap-3">
                       <Briefcase className="h-4 w-4 text-primary" />
                       <span className="font-semibold text-sm">Track active jobs</span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
+                  </HoverCard>
                 </Link>
               </>
             )}
             {isProvider && (
               <>
                 <Link href="/requests">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
+                  <HoverCard className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
                     <div className="flex items-center gap-3">
                       <Truck className="h-4 w-4 text-primary" />
                       <span className="font-semibold text-sm">Find new jobs</span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
+                  </HoverCard>
                 </Link>
                 <Link href="/fleet/new">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
+                  <HoverCard className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
                     <div className="flex items-center gap-3">
                       <Plus className="h-4 w-4 text-primary" />
                       <span className="font-semibold text-sm">Add a truck to fleet</span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
+                  </HoverCard>
                 </Link>
                 <Link href="/jobs">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
+                  <HoverCard className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
                     <div className="flex items-center gap-3">
                       <Briefcase className="h-4 w-4 text-primary" />
                       <span className="font-semibold text-sm">Active jobs</span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
+                  </HoverCard>
                 </Link>
                 <Link href="/account">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
+                  <HoverCard className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
                     <div className="flex items-center gap-3">
                       <ShieldAlert className="h-4 w-4 text-primary" />
                       <span className="font-semibold text-sm">Compliance status</span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
+                  </HoverCard>
                 </Link>
               </>
             )}
+            </Panel>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageTransition>
   );
 }
 

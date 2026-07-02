@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/apiFetch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  LoadingSpinner,
+  MetricCard,
+  Skeleton,
+  StatusPill,
+} from "@/components/design-system";
 import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -11,7 +19,7 @@ import {
 import {
   DollarSign, TrendingUp, Banknote, Briefcase, Activity, PackageCheck,
   ClipboardList, FileStack, XCircle, Truck, Users, UserCog, HardHat,
-  MapPin, ArrowRight, Search, ChevronRight, Building2, Phone, Mail, Globe, Loader2, Download, CalendarRange,
+  MapPin, Search, ChevronRight, Building2, Phone, Mail, Globe, Download, CalendarRange,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -113,16 +121,15 @@ const isExpired = (expiry: string | null) => !!expiry && new Date(expiry).getTim
 
 function DocStatusBadge({ status, expiry }: { status: string; expiry?: string | null }) {
   if (isExpired(expiry ?? null) && status === "verified") {
-    return <Badge variant="outline" className="rounded-none border-amber-500 text-amber-600">Expired</Badge>;
+    return <StatusPill intent="warning">Expired</StatusPill>;
   }
-  const map: Record<string, string> = {
-    verified: "border-green-600 text-green-700",
-    uploaded: "border-blue-500 text-blue-600",
-    rejected: "border-red-500 text-red-600",
-    missing: "border-muted-foreground/40 text-muted-foreground",
+  const map: Record<string, "success" | "primary" | "danger" | "muted"> = {
+    verified: "success",
+    uploaded: "primary",
+    rejected: "danger",
+    missing: "muted",
   };
-  const cls = map[status] ?? "border-muted-foreground/40 text-muted-foreground";
-  return <Badge variant="outline" className={`rounded-none capitalize ${cls}`}>{status}</Badge>;
+  return <StatusPill intent={map[status] ?? "muted"}>{status}</StatusPill>;
 }
 
 type Drill =
@@ -131,33 +138,6 @@ type Drill =
   | { kind: "people"; role: string; title: string }
   | { kind: "documents"; status: string; docType?: string; title: string }
   | null;
-
-// ── Clickable metric card ────────────────────────────────────────────────────
-function MetricCard({
-  icon, label, value, hint, accent, onClick,
-}: {
-  icon: React.ReactNode; label: string; value: React.ReactNode; hint?: string; accent?: boolean; onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!onClick}
-      className={`text-left rounded-none border p-4 transition-colors w-full ${
-        onClick ? "hover:border-primary hover:bg-muted/40 cursor-pointer" : "cursor-default"
-      } ${accent ? "border-primary/40 bg-primary/5" : ""}`}
-    >
-      <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wider">
-        {icon}{label}
-      </div>
-      <div className="mt-2 text-2xl font-bold tabular-nums">{value}</div>
-      <div className="mt-1 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{hint ?? ""}</span>
-        {onClick ? <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" /> : null}
-      </div>
-    </button>
-  );
-}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -316,7 +296,7 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
                     <tr key={r.id} onClick={() => setSelectedPersonId(r.profileId)} className="border-b last:border-0 hover:bg-muted/60 cursor-pointer">
                       <td className="py-2 font-medium">{docLabel(r.docType)}{r.docNumber ? <div className="text-xs text-muted-foreground">#{r.docNumber}</div> : null}</td>
                       <td><div>{r.companyName ?? "—"}</div><div className="text-xs text-muted-foreground capitalize">{r.role ?? ""}</div></td>
-                      <td className={`text-xs ${isExpired(r.expiry) ? "text-amber-600 font-medium" : ""}`}>{r.expiry ? dateFmt(r.expiry) : "—"}</td>
+                      <td className={`text-xs ${isExpired(r.expiry) ? "text-warning font-medium" : ""}`}>{r.expiry ? dateFmt(r.expiry) : "—"}</td>
                       <td className="pl-3"><DocStatusBadge status={r.status} expiry={r.expiry} /></td>
                       <td className="text-right pr-1" onClick={(e) => e.stopPropagation()}>
                         {href ? (
@@ -347,10 +327,21 @@ interface TimeseriesPoint {
 interface TimeseriesResp { months: number; series: TimeseriesPoint[]; }
 
 const COLORS = {
-  gmv: "#2563eb", broker: "#16a34a", jobs: "#f59e0b", completed: "#0ea5e9",
-  customers: "#6366f1", providers: "#ef4444", drivers: "#a855f7",
+  gmv: "var(--chart-secondary)",
+  broker: "var(--chart-success)",
+  jobs: "var(--chart-warning)",
+  completed: "var(--chart-primary)",
+  customers: "var(--chart-accent)",
+  providers: "var(--chart-danger)",
+  drivers: "var(--chart-accent)",
 };
-const STATUS_COLORS = ["#16a34a", "#f59e0b", "#0ea5e9", "#ef4444", "#94a3b8"];
+const STATUS_COLORS = [
+  "var(--chart-success)",
+  "var(--chart-warning)",
+  "var(--chart-primary)",
+  "var(--chart-danger)",
+  "hsl(var(--muted-foreground))",
+];
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
@@ -564,7 +555,7 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
 
         <div className="overflow-auto flex-1 space-y-5 -mx-1 px-1">
           {detail.isLoading ? (
-            <div className="flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading details…</div>
+            <div className="flex items-center justify-center py-12 text-muted-foreground"><LoadingSpinner className="w-5 h-5 mr-2" /> Loading details…</div>
           ) : !d ? (
             <div className="text-sm text-muted-foreground py-8 text-center">Couldn't load this profile.</div>
           ) : (
@@ -638,7 +629,7 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
                         return (
                           <tr key={doc.id} className="border-b last:border-0">
                             <td className="py-2 font-medium">{docLabel(doc.docType)}{doc.docNumber ? <div className="text-xs text-muted-foreground">#{doc.docNumber}</div> : null}{doc.reviewNote ? <div className="text-xs text-muted-foreground italic">{doc.reviewNote}</div> : null}</td>
-                            <td className={`text-xs ${isExpired(doc.expiry) ? "text-amber-600 font-medium" : ""}`}>{doc.expiry ? dateFmt(doc.expiry) : "—"}</td>
+                            <td className={`text-xs ${isExpired(doc.expiry) ? "text-warning font-medium" : ""}`}>{doc.expiry ? dateFmt(doc.expiry) : "—"}</td>
                             <td className="pl-3"><DocStatusBadge status={doc.status} expiry={doc.expiry} /></td>
                             <td className="text-right pr-1">
                               {href ? (
@@ -711,7 +702,7 @@ function JobDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
         </DialogHeader>
 
         {detail.isLoading ? (
-          <div className="flex items-center justify-center py-12 text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading job…</div>
+          <div className="flex items-center justify-center py-12 text-muted-foreground"><LoadingSpinner className="w-5 h-5 mr-2" /> Loading job…</div>
         ) : !j ? (
           <div className="text-sm text-muted-foreground py-8 text-center">Couldn't load this job.</div>
         ) : (
