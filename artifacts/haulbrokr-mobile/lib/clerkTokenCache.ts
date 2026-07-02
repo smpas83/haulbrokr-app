@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getClerkInstance } from "@clerk/expo";
 import * as SecureStore from "expo-secure-store";
 import { DevSettings, Platform } from "react-native";
 
@@ -6,6 +7,7 @@ import { DevSettings, Platform } from "react-native";
 export const CLERK_CLIENT_JWT_KEY = "__clerk_client_jwt";
 
 const PENDING_SIGN_OUT_KEY = "haulbrokr:pending_sign_out";
+const CLERK_LOAD_TIMEOUT_MS = 8_000;
 
 const secureStoreOpts: SecureStore.SecureStoreOptions = {
   keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
@@ -66,6 +68,44 @@ export async function prepareAuthStorage() {
     await clearClerkSessionTokens();
     await AsyncStorage.removeItem(PENDING_SIGN_OUT_KEY);
   }
+}
+
+/**
+ * Pre-load Clerk headless client before React mounts ClerkProvider.
+ * If load hangs (stale JWT), clear storage and retry once.
+ */
+export async function bootstrapClerk(publishableKey: string): Promise<{ ok: boolean; error?: string }> {
+  await prepareAuthStorage();
+
+  if (!publishableKey) {
+    return { ok: false, error: "Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in artifacts/haulbrokr-mobile/.env" };
+  }
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const clerk = getClerkInstance({ publishableKey, tokenCache: clerkTokenCache });
+      await Promise.race([
+        clerk.load({ publishableKey, tokenCache: clerkTokenCache }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Clerk load timed out after 8s — check network and publishable key")),
+            CLERK_LOAD_TIMEOUT_MS
+          )
+        ),
+      ]);
+      if (clerk.loaded) {
+        if (__DEV__) console.log("AUTH bootstrap", { ok: true, attempt });
+        return { ok: true };
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Clerk load failed";
+      if (__DEV__) console.warn("AUTH bootstrap attempt failed", { attempt, msg });
+      await clearClerkSessionTokens();
+      if (attempt === 1) return { ok: false, error: msg };
+    }
+  }
+
+  return { ok: false, error: "Clerk failed to load" };
 }
 
 /** Clerk keeps a module singleton; after clearing JWT we must reload the JS bundle. */

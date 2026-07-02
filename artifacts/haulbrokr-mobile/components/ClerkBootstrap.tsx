@@ -30,8 +30,8 @@ export function ClerkBootstrap({ publishableKey, children }: Props) {
   }, [isLoaded]);
 
   useEffect(() => {
-    if (__DEV__) {
-      console.log("AUTH", { isLoaded, isSignedIn });
+    if (__DEV__ && isLoaded) {
+      console.log("AUTH clerk", { isLoaded, isSignedIn });
     }
   }, [isLoaded, isSignedIn]);
 
