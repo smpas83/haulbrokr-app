@@ -5,7 +5,11 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
+import type { DumpSiteHolidayHours } from './dumpSiteHolidayHours';
+import type { DumpSiteOperatingHours } from './dumpSiteOperatingHours';
 import type { DumpSiteType } from './dumpSiteType';
+import type { FacilityStatus } from './facilityStatus';
+import type { FacilityTrafficStatus } from './facilityTrafficStatus';
 
 export interface DumpSite {
   id: number;
@@ -16,7 +20,55 @@ export interface DumpSite {
   zip: string;
   type: DumpSiteType;
   /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
+  /** @nullable */
   phone?: string | null;
+  /** @nullable */
+  website?: string | null;
+  operatingHours?: DumpSiteOperatingHours;
+  holidayHours?: DumpSiteHolidayHours;
+  /** @nullable */
+  afterHoursContact?: string | null;
+  acceptedMaterials?: string[];
+  rejectedMaterials?: string[];
+  /** @nullable */
+  maxTruckSize?: string | null;
+  /** @nullable */
+  maxWeightTons?: number | null;
+  /** @nullable */
+  scaleLocation?: string | null;
+  /** @nullable */
+  scaleHours?: string | null;
+  /** @nullable */
+  entranceInstructions?: string | null;
+  /** @nullable */
+  exitInstructions?: string | null;
+  safetyRules?: string[];
+  ppeRequirements?: string[];
+  truckRestrictions?: string[];
+  preferredRoutes?: string[];
+  photos?: string[];
+  /** @nullable */
+  facilityNotes?: string | null;
+  /** @nullable */
+  emergencyContact?: string | null;
+  /** @nullable */
+  brokerNotes?: string | null;
+  /** @nullable */
+  driverNotes?: string | null;
+  status?: FacilityStatus;
+  currentStatus?: FacilityTrafficStatus;
+  /** @nullable */
+  estimatedWaitMinutes?: number | null;
+  /** @nullable */
+  temporaryClosureReason?: string | null;
+  /** @nullable */
+  maintenanceNotes?: string | null;
+  /** @nullable */
+  capacityLoadsPerDay?: number | null;
   isActive: boolean;
   fullAddress?: string;
+  distanceMiles?: number;
 }

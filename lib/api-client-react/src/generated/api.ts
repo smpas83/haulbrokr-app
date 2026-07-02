@@ -59,11 +59,25 @@ import type {
   CreateRatingRequest,
   CreditApplication,
   CreditApplicationInput,
+  CustomerFacilityPreferences,
+  CustomerFacilityPreferencesInput,
   DashboardStats,
   DisconnectQuickBooks200,
-  DumpSite,
+  DumpSiteDetail,
+  FacilityAnalytics,
+  FacilityBrokerView,
+  FacilityCustomerView,
+  FacilityDriverView,
+  FacilityImportInput,
+  FacilityImportResult,
+  FacilityMapItem,
+  FacilityMaterialCatalogItem,
+  FacilityPricing,
+  FacilityPricingInput,
+  FacilityRecommendationResponse,
   FlagCompletionInput,
   GetBinOrder200,
+  GetFacilityDriverViewParams,
   GetJobRating200,
   GetMyOrganization200,
   GetProject200,
@@ -84,6 +98,8 @@ import type {
   ListBinOrders200Item,
   ListDriverDocs200Item,
   ListDumpSitesParams,
+  ListDumpSitesResponse,
+  ListFacilityRecommendationsParams,
   ListFactoringRequests200Item,
   ListJobEvidence200Item,
   ListJobTickets200,
@@ -2258,11 +2274,11 @@ export const getListDumpSitesUrl = (params?: ListDumpSitesParams,) => {
 }
 
 /**
- * @summary List dump sites, optionally filtered by state or type
+ * @summary Search smart facilities with paging, material, status, and distance filters
  */
-export const listDumpSites = async (params?: ListDumpSitesParams, options?: RequestInit): Promise<DumpSite[]> => {
+export const listDumpSites = async (params?: ListDumpSitesParams, options?: RequestInit): Promise<ListDumpSitesResponse> => {
 
-  return customFetch<DumpSite[]>(getListDumpSitesUrl(params),
+  return customFetch<ListDumpSitesResponse>(getListDumpSitesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -2305,7 +2321,7 @@ export type ListDumpSitesQueryError = ErrorType<unknown>
 
 
 /**
- * @summary List dump sites, optionally filtered by state or type
+ * @summary Search smart facilities with paging, material, status, and distance filters
  */
 
 export function useListDumpSites<TData = Awaited<ReturnType<typeof listDumpSites>>, TError = ErrorType<unknown>>(
@@ -2314,6 +2330,1009 @@ export function useListDumpSites<TData = Awaited<ReturnType<typeof listDumpSites
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListDumpSitesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListFacilityMaterialsUrl = () => {
+
+
+
+
+  return `/api/dump-sites/materials`
+}
+
+/**
+ * @summary List supported facility material types
+ */
+export const listFacilityMaterials = async ( options?: RequestInit): Promise<FacilityMaterialCatalogItem[]> => {
+
+  return customFetch<FacilityMaterialCatalogItem[]>(getListFacilityMaterialsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListFacilityMaterialsQueryKey = () => {
+    return [
+    `/api/dump-sites/materials`
+    ] as const;
+    }
+
+
+export const getListFacilityMaterialsQueryOptions = <TData = Awaited<ReturnType<typeof listFacilityMaterials>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFacilityMaterials>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFacilityMaterialsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFacilityMaterials>>> = ({ signal }) => listFacilityMaterials({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFacilityMaterials>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListFacilityMaterialsQueryResult = NonNullable<Awaited<ReturnType<typeof listFacilityMaterials>>>
+export type ListFacilityMaterialsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List supported facility material types
+ */
+
+export function useListFacilityMaterials<TData = Awaited<ReturnType<typeof listFacilityMaterials>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFacilityMaterials>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListFacilityMaterialsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListFacilityRecommendationsUrl = (params: ListFacilityRecommendationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/dump-sites/recommendations?${stringifiedParams}` : `/api/dump-sites/recommendations`
+}
+
+/**
+ * @summary Return ranked facility recommendations for broker approval
+ */
+export const listFacilityRecommendations = async (params: ListFacilityRecommendationsParams, options?: RequestInit): Promise<FacilityRecommendationResponse> => {
+
+  return customFetch<FacilityRecommendationResponse>(getListFacilityRecommendationsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListFacilityRecommendationsQueryKey = (params?: ListFacilityRecommendationsParams,) => {
+    return [
+    `/api/dump-sites/recommendations`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListFacilityRecommendationsQueryOptions = <TData = Awaited<ReturnType<typeof listFacilityRecommendations>>, TError = ErrorType<unknown>>(params: ListFacilityRecommendationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFacilityRecommendations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFacilityRecommendationsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFacilityRecommendations>>> = ({ signal }) => listFacilityRecommendations(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFacilityRecommendations>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListFacilityRecommendationsQueryResult = NonNullable<Awaited<ReturnType<typeof listFacilityRecommendations>>>
+export type ListFacilityRecommendationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Return ranked facility recommendations for broker approval
+ */
+
+export function useListFacilityRecommendations<TData = Awaited<ReturnType<typeof listFacilityRecommendations>>, TError = ErrorType<unknown>>(
+ params: ListFacilityRecommendationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFacilityRecommendations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListFacilityRecommendationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getValidateFacilityImportUrl = () => {
+
+
+
+
+  return `/api/dump-sites/imports`
+}
+
+/**
+ * @summary Validate CSV, Excel-derived JSON, or JSON facility imports before admin upload
+ */
+export const validateFacilityImport = async (facilityImportInput: FacilityImportInput, options?: RequestInit): Promise<FacilityImportResult> => {
+
+  return customFetch<FacilityImportResult>(getValidateFacilityImportUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      facilityImportInput,)
+  }
+);}
+
+
+
+
+export const getValidateFacilityImportMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateFacilityImport>>, TError,{data: BodyType<FacilityImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof validateFacilityImport>>, TError,{data: BodyType<FacilityImportInput>}, TContext> => {
+
+const mutationKey = ['validateFacilityImport'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof validateFacilityImport>>, {data: BodyType<FacilityImportInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  validateFacilityImport(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ValidateFacilityImportMutationResult = NonNullable<Awaited<ReturnType<typeof validateFacilityImport>>>
+    export type ValidateFacilityImportMutationBody = BodyType<FacilityImportInput>
+    export type ValidateFacilityImportMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Validate CSV, Excel-derived JSON, or JSON facility imports before admin upload
+ */
+export const useValidateFacilityImport = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateFacilityImport>>, TError,{data: BodyType<FacilityImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof validateFacilityImport>>,
+        TError,
+        {data: BodyType<FacilityImportInput>},
+        TContext
+      > => {
+      return useMutation(getValidateFacilityImportMutationOptions(options));
+    }
+
+export const getGetCustomerFacilityPreferencesUrl = () => {
+
+
+
+
+  return `/api/dump-sites/preferences`
+}
+
+/**
+ * @summary Get signed-in customer facility preferences
+ */
+export const getCustomerFacilityPreferences = async ( options?: RequestInit): Promise<CustomerFacilityPreferences> => {
+
+  return customFetch<CustomerFacilityPreferences>(getGetCustomerFacilityPreferencesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerFacilityPreferencesQueryKey = () => {
+    return [
+    `/api/dump-sites/preferences`
+    ] as const;
+    }
+
+
+export const getGetCustomerFacilityPreferencesQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerFacilityPreferences>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerFacilityPreferences>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerFacilityPreferencesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerFacilityPreferences>>> = ({ signal }) => getCustomerFacilityPreferences({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerFacilityPreferences>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerFacilityPreferencesQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerFacilityPreferences>>>
+export type GetCustomerFacilityPreferencesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get signed-in customer facility preferences
+ */
+
+export function useGetCustomerFacilityPreferences<TData = Awaited<ReturnType<typeof getCustomerFacilityPreferences>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomerFacilityPreferences>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerFacilityPreferencesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpsertCustomerFacilityPreferencesUrl = () => {
+
+
+
+
+  return `/api/dump-sites/preferences`
+}
+
+/**
+ * @summary Update signed-in customer preferences without overriding broker approval
+ */
+export const upsertCustomerFacilityPreferences = async (customerFacilityPreferencesInput: CustomerFacilityPreferencesInput, options?: RequestInit): Promise<CustomerFacilityPreferences> => {
+
+  return customFetch<CustomerFacilityPreferences>(getUpsertCustomerFacilityPreferencesUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      customerFacilityPreferencesInput,)
+  }
+);}
+
+
+
+
+export const getUpsertCustomerFacilityPreferencesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertCustomerFacilityPreferences>>, TError,{data: BodyType<CustomerFacilityPreferencesInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof upsertCustomerFacilityPreferences>>, TError,{data: BodyType<CustomerFacilityPreferencesInput>}, TContext> => {
+
+const mutationKey = ['upsertCustomerFacilityPreferences'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof upsertCustomerFacilityPreferences>>, {data: BodyType<CustomerFacilityPreferencesInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  upsertCustomerFacilityPreferences(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpsertCustomerFacilityPreferencesMutationResult = NonNullable<Awaited<ReturnType<typeof upsertCustomerFacilityPreferences>>>
+    export type UpsertCustomerFacilityPreferencesMutationBody = BodyType<CustomerFacilityPreferencesInput>
+    export type UpsertCustomerFacilityPreferencesMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update signed-in customer preferences without overriding broker approval
+ */
+export const useUpsertCustomerFacilityPreferences = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertCustomerFacilityPreferences>>, TError,{data: BodyType<CustomerFacilityPreferencesInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof upsertCustomerFacilityPreferences>>,
+        TError,
+        {data: BodyType<CustomerFacilityPreferencesInput>},
+        TContext
+      > => {
+      return useMutation(getUpsertCustomerFacilityPreferencesMutationOptions(options));
+    }
+
+export const getGetDumpSiteUrl = (id: number,) => {
+
+
+
+
+  return `/api/dump-sites/${id}`
+}
+
+/**
+ * @summary Get full smart facility profile
+ */
+export const getDumpSite = async (id: number, options?: RequestInit): Promise<DumpSiteDetail> => {
+
+  return customFetch<DumpSiteDetail>(getGetDumpSiteUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDumpSiteQueryKey = (id: number,) => {
+    return [
+    `/api/dump-sites/${id}`
+    ] as const;
+    }
+
+
+export const getGetDumpSiteQueryOptions = <TData = Awaited<ReturnType<typeof getDumpSite>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDumpSite>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDumpSiteQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDumpSite>>> = ({ signal }) => getDumpSite(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDumpSite>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDumpSiteQueryResult = NonNullable<Awaited<ReturnType<typeof getDumpSite>>>
+export type GetDumpSiteQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get full smart facility profile
+ */
+
+export function useGetDumpSite<TData = Awaited<ReturnType<typeof getDumpSite>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDumpSite>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDumpSiteQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetFacilityPricingUrl = (id: number,) => {
+
+
+
+
+  return `/api/dump-sites/${id}/pricing`
+}
+
+/**
+ * @summary Get active facility pricing schedules
+ */
+export const getFacilityPricing = async (id: number, options?: RequestInit): Promise<FacilityPricing[]> => {
+
+  return customFetch<FacilityPricing[]>(getGetFacilityPricingUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFacilityPricingQueryKey = (id: number,) => {
+    return [
+    `/api/dump-sites/${id}/pricing`
+    ] as const;
+    }
+
+
+export const getGetFacilityPricingQueryOptions = <TData = Awaited<ReturnType<typeof getFacilityPricing>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityPricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFacilityPricingQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFacilityPricing>>> = ({ signal }) => getFacilityPricing(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFacilityPricing>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFacilityPricingQueryResult = NonNullable<Awaited<ReturnType<typeof getFacilityPricing>>>
+export type GetFacilityPricingQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get active facility pricing schedules
+ */
+
+export function useGetFacilityPricing<TData = Awaited<ReturnType<typeof getFacilityPricing>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityPricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFacilityPricingQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateFacilityPricingUrl = (id: number,) => {
+
+
+
+
+  return `/api/dump-sites/${id}/pricing`
+}
+
+/**
+ * @summary Add a facility pricing schedule without application code changes
+ */
+export const createFacilityPricing = async (id: number,
+    facilityPricingInput: FacilityPricingInput, options?: RequestInit): Promise<FacilityPricing> => {
+
+  return customFetch<FacilityPricing>(getCreateFacilityPricingUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      facilityPricingInput,)
+  }
+);}
+
+
+
+
+export const getCreateFacilityPricingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFacilityPricing>>, TError,{id: number;data: BodyType<FacilityPricingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createFacilityPricing>>, TError,{id: number;data: BodyType<FacilityPricingInput>}, TContext> => {
+
+const mutationKey = ['createFacilityPricing'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createFacilityPricing>>, {id: number;data: BodyType<FacilityPricingInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createFacilityPricing(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateFacilityPricingMutationResult = NonNullable<Awaited<ReturnType<typeof createFacilityPricing>>>
+    export type CreateFacilityPricingMutationBody = BodyType<FacilityPricingInput>
+    export type CreateFacilityPricingMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Add a facility pricing schedule without application code changes
+ */
+export const useCreateFacilityPricing = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFacilityPricing>>, TError,{id: number;data: BodyType<FacilityPricingInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createFacilityPricing>>,
+        TError,
+        {id: number;data: BodyType<FacilityPricingInput>},
+        TContext
+      > => {
+      return useMutation(getCreateFacilityPricingMutationOptions(options));
+    }
+
+export const getGetFacilityAnalyticsUrl = (id: number,) => {
+
+
+
+
+  return `/api/dump-sites/${id}/analytics`
+}
+
+/**
+ * @summary Get facility load, timing, revenue, rating, and utilization analytics
+ */
+export const getFacilityAnalytics = async (id: number, options?: RequestInit): Promise<FacilityAnalytics> => {
+
+  return customFetch<FacilityAnalytics>(getGetFacilityAnalyticsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFacilityAnalyticsQueryKey = (id: number,) => {
+    return [
+    `/api/dump-sites/${id}/analytics`
+    ] as const;
+    }
+
+
+export const getGetFacilityAnalyticsQueryOptions = <TData = Awaited<ReturnType<typeof getFacilityAnalytics>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFacilityAnalyticsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFacilityAnalytics>>> = ({ signal }) => getFacilityAnalytics(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFacilityAnalytics>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFacilityAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof getFacilityAnalytics>>>
+export type GetFacilityAnalyticsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get facility load, timing, revenue, rating, and utilization analytics
+ */
+
+export function useGetFacilityAnalytics<TData = Awaited<ReturnType<typeof getFacilityAnalytics>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFacilityAnalyticsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetFacilityDriverViewUrl = (id: number,
+    params?: GetFacilityDriverViewParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/dump-sites/${id}/driver-view?${stringifiedParams}` : `/api/dump-sites/${id}/driver-view`
+}
+
+/**
+ * @summary Get driver-safe facility instructions and current job notes
+ */
+export const getFacilityDriverView = async (id: number,
+    params?: GetFacilityDriverViewParams, options?: RequestInit): Promise<FacilityDriverView> => {
+
+  return customFetch<FacilityDriverView>(getGetFacilityDriverViewUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFacilityDriverViewQueryKey = (id: number,
+    params?: GetFacilityDriverViewParams,) => {
+    return [
+    `/api/dump-sites/${id}/driver-view`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetFacilityDriverViewQueryOptions = <TData = Awaited<ReturnType<typeof getFacilityDriverView>>, TError = ErrorType<unknown>>(id: number,
+    params?: GetFacilityDriverViewParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityDriverView>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFacilityDriverViewQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFacilityDriverView>>> = ({ signal }) => getFacilityDriverView(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFacilityDriverView>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFacilityDriverViewQueryResult = NonNullable<Awaited<ReturnType<typeof getFacilityDriverView>>>
+export type GetFacilityDriverViewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get driver-safe facility instructions and current job notes
+ */
+
+export function useGetFacilityDriverView<TData = Awaited<ReturnType<typeof getFacilityDriverView>>, TError = ErrorType<unknown>>(
+ id: number,
+    params?: GetFacilityDriverViewParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityDriverView>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFacilityDriverViewQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetFacilityBrokerViewUrl = (id: number,) => {
+
+
+
+
+  return `/api/dump-sites/${id}/broker-view`
+}
+
+/**
+ * @summary Get broker facility view with internal notes and pricing
+ */
+export const getFacilityBrokerView = async (id: number, options?: RequestInit): Promise<FacilityBrokerView> => {
+
+  return customFetch<FacilityBrokerView>(getGetFacilityBrokerViewUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFacilityBrokerViewQueryKey = (id: number,) => {
+    return [
+    `/api/dump-sites/${id}/broker-view`
+    ] as const;
+    }
+
+
+export const getGetFacilityBrokerViewQueryOptions = <TData = Awaited<ReturnType<typeof getFacilityBrokerView>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityBrokerView>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFacilityBrokerViewQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFacilityBrokerView>>> = ({ signal }) => getFacilityBrokerView(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFacilityBrokerView>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFacilityBrokerViewQueryResult = NonNullable<Awaited<ReturnType<typeof getFacilityBrokerView>>>
+export type GetFacilityBrokerViewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get broker facility view with internal notes and pricing
+ */
+
+export function useGetFacilityBrokerView<TData = Awaited<ReturnType<typeof getFacilityBrokerView>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityBrokerView>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFacilityBrokerViewQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetFacilityCustomerViewUrl = (id: number,) => {
+
+
+
+
+  return `/api/dump-sites/${id}/customer-view`
+}
+
+/**
+ * @summary Get customer-safe facility view
+ */
+export const getFacilityCustomerView = async (id: number, options?: RequestInit): Promise<FacilityCustomerView> => {
+
+  return customFetch<FacilityCustomerView>(getGetFacilityCustomerViewUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFacilityCustomerViewQueryKey = (id: number,) => {
+    return [
+    `/api/dump-sites/${id}/customer-view`
+    ] as const;
+    }
+
+
+export const getGetFacilityCustomerViewQueryOptions = <TData = Awaited<ReturnType<typeof getFacilityCustomerView>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityCustomerView>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFacilityCustomerViewQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFacilityCustomerView>>> = ({ signal }) => getFacilityCustomerView(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFacilityCustomerView>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFacilityCustomerViewQueryResult = NonNullable<Awaited<ReturnType<typeof getFacilityCustomerView>>>
+export type GetFacilityCustomerViewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get customer-safe facility view
+ */
+
+export function useGetFacilityCustomerView<TData = Awaited<ReturnType<typeof getFacilityCustomerView>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityCustomerView>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFacilityCustomerViewQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetFacilityMapViewUrl = (id: number,) => {
+
+
+
+
+  return `/api/dump-sites/${id}/map-view`
+}
+
+/**
+ * @summary Get map marker payload for a facility
+ */
+export const getFacilityMapView = async (id: number, options?: RequestInit): Promise<FacilityMapItem> => {
+
+  return customFetch<FacilityMapItem>(getGetFacilityMapViewUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFacilityMapViewQueryKey = (id: number,) => {
+    return [
+    `/api/dump-sites/${id}/map-view`
+    ] as const;
+    }
+
+
+export const getGetFacilityMapViewQueryOptions = <TData = Awaited<ReturnType<typeof getFacilityMapView>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityMapView>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFacilityMapViewQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFacilityMapView>>> = ({ signal }) => getFacilityMapView(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFacilityMapView>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFacilityMapViewQueryResult = NonNullable<Awaited<ReturnType<typeof getFacilityMapView>>>
+export type GetFacilityMapViewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get map marker payload for a facility
+ */
+
+export function useGetFacilityMapView<TData = Awaited<ReturnType<typeof getFacilityMapView>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFacilityMapView>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFacilityMapViewQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

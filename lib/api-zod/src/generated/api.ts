@@ -848,26 +848,515 @@ export const GetWalletResponse = zod.object({
 
 
 /**
- * @summary List dump sites, optionally filtered by state or type
+ * @summary Search smart facilities with paging, material, status, and distance filters
  */
+export const listDumpSitesQueryLimitDefault = 50;
+export const listDumpSitesQueryLimitMax = 100;
+
+export const listDumpSitesQueryOffsetDefault = 0;
+
 export const ListDumpSitesQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "city": zod.coerce.string().optional(),
   "state": zod.coerce.string().optional(),
-  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost']).optional()
+  "zip": zod.coerce.string().optional(),
+  "material": zod.enum(['rock', 'sand', 'gravel', 'asphalt', 'concrete', 'dirt', 'clay', 'base', 'recycled_asphalt', 'recycled_concrete', 'construction_debris', 'green_waste', 'mixed_waste', 'clean_fill', 'contaminated_soil']).optional(),
+  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost', 'asphalt_plant', 'gravel_pit', 'concrete_crusher', 'quarry', 'supplier']).optional(),
+  "openNow": zod.coerce.boolean().optional(),
+  "latitude": zod.coerce.number().optional(),
+  "longitude": zod.coerce.number().optional(),
+  "distanceMiles": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().max(listDumpSitesQueryLimitMax).default(listDumpSitesQueryLimitDefault),
+  "offset": zod.coerce.number().default(listDumpSitesQueryOffsetDefault)
 })
 
-export const ListDumpSitesResponseItem = zod.object({
+export const ListDumpSitesResponse = zod.object({
+  "items": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "address": zod.string(),
   "city": zod.string(),
   "state": zod.string(),
   "zip": zod.string(),
-  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost']),
+  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost', 'asphalt_plant', 'gravel_pit', 'concrete_crusher', 'quarry', 'supplier']),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "phone": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "operatingHours": zod.record(zod.string(), zod.string()).optional(),
+  "holidayHours": zod.record(zod.string(), zod.string()).optional(),
+  "afterHoursContact": zod.string().nullish(),
+  "acceptedMaterials": zod.array(zod.string()).optional(),
+  "rejectedMaterials": zod.array(zod.string()).optional(),
+  "maxTruckSize": zod.string().nullish(),
+  "maxWeightTons": zod.number().nullish(),
+  "scaleLocation": zod.string().nullish(),
+  "scaleHours": zod.string().nullish(),
+  "entranceInstructions": zod.string().nullish(),
+  "exitInstructions": zod.string().nullish(),
+  "safetyRules": zod.array(zod.string()).optional(),
+  "ppeRequirements": zod.array(zod.string()).optional(),
+  "truckRestrictions": zod.array(zod.string()).optional(),
+  "preferredRoutes": zod.array(zod.string()).optional(),
+  "photos": zod.array(zod.string()).optional(),
+  "facilityNotes": zod.string().nullish(),
+  "emergencyContact": zod.string().nullish(),
+  "brokerNotes": zod.string().nullish(),
+  "driverNotes": zod.string().nullish(),
+  "status": zod.enum(['open', 'closed', 'temporarily_closed']).optional(),
+  "currentStatus": zod.enum(['open', 'closed', 'busy', 'moderate', 'light_traffic', 'temporary_closure', 'holiday_hours', 'maintenance']).optional(),
+  "estimatedWaitMinutes": zod.number().nullish(),
+  "temporaryClosureReason": zod.string().nullish(),
+  "maintenanceNotes": zod.string().nullish(),
+  "capacityLoadsPerDay": zod.number().nullish(),
   "isActive": zod.boolean(),
-  "fullAddress": zod.string().optional()
+  "fullAddress": zod.string().optional(),
+  "distanceMiles": zod.number().optional()
+})),
+  "total": zod.number(),
+  "limit": zod.number(),
+  "offset": zod.number()
 })
-export const ListDumpSitesResponse = zod.array(ListDumpSitesResponseItem)
+
+
+/**
+ * @summary List supported facility material types
+ */
+export const ListFacilityMaterialsResponseItem = zod.object({
+  "value": zod.enum(['rock', 'sand', 'gravel', 'asphalt', 'concrete', 'dirt', 'clay', 'base', 'recycled_asphalt', 'recycled_concrete', 'construction_debris', 'green_waste', 'mixed_waste', 'clean_fill', 'contaminated_soil']),
+  "label": zod.string()
+})
+export const ListFacilityMaterialsResponse = zod.array(ListFacilityMaterialsResponseItem)
+
+
+/**
+ * @summary Return ranked facility recommendations for broker approval
+ */
+export const listFacilityRecommendationsQueryLimitDefault = 10;
+
+export const ListFacilityRecommendationsQueryParams = zod.object({
+  "material": zod.enum(['rock', 'sand', 'gravel', 'asphalt', 'concrete', 'dirt', 'clay', 'base', 'recycled_asphalt', 'recycled_concrete', 'construction_debris', 'green_waste', 'mixed_waste', 'clean_fill', 'contaminated_soil']),
+  "latitude": zod.coerce.number().optional(),
+  "longitude": zod.coerce.number().optional(),
+  "customerId": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().default(listFacilityRecommendationsQueryLimitDefault)
+})
+
+export const ListFacilityRecommendationsResponse = zod.object({
+  "recommendations": zod.array(zod.object({
+  "facility": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "zip": zod.string(),
+  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost', 'asphalt_plant', 'gravel_pit', 'concrete_crusher', 'quarry', 'supplier']),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "phone": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "operatingHours": zod.record(zod.string(), zod.string()).optional(),
+  "holidayHours": zod.record(zod.string(), zod.string()).optional(),
+  "afterHoursContact": zod.string().nullish(),
+  "acceptedMaterials": zod.array(zod.string()).optional(),
+  "rejectedMaterials": zod.array(zod.string()).optional(),
+  "maxTruckSize": zod.string().nullish(),
+  "maxWeightTons": zod.number().nullish(),
+  "scaleLocation": zod.string().nullish(),
+  "scaleHours": zod.string().nullish(),
+  "entranceInstructions": zod.string().nullish(),
+  "exitInstructions": zod.string().nullish(),
+  "safetyRules": zod.array(zod.string()).optional(),
+  "ppeRequirements": zod.array(zod.string()).optional(),
+  "truckRestrictions": zod.array(zod.string()).optional(),
+  "preferredRoutes": zod.array(zod.string()).optional(),
+  "photos": zod.array(zod.string()).optional(),
+  "facilityNotes": zod.string().nullish(),
+  "emergencyContact": zod.string().nullish(),
+  "brokerNotes": zod.string().nullish(),
+  "driverNotes": zod.string().nullish(),
+  "status": zod.enum(['open', 'closed', 'temporarily_closed']).optional(),
+  "currentStatus": zod.enum(['open', 'closed', 'busy', 'moderate', 'light_traffic', 'temporary_closure', 'holiday_hours', 'maintenance']).optional(),
+  "estimatedWaitMinutes": zod.number().nullish(),
+  "temporaryClosureReason": zod.string().nullish(),
+  "maintenanceNotes": zod.string().nullish(),
+  "capacityLoadsPerDay": zod.number().nullish(),
+  "isActive": zod.boolean(),
+  "fullAddress": zod.string().optional(),
+  "distanceMiles": zod.number().optional()
+}),
+  "score": zod.number(),
+  "reasons": zod.array(zod.string()),
+  "scoreBreakdown": zod.record(zod.string(), zod.number()).optional()
+})),
+  "brokerApprovalRequired": zod.boolean()
+})
+
+
+/**
+ * @summary Validate CSV, Excel-derived JSON, or JSON facility imports before admin upload
+ */
+export const ValidateFacilityImportBody = zod.object({
+  "sourceType": zod.enum(['csv', 'excel', 'json', 'admin_upload']),
+  "rows": zod.array(zod.record(zod.string(), zod.unknown()))
+})
+
+export const ValidateFacilityImportResponse = zod.object({
+  "validRows": zod.number(),
+  "duplicateRows": zod.array(zod.record(zod.string(), zod.unknown())),
+  "errors": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Get signed-in customer facility preferences
+ */
+export const GetCustomerFacilityPreferencesResponse = zod.object({
+  "preferredFacilities": zod.array(zod.number()).optional(),
+  "preferredMaterials": zod.array(zod.string()).optional(),
+  "preferredRoutes": zod.array(zod.string()).optional(),
+  "backupFacilities": zod.array(zod.number()).optional(),
+  "notes": zod.string().optional()
+}).and(zod.object({
+  "customerId": zod.number()
+}))
+
+
+/**
+ * @summary Update signed-in customer preferences without overriding broker approval
+ */
+export const UpsertCustomerFacilityPreferencesBody = zod.object({
+  "preferredFacilities": zod.array(zod.number()).optional(),
+  "preferredMaterials": zod.array(zod.string()).optional(),
+  "preferredRoutes": zod.array(zod.string()).optional(),
+  "backupFacilities": zod.array(zod.number()).optional(),
+  "notes": zod.string().optional()
+})
+
+export const UpsertCustomerFacilityPreferencesResponse = zod.object({
+  "preferredFacilities": zod.array(zod.number()).optional(),
+  "preferredMaterials": zod.array(zod.string()).optional(),
+  "preferredRoutes": zod.array(zod.string()).optional(),
+  "backupFacilities": zod.array(zod.number()).optional(),
+  "notes": zod.string().optional()
+}).and(zod.object({
+  "customerId": zod.number()
+}))
+
+
+/**
+ * @summary Get full smart facility profile
+ */
+export const GetDumpSiteParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetDumpSiteResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "zip": zod.string(),
+  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost', 'asphalt_plant', 'gravel_pit', 'concrete_crusher', 'quarry', 'supplier']),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "phone": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "operatingHours": zod.record(zod.string(), zod.string()).optional(),
+  "holidayHours": zod.record(zod.string(), zod.string()).optional(),
+  "afterHoursContact": zod.string().nullish(),
+  "acceptedMaterials": zod.array(zod.string()).optional(),
+  "rejectedMaterials": zod.array(zod.string()).optional(),
+  "maxTruckSize": zod.string().nullish(),
+  "maxWeightTons": zod.number().nullish(),
+  "scaleLocation": zod.string().nullish(),
+  "scaleHours": zod.string().nullish(),
+  "entranceInstructions": zod.string().nullish(),
+  "exitInstructions": zod.string().nullish(),
+  "safetyRules": zod.array(zod.string()).optional(),
+  "ppeRequirements": zod.array(zod.string()).optional(),
+  "truckRestrictions": zod.array(zod.string()).optional(),
+  "preferredRoutes": zod.array(zod.string()).optional(),
+  "photos": zod.array(zod.string()).optional(),
+  "facilityNotes": zod.string().nullish(),
+  "emergencyContact": zod.string().nullish(),
+  "brokerNotes": zod.string().nullish(),
+  "driverNotes": zod.string().nullish(),
+  "status": zod.enum(['open', 'closed', 'temporarily_closed']).optional(),
+  "currentStatus": zod.enum(['open', 'closed', 'busy', 'moderate', 'light_traffic', 'temporary_closure', 'holiday_hours', 'maintenance']).optional(),
+  "estimatedWaitMinutes": zod.number().nullish(),
+  "temporaryClosureReason": zod.string().nullish(),
+  "maintenanceNotes": zod.string().nullish(),
+  "capacityLoadsPerDay": zod.number().nullish(),
+  "isActive": zod.boolean(),
+  "fullAddress": zod.string().optional(),
+  "distanceMiles": zod.number().optional()
+}).and(zod.object({
+  "materials": zod.array(zod.object({
+  "id": zod.number(),
+  "dumpSiteId": zod.number(),
+  "materialType": zod.enum(['rock', 'sand', 'gravel', 'asphalt', 'concrete', 'dirt', 'clay', 'base', 'recycled_asphalt', 'recycled_concrete', 'construction_debris', 'green_waste', 'mixed_waste', 'clean_fill', 'contaminated_soil']),
+  "disposition": zod.enum(['accepted', 'rejected']),
+  "specialInstructions": zod.string().nullish()
+})),
+  "pricing": zod.array(zod.object({
+  "id": zod.number(),
+  "dumpSiteId": zod.number(),
+  "materialType": zod.union([zod.enum(['rock', 'sand', 'gravel', 'asphalt', 'concrete', 'dirt', 'clay', 'base', 'recycled_asphalt', 'recycled_concrete', 'construction_debris', 'green_waste', 'mixed_waste', 'clean_fill', 'contaminated_soil']),zod.null()]).optional(),
+  "priceType": zod.enum(['tipping_fee', 'material_purchase_price', 'minimum_fee', 'per_ton', 'per_load', 'flat_rate', 'cash_price', 'account_price', 'customer_contract_price', 'fuel_surcharge', 'environmental_fee']),
+  "amount": zod.number(),
+  "currency": zod.string(),
+  "unit": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish(),
+  "isActive": zod.boolean()
+})),
+  "analytics": zod.object({
+  "dumpSiteId": zod.number(),
+  "loadsReceived": zod.number(),
+  "averageWaitTimeMinutes": zod.number().nullish(),
+  "averageUnloadTimeMinutes": zod.number().nullish(),
+  "averageTons": zod.number().nullish(),
+  "revenue": zod.number(),
+  "tippingFees": zod.number(),
+  "driverRatingAverage": zod.number().nullish(),
+  "customerRatingAverage": zod.number().nullish(),
+  "completionRate": zod.number().nullish(),
+  "rejectedLoads": zod.number(),
+  "peakHours": zod.array(zod.string()).optional(),
+  "utilization": zod.number().nullish()
+})
+}))
+
+
+/**
+ * @summary Get active facility pricing schedules
+ */
+export const GetFacilityPricingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetFacilityPricingResponseItem = zod.object({
+  "id": zod.number(),
+  "dumpSiteId": zod.number(),
+  "materialType": zod.union([zod.enum(['rock', 'sand', 'gravel', 'asphalt', 'concrete', 'dirt', 'clay', 'base', 'recycled_asphalt', 'recycled_concrete', 'construction_debris', 'green_waste', 'mixed_waste', 'clean_fill', 'contaminated_soil']),zod.null()]).optional(),
+  "priceType": zod.enum(['tipping_fee', 'material_purchase_price', 'minimum_fee', 'per_ton', 'per_load', 'flat_rate', 'cash_price', 'account_price', 'customer_contract_price', 'fuel_surcharge', 'environmental_fee']),
+  "amount": zod.number(),
+  "currency": zod.string(),
+  "unit": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish(),
+  "isActive": zod.boolean()
+})
+export const GetFacilityPricingResponse = zod.array(GetFacilityPricingResponseItem)
+
+
+/**
+ * @summary Add a facility pricing schedule without application code changes
+ */
+export const CreateFacilityPricingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const createFacilityPricingBodyCurrencyDefault = `USD`;
+
+export const CreateFacilityPricingBody = zod.object({
+  "materialType": zod.enum(['rock', 'sand', 'gravel', 'asphalt', 'concrete', 'dirt', 'clay', 'base', 'recycled_asphalt', 'recycled_concrete', 'construction_debris', 'green_waste', 'mixed_waste', 'clean_fill', 'contaminated_soil']).optional(),
+  "priceType": zod.enum(['tipping_fee', 'material_purchase_price', 'minimum_fee', 'per_ton', 'per_load', 'flat_rate', 'cash_price', 'account_price', 'customer_contract_price', 'fuel_surcharge', 'environmental_fee']),
+  "amount": zod.number(),
+  "currency": zod.string().default(createFacilityPricingBodyCurrencyDefault),
+  "unit": zod.string().optional(),
+  "notes": zod.string().optional(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().optional()
+})
+
+
+/**
+ * @summary Get facility load, timing, revenue, rating, and utilization analytics
+ */
+export const GetFacilityAnalyticsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetFacilityAnalyticsResponse = zod.object({
+  "dumpSiteId": zod.number(),
+  "loadsReceived": zod.number(),
+  "averageWaitTimeMinutes": zod.number().nullish(),
+  "averageUnloadTimeMinutes": zod.number().nullish(),
+  "averageTons": zod.number().nullish(),
+  "revenue": zod.number(),
+  "tippingFees": zod.number(),
+  "driverRatingAverage": zod.number().nullish(),
+  "customerRatingAverage": zod.number().nullish(),
+  "completionRate": zod.number().nullish(),
+  "rejectedLoads": zod.number(),
+  "peakHours": zod.array(zod.string()).optional(),
+  "utilization": zod.number().nullish()
+})
+
+
+/**
+ * @summary Get driver-safe facility instructions and current job notes
+ */
+export const GetFacilityDriverViewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetFacilityDriverViewQueryParams = zod.object({
+  "jobId": zod.coerce.number().optional()
+})
+
+export const GetFacilityDriverViewResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "directions": zod.string(),
+  "photos": zod.array(zod.string()),
+  "gateInstructions": zod.string().nullable(),
+  "scaleInstructions": zod.string().nullable(),
+  "unloadInstructions": zod.string().nullable(),
+  "hours": zod.record(zod.string(), zod.string()),
+  "phoneNumber": zod.string().nullable(),
+  "currentJobNotes": zod.string().nullish(),
+  "safetyWarnings": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Get broker facility view with internal notes and pricing
+ */
+export const GetFacilityBrokerViewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetFacilityBrokerViewResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "address": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "zip": zod.string(),
+  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost', 'asphalt_plant', 'gravel_pit', 'concrete_crusher', 'quarry', 'supplier']),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "phone": zod.string().nullish(),
+  "website": zod.string().nullish(),
+  "operatingHours": zod.record(zod.string(), zod.string()).optional(),
+  "holidayHours": zod.record(zod.string(), zod.string()).optional(),
+  "afterHoursContact": zod.string().nullish(),
+  "acceptedMaterials": zod.array(zod.string()).optional(),
+  "rejectedMaterials": zod.array(zod.string()).optional(),
+  "maxTruckSize": zod.string().nullish(),
+  "maxWeightTons": zod.number().nullish(),
+  "scaleLocation": zod.string().nullish(),
+  "scaleHours": zod.string().nullish(),
+  "entranceInstructions": zod.string().nullish(),
+  "exitInstructions": zod.string().nullish(),
+  "safetyRules": zod.array(zod.string()).optional(),
+  "ppeRequirements": zod.array(zod.string()).optional(),
+  "truckRestrictions": zod.array(zod.string()).optional(),
+  "preferredRoutes": zod.array(zod.string()).optional(),
+  "photos": zod.array(zod.string()).optional(),
+  "facilityNotes": zod.string().nullish(),
+  "emergencyContact": zod.string().nullish(),
+  "brokerNotes": zod.string().nullish(),
+  "driverNotes": zod.string().nullish(),
+  "status": zod.enum(['open', 'closed', 'temporarily_closed']).optional(),
+  "currentStatus": zod.enum(['open', 'closed', 'busy', 'moderate', 'light_traffic', 'temporary_closure', 'holiday_hours', 'maintenance']).optional(),
+  "estimatedWaitMinutes": zod.number().nullish(),
+  "temporaryClosureReason": zod.string().nullish(),
+  "maintenanceNotes": zod.string().nullish(),
+  "capacityLoadsPerDay": zod.number().nullish(),
+  "isActive": zod.boolean(),
+  "fullAddress": zod.string().optional(),
+  "distanceMiles": zod.number().optional()
+}).and(zod.object({
+  "materials": zod.array(zod.object({
+  "id": zod.number(),
+  "dumpSiteId": zod.number(),
+  "materialType": zod.enum(['rock', 'sand', 'gravel', 'asphalt', 'concrete', 'dirt', 'clay', 'base', 'recycled_asphalt', 'recycled_concrete', 'construction_debris', 'green_waste', 'mixed_waste', 'clean_fill', 'contaminated_soil']),
+  "disposition": zod.enum(['accepted', 'rejected']),
+  "specialInstructions": zod.string().nullish()
+})),
+  "pricing": zod.array(zod.object({
+  "id": zod.number(),
+  "dumpSiteId": zod.number(),
+  "materialType": zod.union([zod.enum(['rock', 'sand', 'gravel', 'asphalt', 'concrete', 'dirt', 'clay', 'base', 'recycled_asphalt', 'recycled_concrete', 'construction_debris', 'green_waste', 'mixed_waste', 'clean_fill', 'contaminated_soil']),zod.null()]).optional(),
+  "priceType": zod.enum(['tipping_fee', 'material_purchase_price', 'minimum_fee', 'per_ton', 'per_load', 'flat_rate', 'cash_price', 'account_price', 'customer_contract_price', 'fuel_surcharge', 'environmental_fee']),
+  "amount": zod.number(),
+  "currency": zod.string(),
+  "unit": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "effectiveFrom": zod.coerce.date().optional(),
+  "effectiveTo": zod.coerce.date().nullish(),
+  "isActive": zod.boolean()
+})),
+  "analytics": zod.object({
+  "dumpSiteId": zod.number(),
+  "loadsReceived": zod.number(),
+  "averageWaitTimeMinutes": zod.number().nullish(),
+  "averageUnloadTimeMinutes": zod.number().nullish(),
+  "averageTons": zod.number().nullish(),
+  "revenue": zod.number(),
+  "tippingFees": zod.number(),
+  "driverRatingAverage": zod.number().nullish(),
+  "customerRatingAverage": zod.number().nullish(),
+  "completionRate": zod.number().nullish(),
+  "rejectedLoads": zod.number(),
+  "peakHours": zod.array(zod.string()).optional(),
+  "utilization": zod.number().nullish()
+})
+})).and(zod.object({
+  "internalBrokerNotes": zod.string().nullish()
+}))
+
+
+/**
+ * @summary Get customer-safe facility view
+ */
+export const GetFacilityCustomerViewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetFacilityCustomerViewResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost', 'asphalt_plant', 'gravel_pit', 'concrete_crusher', 'quarry', 'supplier']),
+  "address": zod.string(),
+  "city": zod.string(),
+  "state": zod.string(),
+  "zip": zod.string(),
+  "acceptedMaterials": zod.array(zod.string()),
+  "rejectedMaterials": zod.array(zod.string()),
+  "status": zod.enum(['open', 'closed', 'temporarily_closed']),
+  "currentStatus": zod.enum(['open', 'closed', 'busy', 'moderate', 'light_traffic', 'temporary_closure', 'holiday_hours', 'maintenance']),
+  "operatingHours": zod.record(zod.string(), zod.string()).optional()
+})
+
+
+/**
+ * @summary Get map marker payload for a facility
+ */
+export const GetFacilityMapViewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetFacilityMapViewResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost', 'asphalt_plant', 'gravel_pit', 'concrete_crusher', 'quarry', 'supplier']),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "status": zod.enum(['open', 'closed', 'temporarily_closed']),
+  "currentStatus": zod.enum(['open', 'closed', 'busy', 'moderate', 'light_traffic', 'temporary_closure', 'holiday_hours', 'maintenance']),
+  "icon": zod.string().optional(),
+  "acceptedMaterials": zod.array(zod.string()),
+  "estimatedWaitMinutes": zod.number().nullish()
+})
 
 
 /**
