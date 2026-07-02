@@ -44,5 +44,15 @@ Use these commands for concrete frontend implementation passes:
 
 ## Latest result
 
-Pending validation for this documentation-only pass. Update this section with
-the actual command results after verification completes.
+Documentation-only pass validated on July 2, 2026:
+
+- `pnpm run typecheck` passed across shared libs, artifacts, and scripts.
+- `pnpm --filter @workspace/api-server run test` passed 26 test files and 318
+  tests. The run emitted the expected negative Stripe webhook signature warning.
+- `pnpm --filter @workspace/haulbrokr run test` passed 5 test files and 11
+  tests.
+- `pnpm --filter @workspace/haulbrokr-mobile run test` passed 9 test files and
+  68 tests.
+- `pnpm run build` passed typecheck, API build, web build, deck build, promo
+  build, mockup sandbox build, and web prerender. The web build emitted
+  non-fatal Vite sourcemap warnings for existing shadcn UI files.

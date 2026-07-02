@@ -51,6 +51,12 @@ implementation surface is `artifacts/haulbrokr`; mobile lives in
 - `docs/HAULBROKR_AUDIT.md` remains the architecture audit and launch guide.
 - `KNOWN_ISSUES.md` remains the source for prioritized technical blockers.
 
+## Latest verification
+
+The documentation-only implementation baseline passed typecheck, API tests, web
+tests, mobile tests, and production build on July 2, 2026. See
+`BETA_TEST_REPORT.md` for command details and non-fatal build warnings.
+
 ## Next implementation gate
 
 Wait for the next ChatGPT-approved design package, then implement the specified
