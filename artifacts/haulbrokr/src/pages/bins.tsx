@@ -173,10 +173,14 @@ export default function BinsPage() {
   const [notes, setNotes] = useState("");
   const [showForm, setShowForm] = useState(false);
 
-  const { data: orders = [], isLoading: ordersLoading, refetch } = useListBinOrders<BinOrder[]>();
-  const { data: binCatalog = [], isLoading: catalogLoading } = useListBinCatalog<BinCatalogItem[]>({
+  const ordersQuery = useListBinOrders<BinOrder[]>();
+  const catalogQuery = useListBinCatalog<BinCatalogItem[]>({
     query: { staleTime: 5 * 60_000 },
   });
+  const orders: BinOrder[] = ordersQuery.data ?? [];
+  const binCatalog: BinCatalogItem[] = catalogQuery.data ?? [];
+  const { isLoading: ordersLoading, refetch } = ordersQuery;
+  const { isLoading: catalogLoading } = catalogQuery;
 
   // Deep-link target: bin status notifications in the activity feed link here as
   // /bins?order=<uuid>. Scroll the matching card into view and briefly highlight
