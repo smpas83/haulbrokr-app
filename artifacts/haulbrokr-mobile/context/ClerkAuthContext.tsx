@@ -1,6 +1,8 @@
-import { useAuth, useUser } from "@clerk/expo";
+import { useAuth } from "@clerk/expo";
 import { setAuthTokenGetter, setBaseUrl } from "@workspace/api-client-react";
-import React, { createContext, useContext, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
+import React, { createContext, useCallback, useContext, useEffect } from "react";
 
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 
@@ -9,6 +11,7 @@ interface ClerkAuthContextType {
   isLoaded: boolean;
   userId: string | null;
   getToken: () => Promise<string | null>;
+  signOutAndReset: () => Promise<void>;
 }
 
 const ClerkAuthContext = createContext<ClerkAuthContextType>({
@@ -16,10 +19,12 @@ const ClerkAuthContext = createContext<ClerkAuthContextType>({
   isLoaded: false,
   userId: null,
   getToken: async () => null,
+  signOutAndReset: async () => {},
 });
 
 export function ClerkAuthProvider({ children }: { children: React.ReactNode }) {
-  const { isSignedIn, isLoaded, getToken, userId } = useAuth();
+  const { isSignedIn, isLoaded, getToken, userId, signOut } = useAuth();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setBaseUrl(API_BASE);
@@ -29,8 +34,14 @@ export function ClerkAuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [isSignedIn, getToken]);
 
+  const signOutAndReset = useCallback(async () => {
+    queryClient.clear();
+    await signOut();
+    router.replace("/sign-in" as any);
+  }, [queryClient, signOut]);
+
   return (
-    <ClerkAuthContext.Provider value={{ isSignedIn: !!isSignedIn, isLoaded: !!isLoaded, userId: userId ?? null, getToken }}>
+    <ClerkAuthContext.Provider value={{ isSignedIn: !!isSignedIn, isLoaded: !!isLoaded, userId: userId ?? null, getToken, signOutAndReset }}>
       {children}
     </ClerkAuthContext.Provider>
   );
