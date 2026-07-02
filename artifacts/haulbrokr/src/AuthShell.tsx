@@ -33,7 +33,14 @@ const AdminPage = lazy(() => import("./pages/admin"));
 const AdminLoginPage = lazy(() => import("./pages/admin-login"));
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -49,7 +56,7 @@ const clerkAppearance = {
   options: {
     logoPlacement: "inside" as const,
     logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.png`,
+    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
   },
   variables: {
     colorPrimary: "hsl(45 93% 47%)",
@@ -94,7 +101,7 @@ const clerkAppearance = {
 
 function AppLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex items-center justify-center min-h-screen bg-background" role="status" aria-live="polite" aria-label="Loading">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   );

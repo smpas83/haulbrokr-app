@@ -24,5 +24,18 @@ export interface JobRequestInput {
   estimatedHours: number;
   trucksNeeded: number;
   budgetPerHour?: number;
+  projectId?: number;
+  facilityId?: number;
+  facilityName?: string;
+  /** Facility coordinates as "lat,lng" when supplied by a maps client. */
+  facilityCoordinates?: string;
+  facilityInstructions?: string;
+  facilityAcceptedMaterials?: string;
+  facilitySafetyNotes?: string;
+  facilityOperatingHours?: string;
+  facilityPricingMetadata?: string;
+  facilityPhone?: string;
+  brokerNotes?: string;
+  driverInstructions?: string;
   notes?: string;
 }

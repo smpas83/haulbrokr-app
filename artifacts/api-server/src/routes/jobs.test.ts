@@ -117,6 +117,7 @@ function baseJob(overrides: Record<string, unknown> = {}) {
     estimatedHours: "8",
     createdAt: new Date("2026-05-01T00:00:00Z"),
     paymentStatus: "pending",
+    completionApproval: "approved",
     customerTotalAmount: "115.00",
     providerNetAmount: "100.00",
     totalHours: "1",
@@ -196,6 +197,18 @@ const notReadyCases = [
 ];
 
 describe("POST /jobs/:id/charge", () => {
+  it("blocks invoice and payment until completion is approved", async () => {
+    h.rows.set(jobsTable, [baseJob({ completionApproval: "pending" })]);
+    h.rows.set(paymentMethodsTable, [{ profileId: CUSTOMER_ID, methodType: "credit_card" }]);
+
+    const res = await request(makeApp()).post(`/jobs/${JOB_ID}/charge`);
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/approved before invoice or payment/);
+    expect(h.updates).toHaveLength(0);
+    expect(getUncachableStripeClient).not.toHaveBeenCalled();
+  });
+
   for (const c of notReadyCases) {
     it(`returns 409 with the guard message when the provider is ${c.reason}`, async () => {
       h.rows.set(jobsTable, [baseJob()]);

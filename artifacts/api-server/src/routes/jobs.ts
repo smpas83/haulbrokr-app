@@ -65,17 +65,29 @@ function num(v: string | null | undefined): number | null {
   return v == null ? null : parseFloat(v);
 }
 
-function serializeJob(j: any, customerCompany: string, providerCompany: string) {
+function jobCompletionApproved(job: { completionApproval?: string | null }): boolean {
+  return job.completionApproval === "approved";
+}
+
+function serializeJob(
+  j: any,
+  customerCompany: string,
+  providerCompany: string,
+  viewer?: { role?: string; staffRole?: unknown },
+) {
+  const driverView = viewer?.role === "driver" && !viewer.staffRole;
   return {
     ...j,
-    ratePerHour: parseFloat(j.ratePerHour),
+    ratePerHour: driverView ? 0 : parseFloat(j.ratePerHour),
     estimatedHours: parseFloat(j.estimatedHours),
     totalHours: num(j.totalHours),
-    totalAmount: num(j.totalAmount),
-    platformFeeRate: num(j.platformFeeRate),
-    platformFeeAmount: num(j.platformFeeAmount),
-    customerTotalAmount: num(j.customerTotalAmount),
-    providerNetAmount: num(j.providerNetAmount),
+    totalAmount: driverView ? null : num(j.totalAmount),
+    platformFeeRate: driverView ? null : num(j.platformFeeRate),
+    platformFeeAmount: driverView ? null : num(j.platformFeeAmount),
+    customerTotalAmount: driverView ? null : num(j.customerTotalAmount),
+    providerNetAmount: driverView ? null : num(j.providerNetAmount),
+    facilityPricingMetadata: driverView ? null : j.facilityPricingMetadata,
+    brokerNotes: driverView ? null : j.brokerNotes,
     customerCompany,
     providerCompany,
   };
@@ -284,7 +296,7 @@ router.get("/jobs", requireProfile, async (req, res): Promise<void> => {
 
   const enriched = await Promise.all(jobs.map(async (j) => {
     const { customerCompany, providerCompany } = await companiesFor(j);
-    return serializeJob(j, customerCompany, providerCompany);
+    return serializeJob(j, customerCompany, providerCompany, profile);
   }));
 
   res.json(ListJobsResponse.parse(enriched));
@@ -348,7 +360,7 @@ router.get("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     return;
   }
   const { customerCompany, providerCompany } = await companiesFor(job);
-  res.json(GetJobResponse.parse(serializeJob(job, customerCompany, providerCompany)));
+  res.json(GetJobResponse.parse(serializeJob(job, customerCompany, providerCompany, profile)));
 });
 
 /**
@@ -430,6 +442,10 @@ router.get("/jobs/:id/invoice", requireProfile, async (req, res): Promise<void> 
     res.status(400).json({ error: "Invoices are available only for completed or invoiced jobs." });
     return;
   }
+  if (!jobCompletionApproved(job)) {
+    res.status(409).json({ error: "Job completion must be approved before an invoice can be generated." });
+    return;
+  }
 
   const staff = await isAdmin(req);
   if (!staff && !(await canDownloadJobInvoice(job, profile))) {
@@ -503,7 +519,7 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
   });
 
   const { customerCompany, providerCompany } = await companiesFor(updated);
-  res.json(AcceptJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+  res.json(AcceptJobResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
 });
 
 router.post("/jobs/:id/decline", requireProfile, async (req, res): Promise<void> => {
@@ -563,7 +579,7 @@ router.post("/jobs/:id/decline", requireProfile, async (req, res): Promise<void>
   });
 
   const { customerCompany, providerCompany } = await companiesFor(updated);
-  res.json(DeclineJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+  res.json(DeclineJobResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
 });
 
 router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
@@ -609,6 +625,10 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     updates.startedAt = new Date();
   } else if (parsed.data.status === "completed") {
     updates.completedAt = new Date();
+    updates.completionApproval = "pending";
+    updates.approvedByProfileId = null;
+    updates.completionApprovedAt = null;
+    updates.flagReason = null;
     const hours = parsed.data.totalHours ?? (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
     if (hours != null) {
       const rate = parseFloat(existingJob.ratePerHour);
@@ -641,6 +661,12 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
       description: `Completed job #${job.id} — ${job.materialType} delivery`,
       relatedId: job.id,
     });
+    await db.insert(activityTable).values({
+      profileId: job.customerId,
+      type: "job_completed",
+      description: `Job #${job.id} is complete and ready for approval before invoicing.`,
+      relatedId: job.id,
+    });
     await recordJobTimelineEvent(job.id, profile.id, "completed", { note: "Job marked complete" });
   } else if (parsed.data.status === "in_progress") {
     await db.update(requestsTable).set({ status: "in_progress" }).where(eq(requestsTable.id, job.requestId));
@@ -654,7 +680,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
   }
 
   const { customerCompany, providerCompany } = await companiesFor(job);
-  res.json(UpdateJobResponse.parse(serializeJob(job, customerCompany, providerCompany)));
+  res.json(UpdateJobResponse.parse(serializeJob(job, customerCompany, providerCompany, profile)));
 });
 
 /**
@@ -681,6 +707,10 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
   }
   if (job.status !== "completed") {
     res.status(400).json({ error: "Job must be completed before it can be charged." });
+    return;
+  }
+  if (!jobCompletionApproved(job)) {
+    res.status(409).json({ error: "Job completion must be approved before invoice or payment can be initiated." });
     return;
   }
   if (job.customerTotalAmount == null || job.providerNetAmount == null) {
@@ -724,7 +754,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
       .set({ paymentStatus: "invoiced", invoicedAt: now, paymentDueDate: due })
       .where(eq(jobsTable.id, job.id)).returning();
     const { customerCompany, providerCompany } = await companiesFor(updated);
-    res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+    res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
     return;
   }
 
@@ -775,7 +805,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
       })
       .where(eq(jobsTable.id, job.id)).returning();
     const { customerCompany, providerCompany } = await companiesFor(updated);
-    res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+    res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
   } catch (err: any) {
     // The customer's bank wants them to authenticate this charge (3-D Secure).
     // Park the job in `requires_action` (NOT failed) so the UI can prompt them to
@@ -787,7 +817,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
         .where(eq(jobsTable.id, job.id)).returning();
       await notifyPaymentRequiresAction(job);
       const { customerCompany, providerCompany } = await companiesFor(updated);
-      res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+      res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
       return;
     }
     req.log?.error?.({ err }, "Job charge failed");
@@ -870,7 +900,7 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
       })
       .where(eq(jobsTable.id, job.id)).returning();
     const { customerCompany, providerCompany } = await companiesFor(updated);
-    res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+    res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
   } catch (err: any) {
     // Bank wants the customer to authenticate this charge — park in
     // `requires_action` so they can confirm on-session and resume the release.
@@ -881,7 +911,7 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
         .where(eq(jobsTable.id, job.id)).returning();
       await notifyPaymentRequiresAction(job);
       const { customerCompany, providerCompany } = await companiesFor(updated);
-      res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+      res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
       return;
     }
     req.log?.error?.({ err }, "Job payout release failed");
@@ -975,7 +1005,7 @@ router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promi
     // unchanged) and can never re-charge the customer.
     const updated = await settleConfirmedPayout({ ...job, providerNetAmount }, readiness.stripeAccountId, pi as any);
     const { customerCompany, providerCompany } = await companiesFor(updated);
-    res.json(ConfirmJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+    res.json(ConfirmJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
   } catch (err: any) {
     req.log?.error?.({ err }, "Confirm-payment payout release failed");
     // The customer's charge has ALREADY succeeded — only the provider transfer
@@ -1027,6 +1057,10 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
   }
   if (job.status !== "completed") {
     res.status(400).json({ error: "Job must be completed before it can be charged." });
+    return;
+  }
+  if (!jobCompletionApproved(job)) {
+    res.status(409).json({ error: "Job completion must be approved before invoice or payment can be initiated." });
     return;
   }
   if (job.customerTotalAmount == null || job.providerNetAmount == null) {
@@ -1138,7 +1172,7 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
   // Idempotent short-circuit: already finalized — never re-process or risk a flip.
   if (job.paymentStatus === "released" || job.paymentStatus === "paid") {
     const { customerCompany, providerCompany } = await companiesFor(job);
-    res.json(VerifyJobCheckoutResponse.parse(serializeJob(job, customerCompany, providerCompany)));
+    res.json(VerifyJobCheckoutResponse.parse(serializeJob(job, customerCompany, providerCompany, profile)));
     return;
   }
 
@@ -1185,7 +1219,7 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
       })
       .where(eq(jobsTable.id, job.id)).returning();
     const { customerCompany, providerCompany } = await companiesFor(updated);
-    res.json(VerifyJobCheckoutResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+    res.json(VerifyJobCheckoutResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
   } catch (err: any) {
     // We never mark the job `failed` here: if the Checkout payment actually
     // succeeded, flipping to failed would route it back through /charge and risk
@@ -1287,6 +1321,10 @@ router.post("/jobs/:id/status-updates", requireProfile, async (req, res): Promis
   }
   const job = await loadJobIfMember(jobId, profile);
   if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  if (profile.role === "driver" && !(await isDriverAssignedToJob(jobId, profile.id))) {
+    res.status(403).json({ error: "Only assigned drivers can report status updates for this job." });
+    return;
+  }
 
   const parsed = CreateJobStatusUpdateBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
@@ -1340,8 +1378,16 @@ router.post("/jobs/:id/approve-completion", requireProfile, async (req, res): Pr
     .where(eq(jobsTable.id, jobId))
     .returning();
 
+  await recordJobTimelineEvent(jobId, profile.id, "completed", { note: "Completion approved" });
+  await db.insert(activityTable).values({
+    profileId: job.providerId,
+    type: "job_completed",
+    description: `Completion approved for job #${job.id}. Invoice and payment can proceed.`,
+    relatedId: job.id,
+  });
+
   const { customerCompany, providerCompany } = await companiesFor(updated);
-  res.json(ApproveJobCompletionResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+  res.json(ApproveJobCompletionResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
 });
 
 router.post("/jobs/:id/flag-completion", requireProfile, async (req, res): Promise<void> => {
@@ -1377,7 +1423,7 @@ router.post("/jobs/:id/flag-completion", requireProfile, async (req, res): Promi
     .returning();
 
   const { customerCompany, providerCompany } = await companiesFor(updated);
-  res.json(FlagJobCompletionResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+  res.json(FlagJobCompletionResponse.parse(serializeJob(updated, customerCompany, providerCompany, profile)));
 });
 
 export default router;

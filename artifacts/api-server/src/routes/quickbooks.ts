@@ -1,9 +1,21 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Response } from "express";
 import { eq } from "drizzle-orm";
 import { db, quickbooksConnectionsTable, jobsTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+
+function quickBooksLiveConfigured(): boolean {
+  return Boolean(process.env.QUICKBOOKS_CLIENT_ID && process.env.QUICKBOOKS_CLIENT_SECRET);
+}
+
+function blockSimulatedQuickBooksInProduction(res: Response): boolean {
+  if (process.env.NODE_ENV === "production" && !quickBooksLiveConfigured()) {
+    res.status(501).json({ error: "QuickBooks sync requires production OAuth credentials before it can be enabled." });
+    return true;
+  }
+  return false;
+}
 
 router.get("/quickbooks/status", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
@@ -14,6 +26,7 @@ router.get("/quickbooks/status", requireProfile, async (req, res): Promise<void>
 
 // Simulated OAuth connect (in production this would redirect to QB OAuth)
 router.post("/quickbooks/connect", requireProfile, async (req, res): Promise<void> => {
+  if (blockSimulatedQuickBooksInProduction(res)) return;
   const profile = getRequestProfile(req);
   const { companyName } = req.body;
   if (!companyName) { res.status(400).json({ error: "companyName is required" }); return; }
@@ -48,6 +61,7 @@ router.post("/quickbooks/disconnect", requireProfile, async (req, res): Promise<
 });
 
 router.post("/quickbooks/sync", requireProfile, async (req, res): Promise<void> => {
+  if (blockSimulatedQuickBooksInProduction(res)) return;
   const profile = getRequestProfile(req);
   const [conn] = await db.select().from(quickbooksConnectionsTable)
     .where(eq(quickbooksConnectionsTable.profileId, profile.id));

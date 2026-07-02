@@ -161,6 +161,18 @@ beforeEach(() => {
     startTime: "08:00",
     estimatedHours: "8",
     trucksNeeded: 2,
+    projectId: 77,
+    facilityId: 44,
+    facilityName: "North Transfer Station",
+    facilityCoordinates: "41.10,-93.20",
+    facilityInstructions: "Use gate 3",
+    facilityAcceptedMaterials: "dirt, gravel",
+    facilitySafetyNotes: "Hard hats required",
+    facilityOperatingHours: "Mon-Fri 07:00-16:00",
+    facilityPricingMetadata: "zone=A;tier=2",
+    facilityPhone: "555-0100",
+    brokerNotes: "Internal margin review",
+    driverInstructions: "Check in at the scale house",
     notes: "End-dump only; no belly dumps.",
   }];
   h.bids = [{
@@ -186,9 +198,53 @@ describe("Job award / hauler acceptance flow", () => {
 
     expect(res.status).toBe(200);
     expect(h.jobs).toHaveLength(1);
-    expect(h.jobs[0]).toMatchObject({ status: "awarded", providerId: 20, bidId: 5 });
+    expect(h.jobs[0]).toMatchObject({
+      status: "awarded",
+      providerId: 20,
+      bidId: 5,
+      projectId: 77,
+      facilityId: 44,
+      facilityName: "North Transfer Station",
+      facilityCoordinates: "41.10,-93.20",
+      facilityInstructions: "Use gate 3",
+      facilityAcceptedMaterials: "dirt, gravel",
+      facilitySafetyNotes: "Hard hats required",
+      facilityOperatingHours: "Mon-Fri 07:00-16:00",
+      facilityPricingMetadata: "zone=A;tier=2",
+      facilityPhone: "555-0100",
+      brokerNotes: "Internal margin review",
+      driverInstructions: "Check in at the scale house",
+      notes: "End-dump only; no belly dumps.",
+    });
     expect(h.requests[0].status).toBe("awarded");
     expect(h.bids[0].status).toBe("awarded");
+  });
+
+  it("redacts customer pricing and broker-only fields for driver job detail", async () => {
+    h.jobs = [sampleJob({
+      status: "completed",
+      ratePerHour: "120.00",
+      totalAmount: "960.00",
+      platformFeeRate: "0.15",
+      platformFeeAmount: "144.00",
+      customerTotalAmount: "1104.00",
+      providerNetAmount: "960.00",
+      facilityPricingMetadata: "zone=A;tier=2",
+      brokerNotes: "Internal margin review",
+    })];
+    h.profile = { id: 30, role: "driver", companyName: "Driver Co" };
+
+    const res = await request(makeApp()).get("/jobs/9");
+
+    expect(res.status).toBe(200);
+    expect(res.body.ratePerHour).toBe(0);
+    expect(res.body.totalAmount).toBeNull();
+    expect(res.body.platformFeeRate).toBeNull();
+    expect(res.body.platformFeeAmount).toBeNull();
+    expect(res.body.customerTotalAmount).toBeNull();
+    expect(res.body.providerNetAmount).toBeNull();
+    expect(res.body.facilityPricingMetadata).toBeNull();
+    expect(res.body.brokerNotes).toBeNull();
   });
 
   it("provider accepts an awarded job", async () => {

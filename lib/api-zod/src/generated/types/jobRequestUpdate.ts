@@ -6,11 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { JobRequestUpdateMaterialType } from './jobRequestUpdateMaterialType';
-import type { JobRequestUpdateStatus } from './jobRequestUpdateStatus';
 import type { JobRequestUpdateTruckType } from './jobRequestUpdateTruckType';
 
 export interface JobRequestUpdate {
-  status?: JobRequestUpdateStatus;
   materialType?: JobRequestUpdateMaterialType;
   truckType?: JobRequestUpdateTruckType;
   quantityTons?: number;
@@ -22,5 +20,17 @@ export interface JobRequestUpdate {
   estimatedHours?: number;
   trucksNeeded?: number;
   budgetPerHour?: number;
+  projectId?: number;
+  facilityId?: number;
+  facilityName?: string;
+  facilityCoordinates?: string;
+  facilityInstructions?: string;
+  facilityAcceptedMaterials?: string;
+  facilitySafetyNotes?: string;
+  facilityOperatingHours?: string;
+  facilityPricingMetadata?: string;
+  facilityPhone?: string;
+  brokerNotes?: string;
+  driverInstructions?: string;
   notes?: string;
 }

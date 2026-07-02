@@ -98,7 +98,6 @@ export * from './jobRequestStatus';
 export * from './jobRequestTruckType';
 export * from './jobRequestUpdate';
 export * from './jobRequestUpdateMaterialType';
-export * from './jobRequestUpdateStatus';
 export * from './jobRequestUpdateTruckType';
 export * from './jobStatus';
 export * from './jobStatusUpdate';

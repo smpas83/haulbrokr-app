@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, or, sql } from "drizzle-orm";
-import { db, requestsTable, profilesTable, bidsTable, activityTable } from "@workspace/db";
+import { db, requestsTable, profilesTable, bidsTable, activityTable, dumpSitesTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
   ListRequestsQueryParams,
@@ -80,12 +80,25 @@ router.post("/requests", requireProfile, async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const selectedFacility = parsed.data.facilityId != null
+    ? (await db.select().from(dumpSitesTable).where(eq(dumpSitesTable.id, parsed.data.facilityId)))[0]
+    : null;
+  if (parsed.data.facilityId != null && !selectedFacility) {
+    res.status(400).json({ error: "Selected facility does not exist." });
+    return;
+  }
+  if (selectedFacility && !selectedFacility.isActive) {
+    res.status(409).json({ error: "Selected facility is closed or inactive." });
+    return;
+  }
   const [request] = await db.insert(requestsTable).values({
     ...parsed.data,
     customerId: profile.id,
     quantityTons: String(parsed.data.quantityTons),
     estimatedHours: String(parsed.data.estimatedHours),
     budgetPerHour: parsed.data.budgetPerHour != null ? String(parsed.data.budgetPerHour) : undefined,
+    facilityName: parsed.data.facilityName ?? selectedFacility?.name,
+    facilityPhone: parsed.data.facilityPhone ?? selectedFacility?.phone ?? undefined,
   }).returning();
   await db.insert(activityTable).values({
     profileId: profile.id,
@@ -163,9 +176,24 @@ router.patch("/requests/:id", requireProfile, async (req, res): Promise<void> =>
     res.status(400).json({ error: params.error.message });
     return;
   }
+  if (req.body && typeof req.body === "object" && "status" in req.body) {
+    res.status(400).json({ error: "Request status is managed by the award, job, and completion workflow." });
+    return;
+  }
   const parsed = UpdateRequestBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const selectedFacility = parsed.data.facilityId != null
+    ? (await db.select().from(dumpSitesTable).where(eq(dumpSitesTable.id, parsed.data.facilityId)))[0]
+    : null;
+  if (parsed.data.facilityId != null && !selectedFacility) {
+    res.status(400).json({ error: "Selected facility does not exist." });
+    return;
+  }
+  if (selectedFacility && !selectedFacility.isActive) {
+    res.status(409).json({ error: "Selected facility is closed or inactive." });
     return;
   }
   const [request] = await db
@@ -175,6 +203,8 @@ router.patch("/requests/:id", requireProfile, async (req, res): Promise<void> =>
       quantityTons: parsed.data.quantityTons != null ? String(parsed.data.quantityTons) : undefined,
       estimatedHours: parsed.data.estimatedHours != null ? String(parsed.data.estimatedHours) : undefined,
       budgetPerHour: parsed.data.budgetPerHour != null ? String(parsed.data.budgetPerHour) : undefined,
+      facilityName: parsed.data.facilityName ?? selectedFacility?.name,
+      facilityPhone: parsed.data.facilityPhone ?? selectedFacility?.phone ?? undefined,
     })
     .where(and(eq(requestsTable.id, params.data.id), eq(requestsTable.customerId, profile.id)))
     .returning();

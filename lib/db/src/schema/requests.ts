@@ -3,6 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
 import { projectsTable } from "./projects";
+import { dumpSitesTable } from "./dump-sites";
 import { truckTypeEnum } from "./trucks";
 
 export const materialTypeEnum = pgEnum("material_type", ["dirt", "gravel", "sand", "concrete", "asphalt", "demolition", "topsoil", "fill", "other"]);
@@ -32,6 +33,17 @@ export const requestsTable = pgTable("requests", {
   trucksNeeded: integer("trucks_needed").notNull().default(1),
   budgetPerHour: numeric("budget_per_hour", { precision: 10, scale: 2 }),
   projectId: integer("project_id").references(() => projectsTable.id),
+  facilityId: integer("facility_id").references(() => dumpSitesTable.id),
+  facilityName: text("facility_name"),
+  facilityCoordinates: text("facility_coordinates"),
+  facilityInstructions: text("facility_instructions"),
+  facilityAcceptedMaterials: text("facility_accepted_materials"),
+  facilitySafetyNotes: text("facility_safety_notes"),
+  facilityOperatingHours: text("facility_operating_hours"),
+  facilityPricingMetadata: text("facility_pricing_metadata"),
+  facilityPhone: text("facility_phone"),
+  brokerNotes: text("broker_notes"),
+  driverInstructions: text("driver_instructions"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
