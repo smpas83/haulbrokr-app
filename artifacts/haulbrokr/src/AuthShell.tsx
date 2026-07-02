@@ -13,6 +13,7 @@ import LandingPage from "./pages/landing";
 
 const OnboardingPage = lazy(() => import("./pages/onboarding"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
+const DispatcherPage = lazy(() => import("./pages/dispatcher"));
 const RequestsPage = lazy(() => import("./pages/requests"));
 const NewRequestPage = lazy(() => import("./pages/request-new"));
 const RequestDetailPage = lazy(() => import("./pages/request-detail"));
@@ -169,6 +170,11 @@ function AuthShellRoutes() {
 
             <Route path="/dashboard">
               <Show when="signed-in"><RequireProfile><DashboardPage /></RequireProfile></Show>
+              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+            </Route>
+
+            <Route path="/dispatcher">
+              <Show when="signed-in"><RequireProfile><DispatcherPage /></RequireProfile></Show>
               <Show when="signed-out"><Redirect to="/sign-in" /></Show>
             </Route>
 

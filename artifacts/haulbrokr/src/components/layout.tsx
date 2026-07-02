@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Truck, ClipboardList, Briefcase, LayoutDashboard,
   LogOut, Loader2, Settings, Menu, X, Trash2,
-  FolderOpen, DollarSign, Plug, ShieldCheck, Building2
+  FolderOpen, DollarSign, Plug, ShieldCheck, Building2, Map
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/react";
 import { useGetMyProfile, useGetAdminAccess } from "@workspace/api-client-react";
@@ -19,43 +19,63 @@ interface NavItem {
   show: boolean;
 }
 
-function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; onClick?: () => void }) {
+function NavLink({ item, active, collapsed, onClick }: { item: NavItem; active: boolean; collapsed?: boolean; onClick?: () => void }) {
   return (
-    <Link href={item.href} onClick={onClick}>
+    <Link href={item.href} onClick={onClick} aria-label={item.label}>
       <div className={cn(
-        "flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer",
+        "flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring motion-reduce:transition-none",
+        collapsed && "justify-center px-2",
         active
           ? "bg-sidebar-primary text-sidebar-primary-foreground"
           : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
       )}>
         <item.icon className="h-4 w-4 flex-shrink-0" />
-        {item.label}
+        {!collapsed && item.label}
       </div>
     </Link>
   );
 }
 
-function Sidebar({ navItems, profile, user, onSignOut }: {
+function Sidebar({ navItems, profile, user, onSignOut, collapsed, onToggleCollapsed }: {
   navItems: NavItem[];
   profile: any;
   user: any;
   onSignOut: () => void;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }) {
   const [location] = useLocation();
   return (
     <div className="flex flex-col h-full">
-      <div className="h-16 flex items-center px-6 border-b border-sidebar-border/50">
-        <img
-          src={`${import.meta.env.BASE_URL}haulbrokr-logo.png`}
-          alt="HaulBrokr"
-          className="h-8 w-auto"
-        />
+      <div className={cn("h-16 flex items-center border-b border-sidebar-border/50", collapsed ? "justify-center px-2" : "justify-between px-6")}>
+        {!collapsed && (
+          <img
+            src={`${import.meta.env.BASE_URL}haulbrokr-logo.png`}
+            alt="HaulBrokr"
+            className="h-8 w-auto"
+          />
+        )}
+        {onToggleCollapsed && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="hidden md:inline-flex h-8 w-8 rounded-none text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            onClick={onToggleCollapsed}
+            aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+            aria-expanded={!collapsed}
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
-      <div className="p-4 border-b border-sidebar-border/50">
-        <div className="text-sm font-medium text-sidebar-foreground truncate">{profile?.companyName || user?.fullName}</div>
-        <div className="text-xs text-sidebar-foreground/60 uppercase tracking-wider mt-1">{profile?.role}</div>
-      </div>
+      {!collapsed && (
+        <div className="p-4 border-b border-sidebar-border/50">
+          <div className="text-sm font-medium text-sidebar-foreground truncate">{profile?.companyName || user?.fullName}</div>
+          <div className="text-xs text-sidebar-foreground/60 uppercase tracking-wider mt-1">{profile?.role}</div>
+        </div>
+      )}
 
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.filter(i => i.show).map((item) => (
@@ -63,6 +83,7 @@ function Sidebar({ navItems, profile, user, onSignOut }: {
             key={item.href}
             item={item}
             active={location === item.href || location.startsWith(`${item.href}/`)}
+            collapsed={collapsed}
           />
         ))}
       </nav>
@@ -70,11 +91,12 @@ function Sidebar({ navItems, profile, user, onSignOut }: {
       <div className="p-4 border-t border-sidebar-border/50">
         <Button
           variant="ghost"
-          className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          className={cn("w-full text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", collapsed ? "justify-center px-2" : "justify-start")}
           onClick={onSignOut}
+          aria-label="Log out"
         >
-          <LogOut className="h-4 w-4 mr-2" />
-          Log out
+          <LogOut className={cn("h-4 w-4", !collapsed && "mr-2")} />
+          {!collapsed && "Log out"}
         </Button>
       </div>
     </div>
@@ -86,6 +108,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const { data: profile, isLoading } = useGetMyProfile();
   const { data: adminAccess } = useGetAdminAccess();
 
@@ -113,6 +136,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
+    { href: "/dispatcher", label: "Current Dispatch", icon: Map, show: true },
     { href: "/requests", label: isCustomer ? "My Requests" : "Job Board", icon: ClipboardList, show: true },
     { href: "/fleet", label: "My Fleet", icon: Truck, show: isProvider },
     { href: "/jobs", label: "Active Jobs", icon: Briefcase, show: true },
@@ -133,8 +157,20 @@ export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-muted/30">
       {/* Desktop Sidebar */}
-      <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden md:flex flex-col">
-        <Sidebar navItems={navItems} profile={profile} user={user} onSignOut={handleSignOut} />
+      <aside
+        className={cn(
+          "bg-sidebar border-r border-sidebar-border hidden md:flex flex-col transition-[width] motion-reduce:transition-none",
+          desktopCollapsed ? "w-16" : "w-64",
+        )}
+      >
+        <Sidebar
+          navItems={navItems}
+          profile={profile}
+          user={user}
+          onSignOut={handleSignOut}
+          collapsed={desktopCollapsed}
+          onToggleCollapsed={() => setDesktopCollapsed((value) => !value)}
+        />
       </aside>
 
       {/* Main Content */}
