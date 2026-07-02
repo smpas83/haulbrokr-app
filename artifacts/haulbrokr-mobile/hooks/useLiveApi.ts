@@ -2,6 +2,13 @@ import { useAuth } from "@clerk/expo";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+const LIVE_REFETCH_INTERVAL_MS = 15000;
+
+const liveQueryOptions = {
+  refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+  refetchIntervalInBackground: false,
+  refetchOnWindowFocus: true,
+};
 
 async function apiFetch(
   getToken: () => Promise<string | null>,
@@ -258,6 +265,7 @@ export function useJobEvidence(jobId: number | null) {
     queryKey: ["evidence", jobId],
     queryFn: () => apiFetch(getToken, "GET", `/jobs/${jobId}/evidence`),
     enabled: !!isSignedIn && !!jobId,
+    ...liveQueryOptions,
   });
 }
 
@@ -296,6 +304,7 @@ export function useJobStatusUpdates(jobId: number | null) {
     queryKey: ["status-updates", jobId],
     queryFn: () => apiFetch(getToken, "GET", `/jobs/${jobId}/status-updates`),
     enabled: !!isSignedIn && !!jobId,
+    ...liveQueryOptions,
   });
 }
 
@@ -342,6 +351,7 @@ export function useLiveJobs() {
     queryKey: ["jobs"],
     queryFn: () => apiFetch(getToken, "GET", "/jobs"),
     enabled: !!isSignedIn,
+    ...liveQueryOptions,
   });
 }
 
@@ -354,6 +364,7 @@ export function useLiveRequests(opts?: { mine?: boolean; enabled?: boolean }) {
     queryKey: ["requests", { mine }],
     queryFn: () => apiFetch(getToken, "GET", path),
     enabled: !!isSignedIn && (opts?.enabled ?? true),
+    ...liveQueryOptions,
   });
 }
 
@@ -486,6 +497,7 @@ export function useTickets(jobId: number | null) {
     queryKey: ["tickets", jobId],
     queryFn: () => apiFetch(getToken, "GET", `/jobs/${jobId}/tickets`),
     enabled: !!isSignedIn && !!jobId,
+    ...liveQueryOptions,
   });
 }
 
@@ -781,6 +793,7 @@ export function useLiveDashboard() {
     queryKey: ["dashboard", "stats"],
     queryFn: () => apiFetch(getToken, "GET", "/dashboard/stats"),
     enabled: !!isSignedIn,
+    ...liveQueryOptions,
   });
 }
 
@@ -790,6 +803,7 @@ export function useLiveActivity() {
     queryKey: ["dashboard", "activity"],
     queryFn: () => apiFetch(getToken, "GET", "/dashboard/activity"),
     enabled: !!isSignedIn,
+    ...liveQueryOptions,
   });
 }
 

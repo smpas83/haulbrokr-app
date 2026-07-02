@@ -20,6 +20,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import {
+  EmptyStatePanel,
+  ErrorStatePanel,
+  LiveRefreshBadge,
+  LiveStatValue,
+  LoadingCardGrid,
+  PageTransition,
+  usePrefersReducedMotion,
+} from "@/components/realtime/microinteractions";
+import { liveQueryOptions, useLiveActivityToasts } from "@/hooks/use-realtime-feedback";
 
 const AMBER = "#e9a800";
 const NAVY = "#1c2333";
@@ -43,7 +53,9 @@ function StatCard({
         <Icon className={`h-4 w-4 ${accent ? "text-primary" : "text-muted-foreground"}`} />
       </CardHeader>
       <CardContent>
-        <div className={`text-3xl font-black tracking-tight ${accent ? "text-primary" : ""}`}>{value}</div>
+        <div className={`text-3xl font-black tracking-tight ${accent ? "text-primary" : ""}`}>
+          <LiveStatValue value={value} />
+        </div>
         {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
       </CardContent>
     </Card>
@@ -75,10 +87,19 @@ const CustomPieTooltip = ({ active, payload }: any) => {
 };
 
 export default function DashboardPage() {
+  const reducedMotion = usePrefersReducedMotion();
   const { data: profile } = useGetMyProfile();
-  const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
-  const { data: activities, isLoading: activityLoading } = useGetDashboardActivity();
+  const statsQuery = useGetDashboardStats({ query: liveQueryOptions as any });
+  const activityQuery = useGetDashboardActivity({ query: liveQueryOptions as any });
   const { data: accountStatus } = useGetAccountStatus();
+  const { data: stats, isLoading: statsLoading, isFetching: statsFetching, isError: statsError } = statsQuery;
+  const {
+    data: activities,
+    isLoading: activityLoading,
+    isFetching: activityFetching,
+    isError: activityError,
+  } = activityQuery;
+  useLiveActivityToasts(activities);
 
   const isCustomer = profile?.role === "customer";
   const isProvider = profile?.role === "provider";
@@ -122,7 +143,7 @@ export default function DashboardPage() {
   const hasChartData = pieData.some(d => d.value > 0);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <PageTransition className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -131,7 +152,8 @@ export default function DashboardPage() {
             Welcome back, <span className="font-semibold text-foreground">{profile?.contactName || profile?.companyName}</span>.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <LiveRefreshBadge isFetching={statsFetching || activityFetching} />
           {isCustomer && (
             <Link href="/requests/new">
               <Button className="h-10 px-5 font-bold shadow-sm rounded-none" data-testid="button-new-request">
@@ -169,10 +191,10 @@ export default function DashboardPage() {
       )}
 
       {/* Stat Cards */}
-      {statsLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[110px] w-full rounded-none" />)}
-        </div>
+      {statsError ? (
+        <ErrorStatePanel title="Dashboard stats unavailable" description="Live KPIs could not be refreshed." />
+      ) : statsLoading ? (
+        <LoadingCardGrid count={4} className="md:grid-cols-2 lg:grid-cols-4" itemClassName="h-[110px]" />
       ) : stats ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {isCustomer && (
@@ -215,7 +237,9 @@ export default function DashboardPage() {
             <CardDescription>Platform events recorded on your account</CardDescription>
           </CardHeader>
           <CardContent>
-            {activityLoading ? (
+            {activityError ? (
+              <ErrorStatePanel title="Activity chart unavailable" description="Recent activity could not be loaded." className="h-[180px]" />
+            ) : activityLoading ? (
               <Skeleton className="h-[180px] w-full rounded-none" />
             ) : (
               <ResponsiveContainer width="100%" height={180}>
@@ -234,7 +258,7 @@ export default function DashboardPage() {
                     width={24}
                   />
                   <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "rgba(233,168,0,0.08)" }} />
-                  <Bar dataKey="events" fill={AMBER} radius={[2, 2, 0, 0]} maxBarSize={40} />
+                  <Bar dataKey="events" fill={AMBER} radius={[2, 2, 0, 0]} maxBarSize={40} isAnimationActive={!reducedMotion} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -248,7 +272,9 @@ export default function DashboardPage() {
             <CardDescription>Distribution across all your jobs</CardDescription>
           </CardHeader>
           <CardContent>
-            {statsLoading ? (
+            {statsError ? (
+              <ErrorStatePanel title="Job breakdown unavailable" description="Status totals could not be refreshed." className="h-[180px]" />
+            ) : statsLoading ? (
               <Skeleton className="h-[180px] w-full rounded-none" />
             ) : hasChartData ? (
               <ResponsiveContainer width="100%" height={180}>
@@ -261,6 +287,7 @@ export default function DashboardPage() {
                     outerRadius={72}
                     paddingAngle={3}
                     dataKey="value"
+                    isAnimationActive={!reducedMotion}
                   >
                     {pieData.map((_, i) => (
                       <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
@@ -277,11 +304,7 @@ export default function DashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex flex-col items-center justify-center h-[180px] text-muted-foreground">
-                <CircleCheck className="h-10 w-10 mb-3 opacity-20" />
-                <p className="text-sm">No job data yet</p>
-                <p className="text-xs mt-1">Post or bid on a job to see stats</p>
-              </div>
+              <EmptyStatePanel icon={CircleCheck} title="No job data yet" description="Post or bid on a job to see stats." className="h-[180px] border-0 bg-transparent" />
             )}
           </CardContent>
         </Card>
@@ -296,7 +319,9 @@ export default function DashboardPage() {
             <CardDescription>Latest actions on your account</CardDescription>
           </CardHeader>
           <CardContent>
-            {activityLoading ? (
+            {activityError ? (
+              <ErrorStatePanel title="Activity feed unavailable" description="Live notifications could not be loaded." />
+            ) : activityLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
               </div>
@@ -337,7 +362,7 @@ export default function DashboardPage() {
                   const isLink = href != null;
                   const inner = (
                     <>
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
+                      <div className={`hb-live-dot w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium leading-tight truncate ${textClass}`}>{activity.description}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -349,7 +374,7 @@ export default function DashboardPage() {
                       )}
                     </>
                   );
-                  const className = "flex items-center gap-4 py-2.5 px-3 hover:bg-muted/40 transition-colors border-b border-border/40 last:border-0";
+                  const className = "hb-feed-item flex items-center gap-4 py-2.5 px-3 hover:bg-muted/40 transition-colors border-b border-border/40 last:border-0";
                   return isLink ? (
                     <Link key={activity.id} href={href} className={className}>
                       {inner}
@@ -362,10 +387,7 @@ export default function DashboardPage() {
                 })}
               </div>
             ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                <Activity className="mx-auto h-8 w-8 mb-3 opacity-20" />
-                <p className="text-sm">No recent activity</p>
-              </div>
+              <EmptyStatePanel icon={Activity} title="No recent activity" description="Live updates will appear here." className="border-0 bg-transparent py-10" />
             )}
           </CardContent>
         </Card>
@@ -450,7 +472,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageTransition>
   );
 }
 

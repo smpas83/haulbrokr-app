@@ -17,6 +17,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { LiveRefreshBadge, PageTransition } from "@/components/realtime/microinteractions";
+import { liveQueryOptions } from "@/hooks/use-realtime-feedback";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -193,9 +195,10 @@ export default function BinsPage() {
   const [notes, setNotes] = useState("");
   const [showForm, setShowForm] = useState(false);
 
-  const { data: orders = [], isLoading: ordersLoading, refetch } = useQuery<BinOrder[]>({
+  const { data: orders = [], isLoading: ordersLoading, isFetching: ordersFetching, refetch } = useQuery<BinOrder[]>({
     queryKey: ["bin-orders"],
     queryFn: () => apiFetch("/bin-orders"),
+    ...liveQueryOptions,
   });
 
   // Deep-link target: bin status notifications in the activity feed link here as
@@ -283,7 +286,7 @@ export default function BinsPage() {
   const pastOrders = orders.filter(o => ["cancelled", "picked_up"].includes(o.status));
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+    <PageTransition className="max-w-5xl mx-auto space-y-8 pb-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -295,12 +298,15 @@ export default function BinsPage() {
             Order temporary roll-offs or set up permanent bin service from top providers.
           </p>
         </div>
-        {!showForm && (
-          <Button className="font-bold rounded-none h-10 px-5" onClick={() => setShowForm(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Order Bin Service
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-3">
+          <LiveRefreshBadge isFetching={ordersFetching} />
+          {!showForm && (
+            <Button className="font-bold rounded-none h-10 px-5" onClick={() => setShowForm(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Order Bin Service
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Order Form */}
@@ -583,7 +589,7 @@ export default function BinsPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-black">My Active Orders</h2>
           <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={cn("h-4 w-4", ordersFetching && "animate-spin")} />
             Refresh
           </Button>
         </div>
@@ -629,7 +635,7 @@ export default function BinsPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 }
 
@@ -656,7 +662,7 @@ function OrderCard({ order, onCancel, cancelling, past, highlighted, cardRef }: 
     <div
       ref={cardRef}
       className={cn(
-        "bg-card border-2 p-5 transition-colors",
+        "hb-feed-item bg-card border-2 p-5 transition-colors",
         past ? "opacity-70" : "",
         highlighted ? "border-violet-500 bg-violet-500/5" : "border-border",
       )}

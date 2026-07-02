@@ -1,6 +1,6 @@
 import { useLocation, useParams } from "wouter";
 import { format } from "date-fns";
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, MapPin, Calendar, Truck, HardHat, DollarSign, 
   Clock, Flag, CheckCircle2, Navigation, Loader2, Camera, MessageSquare, Plus,
@@ -44,6 +44,19 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { storagePublicUrl, uploadFileToStorage } from "@/lib/storageUpload";
+import {
+  EmptyStatePanel,
+  ErrorStatePanel,
+  LiveRefreshBadge,
+  LoadingCardGrid,
+  PageTransition,
+  RouteProgressPreview,
+} from "@/components/realtime/microinteractions";
+import {
+  liveQueryOptions,
+  useChangedValueToast,
+  useLatestStatusToast,
+} from "@/hooks/use-realtime-feedback";
 
 async function apiFetch(path: string, options?: RequestInit) {
   const url = path.startsWith("/api") ? path : `/api${path.startsWith("/") ? path : `/${path}`}`;
@@ -106,6 +119,7 @@ function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean
     queryKey: ["evidence", jobId],
     queryFn: () => apiFetch(`/jobs/${jobId}/evidence`),
     enabled: !!jobId,
+    ...liveQueryOptions,
   });
 
   const submit = useMutation({
@@ -122,7 +136,7 @@ function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["evidence", jobId] });
-      toast({ title: "Evidence submitted" });
+      toast({ title: "Ticket uploaded", description: "Proof of delivery is now attached to this job." });
       setForm({ photoCaption: "", siteNotes: "" });
       setPhotoFile(null);
       setShowForm(false);
@@ -691,11 +705,37 @@ const STATUS_UPDATE_LABEL: Record<string, string> = {
   completed: "Completed",
 };
 
+function getJobStatusToastCopy(status: string | number) {
+  const value = String(status);
+  if (value === "accepted" || value === "active") {
+    return { title: "Driver accepted", description: "The job is accepted and ready for dispatch." };
+  }
+  if (value === "in_progress") {
+    return { title: "Driver arrived", description: "The job is now in progress." };
+  }
+  if (value === "completed") {
+    return { title: "Job completed", description: "Review tickets, proof, and payment." };
+  }
+  return null;
+}
+
+function getPaymentStatusToastCopy(status: string | number) {
+  const value = String(status);
+  if (value === "paid" || value === "released") {
+    return { title: "Payment received", description: "The payment status has updated." };
+  }
+  if (value === "requires_action" || value === "failed") {
+    return { title: "Payment needs attention", description: "Review the payment panel." };
+  }
+  return null;
+}
+
 function HaulTicketsPanel({ jobId }: { jobId: number }) {
   const { data, isLoading } = useQuery({
     queryKey: ["tickets", jobId],
     queryFn: () => apiFetch(`/jobs/${jobId}/tickets`),
     enabled: !!jobId,
+    ...liveQueryOptions,
   });
   const tickets = (data?.tickets ?? []) as any[];
 
@@ -711,7 +751,7 @@ function HaulTicketsPanel({ jobId }: { jobId: number }) {
       </h3>
       <div className="space-y-3">
         {tickets.map((t) => (
-          <div key={t.id} className="bg-muted/20 border border-border p-4 space-y-2">
+          <div key={t.id} className="hb-feed-item bg-muted/20 border border-border p-4 space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="font-bold text-sm">Load #{t.loadNumber}</span>
               <Badge variant="outline" className="rounded-none text-xs uppercase">{t.status.replace("_", " ")}</Badge>
@@ -901,8 +941,11 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
 }
 
 function StatusTimeline({ jobId }: { jobId: number }) {
-  const { data: updates, isLoading } = useListJobStatusUpdates(jobId);
+  const { data: updates, isLoading } = useListJobStatusUpdates(jobId, {
+    query: liveQueryOptions as any,
+  });
   const items = updates ?? [];
+  useLatestStatusToast(items);
 
   if (isLoading) {
     return <div className="border-t-2 border-border p-6 md:p-8"><Skeleton className="h-24 w-full" /></div>;
@@ -916,8 +959,8 @@ function StatusTimeline({ jobId }: { jobId: number }) {
       </h3>
       <div className="space-y-3">
         {items.map((u) => (
-          <div key={u.id} className="flex items-start gap-3">
-            <div className="mt-1 w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0" />
+          <div key={u.id} className="hb-feed-item flex items-start gap-3">
+            <div className="hb-live-dot mt-1 w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0" />
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-sm">{STATUS_UPDATE_LABEL[u.status] ?? u.status}</span>
@@ -955,7 +998,7 @@ function AssignDriverPanel({ job }: { job: Job }) {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(job.id) });
         queryClient.invalidateQueries({ queryKey: ["tickets", job.id] });
-        toast({ title: "Driver assigned", description: "A load ticket has been created." });
+        toast({ title: "New dispatch", description: "Driver assigned and load ticket created." });
         setDriverId("");
         setTruckId("");
       },
@@ -1153,8 +1196,8 @@ export default function JobDetailPage() {
   const queryClient = useQueryClient();
 
   const { data: profile } = useGetMyProfile();
-  const { data: job, isLoading } = useGetJob(id, {
-    query: { enabled: !!id } as any
+  const { data: job, isLoading, isFetching, isError } = useGetJob(id, {
+    query: { enabled: !!id, ...liveQueryOptions } as any
   });
 
   const updateJob = useUpdateJob();
@@ -1165,6 +1208,10 @@ export default function JobDetailPage() {
   const isProvider = profile?.role === "provider";
   const isDriver = profile?.role === "driver";
   const canUploadEvidence = isProvider || isDriver;
+  const statusToastCopy = useCallback(getJobStatusToastCopy, []);
+  const paymentToastCopy = useCallback(getPaymentStatusToastCopy, []);
+  useChangedValueToast({ value: job?.status, getCopy: statusToastCopy });
+  useChangedValueToast({ value: job?.paymentStatus, getCopy: paymentToastCopy });
 
   const refreshJob = () => queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(id) });
 
@@ -1230,29 +1277,45 @@ export default function JobDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <Skeleton className="h-10 w-48" />
+      <PageTransition className="max-w-4xl mx-auto space-y-6">
+        <LoadingCardGrid count={1} itemClassName="h-10 w-48" />
         <Skeleton className="h-64 w-full" />
         <Skeleton className="h-64 w-full" />
-      </div>
+      </PageTransition>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageTransition className="max-w-4xl mx-auto space-y-6">
+        <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/jobs")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Jobs
+        </Button>
+        <ErrorStatePanel title="Job unavailable" description="Live dispatch details could not be refreshed." />
+      </PageTransition>
     );
   }
 
   if (!job) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-20">
-        <h2 className="text-2xl font-bold">Job not found</h2>
-        <Button className="mt-4" onClick={() => setLocation("/jobs")}>Back to Jobs</Button>
-      </div>
+      <PageTransition className="max-w-4xl mx-auto py-20">
+        <EmptyStatePanel title="Job not found" description="This job may have been removed or is no longer visible.">
+          <Button className="mt-4" onClick={() => setLocation("/jobs")}>Back to Jobs</Button>
+        </EmptyStatePanel>
+      </PageTransition>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/jobs")}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Jobs
-      </Button>
+    <PageTransition className="max-w-5xl mx-auto space-y-6 pb-12">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button variant="ghost" className="-ml-4" onClick={() => setLocation("/jobs")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Jobs
+        </Button>
+        <LiveRefreshBadge isFetching={isFetching} label="ETA live" />
+      </div>
 
       <div className="bg-card border-2 border-border shadow-sm overflow-hidden">
         {/* Header */}
@@ -1420,8 +1483,12 @@ export default function JobDetailPage() {
                 <MapPin className="h-5 w-5 text-muted-foreground" />
                 Route Information
               </h3>
+              <RouteProgressPreview
+                status={job.status}
+                etaLabel={job.status === "completed" ? "Complete" : "ETA updating"}
+              />
               
-              <div className="relative pl-8 pb-8">
+              <div className="relative pl-8 pb-8 mt-5">
                 <div className="absolute left-3 top-2 bottom-0 w-0.5 bg-border border-dashed border-l-2"></div>
                 <div className="absolute left-[9px] top-2 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-background"></div>
                 
@@ -1476,6 +1543,6 @@ export default function JobDetailPage() {
 
         <EvidencePanel jobId={id} canUpload={canUploadEvidence} />
       </div>
-    </div>
+    </PageTransition>
   );
 }

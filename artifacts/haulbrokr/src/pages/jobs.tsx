@@ -5,11 +5,21 @@ import { useListJobs, useGetMyProfile } from "@workspace/api-client-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  EmptyStatePanel,
+  ErrorStatePanel,
+  LiveRefreshBadge,
+  LoadingCardGrid,
+  PageTransition,
+  RouteProgressPreview,
+} from "@/components/realtime/microinteractions";
+import { liveQueryOptions } from "@/hooks/use-realtime-feedback";
 
 export default function JobsPage() {
   const { data: profile } = useGetMyProfile();
-  const { data: jobs, isLoading } = useListJobs();
+  const { data: jobs, isLoading, isFetching, isError } = useListJobs(undefined, {
+    query: liveQueryOptions as any,
+  });
   
   const isCustomer = profile?.role === "customer";
 
@@ -27,20 +37,23 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Active Jobs</h1>
-        <p className="text-muted-foreground">Track and manage accepted hauling jobs.</p>
+    <PageTransition className="space-y-6 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Active Jobs</h1>
+          <p className="text-muted-foreground">Track and manage accepted hauling jobs.</p>
+        </div>
+        <LiveRefreshBadge isFetching={isFetching} />
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-40 w-full rounded-none" />)}
-        </div>
+      {isError ? (
+        <ErrorStatePanel title="Jobs unavailable" description="Live job progress could not be refreshed." />
+      ) : isLoading ? (
+        <LoadingCardGrid count={4} className="grid-cols-1 lg:grid-cols-2" itemClassName="h-40" />
       ) : jobs && jobs.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {jobs.map(job => (
-            <div key={job.id} className="bg-card border-2 border-border hover:border-primary/50 transition-colors flex flex-col">
+            <div key={job.id} className="hb-feed-item bg-card border-2 border-border hover:border-primary/50 transition-colors flex flex-col">
               <div className="p-5 border-b border-border/50 flex justify-between items-start bg-muted/10">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -78,6 +91,13 @@ export default function JobsPage() {
                   </p>
                 </div>
               </div>
+              <div className="px-5 pb-5">
+                <RouteProgressPreview
+                  status={job.status}
+                  label="Job progress"
+                  etaLabel={job.status === "completed" ? "Complete" : "ETA updating"}
+                />
+              </div>
               
               <div className="p-4 bg-muted/30 border-t border-border mt-auto">
                 <Link href={`/jobs/${job.id}`}>
@@ -91,21 +111,23 @@ export default function JobsPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-card border-2 border-dashed border-border p-12 text-center">
-          <Briefcase className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-          <h3 className="text-xl font-bold mb-2">No active jobs</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            {isCustomer 
-              ? "You don't have any active hauling jobs yet. Accept a bid on one of your open requests to create a job." 
-              : "You don't have any active hauling jobs yet. Place bids on open requests to secure work."}
-          </p>
+        <EmptyStatePanel
+          icon={Briefcase}
+          title="No active jobs"
+          description={
+            isCustomer
+              ? "Accept a bid on one of your open requests to create a job."
+              : "Place bids on open requests to secure work."
+          }
+          className="p-12"
+        >
           <Link href="/requests">
             <Button className="font-bold rounded-none h-12 px-8">
               {isCustomer ? "View Requests" : "Browse Job Board"}
             </Button>
           </Link>
-        </div>
+        </EmptyStatePanel>
       )}
-    </div>
+    </PageTransition>
   );
 }
