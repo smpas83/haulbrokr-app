@@ -47,6 +47,61 @@ vi.mock("@workspace/api-client-react", () => ({
     isLoading: false,
   }),
   useGetAccountStatus: () => ({ data: { profileComplete: true } }),
+  useListTrucks: () => ({
+    data: [
+      {
+        id: 1,
+        ownerId: 1,
+        ownerCompany: "Acme Hauling",
+        truckType: "dump_truck",
+        capacityTons: 18,
+        ratePerHour: 125,
+        truckNumber: "7",
+        assignedDriverId: null,
+        isAvailable: true,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    isLoading: false,
+  }),
+  useListJobs: () => ({
+    data: [
+      {
+        id: 7,
+        requestId: 1,
+        bidId: 1,
+        customerId: 1,
+        customerCompany: "Builder Co",
+        providerId: 2,
+        providerCompany: "Acme Hauling",
+        ratePerHour: 125,
+        trucksAssigned: 1,
+        status: "active",
+        materialType: "dirt",
+        truckType: "dump_truck",
+        pickupAddress: "100 Main St",
+        deliveryAddress: "200 State St",
+        scheduledDate: new Date().toISOString(),
+        startTime: "08:00",
+        estimatedHours: 4,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    isLoading: false,
+  }),
+  useListOrgMembers: () => ({
+    data: {
+      members: [
+        {
+          id: 3,
+          role: "driver",
+          contactName: "Taylor Driver",
+          companyName: "Acme Hauling",
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    },
+  }),
 }));
 
 // recharts needs ResizeObserver/layout jsdom can't provide and is irrelevant
