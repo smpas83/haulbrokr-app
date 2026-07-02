@@ -4,6 +4,7 @@ import { db, bidsTable, requestsTable, profilesTable, jobsTable, activityTable }
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { getCarrierComplianceSnapshot } from "../lib/adminComplianceBundle";
 import { describeCanBidBlockers } from "../lib/providerCompliance";
+import { recordJobTimelineEvent } from "../lib/jobTimeline";
 import {
   ListBidsParams,
   ListBidsResponse,
@@ -238,7 +239,7 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
 
     const [provider] = await db.select().from(profilesTable).where(eq(profilesTable.id, existingBid.providerId));
 
-    await db.insert(jobsTable).values({
+    const [createdJob] = await db.insert(jobsTable).values({
       requestId: request.id,
       bidId: existingBid.id,
       customerId: request.customerId,
@@ -253,8 +254,15 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       scheduledDate: request.scheduledDate,
       startTime: request.startTime,
       estimatedHours: request.estimatedHours,
+      brokerMarginType: request.brokerMarginType,
+      brokerMarginValue: request.brokerMarginValue,
+      platformFeeRate: request.brokerMarginType === "percentage" ? request.brokerMarginValue : "0",
+      pricingRules: request.pricingRules,
       notes: request.notes,
-    });
+    }).returning();
+    if (createdJob) {
+      await recordJobTimelineEvent(createdJob.id, profile.id, "job_created", { note: "Job created from accepted bid" });
+    }
 
     await db.update(requestsTable).set({ status: "awarded" }).where(eq(requestsTable.id, request.id));
     await db
