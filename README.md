@@ -53,6 +53,9 @@ pnpm run build       # typecheck + build all packages
 
 ## Documentation
 
+- **[ENGINEERING_STATUS.md](./ENGINEERING_STATUS.md)** — current implementation status and blockers
+- **[DESIGN_IMPLEMENTATION_GUIDE.md](./DESIGN_IMPLEMENTATION_GUIDE.md)** — frontend design implementation contract
+- **[BETA_TEST_REPORT.md](./BETA_TEST_REPORT.md)** — beta verification baseline and test results
 - **[docs/DEPLOY-VERCEL-RENDER.md](./docs/DEPLOY-VERCEL-RENDER.md)** — **production deploy** (Vercel + Render + Neon)
 - **[docs/HAULBROKR_AUDIT.md](./docs/HAULBROKR_AUDIT.md)** — architecture audit and launch checklist
 - **[MIGRATION_TO_CURSOR.md](./MIGRATION_TO_CURSOR.md)** — local dev, environment variables
