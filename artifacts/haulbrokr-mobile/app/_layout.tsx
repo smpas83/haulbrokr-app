@@ -11,7 +11,7 @@ import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-
 import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, AppState, type AppStateStatus, Platform, View } from "react-native";
+import { ActivityIndicator, AppState, type AppStateStatus, Platform, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -104,9 +104,27 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError, authStorageReady]);
 
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+  const clerkKeyInvalid =
+    !publishableKey ||
+    publishableKey.includes("xxx") ||
+    publishableKey.includes("...") ||
+    !/^pk_(test|live)_/.test(publishableKey);
 
   if ((!fontsLoaded && !fontError) || !authStorageReady) {
     return null;
+  }
+
+  if (clerkKeyInvalid) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#1e2235", justifyContent: "center", padding: 24 }}>
+        <Text style={{ color: "#f87171", fontFamily: "Inter_600SemiBold", fontSize: 16, textAlign: "center", marginBottom: 12 }}>
+          Clerk key missing or invalid
+        </Text>
+        <Text style={{ color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21 }}>
+          Set exactly one EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in .env to your real pk_live_... or pk_test_... value, then restart Expo with --clear.
+        </Text>
+      </View>
+    );
   }
 
   return (
