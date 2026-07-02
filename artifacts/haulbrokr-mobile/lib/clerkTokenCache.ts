@@ -127,3 +127,23 @@ export function reloadApp() {
     // Fall back to navigation-only reset when reload isn't available.
   }
 }
+
+const SIGN_OUT_TIMEOUT_MS = 3_000;
+
+/** Clerk signOut() can hang forever when isLoaded is false — never block on it. */
+export async function signOutWithTimeout(
+  signOut: () => Promise<void>,
+  isLoaded: boolean
+): Promise<void> {
+  if (!isLoaded) return;
+  try {
+    await Promise.race([
+      signOut(),
+      new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error("signOut timed out")), SIGN_OUT_TIMEOUT_MS)
+      ),
+    ]);
+  } catch {
+    // Local session tokens are cleared separately; reload finishes the reset.
+  }
+}

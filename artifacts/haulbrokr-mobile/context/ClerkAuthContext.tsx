@@ -1,10 +1,9 @@
 import { useAuth } from "@clerk/expo";
 import { setAuthTokenGetter, setBaseUrl } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { router } from "expo-router";
 import React, { createContext, useCallback, useContext, useEffect } from "react";
 
-import { clearClerkSessionTokens, markPendingSignOut, reloadApp } from "@/lib/clerkTokenCache";
+import { clearClerkSessionTokens, markPendingSignOut, reloadApp, signOutWithTimeout } from "@/lib/clerkTokenCache";
 
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 
@@ -37,17 +36,14 @@ export function ClerkAuthProvider({ children }: { children: React.ReactNode }) {
   }, [isSignedIn, getToken]);
 
   const signOutAndReset = useCallback(async () => {
+    if (__DEV__) console.log("SIGNOUT: clearing session");
     await markPendingSignOut();
     queryClient.clear();
     await clearClerkSessionTokens();
-    try {
-      await signOut();
-    } catch {
-      // Tokens are already cleared; reload will finish the reset.
-    }
+    await signOutWithTimeout(signOut, isLoaded);
+    if (__DEV__) console.log("SIGNOUT: reloading app");
     reloadApp();
-    router.replace("/sign-in" as any);
-  }, [queryClient, signOut]);
+  }, [queryClient, signOut, isLoaded]);
 
   return (
     <ClerkAuthContext.Provider value={{ isSignedIn: !!isSignedIn, isLoaded: !!isLoaded, userId: userId ?? null, getToken, signOutAndReset }}>
