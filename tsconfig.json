@@ -4,6 +4,48 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/agents"
+    },
+    {
+      "path": "./packages/memory"
+    },
+    {
+      "path": "./packages/integrations"
+    },
+    {
+      "path": "./packages/workflows"
+    },
+    {
+      "path": "./packages/ui"
+    },
+    {
+      "path": "./packages/analytics"
+    },
+    {
+      "path": "./packages/notifications"
+    },
+    {
+      "path": "./packages/voice"
+    },
+    {
+      "path": "./companies/haulbrokr"
+    },
+    {
+      "path": "./companies/merchnow"
+    },
+    {
+      "path": "./companies/gwfg"
+    },
+    {
+      "path": "./companies/stratus"
+    },
+    {
+      "path": "./companies/personal"
+    },
+    {
+      "path": "./apps/api"
+    },
+    {
       "path": "./lib/db"
     },
     {

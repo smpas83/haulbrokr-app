@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../agents"
+    },
+    {
+      "path": "../analytics"
+    },
+    {
+      "path": "../integrations"
+    },
+    {
+      "path": "../memory"
+    },
+    {
+      "path": "../notifications"
+    }
+  ]
+}

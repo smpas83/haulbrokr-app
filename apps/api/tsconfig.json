@@ -1,0 +1,42 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["es2022"],
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"]
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../../packages/agents"
+    },
+    {
+      "path": "../../packages/integrations"
+    },
+    {
+      "path": "../../packages/memory"
+    },
+    {
+      "path": "../../packages/voice"
+    },
+    {
+      "path": "../../packages/workflows"
+    },
+    {
+      "path": "../../companies/haulbrokr"
+    },
+    {
+      "path": "../../companies/merchnow"
+    },
+    {
+      "path": "../../companies/gwfg"
+    },
+    {
+      "path": "../../companies/stratus"
+    },
+    {
+      "path": "../../companies/personal"
+    }
+  ]
+}

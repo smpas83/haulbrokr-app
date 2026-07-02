@@ -1,0 +1,33 @@
+{
+  "name": "@kip/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx src/index.ts",
+    "lint": "eslint . --max-warnings=0",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@kip/agents": "workspace:*",
+    "@kip/company-gwfg": "workspace:*",
+    "@kip/company-haulbrokr": "workspace:*",
+    "@kip/company-merchnow": "workspace:*",
+    "@kip/company-personal": "workspace:*",
+    "@kip/company-stratus": "workspace:*",
+    "@kip/integrations": "workspace:*",
+    "@kip/memory": "workspace:*",
+    "@kip/voice": "workspace:*",
+    "@kip/workflows": "workspace:*",
+    "express": "^5.2.1",
+    "tsx": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

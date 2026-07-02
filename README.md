@@ -1,6 +1,34 @@
-# HaulBrokr
+# Kash Intelligence Platform
 
-An "Uber for dump trucks" — a hauling marketplace connecting customers who need
+This repository now contains the Kash Intelligence Platform foundation alongside
+the existing HaulBrokr production artifacts. Kash AI OS is the interface; KIP is
+the reusable multi-business platform for agents, memory, workflows, analytics,
+voice, integrations, and governance.
+
+## KIP foundation
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm --filter @kip/dashboard dev
+pnpm --filter @kip/admin dev
+pnpm --filter @kip/voice-app dev
+pnpm --filter @kip/api dev
+```
+
+KIP workspaces:
+
+- HaulBrokr
+- MerchNow
+- Golden West Food Group
+- Stratus Group
+- Personal
+
+See [docs/KIP_ARCHITECTURE.md](./docs/KIP_ARCHITECTURE.md) for the KIP architecture, package graph, memory model, agents, integrations, and remaining production work.
+
+## HaulBrokr
+
+An "Uber for dump trucks" - a hauling marketplace connecting customers who need
 material hauled with truck providers. This is a **pnpm monorepo** containing the
 backend API, a web app, a mobile app (iOS + Android via Expo), a pitch deck, a promo,
 and shared libraries.

@@ -1,0 +1,39 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "jsx": "preserve",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "module": "esnext",
+    "noEmit": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "../../packages/workflows"
+    },
+    {
+      "path": "../../companies/haulbrokr"
+    },
+    {
+      "path": "../../companies/merchnow"
+    },
+    {
+      "path": "../../companies/gwfg"
+    },
+    {
+      "path": "../../companies/stratus"
+    },
+    {
+      "path": "../../companies/personal"
+    }
+  ]
+}
