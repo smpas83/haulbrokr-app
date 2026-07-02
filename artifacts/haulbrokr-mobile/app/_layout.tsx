@@ -7,7 +7,6 @@ import {
 } from "@expo-google-fonts/inter";
 import { Feather } from "@expo/vector-icons";
 import { ClerkProvider, useAuth } from "@clerk/expo";
-import * as SecureStore from "expo-secure-store";
 import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -18,9 +17,11 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ClerkBootstrap } from "@/components/ClerkBootstrap";
 import { AppProvider } from "@/context/AppContext";
 import { ClerkAuthProvider } from "@/context/ClerkAuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { clerkTokenCache } from "@/lib/clerkTokenCache";
 import { useMyProfile } from "@/hooks/useLiveApi";
 
 SplashScreen.preventAutoHideAsync();
@@ -40,17 +41,7 @@ if (Platform.OS !== "web") {
   });
 }
 
-const tokenCache = {
-  async getToken(key: string) {
-    try { return await SecureStore.getItemAsync(key); } catch { return null; }
-  },
-  async saveToken(key: string, value: string) {
-    try { await SecureStore.setItemAsync(key, value); } catch {}
-  },
-  async clearToken(key: string) {
-    try { await SecureStore.deleteItemAsync(key); } catch {}
-  },
-};
+const tokenCache = clerkTokenCache;
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useAuth();
@@ -93,7 +84,8 @@ export default function RootLayout() {
         <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
           <QueryClientProvider client={queryClient}>
             <ClerkAuthProvider>
-              <GestureHandlerRootView style={{ flex: 1 }}>
+              <ClerkBootstrap publishableKey={publishableKey}>
+                <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
                   <LanguageProvider>
                     <AppProvider>
@@ -125,6 +117,7 @@ export default function RootLayout() {
                   </LanguageProvider>
                 </KeyboardProvider>
               </GestureHandlerRootView>
+              </ClerkBootstrap>
             </ClerkAuthProvider>
           </QueryClientProvider>
         </ClerkProvider>

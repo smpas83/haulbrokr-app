@@ -44,6 +44,7 @@
       "favicon": "./assets/images/app-icon-v2.png"
     },
     "plugins": [
+      "@clerk/expo",
       [
         "expo-router",
         {
