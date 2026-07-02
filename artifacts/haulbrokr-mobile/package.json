@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "sh scripts/dev.sh",
     "dev:client": "expo start --dev-client",
-    "ios": "expo run:ios",
+    "ios": "expo run:ios --simulator",
     "android": "expo run:android",
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
