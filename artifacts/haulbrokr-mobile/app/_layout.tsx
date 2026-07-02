@@ -7,7 +7,6 @@ import {
 } from "@expo-google-fonts/inter";
 import { Feather } from "@expo/vector-icons";
 import { ClerkProvider, useAuth } from "@clerk/expo";
-import * as SecureStore from "expo-secure-store";
 import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -22,6 +21,7 @@ import { AppProvider } from "@/context/AppContext";
 import { ClerkAuthProvider } from "@/context/ClerkAuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { useMyProfile } from "@/hooks/useLiveApi";
+import { tokenCache } from "@/lib/clerkTokenCache";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,18 +39,6 @@ if (Platform.OS !== "web") {
     return () => subscription.remove();
   });
 }
-
-const tokenCache = {
-  async getToken(key: string) {
-    try { return await SecureStore.getItemAsync(key); } catch { return null; }
-  },
-  async saveToken(key: string, value: string) {
-    try { await SecureStore.setItemAsync(key, value); } catch {}
-  },
-  async clearToken(key: string) {
-    try { await SecureStore.deleteItemAsync(key); } catch {}
-  },
-};
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useAuth();
