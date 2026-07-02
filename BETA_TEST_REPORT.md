@@ -77,4 +77,11 @@ Generated: 2026-07-02
 
 ## Latest Test Results
 
-Pending current sprint verification.
+- `pnpm run typecheck`: passed.
+- `pnpm --filter @workspace/api-server run test`: passed, 28 files / 325 tests.
+- `pnpm --filter @workspace/haulbrokr run test`: passed, 5 files / 11 tests.
+- `pnpm --filter @workspace/haulbrokr-mobile run test`: passed, 9 files / 68 tests.
+- `DATABASE_URL=postgres://haulbrokr:haulbrokr@localhost:5432/haulbrokr?sslmode=disable pnpm --filter @workspace/api-server run test:integration`: passed, 29 files / 338 tests.
+- `pnpm run build`: passed.
+- `EXPO_PUBLIC_DOMAIN=haulbrokr.com pnpm --filter @workspace/haulbrokr-mobile run build`: passed.
+- `SKIP_ENDPOINT_CHECKS=1 pnpm run verify:deployment`: failed because this environment does not have the required production/staging credentials.

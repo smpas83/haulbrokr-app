@@ -47,7 +47,14 @@ The codebase supports the core marketplace workflow across customer, provider, d
 
 ## Latest Build and Test Results
 
-Pending current sprint verification.
+- `pnpm run typecheck`: passed.
+- `pnpm --filter @workspace/api-server run test`: passed, 28 files / 325 tests.
+- `pnpm --filter @workspace/haulbrokr run test`: passed, 5 files / 11 tests.
+- `pnpm --filter @workspace/haulbrokr-mobile run test`: passed, 9 files / 68 tests.
+- `DATABASE_URL=postgres://haulbrokr:haulbrokr@localhost:5432/haulbrokr?sslmode=disable pnpm --filter @workspace/api-server run test:integration`: passed, 29 files / 338 tests.
+- `pnpm run build`: passed for API, web, deck, promo, mockup sandbox, and shared packages.
+- `EXPO_PUBLIC_DOMAIN=haulbrokr.com pnpm --filter @workspace/haulbrokr-mobile run build`: passed for iOS and Android bundles/manifests.
+- `SKIP_ENDPOINT_CHECKS=1 pnpm run verify:deployment`: failed as expected in this environment because launch-critical production credentials are not configured.
 
 ## Deployment Status
 
