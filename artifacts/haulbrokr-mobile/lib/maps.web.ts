@@ -31,6 +31,7 @@ function MapView({ children, style, initialRegion, onRegionChange }: {
 
 export function Marker(_props: any) { return null; }
 export function Circle(_props: any) { return null; }
+export function Polyline(_props: any) { return null; }
 
 const webStyles = StyleSheet.create({
   map:         { flex: 1, backgroundColor: "#0f172a", overflow: "hidden" },
