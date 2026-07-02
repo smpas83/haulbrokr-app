@@ -1,4 +1,5 @@
-import { useClerk, useSSO } from "@clerk/expo";
+import { useAuth, useSSO } from "@clerk/expo";
+import { useSignIn, useSignUp } from "@clerk/expo/legacy";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as AuthSession from "expo-auth-session";
@@ -20,6 +21,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { clearClerkSessionTokens, reloadApp } from "@/lib/clerkTokenCache";
+
 type Mode = "signin" | "signup";
 type Step = "email" | "otp";
 
@@ -28,9 +31,12 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
-  const clerk = useClerk() as any;
+  const { isLoaded: authLoaded } = useAuth();
+  const { isLoaded: signInLoaded, signIn, setActive: setSignInActive } = useSignIn();
+  const { isLoaded: signUpLoaded, signUp, setActive: setSignUpActive } = useSignUp();
   const { startSSOFlow } = useSSO();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
+  const [authStuck, setAuthStuck] = useState(false);
 
   // Preload browser on Android so OAuth pops faster
   useEffect(() => {
@@ -38,6 +44,20 @@ export default function SignInScreen() {
     void WebBrowser.warmUpAsync();
     return () => { void WebBrowser.coolDownAsync(); };
   }, []);
+
+  useEffect(() => {
+    if (authLoaded && signInLoaded && signUpLoaded) {
+      setAuthStuck(false);
+      return;
+    }
+    const timer = setTimeout(() => setAuthStuck(true), 6000);
+    return () => clearTimeout(timer);
+  }, [authLoaded, signInLoaded, signUpLoaded]);
+
+  const handleResetAuth = async () => {
+    await clearClerkSessionTokens();
+    reloadApp();
+  };
 
   const handleSSO = async (strategy: "oauth_google" | "oauth_apple") => {
     const which = strategy === "oauth_google" ? "google" : "apple";
@@ -71,14 +91,6 @@ export default function SignInScreen() {
     }
   };
 
-  const clerkLoaded = !!clerk?.loaded;
-  const signIn = clerk?.client?.signIn;
-  const signUp = clerk?.client?.signUp;
-  const setSignInActive = clerk?.setActive?.bind(clerk);
-  const setSignUpActive = clerk?.setActive?.bind(clerk);
-  const signInLoaded = clerkLoaded && !!signIn;
-  const signUpLoaded = clerkLoaded && !!signUp;
-
   const [mode, setMode] = useState<Mode>("signin");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -94,7 +106,7 @@ export default function SignInScreen() {
       setError("Please enter your email address.");
       return;
     }
-    if (!clerkReady) {
+    if (!clerkReady || !signIn || !signUp || !setSignInActive || !setSignUpActive) {
       setError("Authentication is initialising. Please wait a moment.");
       return;
     }
@@ -105,8 +117,8 @@ export default function SignInScreen() {
         try {
           await signIn.create({ identifier: email.trim() });
           const firstFactor = signIn.supportedFirstFactors?.find(
-            (f: any) => f.strategy === "email_code"
-          );
+            (f) => f.strategy === "email_code"
+          ) as { strategy: "email_code"; emailAddressId: string } | undefined;
           if (firstFactor) {
             await signIn.prepareFirstFactor({
               strategy: "email_code",
@@ -140,8 +152,8 @@ export default function SignInScreen() {
             setMode("signin");
             await signIn.create({ identifier: email.trim() });
             const firstFactor = signIn.supportedFirstFactors?.find(
-              (f: any) => f.strategy === "email_code"
-            );
+              (f) => f.strategy === "email_code"
+            ) as { strategy: "email_code"; emailAddressId: string } | undefined;
             if (firstFactor) {
               await signIn.prepareFirstFactor({
                 strategy: "email_code",
@@ -167,6 +179,10 @@ export default function SignInScreen() {
     setError("");
     if (!code.trim()) {
       setError("Please enter the 6-digit code from your email.");
+      return;
+    }
+    if (!signIn || !signUp || !setSignInActive || !setSignUpActive) {
+      setError("Authentication is initialising. Please wait a moment.");
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -336,8 +352,13 @@ export default function SignInScreen() {
               )}
             </Pressable>
 
-            {!clerkReady && (
+            {!clerkReady && !authStuck && (
               <Text style={styles.initText}>Authentication initialising…</Text>
+            )}
+            {authStuck && (
+              <Pressable onPress={() => void handleResetAuth()} style={styles.resetRow}>
+                <Text style={styles.resetText}>Auth stuck? Tap to reset and reload</Text>
+              </Pressable>
             )}
           </>
         ) : (
@@ -486,6 +507,10 @@ const styles = StyleSheet.create({
   initText: {
     color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 12,
     textAlign: "center", marginTop: -4,
+  },
+  resetRow: { marginTop: 4, paddingVertical: 8 },
+  resetText: {
+    color: "#e9a600", fontFamily: "Inter_600SemiBold", fontSize: 13, textAlign: "center",
   },
   codeHint: {
     flexDirection: "row", alignItems: "center", gap: 6,

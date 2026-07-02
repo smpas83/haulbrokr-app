@@ -44,6 +44,7 @@
       "favicon": "./assets/images/app-icon-v2.png"
     },
     "plugins": [
+      "@clerk/expo",
       [
         "expo-router",
         {
@@ -97,8 +98,7 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
     "extra": {
       "eas": {

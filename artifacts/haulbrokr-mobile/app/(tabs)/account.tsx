@@ -9,7 +9,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
-import { useAuth } from "@clerk/expo";
+import { useClerkAuth } from "@/context/ClerkAuthContext";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/RefreshingIndicator";
@@ -46,7 +46,7 @@ export default function AccountScreen() {
   const [notifBids, setNotifBids] = useState(true);
   const [notifJobs, setNotifJobs] = useState(true);
   const [notifPayments, setNotifPayments] = useState(true);
-  const { signOut } = useAuth();
+  const { signOutAndReset } = useClerkAuth();
   const complianceQuery = useCompliance();
   const submitCompliance = useSubmitCompliance();
   const verifyCompliance = useVerifyCompliance();
@@ -339,8 +339,7 @@ export default function AccountScreen() {
                   { text: "Cancel", style: "cancel" },
                   { text: "Sign Out", style: "destructive", onPress: async () => {
                     try {
-                      await signOut();
-                      router.replace("/sign-in" as any);
+                      await signOutAndReset();
                     } catch (err: any) {
                       Alert.alert("Sign out failed", err?.message ?? "Please try again.");
                     }
@@ -1013,8 +1012,7 @@ export default function AccountScreen() {
               { text: "Cancel", style: "cancel" },
               { text: "Sign Out", style: "destructive", onPress: async () => {
                 try {
-                  await signOut();
-                  router.replace("/sign-in" as any);
+                  await signOutAndReset();
                 } catch (err: any) {
                   Alert.alert("Sign out failed", err?.message ?? "Please try again.");
                 }
