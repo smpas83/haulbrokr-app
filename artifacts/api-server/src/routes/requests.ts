@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, or, sql } from "drizzle-orm";
-import { db, requestsTable, profilesTable, bidsTable, activityTable } from "@workspace/db";
+import { db, requestsTable, profilesTable, bidsTable, activityTable, dumpSitesTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
   ListRequestsQueryParams,
@@ -26,9 +26,20 @@ function serializeRequest(
     quantityTons: parseFloat(r.quantityTons),
     estimatedHours: parseFloat(r.estimatedHours),
     budgetPerHour: r.budgetPerHour ? parseFloat(r.budgetPerHour) : null,
+    dropoffFacilityId: r.dropoffFacilityId ?? null,
+    dropoffInstructions: r.dropoffInstructions ?? null,
     customerCompany,
     bidCount,
   };
+}
+
+async function loadActiveDropoffFacility(dropoffFacilityId: number | null | undefined) {
+  if (dropoffFacilityId == null) return null;
+  const [facility] = await db
+    .select()
+    .from(dumpSitesTable)
+    .where(and(eq(dumpSitesTable.id, dropoffFacilityId), eq(dumpSitesTable.isActive, true)));
+  return facility ?? null;
 }
 
 router.get("/requests", requireProfile, async (req, res): Promise<void> => {
@@ -78,6 +89,11 @@ router.post("/requests", requireProfile, async (req, res): Promise<void> => {
   const parsed = CreateRequestBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const dropoffFacility = await loadActiveDropoffFacility(parsed.data.dropoffFacilityId);
+  if (parsed.data.dropoffFacilityId != null && !dropoffFacility) {
+    res.status(400).json({ error: "Dropoff facility not found or inactive" });
     return;
   }
   const [request] = await db.insert(requestsTable).values({
@@ -166,6 +182,11 @@ router.patch("/requests/:id", requireProfile, async (req, res): Promise<void> =>
   const parsed = UpdateRequestBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const dropoffFacility = await loadActiveDropoffFacility(parsed.data.dropoffFacilityId);
+  if (parsed.data.dropoffFacilityId != null && !dropoffFacility) {
+    res.status(400).json({ error: "Dropoff facility not found or inactive" });
     return;
   }
   const [request] = await db

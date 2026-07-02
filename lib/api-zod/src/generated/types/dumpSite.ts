@@ -17,6 +17,19 @@ export interface DumpSite {
   type: DumpSiteType;
   /** @nullable */
   phone?: string | null;
+  /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
+  /** @nullable */
+  hours?: string | null;
+  acceptedMaterials?: string[];
+  /** @nullable */
+  tippingFeeDetails?: string | null;
+  /** @nullable */
+  paymentMethods?: string | null;
+  /** @nullable */
+  instructions?: string | null;
   isActive: boolean;
   fullAddress?: string;
 }
