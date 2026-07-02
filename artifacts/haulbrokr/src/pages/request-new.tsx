@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useReverseGeocode } from "@/hooks/use-reverse-geocode";
 
 const USA_STATES = [
   { abbr: "AL", name: "Alabama" }, { abbr: "AK", name: "Alaska" }, { abbr: "AZ", name: "Arizona" },
@@ -178,7 +179,12 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
                 className="pl-8 h-9 border-2 rounded-none text-sm focus-visible:ring-primary"
               />
               {search && (
-                <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <button
+                  type="button"
+                  aria-label="Clear dump site search"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
@@ -209,7 +215,7 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
                   key={site.id}
                   type="button"
                   onClick={() => handleSelect(site)}
-                  className="w-full text-left px-4 py-3 hover:bg-primary/5 transition-colors group"
+                  className="w-full text-left px-4 py-3 hover:bg-primary/5 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -264,49 +270,14 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-function useReverseGeocode() {
-  const [geoLoading, setGeoLoading] = useState(false);
-
-  const getAddressFromLocation = useCallback(async (): Promise<string | null> => {
-    if (!navigator.geolocation) return null;
-    setGeoLoading(true);
-    try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-      );
-      const { latitude, longitude } = pos.coords;
-      const resp = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const data = await resp.json();
-      const a = data.address || {};
-      const parts = [
-        a.house_number,
-        a.road,
-        a.city || a.town || a.village || a.county,
-        a.state,
-        a.postcode,
-      ].filter(Boolean);
-      return parts.join(", ") || data.display_name || null;
-    } catch {
-      return null;
-    } finally {
-      setGeoLoading(false);
-    }
-  }, []);
-
-  return { getAddressFromLocation, geoLoading };
-}
-
 export default function NewRequestPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const createRequest = useCreateRequest();
-  const { getAddressFromLocation, geoLoading } = useReverseGeocode();
+  const { getAddress, loading: geoLoading } = useReverseGeocode();
 
   const handleUseMyLocation = async () => {
-    const addr = await getAddressFromLocation();
+    const addr = await getAddress();
     if (addr) {
       form.setValue("pickupAddress", addr, { shouldValidate: true });
       toast({ title: "Location detected", description: addr });
