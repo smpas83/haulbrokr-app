@@ -1,46 +1,54 @@
 # HaulBrokr Engineering Status
 
-## Sprint 19 workflow integrations completed
+## Closed beta recommendation
 
-- Request posting now accepts and returns optional `projectId`, facility identity, facility instructions, facility accepted materials, facility safety notes, facility operating hours, facility phone, facility pricing metadata, broker notes, and driver instructions.
-- Request creation and updates validate `facilityId` against the existing dump-site directory and reject missing or inactive facilities before the request can progress.
-- Bid award now copies request `projectId` plus all facility, broker, driver, and customer note metadata onto the created job.
-- Completed jobs now enter `completionApproval: "pending"` automatically and create customer/provider activity and timeline events for review.
-- Invoice PDF, direct charge, and Stripe Checkout initiation are blocked until completion is approved.
-- Driver job API responses redact customer pricing, broker fee/margin, provider net, facility pricing metadata, and broker-only notes.
-- The OpenAPI contract, generated React Query client, and generated Zod validation schemas were regenerated from the updated workflow fields.
+HaulBrokr is conditionally ready for a controlled closed beta with customers, providers/fleet owners, invited drivers, and staff operators after production credentials and staging smoke tests are completed. Public launch is not recommended until live maps/GPS, SMS/push, accounting sync, stronger audit logging, and scale-oriented database/index work are complete.
+
+## Completed and verified
+
+- Request posting accepts facility and operational metadata, validates active facilities, and preserves that data through bid award into jobs.
+- Bid award copies `projectId`, facility fields, broker notes, driver instructions, customer notes, schedule, material, truck type, and pricing metadata to jobs.
+- Completed jobs move to `completionApproval: "pending"` and invoices, direct charge, and Stripe Checkout are blocked until approval.
+- Driver job API responses redact customer pricing, broker margin, provider net, facility pricing metadata, and broker-only notes.
+- Direct request status mutation is rejected; request status is now controlled by the award, job, and completion workflow.
+- Unassigned drivers cannot post job timeline status updates.
+- Unavailable third-party trucks are hidden from truck detail reads.
+- Simulated QuickBooks connect/sync is blocked in production unless real OAuth credentials are configured.
+- Express now trusts the first production proxy and limits JSON/form bodies to `256kb`.
+- Web accessibility/performance hardening added: zoom is not disabled, reduced-motion is honored, loading states are announced, skip link and nav current state are present, mobile nav has an accessible label, and React Query uses safer defaults.
+- Broken web logo references now point at the existing `logo.svg`.
+- OpenAPI, React Query client types, and Zod schemas were regenerated after workflow contract changes.
 
 ## Remaining production blockers
 
-- Production credentials must be supplied and verified for Stripe, Clerk, Google Maps, email, SMS, push notifications, and object storage.
-- Facility coordinates, geofences, traffic, and live ETA require a maps provider key and real GPS ingestion from driver devices.
-- Email/SMS/push workflow notifications still need provider-specific delivery adapters beyond the current in-app activity feed.
-- Timeline rows do not yet persist actor role or GPS columns; GPS-aware timeline entries require a schema expansion and client payload updates.
-- Material compatibility rules per facility are stored as metadata but need a structured material taxonomy before enforcing wrong-material rejection.
+- Production credentials must be supplied and verified for Neon/Postgres, Clerk, Stripe, Resend, Cloudflare R2/storage, staff secrets, upload/QR secrets, domain configuration, and Google Maps.
+- DB-backed integration tests require a reachable Postgres instance.
+- Mobile static deployment requires `REPLIT_INTERNAL_APP_DOMAIN`, `REPLIT_DEV_DOMAIN`, or `EXPO_PUBLIC_DOMAIN`.
+- Live maps, traffic, GPS, ETA, geofences, and route updates require provider credentials plus real driver GPS ingestion.
+- Email is limited to existing backend paths; SMS and push notification delivery adapters are not implemented.
+- QuickBooks remains out of scope for beta unless live OAuth credentials and sync behavior are implemented.
+- Timeline rows do not yet persist actor role or structured GPS columns.
 
 ## Validation rules
 
-- Invalid or inactive facilities are rejected on request create/update.
+- Invalid, missing, or inactive facilities are rejected when supplied.
 - Provider bidding remains blocked by compliance and payout readiness.
 - Jobs cannot start until accepted.
-- Driver job updates remain restricted to assigned drivers or the hauling company.
-- Completion must be approved before invoices or payments can be initiated.
-- Payment still guards against duplicate payment, failed payout retries, pending ACH verification, and missing provider payout readiness.
+- Assigned-driver checks gate driver evidence, job updates, and timeline status writes.
+- Completion approval is required before invoice generation and payment initiation.
+- Payment guards remain in place for duplicate payment, failed payout retries, pending ACH verification, missing customer payment method, and missing provider payout readiness.
 
-## Performance notes
+## Risk assessment
 
-- Workflow changes reuse existing API routes, generated clients, and tables instead of adding duplicate business logic.
-- Facility validation performs a single lookup only when `facilityId` is supplied.
-- Timeline and activity writes remain append-only and scoped to the related job ID for existing query patterns.
+- Closed beta risk is moderate and acceptable with staff-assisted onboarding and a limited user cohort.
+- Highest beta risks are production credential setup, live payment/webhook configuration, driver/supervisor mobile UX clarity, and lack of live GPS/notification channels.
+- Highest public-launch risks are accounting integration, audit logging, rate limiting across multiple instances, database indexes, and nationwide-scale dispatcher/map performance.
 
-## Testing status
+## Latest testing status
 
-- `pnpm run typecheck` passed across shared libraries, API, web, mobile, and scripts.
-- API tests passed: 26 files, 323 tests.
-- Web tests passed: 5 files, 11 tests.
-- Mobile tests passed: 9 files, 68 tests.
-- Production workspace build passed for API, web, deck, promo, and sandbox artifacts.
-- Mobile web build/runtime check passed; all 30 routes rendered successfully on first load.
-- Mobile static deployment build is blocked by missing `REPLIT_INTERNAL_APP_DOMAIN`, `REPLIT_DEV_DOMAIN`, or `EXPO_PUBLIC_DOMAIN`.
-- Deployment readiness is blocked by missing production environment variables for database, Stripe, Clerk proxy/mobile key, Resend, R2/storage, upload/QR/staff secrets, domain, and Google Maps.
-- DB-backed integration tests are blocked by no reachable local Postgres at `127.0.0.1:5432`.
+- `pnpm run typecheck`, full API tests, web tests, mobile tests, production workspace build, and mobile web runtime checks passed for this audit revision.
+- Deployment readiness remains blocked by missing production environment variables.
+- DB-backed integration tests remain blocked by no reachable local Postgres at `127.0.0.1:5432`.
+- Mobile static deployment build remains blocked by missing deployment domain configuration.
+- Manual localhost web auth verification is blocked by Clerk production keys restricted to `haulbrokr.com`; verify auth UI on the configured staging/production domain.
+- Full command results are recorded in `BETA_TEST_REPORT.md`.

@@ -393,7 +393,6 @@ export const updateRequestBodyStartTimeRegExp = new RegExp('^([01]\\d|2[0-3]):[0
 
 
 export const UpdateRequestBody = zod.object({
-  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']).optional(),
   "materialType": zod.enum(['dirt', 'gravel', 'sand', 'concrete', 'asphalt', 'demolition', 'topsoil', 'fill', 'other']).optional(),
   "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']).optional(),
   "quantityTons": zod.number().optional(),

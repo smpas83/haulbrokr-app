@@ -2738,9 +2738,6 @@ components:
     JobRequestUpdate:
       type: object
       properties:
-        status:
-          type: string
-          enum: [open, bid_received, bidding, awarded, accepted, in_progress, completed, cancelled]
         materialType:
           type: string
           enum: [dirt, gravel, sand, concrete, asphalt, demolition, topsoil, fill, other]

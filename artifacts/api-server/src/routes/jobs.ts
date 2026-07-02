@@ -1321,6 +1321,10 @@ router.post("/jobs/:id/status-updates", requireProfile, async (req, res): Promis
   }
   const job = await loadJobIfMember(jobId, profile);
   if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  if (profile.role === "driver" && !(await isDriverAssignedToJob(jobId, profile.id))) {
+    res.status(403).json({ error: "Only assigned drivers can report status updates for this job." });
+    return;
+  }
 
   const parsed = CreateJobStatusUpdateBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }

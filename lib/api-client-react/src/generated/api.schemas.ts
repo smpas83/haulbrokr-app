@@ -475,20 +475,6 @@ export interface JobRequestInput {
   notes?: string;
 }
 
-export type JobRequestUpdateStatus = typeof JobRequestUpdateStatus[keyof typeof JobRequestUpdateStatus];
-
-
-export const JobRequestUpdateStatus = {
-  open: 'open',
-  bid_received: 'bid_received',
-  bidding: 'bidding',
-  awarded: 'awarded',
-  accepted: 'accepted',
-  in_progress: 'in_progress',
-  completed: 'completed',
-  cancelled: 'cancelled',
-} as const;
-
 export type JobRequestUpdateMaterialType = typeof JobRequestUpdateMaterialType[keyof typeof JobRequestUpdateMaterialType];
 
 
@@ -525,7 +511,6 @@ export const JobRequestUpdateTruckType = {
 } as const;
 
 export interface JobRequestUpdate {
-  status?: JobRequestUpdateStatus;
   materialType?: JobRequestUpdateMaterialType;
   truckType?: JobRequestUpdateTruckType;
   quantityTons?: number;

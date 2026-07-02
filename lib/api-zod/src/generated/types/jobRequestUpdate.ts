@@ -6,11 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { JobRequestUpdateMaterialType } from './jobRequestUpdateMaterialType';
-import type { JobRequestUpdateStatus } from './jobRequestUpdateStatus';
 import type { JobRequestUpdateTruckType } from './jobRequestUpdateTruckType';
 
 export interface JobRequestUpdate {
-  status?: JobRequestUpdateStatus;
   materialType?: JobRequestUpdateMaterialType;
   truckType?: JobRequestUpdateTruckType;
   quantityTons?: number;

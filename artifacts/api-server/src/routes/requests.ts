@@ -176,6 +176,10 @@ router.patch("/requests/:id", requireProfile, async (req, res): Promise<void> =>
     res.status(400).json({ error: params.error.message });
     return;
   }
+  if (req.body && typeof req.body === "object" && "status" in req.body) {
+    res.status(400).json({ error: "Request status is managed by the award, job, and completion workflow." });
+    return;
+  }
   const parsed = UpdateRequestBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

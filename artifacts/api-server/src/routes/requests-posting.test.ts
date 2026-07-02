@@ -186,6 +186,17 @@ describe("POST /requests job posting fields", () => {
   });
 });
 
+describe("PATCH /requests/:id workflow guards", () => {
+  it("rejects direct status changes from clients", async () => {
+    const res = await request(makeApp())
+      .patch("/requests/1")
+      .send({ status: "completed" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/managed by the award/);
+  });
+});
+
 describe("GET /requests/:id", () => {
   it("returns posting details for the customer", async () => {
     h.requests.push({
