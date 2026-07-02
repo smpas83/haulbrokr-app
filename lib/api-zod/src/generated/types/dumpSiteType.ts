@@ -16,4 +16,9 @@ export const DumpSiteType = {
   construction_debris: 'construction_debris',
   hazardous_waste: 'hazardous_waste',
   compost: 'compost',
+  asphalt_plant: 'asphalt_plant',
+  gravel_pit: 'gravel_pit',
+  concrete_crusher: 'concrete_crusher',
+  quarry: 'quarry',
+  supplier: 'supplier',
 } as const;

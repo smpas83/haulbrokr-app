@@ -850,18 +850,51 @@ export type DumpSite = {
   state: string;
   zip: string;
   type: string;
+  latitude?: number | null;
+  longitude?: number | null;
   phone?: string | null;
+  website?: string | null;
+  acceptedMaterials?: string[];
+  rejectedMaterials?: string[];
+  status?: "open" | "closed" | "temporarily_closed";
+  currentStatus?: string;
+  estimatedWaitMinutes?: number | null;
+  photos?: string[];
+  entranceInstructions?: string | null;
+  scaleLocation?: string | null;
+  scaleHours?: string | null;
+  driverNotes?: string | null;
   isActive: boolean;
   fullAddress?: string;
+  distanceMiles?: number;
 };
 
 /** Public dump-site directory (no auth required). */
-export function useDumpSites(opts?: { state?: string }) {
-  const state = opts?.state;
-  const path = state ? `/dump-sites?state=${encodeURIComponent(state)}` : "/dump-sites";
+export function useDumpSites(opts?: {
+  state?: string;
+  material?: string;
+  openNow?: boolean;
+  latitude?: number;
+  longitude?: number;
+  distanceMiles?: number;
+  limit?: number;
+}) {
+  const query = new URLSearchParams();
+  if (opts?.state) query.set("state", opts.state);
+  if (opts?.material) query.set("material", opts.material);
+  if (opts?.openNow != null) query.set("openNow", String(opts.openNow));
+  if (opts?.latitude != null) query.set("latitude", String(opts.latitude));
+  if (opts?.longitude != null) query.set("longitude", String(opts.longitude));
+  if (opts?.distanceMiles != null) query.set("distanceMiles", String(opts.distanceMiles));
+  if (opts?.limit != null) query.set("limit", String(opts.limit));
+  const qs = query.toString();
+  const path = qs ? `/dump-sites?${qs}` : "/dump-sites";
   return useQuery<DumpSite[]>({
-    queryKey: ["dump-sites", { state }],
-    queryFn: () => apiFetch(() => Promise.resolve(null), "GET", path),
+    queryKey: ["dump-sites", opts ?? {}],
+    queryFn: async () => {
+      const data = await apiFetch(() => Promise.resolve(null), "GET", path);
+      return Array.isArray(data) ? data : data?.items ?? [];
+    },
   });
 }
 

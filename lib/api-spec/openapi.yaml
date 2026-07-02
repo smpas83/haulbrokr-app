@@ -594,31 +594,335 @@ paths:
               schema:
                 $ref: "#/components/schemas/Wallet"
 
-  # ── Dump Sites ────────────────────────────────────────────────────────────
+  # ── Smart Facility Network / Dump Sites ───────────────────────────────────
   /dump-sites:
     get:
       operationId: listDumpSites
       tags: [dump-sites]
-      summary: List dump sites, optionally filtered by state or type
+      summary: Search smart facilities with paging, material, status, and distance filters
       parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: city
+          in: query
+          schema:
+            type: string
         - name: state
           in: query
           schema:
             type: string
-        - name: type
+        - name: zip
           in: query
           schema:
             type: string
-            enum: [landfill, transfer_station, recycling_center, construction_debris, hazardous_waste, compost]
+        - name: material
+          in: query
+          schema:
+            $ref: "#/components/schemas/FacilityMaterialType"
+        - name: type
+          in: query
+          schema:
+            $ref: "#/components/schemas/DumpSiteType"
+        - name: openNow
+          in: query
+          schema:
+            type: boolean
+        - name: latitude
+          in: query
+          schema:
+            type: number
+        - name: longitude
+          in: query
+          schema:
+            type: number
+        - name: distanceMiles
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
       responses:
         "200":
-          description: List of dump sites
+          description: Paginated list of smart facilities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDumpSitesResponse"
+
+  /dump-sites/materials:
+    get:
+      operationId: listFacilityMaterials
+      tags: [dump-sites]
+      summary: List supported facility material types
+      responses:
+        "200":
+          description: Supported material database
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DumpSite"
+                  $ref: "#/components/schemas/FacilityMaterialCatalogItem"
+
+  /dump-sites/recommendations:
+    get:
+      operationId: listFacilityRecommendations
+      tags: [dump-sites]
+      summary: Return ranked facility recommendations for broker approval
+      parameters:
+        - name: material
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/FacilityMaterialType"
+        - name: latitude
+          in: query
+          schema:
+            type: number
+        - name: longitude
+          in: query
+          schema:
+            type: number
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Ranked facility recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityRecommendationResponse"
+
+  /dump-sites/imports:
+    post:
+      operationId: validateFacilityImport
+      tags: [dump-sites]
+      summary: Validate CSV, Excel-derived JSON, or JSON facility imports before admin upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FacilityImportInput"
+      responses:
+        "200":
+          description: Import validation result with duplicate findings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityImportResult"
+
+  /dump-sites/preferences:
+    get:
+      operationId: getCustomerFacilityPreferences
+      tags: [dump-sites]
+      summary: Get signed-in customer facility preferences
+      responses:
+        "200":
+          description: Customer facility preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerFacilityPreferences"
+    put:
+      operationId: upsertCustomerFacilityPreferences
+      tags: [dump-sites]
+      summary: Update signed-in customer preferences without overriding broker approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerFacilityPreferencesInput"
+      responses:
+        "200":
+          description: Updated customer facility preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerFacilityPreferences"
+
+  /dump-sites/{id}:
+    get:
+      operationId: getDumpSite
+      tags: [dump-sites]
+      summary: Get full smart facility profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Smart facility details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DumpSiteDetail"
+        "404":
+          description: Facility not found
+
+  /dump-sites/{id}/pricing:
+    get:
+      operationId: getFacilityPricing
+      tags: [dump-sites]
+      summary: Get active facility pricing schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Facility pricing schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FacilityPricing"
+    post:
+      operationId: createFacilityPricing
+      tags: [dump-sites]
+      summary: Add a facility pricing schedule without application code changes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FacilityPricingInput"
+      responses:
+        "201":
+          description: Created pricing schedule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityPricing"
+
+  /dump-sites/{id}/analytics:
+    get:
+      operationId: getFacilityAnalytics
+      tags: [dump-sites]
+      summary: Get facility load, timing, revenue, rating, and utilization analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Facility analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityAnalytics"
+
+  /dump-sites/{id}/driver-view:
+    get:
+      operationId: getFacilityDriverView
+      tags: [dump-sites]
+      summary: Get driver-safe facility instructions and current job notes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: jobId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Driver-safe facility view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityDriverView"
+
+  /dump-sites/{id}/broker-view:
+    get:
+      operationId: getFacilityBrokerView
+      tags: [dump-sites]
+      summary: Get broker facility view with internal notes and pricing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Broker facility view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityBrokerView"
+
+  /dump-sites/{id}/customer-view:
+    get:
+      operationId: getFacilityCustomerView
+      tags: [dump-sites]
+      summary: Get customer-safe facility view
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer-safe facility view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityCustomerView"
+
+  /dump-sites/{id}/map-view:
+    get:
+      operationId: getFacilityMapView
+      tags: [dump-sites]
+      summary: Get map marker payload for a facility
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Facility map marker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityMapItem"
 
   /dump-sites/states:
     get:
@@ -2957,7 +3261,27 @@ components:
           items:
             $ref: "#/components/schemas/WalletTransaction"
 
-    # ── Dump Site ─────────────────────────────────────────────────────────────
+    # ── Smart Facility / Dump Site ────────────────────────────────────────────
+    DumpSiteType:
+      type: string
+      enum: [landfill, transfer_station, recycling_center, construction_debris, hazardous_waste, compost, asphalt_plant, gravel_pit, concrete_crusher, quarry, supplier]
+
+    FacilityStatus:
+      type: string
+      enum: [open, closed, temporarily_closed]
+
+    FacilityTrafficStatus:
+      type: string
+      enum: [open, closed, busy, moderate, light_traffic, temporary_closure, holiday_hours, maintenance]
+
+    FacilityMaterialType:
+      type: string
+      enum: [rock, sand, gravel, asphalt, concrete, dirt, clay, base, recycled_asphalt, recycled_concrete, construction_debris, green_waste, mixed_waste, clean_fill, contaminated_soil]
+
+    FacilityPriceType:
+      type: string
+      enum: [tipping_fee, material_purchase_price, minimum_fee, per_ton, per_load, flat_rate, cash_price, account_price, customer_contract_price, fuel_surcharge, environmental_fee]
+
     DumpSite:
       type: object
       required: [id, name, address, city, state, zip, type, isActive]
@@ -2975,14 +3299,427 @@ components:
         zip:
           type: string
         type:
-          type: string
-          enum: [landfill, transfer_station, recycling_center, construction_debris, hazardous_waste, compost]
+          $ref: "#/components/schemas/DumpSiteType"
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
         phone:
           type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        operatingHours:
+          type: object
+          additionalProperties:
+            type: string
+        holidayHours:
+          type: object
+          additionalProperties:
+            type: string
+        afterHoursContact:
+          type: ["string", "null"]
+        acceptedMaterials:
+          type: array
+          items:
+            type: string
+        rejectedMaterials:
+          type: array
+          items:
+            type: string
+        maxTruckSize:
+          type: ["string", "null"]
+        maxWeightTons:
+          type: ["number", "null"]
+        scaleLocation:
+          type: ["string", "null"]
+        scaleHours:
+          type: ["string", "null"]
+        entranceInstructions:
+          type: ["string", "null"]
+        exitInstructions:
+          type: ["string", "null"]
+        safetyRules:
+          type: array
+          items:
+            type: string
+        ppeRequirements:
+          type: array
+          items:
+            type: string
+        truckRestrictions:
+          type: array
+          items:
+            type: string
+        preferredRoutes:
+          type: array
+          items:
+            type: string
+        photos:
+          type: array
+          items:
+            type: string
+        facilityNotes:
+          type: ["string", "null"]
+        emergencyContact:
+          type: ["string", "null"]
+        brokerNotes:
+          type: ["string", "null"]
+        driverNotes:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/FacilityStatus"
+        currentStatus:
+          $ref: "#/components/schemas/FacilityTrafficStatus"
+        estimatedWaitMinutes:
+          type: ["integer", "null"]
+        temporaryClosureReason:
+          type: ["string", "null"]
+        maintenanceNotes:
+          type: ["string", "null"]
+        capacityLoadsPerDay:
+          type: ["integer", "null"]
         isActive:
           type: boolean
         fullAddress:
           type: string
+        distanceMiles:
+          type: number
+
+    ListDumpSitesResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DumpSite"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    FacilityMaterial:
+      type: object
+      required: [id, dumpSiteId, materialType, disposition]
+      properties:
+        id:
+          type: integer
+        dumpSiteId:
+          type: integer
+        materialType:
+          $ref: "#/components/schemas/FacilityMaterialType"
+        disposition:
+          type: string
+          enum: [accepted, rejected]
+        specialInstructions:
+          type: ["string", "null"]
+
+    FacilityMaterialCatalogItem:
+      type: object
+      required: [value, label]
+      properties:
+        value:
+          $ref: "#/components/schemas/FacilityMaterialType"
+        label:
+          type: string
+
+    FacilityPricing:
+      type: object
+      required: [id, dumpSiteId, priceType, amount, currency, isActive]
+      properties:
+        id:
+          type: integer
+        dumpSiteId:
+          type: integer
+        materialType:
+          anyOf:
+            - $ref: "#/components/schemas/FacilityMaterialType"
+            - type: "null"
+        priceType:
+          $ref: "#/components/schemas/FacilityPriceType"
+        amount:
+          type: number
+        currency:
+          type: string
+        unit:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveTo:
+          type: ["string", "null"]
+          format: date-time
+        isActive:
+          type: boolean
+
+    FacilityPricingInput:
+      type: object
+      required: [priceType, amount]
+      properties:
+        materialType:
+          $ref: "#/components/schemas/FacilityMaterialType"
+        priceType:
+          $ref: "#/components/schemas/FacilityPriceType"
+        amount:
+          type: number
+        currency:
+          type: string
+          default: USD
+        unit:
+          type: string
+        notes:
+          type: string
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveTo:
+          type: string
+          format: date-time
+
+    FacilityAnalytics:
+      type: object
+      required: [dumpSiteId, loadsReceived, revenue, tippingFees, rejectedLoads]
+      properties:
+        dumpSiteId:
+          type: integer
+        loadsReceived:
+          type: integer
+        averageWaitTimeMinutes:
+          type: ["number", "null"]
+        averageUnloadTimeMinutes:
+          type: ["number", "null"]
+        averageTons:
+          type: ["number", "null"]
+        revenue:
+          type: number
+        tippingFees:
+          type: number
+        driverRatingAverage:
+          type: ["number", "null"]
+        customerRatingAverage:
+          type: ["number", "null"]
+        completionRate:
+          type: ["number", "null"]
+        rejectedLoads:
+          type: integer
+        peakHours:
+          type: array
+          items:
+            type: string
+        utilization:
+          type: ["number", "null"]
+
+    DumpSiteDetail:
+      allOf:
+        - $ref: "#/components/schemas/DumpSite"
+        - type: object
+          required: [materials, pricing, analytics]
+          properties:
+            materials:
+              type: array
+              items:
+                $ref: "#/components/schemas/FacilityMaterial"
+            pricing:
+              type: array
+              items:
+                $ref: "#/components/schemas/FacilityPricing"
+            analytics:
+              $ref: "#/components/schemas/FacilityAnalytics"
+
+    CustomerFacilityPreferencesInput:
+      type: object
+      properties:
+        preferredFacilities:
+          type: array
+          items:
+            type: integer
+        preferredMaterials:
+          type: array
+          items:
+            type: string
+        preferredRoutes:
+          type: array
+          items:
+            type: string
+        backupFacilities:
+          type: array
+          items:
+            type: integer
+        notes:
+          type: string
+
+    CustomerFacilityPreferences:
+      allOf:
+        - $ref: "#/components/schemas/CustomerFacilityPreferencesInput"
+        - type: object
+          required: [customerId, preferredFacilities, preferredMaterials, preferredRoutes, backupFacilities]
+          properties:
+            customerId:
+              type: integer
+
+    FacilityRecommendation:
+      type: object
+      required: [facility, score, reasons]
+      properties:
+        facility:
+          $ref: "#/components/schemas/DumpSite"
+        score:
+          type: number
+        reasons:
+          type: array
+          items:
+            type: string
+        scoreBreakdown:
+          type: object
+          additionalProperties:
+            type: number
+
+    FacilityRecommendationResponse:
+      type: object
+      required: [recommendations, brokerApprovalRequired]
+      properties:
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacilityRecommendation"
+        brokerApprovalRequired:
+          type: boolean
+
+    FacilityDriverView:
+      type: object
+      required: [id, name, directions, photos, gateInstructions, scaleInstructions, unloadInstructions, hours, phoneNumber, safetyWarnings]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        directions:
+          type: string
+        photos:
+          type: array
+          items:
+            type: string
+        gateInstructions:
+          type: ["string", "null"]
+        scaleInstructions:
+          type: ["string", "null"]
+        unloadInstructions:
+          type: ["string", "null"]
+        hours:
+          type: object
+          additionalProperties:
+            type: string
+        phoneNumber:
+          type: ["string", "null"]
+        currentJobNotes:
+          type: ["string", "null"]
+        safetyWarnings:
+          type: array
+          items:
+            type: string
+
+    FacilityBrokerView:
+      allOf:
+        - $ref: "#/components/schemas/DumpSiteDetail"
+        - type: object
+          properties:
+            internalBrokerNotes:
+              type: ["string", "null"]
+
+    FacilityCustomerView:
+      type: object
+      required: [id, name, type, address, city, state, zip, acceptedMaterials, rejectedMaterials, status, currentStatus]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/DumpSiteType"
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        acceptedMaterials:
+          type: array
+          items:
+            type: string
+        rejectedMaterials:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: "#/components/schemas/FacilityStatus"
+        currentStatus:
+          $ref: "#/components/schemas/FacilityTrafficStatus"
+        operatingHours:
+          type: object
+          additionalProperties:
+            type: string
+
+    FacilityMapItem:
+      type: object
+      required: [id, name, type, status, currentStatus, acceptedMaterials]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/DumpSiteType"
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        status:
+          $ref: "#/components/schemas/FacilityStatus"
+        currentStatus:
+          $ref: "#/components/schemas/FacilityTrafficStatus"
+        icon:
+          type: string
+        acceptedMaterials:
+          type: array
+          items:
+            type: string
+        estimatedWaitMinutes:
+          type: ["integer", "null"]
+
+    FacilityImportInput:
+      type: object
+      required: [sourceType, rows]
+      properties:
+        sourceType:
+          type: string
+          enum: [csv, excel, json, admin_upload]
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    FacilityImportResult:
+      type: object
+      required: [validRows, duplicateRows, errors]
+      properties:
+        validRows:
+          type: integer
+        duplicateRows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        errors:
+          type: array
+          items:
+            type: string
 
     # ── W-9 ───────────────────────────────────────────────────────────────────
     W9Submission:

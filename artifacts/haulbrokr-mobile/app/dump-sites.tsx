@@ -22,9 +22,11 @@ interface Site {
   name: string;
   city: string;
   state: string;
-  category: "landfill" | "transfer_station" | "recycling" | "quarry" | "supplier";
+  category: "landfill" | "transfer_station" | "recycling" | "quarry" | "supplier" | "asphalt_plant" | "gravel_pit" | "concrete_crusher";
   materials: string[];
   phone: string;
+  status?: string;
+  wait?: number | null;
 }
 
 const DUMP_SITES: Site[] = [
@@ -123,6 +125,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   recycling: "#16a34a",
   quarry: "#d97706",
   supplier: "#0891b2",
+  asphalt_plant: "#ea580c",
+  gravel_pit: "#a16207",
+  concrete_crusher: "#64748b",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -131,18 +136,26 @@ const CATEGORY_LABELS: Record<string, string> = {
   recycling: "Recycling",
   quarry: "Quarry",
   supplier: "Supplier",
+  asphalt_plant: "Asphalt Plant",
+  gravel_pit: "Gravel Pit",
+  concrete_crusher: "Crusher",
 };
 
 function apiSiteToView(site: DumpSite): Site {
-  const category = site.type in CATEGORY_LABELS ? site.type as Site["category"] : "landfill";
+  const normalizedType = site.type === "recycling_center" ? "recycling" : site.type;
+  const category = normalizedType in CATEGORY_LABELS ? normalizedType as Site["category"] : "landfill";
   return {
     id: `api-${site.id}`,
     name: site.name,
     city: site.city,
     state: site.state,
     category,
-    materials: [DUMP_TYPE_LABELS[site.type] ?? site.type],
+    materials: site.acceptedMaterials?.length
+      ? site.acceptedMaterials.map((m) => DUMP_TYPE_LABELS[m] ?? m.replace(/_/g, " "))
+      : [DUMP_TYPE_LABELS[site.type] ?? site.type],
     phone: site.phone ?? "",
+    status: site.currentStatus ?? site.status,
+    wait: site.estimatedWaitMinutes,
   };
 }
 
@@ -307,6 +320,11 @@ function SiteCard({ site, colors }: { site: Site; colors: ReturnType<typeof useC
         <Text style={[styles.phone, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
           {site.phone}
         </Text>
+        {site.status && (
+          <Text style={[styles.statusText, { color: catColor, fontFamily: "Inter_600SemiBold" }]}>
+            {site.status.replace(/_/g, " ")}{site.wait != null ? ` • ${site.wait} min` : ""}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -343,6 +361,7 @@ const styles = StyleSheet.create({
   materialText: { fontSize: 12 },
   cardFooter: { flexDirection: "row", alignItems: "center", gap: 6, borderTopWidth: 1, paddingTop: 10 },
   phone: { fontSize: 13 },
+  statusText: { fontSize: 12, marginLeft: "auto", textTransform: "capitalize" },
   empty: { alignItems: "center", paddingTop: 60, gap: 12 },
   emptyText: { fontSize: 14 },
 });

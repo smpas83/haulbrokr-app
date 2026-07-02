@@ -766,7 +766,77 @@ export const DumpSiteType = {
   construction_debris: 'construction_debris',
   hazardous_waste: 'hazardous_waste',
   compost: 'compost',
+  asphalt_plant: 'asphalt_plant',
+  gravel_pit: 'gravel_pit',
+  concrete_crusher: 'concrete_crusher',
+  quarry: 'quarry',
+  supplier: 'supplier',
 } as const;
+
+export type FacilityStatus = typeof FacilityStatus[keyof typeof FacilityStatus];
+
+
+export const FacilityStatus = {
+  open: 'open',
+  closed: 'closed',
+  temporarily_closed: 'temporarily_closed',
+} as const;
+
+export type FacilityTrafficStatus = typeof FacilityTrafficStatus[keyof typeof FacilityTrafficStatus];
+
+
+export const FacilityTrafficStatus = {
+  open: 'open',
+  closed: 'closed',
+  busy: 'busy',
+  moderate: 'moderate',
+  light_traffic: 'light_traffic',
+  temporary_closure: 'temporary_closure',
+  holiday_hours: 'holiday_hours',
+  maintenance: 'maintenance',
+} as const;
+
+export type FacilityMaterialType = typeof FacilityMaterialType[keyof typeof FacilityMaterialType];
+
+
+export const FacilityMaterialType = {
+  rock: 'rock',
+  sand: 'sand',
+  gravel: 'gravel',
+  asphalt: 'asphalt',
+  concrete: 'concrete',
+  dirt: 'dirt',
+  clay: 'clay',
+  base: 'base',
+  recycled_asphalt: 'recycled_asphalt',
+  recycled_concrete: 'recycled_concrete',
+  construction_debris: 'construction_debris',
+  green_waste: 'green_waste',
+  mixed_waste: 'mixed_waste',
+  clean_fill: 'clean_fill',
+  contaminated_soil: 'contaminated_soil',
+} as const;
+
+export type FacilityPriceType = typeof FacilityPriceType[keyof typeof FacilityPriceType];
+
+
+export const FacilityPriceType = {
+  tipping_fee: 'tipping_fee',
+  material_purchase_price: 'material_purchase_price',
+  minimum_fee: 'minimum_fee',
+  per_ton: 'per_ton',
+  per_load: 'per_load',
+  flat_rate: 'flat_rate',
+  cash_price: 'cash_price',
+  account_price: 'account_price',
+  customer_contract_price: 'customer_contract_price',
+  fuel_surcharge: 'fuel_surcharge',
+  environmental_fee: 'environmental_fee',
+} as const;
+
+export type DumpSiteOperatingHours = {[key: string]: string};
+
+export type DumpSiteHolidayHours = {[key: string]: string};
 
 export interface DumpSite {
   id: number;
@@ -777,9 +847,253 @@ export interface DumpSite {
   zip: string;
   type: DumpSiteType;
   /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
+  /** @nullable */
   phone?: string | null;
+  /** @nullable */
+  website?: string | null;
+  operatingHours?: DumpSiteOperatingHours;
+  holidayHours?: DumpSiteHolidayHours;
+  /** @nullable */
+  afterHoursContact?: string | null;
+  acceptedMaterials?: string[];
+  rejectedMaterials?: string[];
+  /** @nullable */
+  maxTruckSize?: string | null;
+  /** @nullable */
+  maxWeightTons?: number | null;
+  /** @nullable */
+  scaleLocation?: string | null;
+  /** @nullable */
+  scaleHours?: string | null;
+  /** @nullable */
+  entranceInstructions?: string | null;
+  /** @nullable */
+  exitInstructions?: string | null;
+  safetyRules?: string[];
+  ppeRequirements?: string[];
+  truckRestrictions?: string[];
+  preferredRoutes?: string[];
+  photos?: string[];
+  /** @nullable */
+  facilityNotes?: string | null;
+  /** @nullable */
+  emergencyContact?: string | null;
+  /** @nullable */
+  brokerNotes?: string | null;
+  /** @nullable */
+  driverNotes?: string | null;
+  status?: FacilityStatus;
+  currentStatus?: FacilityTrafficStatus;
+  /** @nullable */
+  estimatedWaitMinutes?: number | null;
+  /** @nullable */
+  temporaryClosureReason?: string | null;
+  /** @nullable */
+  maintenanceNotes?: string | null;
+  /** @nullable */
+  capacityLoadsPerDay?: number | null;
   isActive: boolean;
   fullAddress?: string;
+  distanceMiles?: number;
+}
+
+export interface ListDumpSitesResponse {
+  items: DumpSite[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export type FacilityMaterialDisposition = typeof FacilityMaterialDisposition[keyof typeof FacilityMaterialDisposition];
+
+
+export const FacilityMaterialDisposition = {
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface FacilityMaterial {
+  id: number;
+  dumpSiteId: number;
+  materialType: FacilityMaterialType;
+  disposition: FacilityMaterialDisposition;
+  /** @nullable */
+  specialInstructions?: string | null;
+}
+
+export interface FacilityMaterialCatalogItem {
+  value: FacilityMaterialType;
+  label: string;
+}
+
+export interface FacilityPricing {
+  id: number;
+  dumpSiteId: number;
+  materialType?: FacilityMaterialType | null;
+  priceType: FacilityPriceType;
+  amount: number;
+  currency: string;
+  /** @nullable */
+  unit?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  effectiveFrom?: string;
+  /** @nullable */
+  effectiveTo?: string | null;
+  isActive: boolean;
+}
+
+export interface FacilityPricingInput {
+  materialType?: FacilityMaterialType;
+  priceType: FacilityPriceType;
+  amount: number;
+  currency?: string;
+  unit?: string;
+  notes?: string;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+}
+
+export interface FacilityAnalytics {
+  dumpSiteId: number;
+  loadsReceived: number;
+  /** @nullable */
+  averageWaitTimeMinutes?: number | null;
+  /** @nullable */
+  averageUnloadTimeMinutes?: number | null;
+  /** @nullable */
+  averageTons?: number | null;
+  revenue: number;
+  tippingFees: number;
+  /** @nullable */
+  driverRatingAverage?: number | null;
+  /** @nullable */
+  customerRatingAverage?: number | null;
+  /** @nullable */
+  completionRate?: number | null;
+  rejectedLoads: number;
+  peakHours?: string[];
+  /** @nullable */
+  utilization?: number | null;
+}
+
+export type DumpSiteDetail = DumpSite & {
+  materials: FacilityMaterial[];
+  pricing: FacilityPricing[];
+  analytics: FacilityAnalytics;
+};
+
+export interface CustomerFacilityPreferencesInput {
+  preferredFacilities?: number[];
+  preferredMaterials?: string[];
+  preferredRoutes?: string[];
+  backupFacilities?: number[];
+  notes?: string;
+}
+
+export type CustomerFacilityPreferences = CustomerFacilityPreferencesInput & {
+  customerId: number;
+};
+
+export type FacilityRecommendationScoreBreakdown = {[key: string]: number};
+
+export interface FacilityRecommendation {
+  facility: DumpSite;
+  score: number;
+  reasons: string[];
+  scoreBreakdown?: FacilityRecommendationScoreBreakdown;
+}
+
+export interface FacilityRecommendationResponse {
+  recommendations: FacilityRecommendation[];
+  brokerApprovalRequired: boolean;
+}
+
+export type FacilityDriverViewHours = {[key: string]: string};
+
+export interface FacilityDriverView {
+  id: number;
+  name: string;
+  directions: string;
+  photos: string[];
+  /** @nullable */
+  gateInstructions: string | null;
+  /** @nullable */
+  scaleInstructions: string | null;
+  /** @nullable */
+  unloadInstructions: string | null;
+  hours: FacilityDriverViewHours;
+  /** @nullable */
+  phoneNumber: string | null;
+  /** @nullable */
+  currentJobNotes?: string | null;
+  safetyWarnings: string[];
+}
+
+export type FacilityBrokerView = DumpSiteDetail & ({
+  /** @nullable */
+  internalBrokerNotes?: string | null;
+});
+
+export type FacilityCustomerViewOperatingHours = {[key: string]: string};
+
+export interface FacilityCustomerView {
+  id: number;
+  name: string;
+  type: DumpSiteType;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  acceptedMaterials: string[];
+  rejectedMaterials: string[];
+  status: FacilityStatus;
+  currentStatus: FacilityTrafficStatus;
+  operatingHours?: FacilityCustomerViewOperatingHours;
+}
+
+export interface FacilityMapItem {
+  id: number;
+  name: string;
+  type: DumpSiteType;
+  /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
+  status: FacilityStatus;
+  currentStatus: FacilityTrafficStatus;
+  icon?: string;
+  acceptedMaterials: string[];
+  /** @nullable */
+  estimatedWaitMinutes?: number | null;
+}
+
+export type FacilityImportInputSourceType = typeof FacilityImportInputSourceType[keyof typeof FacilityImportInputSourceType];
+
+
+export const FacilityImportInputSourceType = {
+  csv: 'csv',
+  excel: 'excel',
+  json: 'json',
+  admin_upload: 'admin_upload',
+} as const;
+
+export type FacilityImportInputRowsItem = { [key: string]: unknown };
+
+export interface FacilityImportInput {
+  sourceType: FacilityImportInputSourceType;
+  rows: FacilityImportInputRowsItem[];
+}
+
+export type FacilityImportResultDuplicateRowsItem = { [key: string]: unknown };
+
+export interface FacilityImportResult {
+  validRows: number;
+  duplicateRows: FacilityImportResultDuplicateRowsItem[];
+  errors: string[];
 }
 
 export type W9SubmissionBusinessType = typeof W9SubmissionBusinessType[keyof typeof W9SubmissionBusinessType];
@@ -1994,21 +2308,34 @@ export type GetJobRating200 = {
 };
 
 export type ListDumpSitesParams = {
+search?: string;
+city?: string;
 state?: string;
-type?: ListDumpSitesType;
+zip?: string;
+material?: FacilityMaterialType;
+type?: DumpSiteType;
+openNow?: boolean;
+latitude?: number;
+longitude?: number;
+distanceMiles?: number;
+/**
+ * @maximum 100
+ */
+limit?: number;
+offset?: number;
 };
 
-export type ListDumpSitesType = typeof ListDumpSitesType[keyof typeof ListDumpSitesType];
+export type ListFacilityRecommendationsParams = {
+material: FacilityMaterialType;
+latitude?: number;
+longitude?: number;
+customerId?: number;
+limit?: number;
+};
 
-
-export const ListDumpSitesType = {
-  landfill: 'landfill',
-  transfer_station: 'transfer_station',
-  recycling_center: 'recycling_center',
-  construction_debris: 'construction_debris',
-  hazardous_waste: 'hazardous_waste',
-  compost: 'compost',
-} as const;
+export type GetFacilityDriverViewParams = {
+jobId?: number;
+};
 
 export type GetMyOrganization200 = { [key: string]: unknown };
 

@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   Platform, Pressable, RefreshControl, ScrollView, StyleSheet,
   Switch, Text, View,
@@ -16,6 +16,7 @@ import { LocationFilterModal } from "@/components/LocationFilterModal";
 import { STATUS_COLOR } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useDumpSites } from "@/hooks/useLiveApi";
 
 // ── Real DFW coordinates for each seed job ──────────────────────────
 const JOB_COORDS: Record<string, { latitude: number; longitude: number }> = {
@@ -84,6 +85,17 @@ function isInRegion(
 
 type FilterType = "all" | "open" | "nearby";
 
+const FACILITY_STATUS_COLOR: Record<string, string> = {
+  open: "#16a34a",
+  light_traffic: "#22c55e",
+  moderate: "#eab308",
+  busy: "#f97316",
+  closed: "#6b7280",
+  temporary_closure: "#dc2626",
+  holiday_hours: "#8b5cf6",
+  maintenance: "#64748b",
+};
+
 // ── Screen ────────────────────────────────────────────────────────────
 export default function MapScreen() {
   const colors  = useColors();
@@ -103,6 +115,13 @@ export default function MapScreen() {
   const [pendingRegion,    setPendingRegion]     = useState<Region | null>(null);
   const [showSearchHere,   setShowSearchHere]    = useState(false);
   const [refreshing,       setRefreshing]        = useState(false);
+  const [selectedFacilityId,setSelectedFacilityId] = useState<number | null>(null);
+  const { data: facilities = [] } = useDumpSites({
+    latitude: visibleRegion.latitude,
+    longitude: visibleRegion.longitude,
+    distanceMiles: 75,
+    limit: 100,
+  });
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -110,6 +129,7 @@ export default function MapScreen() {
     setPendingRegion(null);
     setShowSearchHere(false);
     setSelectedPin(null);
+    setSelectedFacilityId(null);
     setTimeout(() => setRefreshing(false), 600);
   }, [pendingRegion]);
 
@@ -148,6 +168,18 @@ export default function MapScreen() {
   });
 
   const selectedJob = selectedPin ? jobs.find((j) => j.id === selectedPin) : null;
+  const visibleFacilities = useMemo(
+    () => facilities.filter((facility) =>
+      facility.latitude != null &&
+      facility.longitude != null &&
+      isInRegion({ latitude: facility.latitude, longitude: facility.longitude }, visibleRegion) &&
+      (activeFilter !== "open" || facility.status === "open"),
+    ),
+    [activeFilter, facilities, visibleRegion],
+  );
+  const selectedFacility = selectedFacilityId
+    ? facilities.find((facility) => facility.id === selectedFacilityId) ?? null
+    : null;
 
   // Called continuously while dragging — only show the button, don't commit region yet
   const handleRegionChange = useCallback((_region: Region) => {
@@ -167,6 +199,7 @@ export default function MapScreen() {
       setVisibleRegion(pendingRegion);
       setPendingRegion(null);
       setSelectedPin(null);
+      setSelectedFacilityId(null);
     }
     setShowSearchHere(false);
   }, [pendingRegion]);
@@ -325,11 +358,28 @@ export default function MapScreen() {
                 pinColor={pinColor}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedFacilityId(null);
                   setSelectedPin((prev) => (prev === job.id ? null : job.id));
                 }}
               />
             );
           })}
+
+          {/* Facility markers */}
+          {visibleFacilities.map((facility) => (
+            <Marker
+              key={`facility-${facility.id}`}
+              coordinate={{ latitude: facility.latitude!, longitude: facility.longitude! }}
+              pinColor={FACILITY_STATUS_COLOR[facility.currentStatus ?? facility.status ?? "moderate"] ?? colors.primary}
+              title={facility.name}
+              description={`${facility.type.replace(/_/g, " ")} • ${facility.currentStatus?.replace(/_/g, " ") ?? facility.status ?? "status pending"}`}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedPin(null);
+                setSelectedFacilityId((prev) => (prev === facility.id ? null : facility.id));
+              }}
+            />
+          ))}
 
           {/* Surge heat circles */}
           {showSurge && isSurge && SURGE_ZONES.map((zone, i) => (
@@ -409,6 +459,7 @@ export default function MapScreen() {
             { color: "#e9a600", label: "Open"    },
             { color: "#3b82f6", label: "Bidding" },
             { color: "#16a34a", label: "Active"  },
+            { color: "#22c55e", label: "Facility" },
           ].map((l) => (
             <View key={l.label} style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: l.color }]} />
@@ -475,7 +526,45 @@ export default function MapScreen() {
           backgroundColor: colors.background,
           borderTopColor:  colors.border,
         }]}>
-          {selectedJob ? (
+          {selectedFacility ? (
+            // ── Selected facility card ───────────────────────────────
+            <Animated.View entering={FadeInUp.duration(250)} style={{ flex: 1 }}>
+              <View style={styles.selectedJobHeader}>
+                <Text style={[styles.selectedJobTitle, {
+                  color:      colors.foreground,
+                  fontFamily: "Inter_700Bold",
+                }]}>
+                  {selectedFacility.name}
+                </Text>
+                <Pressable onPress={() => setSelectedFacilityId(null)}>
+                  <Feather name="x" size={20} color={colors.mutedForeground} />
+                </Pressable>
+              </View>
+              <View style={styles.selectedJobDetails}>
+                <DetailPill icon="map-pin" label={selectedFacility.type.replace(/_/g, " ")} colors={colors} />
+                <DetailPill icon="activity" label={(selectedFacility.currentStatus ?? selectedFacility.status ?? "status pending").replace(/_/g, " ")} highlight colors={colors} />
+                {selectedFacility.estimatedWaitMinutes != null && (
+                  <DetailPill icon="clock" label={`${selectedFacility.estimatedWaitMinutes} min wait`} colors={colors} />
+                )}
+              </View>
+              <View style={styles.selectedJobRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.selectedJobSub, {
+                    color:      colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                  }]} numberOfLines={1}>
+                    {selectedFacility.address}, {selectedFacility.city}, {selectedFacility.state}
+                  </Text>
+                  <Text style={[styles.selectedJobSub, {
+                    color:      colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                  }]} numberOfLines={1}>
+                    {selectedFacility.acceptedMaterials?.slice(0, 3).join(" • ") || "Materials pending"}
+                  </Text>
+                </View>
+              </View>
+            </Animated.View>
+          ) : selectedJob ? (
             // ── Selected job card ──────────────────────────────────
             <Animated.View entering={FadeInUp.duration(250)} style={{ flex: 1 }}>
               <View style={styles.selectedJobHeader}>
@@ -544,7 +633,7 @@ export default function MapScreen() {
                 color:      colors.mutedForeground,
                 fontFamily: "Inter_600SemiBold",
               }]}>
-                {visibleJobs.length} JOBS IN VIEW
+                {visibleJobs.length} JOBS • {visibleFacilities.length} FACILITIES IN VIEW
               </Text>
               {visibleJobs.length === 0 ? (
                 <View style={styles.emptyState}>

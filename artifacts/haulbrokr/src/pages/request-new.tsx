@@ -64,6 +64,11 @@ const SITE_TYPE_LABELS: Record<string, string> = {
   construction_debris: "C&D Debris",
   hazardous_waste: "Hazardous Waste",
   compost: "Compost",
+  asphalt_plant: "Asphalt Plant",
+  gravel_pit: "Gravel Pit",
+  concrete_crusher: "Concrete Crusher",
+  quarry: "Quarry",
+  supplier: "Material Supplier",
 };
 
 const SITE_TYPE_COLORS: Record<string, string> = {
@@ -73,6 +78,11 @@ const SITE_TYPE_COLORS: Record<string, string> = {
   construction_debris: "bg-amber-600",
   hazardous_waste: "bg-red-600",
   compost: "bg-emerald-600",
+  asphalt_plant: "bg-orange-600",
+  gravel_pit: "bg-yellow-700",
+  concrete_crusher: "bg-slate-600",
+  quarry: "bg-stone-600",
+  supplier: "bg-cyan-600",
 };
 
 interface DumpSitePickerProps {
@@ -88,10 +98,11 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
 
   const { data: states = [] } = useListDumpSiteStates();
 
-  const { data: sites = [], isLoading } = useListDumpSites(
+  const { data: siteResponse, isLoading } = useListDumpSites(
     { state: selectedState || undefined, type: selectedType !== "all" ? selectedType as any : undefined },
     { query: { enabled: !!selectedState } as any }
   );
+  const sites = siteResponse?.items ?? [];
 
   const filtered = sites.filter((s) =>
     search.trim() === "" ||
