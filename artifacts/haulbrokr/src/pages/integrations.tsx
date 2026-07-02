@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { CheckCircle2, Link2, Link2Off, RefreshCw, Loader2, Plug, BookOpen, FileText, BarChart3 } from "lucide-react";
+import { CheckCircle2, Link2, Link2Off, RefreshCw, Loader2, Plug, BookOpen, FileText, BarChart3, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { apiFetch } from "@/lib/apiFetch";
+import { runtimeIntegrationStatuses } from "@/lib/runtimeConfig";
 
 function QuickBooksCard() {
   const { toast } = useToast();
@@ -150,12 +151,59 @@ function ComingSoonCard({ name, description, icon: Icon, color }: { name: string
   );
 }
 
+function ConfigurationStatusCard() {
+  return (
+    <div className="bg-card border-2 border-border overflow-hidden">
+      <div className="bg-secondary text-secondary-foreground p-5">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/20 p-2 rounded">
+            <Plug className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg">Runtime configuration</h3>
+            <p className="text-sm text-secondary-foreground/70">Optional integrations detected at app startup</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="divide-y divide-border">
+        {runtimeIntegrationStatuses.map((status) => (
+          <div key={status.id} className="p-5 space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h4 className="font-bold">{status.label}</h4>
+                <p className="text-sm text-muted-foreground">{status.requiredFor}</p>
+              </div>
+              <Badge className={`rounded-none border-2 font-bold text-xs ${status.configured ? "bg-green-100 text-green-800 border-green-200" : "bg-amber-100 text-amber-800 border-amber-200"}`}>
+                {status.configured ? <><CheckCircle2 className="h-3 w-3 mr-1" />Configured</> : <><AlertTriangle className="h-3 w-3 mr-1" />Unavailable</>}
+              </Badge>
+            </div>
+            {!status.configured ? (
+              <Alert className="rounded-none border-amber-200 bg-amber-50">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800 text-sm">
+                  {status.unavailableMessage}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function IntegrationsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
       <div>
         <h1 className="text-3xl font-black uppercase tracking-tight">Integrations</h1>
         <p className="text-muted-foreground mt-1">Connect your HaulBrokr account with the tools you already use</p>
+      </div>
+
+      <div className="space-y-4">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Configuration</p>
+        <ConfigurationStatusCard />
       </div>
 
       <div className="space-y-4">
