@@ -10,7 +10,7 @@ import { ClerkProvider, useAuth } from "@clerk/expo";
 import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -21,7 +21,7 @@ import { ClerkBootstrap } from "@/components/ClerkBootstrap";
 import { AppProvider } from "@/context/AppContext";
 import { ClerkAuthProvider } from "@/context/ClerkAuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
-import { clerkTokenCache } from "@/lib/clerkTokenCache";
+import { clerkTokenCache, prepareAuthStorage } from "@/lib/clerkTokenCache";
 import { useMyProfile } from "@/hooks/useLiveApi";
 
 SplashScreen.preventAutoHideAsync();
@@ -62,6 +62,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const [authStorageReady, setAuthStorageReady] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -71,12 +72,24 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    prepareAuthStorage().finally(() => setAuthStorageReady(true));
+  }, []);
+
+  useEffect(() => {
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
 
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+
+  if (!authStorageReady || (!fontsLoaded && !fontError)) {
+    return null;
+  }
+
+  if (__DEV__ && publishableKey) {
+    console.log("AUTH config", { keyPrefix: publishableKey.slice(0, 12) });
+  }
 
   return (
     <SafeAreaProvider>

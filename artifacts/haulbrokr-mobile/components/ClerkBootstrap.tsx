@@ -1,11 +1,10 @@
 import { useAuth } from "@clerk/expo";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, DevSettings, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { clearClerkSessionTokens } from "@/lib/clerkTokenCache";
-import { useMyProfile } from "@/hooks/useLiveApi";
+import { clearClerkSessionTokens, reloadApp } from "@/lib/clerkTokenCache";
 
-const LOAD_TIMEOUT_MS = 10_000;
+const LOAD_TIMEOUT_MS = 6_000;
 
 type Props = {
   publishableKey: string;
@@ -18,10 +17,8 @@ type Props = {
  */
 export function ClerkBootstrap({ publishableKey, children }: Props) {
   const { isLoaded, isSignedIn } = useAuth();
-  const profileQuery = useMyProfile();
   const [timedOut, setTimedOut] = useState(false);
   const [recovering, setRecovering] = useState(false);
-  const [recovered, setRecovered] = useState(false);
 
   useEffect(() => {
     if (isLoaded) {
@@ -34,26 +31,25 @@ export function ClerkBootstrap({ publishableKey, children }: Props) {
 
   useEffect(() => {
     if (__DEV__) {
-      console.log("AUTH", {
-        isLoaded,
-        isSignedIn,
-        profileError: profileQuery.isError,
-        profileFetching: profileQuery.isFetching,
-        profileLoading: profileQuery.isLoading,
-      });
+      console.log("AUTH", { isLoaded, isSignedIn });
     }
-  }, [isLoaded, isSignedIn, profileQuery.isError, profileQuery.isFetching, profileQuery.isLoading]);
+  }, [isLoaded, isSignedIn]);
+
+  // Auto-recover in dev when Clerk headless load hangs (stale JWT in singleton).
+  useEffect(() => {
+    if (!__DEV__ || isLoaded || !timedOut || recovering) return;
+    void (async () => {
+      setRecovering(true);
+      await clearClerkSessionTokens();
+      reloadApp();
+    })();
+  }, [isLoaded, timedOut, recovering]);
 
   const handleRecover = async () => {
     setRecovering(true);
     try {
       await clearClerkSessionTokens();
-      if (__DEV__ && Platform.OS !== "web") {
-        DevSettings.reload();
-        return;
-      }
-      setRecovered(true);
-      setTimedOut(false);
+      reloadApp();
     } finally {
       setRecovering(false);
     }
@@ -70,29 +66,19 @@ export function ClerkBootstrap({ publishableKey, children }: Props) {
     );
   }
 
-  if (!isLoaded && timedOut && !recovered) {
+  if (!isLoaded && timedOut) {
     return (
       <View style={styles.center}>
-        <Text style={styles.title}>Authentication is taking too long</Text>
+        <ActivityIndicator color="#e9a600" size="large" />
+        <Text style={styles.title}>Resetting authentication…</Text>
         <Text style={styles.body}>
-          A stale session token in SecureStore can block Clerk from loading. Reset auth storage and reload the app.
+          Clerk did not finish loading — clearing stale session storage and reloading.
         </Text>
-        <Pressable style={styles.btn} onPress={() => void handleRecover()} disabled={recovering}>
-          {recovering ? (
-            <ActivityIndicator color="#1e2235" />
-          ) : (
-            <Text style={styles.btnText}>Reset & Reload</Text>
-          )}
-        </Pressable>
-      </View>
-    );
-  }
-
-  if (!isLoaded && recovered) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.title}>Auth storage cleared</Text>
-        <Text style={styles.body}>Force-quit HaulBrokr and reopen the app to finish signing out.</Text>
+        {Platform.OS !== "web" && !__DEV__ && (
+          <Pressable style={styles.btn} onPress={() => void handleRecover()} disabled={recovering}>
+            <Text style={styles.btnText}>Try again</Text>
+          </Pressable>
+        )}
       </View>
     );
   }

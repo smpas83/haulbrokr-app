@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { createContext, useCallback, useContext, useEffect } from "react";
 
-import { clearClerkSessionTokens } from "@/lib/clerkTokenCache";
+import { clearClerkSessionTokens, markPendingSignOut, reloadApp } from "@/lib/clerkTokenCache";
 
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 
@@ -37,13 +37,15 @@ export function ClerkAuthProvider({ children }: { children: React.ReactNode }) {
   }, [isSignedIn, getToken]);
 
   const signOutAndReset = useCallback(async () => {
+    await markPendingSignOut();
     queryClient.clear();
     await clearClerkSessionTokens();
     try {
       await signOut();
     } catch {
-      // Tokens are already cleared; routing to sign-in is still the right UX.
+      // Tokens are already cleared; reload will finish the reset.
     }
+    reloadApp();
     router.replace("/sign-in" as any);
   }, [queryClient, signOut]);
 
