@@ -8,10 +8,10 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
-import { Stack, router } from "expo-router";
+import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
-import { AppState, type AppStateStatus, Platform } from "react-native";
+import { ActivityIndicator, AppState, type AppStateStatus, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -43,17 +43,42 @@ if (Platform.OS !== "web") {
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useAuth();
   const profileQuery = useMyProfile();
+  const segments = useSegments();
+  const isPublicRoute = segments[0] === "sign-in" || segments[0] === "onboarding";
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded) {
+      if (!isPublicRoute) {
+        router.replace("/sign-in" as any);
+      }
+      return;
+    }
     if (!isSignedIn) {
-      router.replace("/sign-in" as any);
+      if (!isPublicRoute) {
+        router.replace("/sign-in" as any);
+      }
       return;
     }
     if (profileQuery.isError) {
       router.replace("/onboarding" as any);
     }
-  }, [isLoaded, isSignedIn, profileQuery.isError]);
+  }, [isLoaded, isSignedIn, profileQuery.isError, isPublicRoute]);
+
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
+
+  if (!isLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#1e2235", alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color="#e9a600" />
+      </View>
+    );
+  }
+
+  if (!isSignedIn) {
+    return null;
+  }
 
   return <>{children}</>;
 }
@@ -74,6 +99,10 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError]);
 
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <SafeAreaProvider>

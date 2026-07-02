@@ -1,4 +1,5 @@
-import { useClerk, useSSO } from "@clerk/expo";
+import { useSSO } from "@clerk/expo";
+import { useSignIn, useSignUp } from "@clerk/expo/legacy";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as AuthSession from "expo-auth-session";
@@ -28,7 +29,8 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
-  const clerk = useClerk() as any;
+  const { isLoaded: signInLoaded, signIn, setActive: setSignInActive } = useSignIn();
+  const { isLoaded: signUpLoaded, signUp, setActive: setSignUpActive } = useSignUp();
   const { startSSOFlow } = useSSO();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
 
@@ -71,14 +73,6 @@ export default function SignInScreen() {
     }
   };
 
-  const clerkLoaded = !!clerk?.loaded;
-  const signIn = clerk?.client?.signIn;
-  const signUp = clerk?.client?.signUp;
-  const setSignInActive = clerk?.setActive?.bind(clerk);
-  const setSignUpActive = clerk?.setActive?.bind(clerk);
-  const signInLoaded = clerkLoaded && !!signIn;
-  const signUpLoaded = clerkLoaded && !!signUp;
-
   const [mode, setMode] = useState<Mode>("signin");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -86,7 +80,7 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clerkReady = signInLoaded && signUpLoaded;
+  const clerkReady = signInLoaded && signUpLoaded && !!signIn && !!signUp && !!setSignInActive && !!setSignUpActive;
 
   const handleSendCode = async () => {
     setError("");
@@ -105,8 +99,8 @@ export default function SignInScreen() {
         try {
           await signIn.create({ identifier: email.trim() });
           const firstFactor = signIn.supportedFirstFactors?.find(
-            (f: any) => f.strategy === "email_code"
-          );
+            (f) => f.strategy === "email_code"
+          ) as { strategy: "email_code"; emailAddressId: string } | undefined;
           if (firstFactor) {
             await signIn.prepareFirstFactor({
               strategy: "email_code",
@@ -140,8 +134,8 @@ export default function SignInScreen() {
             setMode("signin");
             await signIn.create({ identifier: email.trim() });
             const firstFactor = signIn.supportedFirstFactors?.find(
-              (f: any) => f.strategy === "email_code"
-            );
+              (f) => f.strategy === "email_code"
+            ) as { strategy: "email_code"; emailAddressId: string } | undefined;
             if (firstFactor) {
               await signIn.prepareFirstFactor({
                 strategy: "email_code",
@@ -167,6 +161,10 @@ export default function SignInScreen() {
     setError("");
     if (!code.trim()) {
       setError("Please enter the 6-digit code from your email.");
+      return;
+    }
+    if (!clerkReady || !signIn || !signUp || !setSignInActive || !setSignUpActive) {
+      setError("Authentication is initialising. Please wait a moment.");
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
