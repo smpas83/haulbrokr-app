@@ -47,7 +47,7 @@ function serializeFacility(s: typeof dumpSitesTable.$inferSelect) {
   };
 }
 
-function toFacilityValues(data: z.infer<typeof patchFacilityBody>) {
+function toFacilityValues(data: z.infer<typeof patchFacilityBody>): Record<string, unknown> {
   return {
     ...data,
     latitude: data.latitude != null ? String(data.latitude) : data.latitude,
@@ -105,7 +105,7 @@ router.post("/facilities", requireProfile, async (req, res): Promise<void> => {
   }
   const parsed = facilityBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-  const [facility] = await db.insert(dumpSitesTable).values(toFacilityValues(parsed.data)).returning();
+  const [facility] = await db.insert(dumpSitesTable).values(toFacilityValues(parsed.data) as typeof dumpSitesTable.$inferInsert).returning();
   res.status(201).json(serializeFacility(facility));
 });
 
