@@ -28,7 +28,7 @@ type Intent = "primary" | "secondary" | "success" | "warning" | "danger" | "acce
 
 const intentClass: Record<Intent, string> = {
   primary: "bg-primary text-primary-foreground border-primary",
-  secondary: "bg-secondary text-secondary-foreground border-secondary-border",
+  secondary: "bg-secondary text-secondary-foreground border-border",
   success: "bg-success text-success-foreground border-success",
   warning: "bg-warning text-warning-foreground border-warning",
   danger: "bg-destructive text-destructive-foreground border-destructive",
