@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/apiFetch";
+import { getGetAdminOverviewQueryKey, useReviewProviderComplianceDocument } from "@workspace/api-client-react";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
   DollarSign, TrendingUp, Banknote, Briefcase, Activity, PackageCheck,
   ClipboardList, FileStack, XCircle, Truck, Users, UserCog, HardHat,
-  MapPin, ArrowRight, Search, ChevronRight, Building2, Phone, Mail, Globe, Loader2, Download, CalendarRange,
+  MapPin, ArrowRight, Search, ChevronRight, Building2, Phone, Mail, Globe, Loader2, Download, CalendarRange, ShieldCheck,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -95,10 +98,19 @@ const DOC_LABELS: Record<string, string> = {
   business_license: "Business license", vehicle_registration: "Vehicle registration",
   equipment_list: "Equipment list", signed_carrier_agreement: "Carrier agreement",
   voided_check: "Voided check", ach_authorization: "ACH authorization",
-  safety_rating: "Safety rating", bond: "Bond",
+  safety_rating: "Safety rating",   bond: "Bond",
+  cos: "Certificate of Status (COS)",
   po_template: "PO template", tax_exempt_certificate: "Tax-exempt certificate",
 };
 const docLabel = (t: string) => DOC_LABELS[t] ?? t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+function formatDocStatus(status: string): string {
+  if (status === "uploaded" || status === "pending") return "Pending review";
+  if (status === "verified" || status === "approved") return "Approved";
+  if (status === "rejected") return "Rejected";
+  if (status === "missing" || status === "not_submitted") return "Missing";
+  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 // objectPath is stored as "/objects/<...>"; the server streams it from
 // /api/storage/objects/<...> with the same BASE_URL prefix apiFetch uses.
@@ -122,7 +134,7 @@ function DocStatusBadge({ status, expiry }: { status: string; expiry?: string | 
     missing: "border-muted-foreground/40 text-muted-foreground",
   };
   const cls = map[status] ?? "border-muted-foreground/40 text-muted-foreground";
-  return <Badge variant="outline" className={`rounded-none capitalize ${cls}`}>{status}</Badge>;
+  return <Badge variant="outline" className={`rounded-none ${cls}`}>{formatDocStatus(status)}</Badge>;
 }
 
 type Drill =
@@ -164,6 +176,69 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div>
       <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">{title}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">{children}</div>
+    </div>
+  );
+}
+
+function invalidateAdminDashboardQueries(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: getGetAdminOverviewQueryKey() });
+  qc.invalidateQueries({ queryKey: ["admin-documents"] });
+  qc.invalidateQueries({ queryKey: ["admin-profile"] });
+}
+
+function DocReviewButtons({
+  profileId,
+  docType,
+  status,
+  onDone,
+}: {
+  profileId: number;
+  docType: string;
+  status: string;
+  onDone?: () => void;
+}) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const review = useReviewProviderComplianceDocument();
+
+  if (status !== "uploaded") return null;
+
+  const act = (action: "approve" | "reject") => {
+    review.mutate(
+      { profileId, docType, data: { action } },
+      {
+        onSuccess: () => {
+          invalidateAdminDashboardQueries(qc);
+          toast({ title: action === "approve" ? `${docLabel(docType)} approved` : `${docLabel(docType)} rejected` });
+          onDone?.();
+        },
+        onError: () => toast({ title: "Action failed", variant: "destructive" }),
+      },
+    );
+  };
+
+  return (
+    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="h-7 rounded-none text-xs"
+        disabled={review.isPending}
+        onClick={() => act("approve")}
+      >
+        <ShieldCheck className="w-3 h-3 mr-1" /> Approve
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="h-7 rounded-none text-xs text-destructive"
+        disabled={review.isPending}
+        onClick={() => act("reject")}
+      >
+        <XCircle className="w-3 h-3 mr-1" /> Reject
+      </Button>
     </div>
   );
 }
@@ -313,12 +388,20 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
                 {(documents.data ?? []).filter((r) => match(r.companyName, r.contactName, r.email, r.docType, r.fileName)).map((r) => {
                   const href = docHref(r.objectPath);
                   return (
-                    <tr key={r.id} onClick={() => setSelectedPersonId(r.profileId)} className="border-b last:border-0 hover:bg-muted/60 cursor-pointer">
+                    <tr key={r.id} className="border-b last:border-0 hover:bg-muted/60">
                       <td className="py-2 font-medium">{docLabel(r.docType)}{r.docNumber ? <div className="text-xs text-muted-foreground">#{r.docNumber}</div> : null}</td>
-                      <td><div>{r.companyName ?? "—"}</div><div className="text-xs text-muted-foreground capitalize">{r.role ?? ""}</div></td>
+                      <td onClick={() => setSelectedPersonId(r.profileId)} className="cursor-pointer">
+                        <div>{r.companyName ?? "—"}</div>
+                        <div className="text-xs text-muted-foreground capitalize">{r.role ?? ""}</div>
+                      </td>
                       <td className={`text-xs ${isExpired(r.expiry) ? "text-amber-600 font-medium" : ""}`}>{r.expiry ? dateFmt(r.expiry) : "—"}</td>
-                      <td className="pl-3"><DocStatusBadge status={r.status} expiry={r.expiry} /></td>
-                      <td className="text-right pr-1" onClick={(e) => e.stopPropagation()}>
+                      <td className="pl-3">
+                        <div className="flex flex-col gap-1.5">
+                          <DocStatusBadge status={r.status} expiry={r.expiry} />
+                          <DocReviewButtons profileId={r.profileId} docType={r.docType} status={r.status} onDone={() => documents.refetch()} />
+                        </div>
+                      </td>
+                      <td className="text-right pr-1">
                         {href ? (
                           <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
                             <FileStack className="w-3.5 h-3.5" /> View
@@ -639,7 +722,14 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
                           <tr key={doc.id} className="border-b last:border-0">
                             <td className="py-2 font-medium">{docLabel(doc.docType)}{doc.docNumber ? <div className="text-xs text-muted-foreground">#{doc.docNumber}</div> : null}{doc.reviewNote ? <div className="text-xs text-muted-foreground italic">{doc.reviewNote}</div> : null}</td>
                             <td className={`text-xs ${isExpired(doc.expiry) ? "text-amber-600 font-medium" : ""}`}>{doc.expiry ? dateFmt(doc.expiry) : "—"}</td>
-                            <td className="pl-3"><DocStatusBadge status={doc.status} expiry={doc.expiry} /></td>
+                            <td className="pl-3">
+                              <div className="flex flex-col gap-1.5">
+                                <DocStatusBadge status={doc.status} expiry={doc.expiry} />
+                                {id !== null ? (
+                                  <DocReviewButtons profileId={id} docType={doc.docType} status={doc.status} onDone={() => detail.refetch()} />
+                                ) : null}
+                              </div>
+                            </td>
                             <td className="text-right pr-1">
                               {href ? (
                                 <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
@@ -749,7 +839,7 @@ function JobDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
 export function AdminInsights({ enabled }: { enabled: boolean }) {
   const [drill, setDrill] = useState<Drill>(null);
   const overview = useQuery({
-    queryKey: ["admin-overview-v2"],
+    queryKey: getGetAdminOverviewQueryKey(),
     queryFn: () => apiFetch<AdminOverviewV2>("/admin/overview"),
     enabled,
   });
@@ -762,7 +852,6 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
 
   return (
     <div className="space-y-6">
-      <AdminCharts enabled={enabled} overview={d} />
       <Section title="Money">
         <MetricCard accent icon={<DollarSign className="w-3.5 h-3.5" />} label="GMV (billed)" value={money(d.gmv)} hint="Total customer-billed" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (GMV)" })} />
         <MetricCard accent icon={<TrendingUp className="w-3.5 h-3.5" />} label="Broker-fee revenue" value={money(d.brokerFees)} hint="15% platform fee on all jobs" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (broker fees)" })} />
@@ -796,6 +885,8 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
           <MetricCard icon={<XCircle className="w-3.5 h-3.5" />} label="Cancelled / declined" value={d.cancelledJobs.toLocaleString()} onClick={() => setDrill({ kind: "jobs", status: "cancelled", title: "Cancelled / declined jobs" })} />
         </Section>
       )}
+
+      <AdminCharts enabled={enabled} overview={d} />
 
       <DrillDialog drill={drill} onClose={() => setDrill(null)} />
     </div>

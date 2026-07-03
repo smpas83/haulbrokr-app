@@ -1,4 +1,11 @@
-/** Carrier document types surfaced in admin review (uploaded files). */
+/** Customer document types surfaced in admin review (uploaded files). */
+export const CUSTOMER_UPLOAD_DOC_TYPES = [
+  "cos",
+  "po_template",
+  "tax_exempt_certificate",
+] as const;
+
+/** Carrier + customer document types surfaced in admin review (uploaded files). */
 export const ADMIN_UPLOAD_DOC_TYPES = [
   "w9",
   "coi",
@@ -15,6 +22,7 @@ export const ADMIN_UPLOAD_DOC_TYPES = [
   "safety_rating",
   "bond",
   "equipment_list",
+  ...CUSTOMER_UPLOAD_DOC_TYPES,
 ] as const;
 
 export type AdminUploadDocType = (typeof ADMIN_UPLOAD_DOC_TYPES)[number];

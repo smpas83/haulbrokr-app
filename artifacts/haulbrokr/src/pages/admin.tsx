@@ -247,6 +247,8 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getListAdminComplianceQueryKey() });
     queryClient.invalidateQueries({ queryKey: getGetAdminOverviewQueryKey() });
+    queryClient.invalidateQueries({ queryKey: ["admin-documents"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
   };
 
   const makeAct = (
