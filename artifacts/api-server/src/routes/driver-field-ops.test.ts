@@ -68,7 +68,12 @@ vi.mock("@workspace/db", () => {
         if (table === jobStatusUpdatesTable) {
           const row = { id: h.nextTimelineId++, ...vals };
           h.timeline.push(row);
-          return Promise.resolve(undefined);
+          return {
+            returning: () => Promise.resolve([row]),
+            then(onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) {
+              return Promise.resolve(undefined).then(onFulfilled, onRejected);
+            },
+          };
         }
         if (table === activityTable) {
           return Promise.resolve(undefined);
@@ -251,5 +256,8 @@ describe("Driver field operations workflow", () => {
 
     const complete = await request(app).patch("/jobs/9").send({ status: "completed" });
     expect(complete.status).toBe(403);
+
+    const status = await request(app).post("/jobs/9/status-updates").send({ status: "arrived" });
+    expect(status.status).toBe(403);
   });
 });

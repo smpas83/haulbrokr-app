@@ -75,6 +75,7 @@ function baseJob(overrides: Record<string, unknown> = {}) {
     providerId: PROVIDER_ID,
     status: "completed",
     paymentStatus: "unpaid",
+    completionApproval: "approved",
     materialType: "gravel",
     truckType: "dump_truck",
     pickupAddress: "100 Main St, Dallas, TX",
@@ -238,6 +239,12 @@ describe("GET /jobs/:id/invoice", () => {
     h.profile = { id: OUTSIDER_ID, role: "customer" };
     const res = await request(makeApp()).get(`/jobs/${JOB_ID}/invoice`);
     expect(res.status).toBe(403);
+  });
+
+  it("returns 409 before completion approval", async () => {
+    seedInvoiceFixtures({ completionApproval: "pending" });
+    const res = await request(makeApp()).get(`/jobs/${JOB_ID}/invoice`);
+    expect(res.status).toBe(409);
   });
 
   it("returns 400 when the job is not completed or invoiced", async () => {

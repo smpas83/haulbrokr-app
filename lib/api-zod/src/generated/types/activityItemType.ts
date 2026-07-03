@@ -18,6 +18,8 @@ export const ActivityItemType = {
   job_declined: 'job_declined',
   job_started: 'job_started',
   job_completed: 'job_completed',
+  delivery_evidence_submitted: 'delivery_evidence_submitted',
+  driver_event_rejected: 'driver_event_rejected',
   payment_failed: 'payment_failed',
   payment_requires_action: 'payment_requires_action',
   application_approved: 'application_approved',

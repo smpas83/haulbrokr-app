@@ -5,6 +5,7 @@ import { profilesTable } from "./profiles";
 import { requestsTable } from "./requests";
 import { bidsTable } from "./bids";
 import { projectsTable } from "./projects";
+import { dumpSitesTable } from "./dump-sites";
 import { truckTypeEnum } from "./trucks";
 
 export const jobStatusEnum = pgEnum("job_status", [
@@ -73,6 +74,17 @@ export const jobsTable = pgTable("jobs", {
   approvedByProfileId: integer("approved_by_profile_id").references(() => profilesTable.id),
   completionApprovedAt: timestamp("completion_approved_at", { withTimezone: true }),
   flagReason: text("flag_reason"),
+  facilityId: integer("facility_id").references(() => dumpSitesTable.id),
+  facilityName: text("facility_name"),
+  facilityCoordinates: text("facility_coordinates"),
+  facilityInstructions: text("facility_instructions"),
+  facilityAcceptedMaterials: text("facility_accepted_materials"),
+  facilitySafetyNotes: text("facility_safety_notes"),
+  facilityOperatingHours: text("facility_operating_hours"),
+  facilityPricingMetadata: text("facility_pricing_metadata"),
+  facilityPhone: text("facility_phone"),
+  brokerNotes: text("broker_notes"),
+  driverInstructions: text("driver_instructions"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

@@ -5,6 +5,7 @@ import request from "supertest";
 const h = vi.hoisted(() => ({
   profile: { id: 1, role: "customer", companyName: "Test Builders" } as Record<string, unknown>,
   requests: [] as Record<string, unknown>[],
+  dumpSites: [] as Record<string, unknown>[],
   nextRequestId: 1,
   inserts: [] as Record<string, unknown>[],
 }));
@@ -17,6 +18,7 @@ vi.mock("@workspace/db", () => {
   const profilesTable = makeTable("profiles");
   const bidsTable = makeTable("bids");
   const activityTable = makeTable("activity");
+  const dumpSitesTable = makeTable("dumpSites");
 
   const db = {
     select: () => ({
@@ -25,6 +27,7 @@ vi.mock("@workspace/db", () => {
           if (table === requestsTable) return Promise.resolve(h.requests);
           if (table === profilesTable) return Promise.resolve([{ companyName: "Test Builders" }]);
           if (table === bidsTable) return Promise.resolve([{ count: 0 }]);
+          if (table === dumpSitesTable) return Promise.resolve(h.dumpSites);
           return Promise.resolve([]);
         },
         orderBy: () => Promise.resolve(h.requests),
@@ -53,7 +56,7 @@ vi.mock("@workspace/db", () => {
     }),
   };
 
-  return { db, requestsTable, profilesTable, bidsTable, activityTable };
+  return { db, requestsTable, profilesTable, bidsTable, activityTable, dumpSitesTable };
 });
 
 vi.mock("../middlewares/requireAuth", () => ({
@@ -89,6 +92,7 @@ const validBody = {
 
 beforeEach(() => {
   h.requests = [];
+  h.dumpSites = [];
   h.inserts = [];
   h.nextRequestId = 1;
   h.profile = { id: 1, role: "customer", companyName: "Test Builders" };
@@ -119,6 +123,47 @@ describe("POST /requests job posting fields", () => {
     });
   });
 
+  it("validates facility selection and preserves facility metadata", async () => {
+    h.dumpSites = [{ id: 88, name: "North Transfer Station", phone: "555-0100", isActive: true }];
+
+    const res = await request(makeApp()).post("/requests").send({
+      ...validBody,
+      facilityId: 88,
+      facilityCoordinates: "41.10,-93.20",
+      facilityInstructions: "Use gate 3",
+      facilityAcceptedMaterials: "dirt, gravel",
+      facilitySafetyNotes: "Hard hats required",
+      facilityOperatingHours: "Mon-Fri 07:00-16:00",
+      facilityPricingMetadata: "zone=A;tier=2",
+      driverInstructions: "Check in at the scale house",
+      brokerNotes: "Internal margin review",
+    });
+
+    expect(res.status).toBe(201);
+    expect(h.inserts[0]).toMatchObject({
+      facilityId: 88,
+      facilityName: "North Transfer Station",
+      facilityCoordinates: "41.10,-93.20",
+      facilityInstructions: "Use gate 3",
+      facilityAcceptedMaterials: "dirt, gravel",
+      facilitySafetyNotes: "Hard hats required",
+      facilityOperatingHours: "Mon-Fri 07:00-16:00",
+      facilityPricingMetadata: "zone=A;tier=2",
+      facilityPhone: "555-0100",
+      driverInstructions: "Check in at the scale house",
+      brokerNotes: "Internal margin review",
+    });
+  });
+
+  it("rejects closed facilities", async () => {
+    h.dumpSites = [{ id: 88, name: "Closed Facility", isActive: false }];
+
+    const res = await request(makeApp()).post("/requests").send({ ...validBody, facilityId: 88 });
+
+    expect(res.status).toBe(409);
+    expect(h.requests).toHaveLength(0);
+  });
+
   it("rejects invalid start time format", async () => {
     const res = await request(makeApp())
       .post("/requests")
@@ -138,6 +183,17 @@ describe("POST /requests job posting fields", () => {
     h.profile = { id: 2, role: "provider", companyName: "Haul Co" };
     const res = await request(makeApp()).post("/requests").send(validBody);
     expect(res.status).toBe(403);
+  });
+});
+
+describe("PATCH /requests/:id workflow guards", () => {
+  it("rejects direct status changes from clients", async () => {
+    const res = await request(makeApp())
+      .patch("/requests/1")
+      .send({ status: "completed" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/managed by the award/);
   });
 });
 

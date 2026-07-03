@@ -67,6 +67,7 @@ router.post("/trucks", requireProfile, async (req, res): Promise<void> => {
 });
 
 router.get("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const params = GetTruckParams.safeParse({ id: parseInt(raw, 10) });
   if (!params.success) {
@@ -75,6 +76,10 @@ router.get("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
   }
   const [truck] = await db.select().from(trucksTable).where(eq(trucksTable.id, params.data.id));
   if (!truck) {
+    res.status(404).json({ error: "Truck not found" });
+    return;
+  }
+  if (truck.ownerId !== profile.id && !truck.isAvailable && !profile.staffRole) {
     res.status(404).json({ error: "Truck not found" });
     return;
   }

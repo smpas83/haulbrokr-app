@@ -27,6 +27,30 @@ export interface JobRequest {
   /** @nullable */
   budgetPerHour?: number | null;
   /** @nullable */
+  projectId?: number | null;
+  /** @nullable */
+  facilityId?: number | null;
+  /** @nullable */
+  facilityName?: string | null;
+  /** @nullable */
+  facilityCoordinates?: string | null;
+  /** @nullable */
+  facilityInstructions?: string | null;
+  /** @nullable */
+  facilityAcceptedMaterials?: string | null;
+  /** @nullable */
+  facilitySafetyNotes?: string | null;
+  /** @nullable */
+  facilityOperatingHours?: string | null;
+  /** @nullable */
+  facilityPricingMetadata?: string | null;
+  /** @nullable */
+  facilityPhone?: string | null;
+  /** @nullable */
+  brokerNotes?: string | null;
+  /** @nullable */
+  driverInstructions?: string | null;
+  /** @nullable */
   notes?: string | null;
   bidCount?: number;
   createdAt: Date;

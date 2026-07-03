@@ -17,6 +17,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+app.set("trust proxy", process.env.NODE_ENV === "production" ? 1 : false);
 
 const DEFAULT_PRODUCTION_ORIGINS = [
   "https://haulbrokr.com",
@@ -104,8 +105,8 @@ app.use(
   stripeWebhooksRouter,
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "256kb" }));
+app.use(express.urlencoded({ extended: true, limit: "256kb" }));
 
 // Health check must work without Clerk auth so deployment probes succeed
 // even when Clerk keys are absent/invalid. Mount it before clerkMiddleware.
