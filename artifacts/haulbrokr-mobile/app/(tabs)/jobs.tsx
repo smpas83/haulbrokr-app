@@ -63,6 +63,11 @@ const MATERIAL_TO_API: Record<string, string> = {
 
 const PROJECT_TYPES: ProjectType[] = ["Transport", "Material & Transport", "Tracking", "Recycling"];
 
+// Request statuses that are still an open/biddable load (not yet a live job).
+// Must include `bid_received` — the status the API sets after the first bid —
+// otherwise loads disappear from the board as soon as anyone bids on them.
+const OPEN_REQUEST_STATUSES = new Set<string>(["open", "bid_received", "bidding"]);
+
 export default function JobsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -90,18 +95,20 @@ export default function JobsScreen() {
     if (isProvider) {
       const fromOpenRequests = Array.isArray(liveOpenRequestsRaw)
         ? (liveOpenRequestsRaw as LiveRequest[])
-            .filter((r) => r.status === "open" || r.status === "bidding")
+            .filter((r) => OPEN_REQUEST_STATUSES.has(r.status))
             .map(liveRequestToViewJob)
         : [];
       return [...fromOpenRequests, ...fromJobs];
     }
     // Customers also see their posted load requests that haven't yet been
-    // converted into a job (open/bidding). Once a bid is accepted the request
-    // becomes a job, so we drop those statuses here to avoid showing both.
+    // converted into a job (open/bid_received/bidding). Once a bid is accepted
+    // the request becomes a job, so we drop those statuses here to avoid showing
+    // both. `bid_received` (the status after the first bid) MUST be included or
+    // loads vanish from the list as soon as anyone bids on them.
     const fromRequests =
       Array.isArray(liveRequestsRaw)
         ? (liveRequestsRaw as LiveRequest[])
-            .filter((r) => r.status === "open" || r.status === "bidding")
+            .filter((r) => OPEN_REQUEST_STATUSES.has(r.status))
             .map(liveRequestToViewJob)
         : [];
     return [...fromRequests, ...fromJobs];
@@ -330,10 +337,16 @@ export default function JobsScreen() {
             try {
               await createRequest.mutateAsync({
                 materialType: MATERIAL_TO_API[data.material] ?? "other",
+                // truckType/startTime/estimatedHours are required by the API but
+                // not collected by this quick-post form; send sensible defaults
+                // so the load actually posts (otherwise the API returns 400).
+                truckType: "dump_truck",
                 quantityTons: data.quantity,
                 pickupAddress: data.pickupAddress,
                 deliveryAddress: data.deliveryAddress,
                 scheduledDate: data.scheduledDate,
+                startTime: "08:00",
+                estimatedHours: 8,
                 trucksNeeded: data.trucksNeeded,
                 budgetPerHour: data.budgetPerHour,
                 notes: data.notes || undefined,

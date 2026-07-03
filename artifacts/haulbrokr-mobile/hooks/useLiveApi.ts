@@ -359,10 +359,16 @@ export function useLiveRequests(opts?: { mine?: boolean; enabled?: boolean }) {
 
 export type CreateRequestInput = {
   materialType: string;
+  // Required by the API (POST /requests): the load is rejected with 400 if these
+  // are omitted. The mobile Post-Load form doesn't collect all of them, so the
+  // caller supplies sensible defaults.
+  truckType: string;
   quantityTons: number;
   pickupAddress: string;
   deliveryAddress: string;
   scheduledDate: string;
+  startTime: string;
+  estimatedHours: number;
   trucksNeeded: number;
   budgetPerHour?: number;
   notes?: string;

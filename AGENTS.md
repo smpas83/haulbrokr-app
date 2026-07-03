@@ -28,6 +28,14 @@ non-obvious cloud setup/run caveats.
 - **Schema** is applied with Drizzle push (no SQL migration files, no RLS):
   `pnpm --filter @workspace/db run push` (use `push-force` for non-interactive
   drop/recreate). Re-run after editing `lib/db/src/schema/`.
+- **Demo data**: `pnpm --filter @workspace/api-server run seed-demo` seeds nationwide
+  loads, trucks, live GPS, routes, and active jobs (idempotent; demo rows namespaced
+  `demo_*` / invite codes `DEMO*`). Run it against any `DATABASE_URL` (local or Neon) to
+  populate an empty DB — a fresh DB legitimately shows empty load boards/maps otherwise.
+- **Maps require `GOOGLE_MAPS_SERVER_API_KEY`** (or `GOOGLE_MAPS_API_KEY`) — all
+  `/api/maps/*` and `/api/tracking/*` routes return 503 without it, and in production the
+  API refuses to boot without it (`validateProductionEnv`). Mobile native maps also need a
+  Google key (`app.config.js` wires Android from `GOOGLE_MAPS_API_KEY`; iOS has none).
 
 ### Testing / verifying
 - Lint: there is **no `lint` script** in any package; `pnpm -r --if-present run lint`
