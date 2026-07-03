@@ -142,3 +142,132 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+@layer components {
+  .homepage-shell {
+    background:
+      radial-gradient(circle at 76% 12%, hsl(var(--primary) / 0.16), transparent 30rem),
+      radial-gradient(circle at 8% 18%, hsl(var(--foreground) / 0.08), transparent 24rem),
+      linear-gradient(135deg, hsl(var(--background)), hsl(var(--secondary)));
+  }
+
+  .homepage-carbon {
+    background-image:
+      linear-gradient(135deg, hsl(var(--foreground) / 0.035) 25%, transparent 25%),
+      linear-gradient(225deg, hsl(var(--foreground) / 0.035) 25%, transparent 25%),
+      linear-gradient(45deg, hsl(var(--foreground) / 0.025) 25%, transparent 25%),
+      linear-gradient(315deg, hsl(var(--foreground) / 0.025) 25%, hsl(var(--background)) 25%);
+    background-position: 0 0, 0 0, 0 0, 0 0;
+    background-size: 28px 28px;
+  }
+
+  .homepage-steel {
+    background:
+      linear-gradient(120deg, hsl(var(--foreground) / 0.11), transparent 18%, hsl(var(--foreground) / 0.08) 34%, transparent 62%),
+      linear-gradient(180deg, hsl(var(--secondary)), hsl(var(--card)));
+  }
+
+  .homepage-hero-glow {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.26),
+      0 24px 120px hsl(var(--primary) / 0.16),
+      inset 0 1px 0 hsl(var(--foreground) / 0.14);
+  }
+
+  .homepage-card {
+    @apply border border-border bg-card/70 text-card-foreground shadow-2xl backdrop-blur transition-colors duration-300;
+  }
+
+  .homepage-card:hover {
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  .homepage-kicker {
+    @apply inline-flex items-center gap-3 border border-primary/40 bg-background/70 px-4 py-2 text-xs font-black uppercase tracking-[0.28em] text-primary backdrop-blur;
+  }
+
+  .homepage-primary-button {
+    @apply border-primary bg-primary font-black uppercase tracking-[0.12em] text-primary-foreground shadow-2xl transition-transform duration-300 hover:-translate-y-0.5 hover:bg-primary/90;
+  }
+
+  .homepage-outline-button {
+    @apply border-2 border-foreground/25 bg-background/60 font-black uppercase tracking-[0.12em] text-foreground backdrop-blur transition-transform duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10 hover:text-foreground;
+  }
+
+  .homepage-light-sweep {
+    background: linear-gradient(100deg, transparent 0%, hsl(var(--primary) / 0.18) 42%, hsl(var(--foreground) / 0.18) 50%, hsl(var(--primary) / 0.12) 58%, transparent 100%);
+    animation: homepage-light-sweep 7s ease-in-out infinite;
+  }
+
+  .homepage-pulse-orb {
+    animation: homepage-pulse-orb 3s ease-in-out infinite;
+  }
+
+  .homepage-map-grid {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.06) 1px, transparent 1px),
+      radial-gradient(circle at 30% 42%, hsl(var(--primary) / 0.2), transparent 11rem),
+      radial-gradient(circle at 76% 58%, hsl(var(--primary) / 0.12), transparent 12rem);
+    background-size: 48px 48px, 48px 48px, auto, auto;
+  }
+
+  .homepage-route-line {
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.28), hsl(var(--primary)), hsl(var(--primary) / 0.28), transparent);
+  }
+
+  .homepage-phone {
+    box-shadow:
+      0 0 0 1px hsl(var(--foreground) / 0.14),
+      0 28px 90px hsl(var(--background) / 0.65),
+      inset 0 0 0 8px hsl(var(--background));
+  }
+
+  .homepage-scroll-indicator {
+    animation: homepage-scroll 1.7s ease-in-out infinite;
+  }
+}
+
+@keyframes homepage-light-sweep {
+  0%, 100% {
+    transform: translateX(-62%) skewX(-18deg);
+    opacity: 0;
+  }
+  35%, 62% {
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(72%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes homepage-pulse-orb {
+  0%, 100% {
+    transform: scale(0.92);
+    opacity: 0.58;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes homepage-scroll {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(0.55rem);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homepage-light-sweep,
+  .homepage-pulse-orb,
+  .homepage-scroll-indicator {
+    animation: none;
+  }
+}
