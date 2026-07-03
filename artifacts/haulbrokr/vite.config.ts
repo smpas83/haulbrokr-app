@@ -168,10 +168,29 @@ export default defineConfig(async ({ command }) => {
         notFound: path.resolve(import.meta.dirname, "404.html"),
       },
       output: {
-        manualChunks: {
-          "auth-shell": [
-            path.resolve(import.meta.dirname, "src/AuthShell.tsx"),
-          ],
+        manualChunks(id) {
+          if (id === path.resolve(import.meta.dirname, "src/AuthShell.tsx")) {
+            return "auth-shell";
+          }
+          if (id.includes("node_modules/@clerk")) {
+            return "vendor-clerk";
+          }
+          if (id.includes("node_modules/@stripe")) {
+            return "vendor-stripe";
+          }
+          if (id.includes("node_modules/recharts") || id.includes("node_modules/d3-")) {
+            return "vendor-charts";
+          }
+          if (id.includes("node_modules/@radix-ui")) {
+            return "vendor-radix";
+          }
+          if (
+            id.includes("node_modules/react") ||
+            id.includes("node_modules/react-dom") ||
+            id.includes("node_modules/scheduler")
+          ) {
+            return "vendor-react";
+          }
         },
       },
     },
