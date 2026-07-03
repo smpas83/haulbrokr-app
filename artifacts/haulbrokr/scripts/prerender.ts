@@ -113,6 +113,12 @@ const assetsDir = path.join(distDir, "assets");
 
 const routes: Array<{ component: string; outputFile: string; route: string }> = [
   { component: "landing", outputFile: "index.html", route: "/" },
+  { component: "features", outputFile: "features.html", route: "/features" },
+  { component: "industries", outputFile: "industries.html", route: "/industries" },
+  { component: "pricing", outputFile: "pricing.html", route: "/pricing" },
+  { component: "about", outputFile: "about.html", route: "/about" },
+  { component: "contact", outputFile: "contact.html", route: "/contact" },
+  { component: "terms", outputFile: "terms.html", route: "/terms" },
   { component: "support", outputFile: "support.html", route: "/support" },
   { component: "privacy", outputFile: "privacy.html", route: "/privacy" },
   { component: "not-found", outputFile: "404.html", route: "/404" },

@@ -80,8 +80,19 @@ const knownSpaPrefixes = [
   "/admin/",
 ];
 
+const publicHtmlRoutes: Record<string, string> = {
+  "/support": "/support.html",
+  "/privacy": "/privacy.html",
+  "/features": "/features.html",
+  "/industries": "/industries.html",
+  "/pricing": "/pricing.html",
+  "/about": "/about.html",
+  "/contact": "/contact.html",
+  "/terms": "/terms.html",
+};
+
 /**
- * In dev mode, route /support and /privacy to their own HTML entry files, and
+ * In dev mode, route public marketing pages to their own HTML entry files, and
  * return 404.html (with a 404 status) for any path that doesn't match a known
  * app route so dev behaviour mirrors the production static-server config.
  */
@@ -91,14 +102,11 @@ function publicRoutesDevMiddleware(): Plugin {
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = req.url ?? "/";
-        const stripped = url.split("?")[0];
+        const stripped = url.split("?")[0].replace(/\/$/, "") || "/";
 
-        if (stripped === "/support" || stripped === "/support/") {
-          req.url = "/support.html";
-          return next();
-        }
-        if (stripped === "/privacy" || stripped === "/privacy/") {
-          req.url = "/privacy.html";
+        const htmlEntry = publicHtmlRoutes[stripped];
+        if (htmlEntry) {
+          req.url = htmlEntry;
           return next();
         }
 
@@ -163,6 +171,12 @@ export default defineConfig(async ({ command }) => {
     rollupOptions: {
       input: {
         main: path.resolve(import.meta.dirname, "index.html"),
+        features: path.resolve(import.meta.dirname, "features.html"),
+        industries: path.resolve(import.meta.dirname, "industries.html"),
+        pricing: path.resolve(import.meta.dirname, "pricing.html"),
+        about: path.resolve(import.meta.dirname, "about.html"),
+        contact: path.resolve(import.meta.dirname, "contact.html"),
+        terms: path.resolve(import.meta.dirname, "terms.html"),
         support: path.resolve(import.meta.dirname, "support.html"),
         privacy: path.resolve(import.meta.dirname, "privacy.html"),
         notFound: path.resolve(import.meta.dirname, "404.html"),

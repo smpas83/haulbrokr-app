@@ -3,13 +3,14 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Loader2, CheckCircle2, AlertCircle, Clock, ShieldAlert,
   ShieldCheck, CreditCard, Truck, Building2, X, Banknote, ArrowRight, RotateCcw,
-  Users, UserCog, Package, MapPin, Calendar, PackageCheck,
-  LayoutDashboard, DollarSign, TrendingUp, Briefcase, Activity, UserPlus, Lock,
+  Users, UserCog, UserPlus, Package, MapPin, Calendar, PackageCheck,
+  LayoutDashboard, Lock,
 } from "lucide-react";
-import { AdminInsights } from "@/components/admin-insights";
+import { AdminCommandCenter } from "@/components/admin-command-center";
+import { EmptyState } from "@/components/shared";
 import {
   useGetAdminAccess,
-  useGetAdminOverview, getGetAdminOverviewQueryKey,
+  getGetAdminOverviewQueryKey,
   useListAdminCompliance, useReviewCompliance, getListAdminComplianceQueryKey,
   useReviewProviderW9, useReviewProviderInsurance, useReviewProviderComplianceDocument,
   useListAdminCreditApplications, useReviewCreditApplication, getListAdminCreditApplicationsQueryKey,
@@ -18,7 +19,7 @@ import {
   useListAdminBinOrders, useAdvanceBinOrderStatus, getListAdminBinOrdersQueryKey,
   type AdminProviderCompliance, type AdminUploadedComplianceDocument,
   type AdminCreditApplicationItem, type StuckPayoutItem,
-  type StaffMember, type BinOrder, type AdvanceBinOrderInput, type AdminOverview,
+  type StaffMember, type BinOrder, type AdvanceBinOrderInput,
   type UpdateStaffRoleInput,
 } from "@workspace/api-client-react";
 
@@ -773,7 +774,7 @@ function StaffPanel({ enabled, canManage }: { enabled: boolean; canManage: boole
       {staff.isLoading ? (
         <Skeleton className="h-32 w-full" />
       ) : members.length === 0 ? (
-        <EmptyState label="No staff members yet. Staff appear here once assigned a role." />
+        <EmptyState title="No staff members yet" description="Staff appear here once assigned a role." />
       ) : (
         members.map((m) => <StaffRow key={m.id} member={m} canManage={canManage} />)
       )}
@@ -903,201 +904,10 @@ function BinOrdersPanel({ enabled }: { enabled: boolean }) {
       {orders.isLoading ? (
         <Skeleton className="h-48 w-full" />
       ) : items.length === 0 ? (
-        <EmptyState label="No bin orders yet. New orders appear here as customers place them." />
+        <EmptyState title="No bin orders yet" description="New orders appear here as customers place them." />
       ) : (
         items.map((order) => <BinOrderCard key={order.id} order={order} />)
       )}
-    </div>
-  );
-}
-
-function EmptyState({ label }: { label: string }) {
-  return (
-    <div className="text-center py-16 text-muted-foreground border-2 border-dashed">
-      <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-40" />
-      <p className="text-sm">{label}</p>
-    </div>
-  );
-}
-
-function money(n: number): string {
-  return `$${Math.round(n).toLocaleString()}`;
-}
-
-function StatCard({
-  icon, label, value, hint, accent,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: ReactNode;
-  hint?: string;
-  accent?: boolean;
-}) {
-  return (
-    <Card className="rounded-none border-2">
-      <CardContent className="pt-6">
-        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {icon} {label}
-        </div>
-        <div className={`mt-2 text-2xl font-bold tracking-tight ${accent ? "text-primary" : ""}`}>{value}</div>
-        {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
-      </CardContent>
-    </Card>
-  );
-}
-
-// A pending-review tile that doubles as a jump link into the relevant tab.
-function ReviewQueueTile({
-  icon, label, count, onClick,
-}: {
-  icon: ReactNode;
-  label: string;
-  count: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="text-left border-2 rounded-none p-4 transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          {icon} {label}
-        </div>
-        {count > 0 ? (
-          <Badge className="bg-amber-500 text-amber-950 rounded-none">{count}</Badge>
-        ) : (
-          <Badge variant="secondary" className="rounded-none text-muted-foreground">0</Badge>
-        )}
-      </div>
-      <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-        {count > 0 ? "Needs review" : "All clear"} <ArrowRight className="w-3 h-3" />
-      </div>
-    </button>
-  );
-}
-
-function OverviewPanel({
-  enabled, onJump, canBins,
-}: {
-  enabled: boolean;
-  onJump: (tab: string) => void;
-  canBins: boolean;
-}) {
-  const overview = useGetAdminOverview({
-    query: { enabled, queryKey: getGetAdminOverviewQueryKey() },
-  });
-  const data: AdminOverview | undefined = overview.data;
-
-  if (overview.isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
-      </div>
-    );
-  }
-
-  if (!data) {
-    return <EmptyState label="Couldn't load platform stats. Try refreshing." />;
-  }
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Business at a glance
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            icon={<DollarSign className="w-3.5 h-3.5" />}
-            label="GMV"
-            value={money(data.gmv)}
-            hint="Total customer-billed"
-            accent
-          />
-          <StatCard
-            icon={<TrendingUp className="w-3.5 h-3.5" />}
-            label="Broker Fees"
-            value={money(data.brokerFees)}
-            hint="Platform revenue earned"
-            accent
-          />
-          <StatCard
-            icon={<Briefcase className="w-3.5 h-3.5" />}
-            label="Total Jobs"
-            value={data.totalJobs.toLocaleString()}
-            hint="All hauls brokered"
-          />
-          <StatCard
-            icon={<Activity className="w-3.5 h-3.5" />}
-            label="Active Jobs"
-            value={data.activeJobs.toLocaleString()}
-            hint="In progress now"
-          />
-          <StatCard
-            icon={<PackageCheck className="w-3.5 h-3.5" />}
-            label="Completed Hauls"
-            value={data.completedJobs.toLocaleString()}
-          />
-          <StatCard
-            icon={<Truck className="w-3.5 h-3.5" />}
-            label="Carriers"
-            value={data.newCarriers.toLocaleString()}
-            hint="Provider accounts"
-          />
-          <StatCard
-            icon={<UserPlus className="w-3.5 h-3.5" />}
-            label="Customers"
-            value={data.newCustomers.toLocaleString()}
-            hint="Customer accounts"
-          />
-          <StatCard
-            icon={<Banknote className="w-3.5 h-3.5" />}
-            label="Stuck Payouts"
-            value={
-              <span className={data.stuckPayouts > 0 ? "text-red-600" : undefined}>
-                {data.stuckPayouts.toLocaleString()}
-              </span>
-            }
-            hint="Awaiting transfer"
-          />
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Review queues
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ReviewQueueTile
-            icon={<Truck className="w-4 h-4 text-primary" />}
-            label="Carriers"
-            count={data.pendingCompliance}
-            onClick={() => onJump("compliance")}
-          />
-          <ReviewQueueTile
-            icon={<CreditCard className="w-4 h-4 text-primary" />}
-            label="Credit"
-            count={data.pendingCredit}
-            onClick={() => onJump("credit")}
-          />
-          <ReviewQueueTile
-            icon={<Banknote className="w-4 h-4 text-primary" />}
-            label="Payouts"
-            count={data.stuckPayouts}
-            onClick={() => onJump("payouts")}
-          />
-          {canBins && (
-            <ReviewQueueTile
-              icon={<Package className="w-4 h-4 text-primary" />}
-              label="Bin Orders"
-              count={data.openBinOrders}
-              onClick={() => onJump("bins")}
-            />
-          )}
-        </div>
-      </div>
     </div>
   );
 }
@@ -1173,20 +983,9 @@ export default function AdminPage() {
   const activeTab = tab ?? defaultTab;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <ShieldCheck className="w-7 h-7 text-primary" /> Command Center
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Platform overview, carrier &amp; credit review, payouts, bin orders, and team management.
-            {(access as { staffDisplayName?: string | null }).staffDisplayName
-              ? ` Â· Signed in as ${(access as { staffDisplayName?: string | null }).staffDisplayName}`
-              : ""}
-          </p>
-        </div>
-        {(access as { authMethod?: string | null }).authMethod === "staff" && (
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {(access as { authMethod?: string | null }).authMethod === "staff" && (
+        <div className="flex justify-end">
           <Button
             variant="outline"
             className="rounded-none border-2 shrink-0"
@@ -1197,8 +996,8 @@ export default function AdminPage() {
           >
             Sign out
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList className="rounded-none">
@@ -1248,7 +1047,11 @@ export default function AdminPage() {
 
         {canOverview && (
           <TabsContent value="overview" className="space-y-4 mt-4">
-            <AdminInsights enabled={canOverview && activeTab === "overview"} />
+            <AdminCommandCenter
+              enabled={canOverview && activeTab === "overview"}
+              staffDisplayName={(access as { staffDisplayName?: string | null }).staffDisplayName}
+              onJumpTab={setTab}
+            />
           </TabsContent>
         )}
 
@@ -1257,7 +1060,7 @@ export default function AdminPage() {
             {compliance.isLoading ? (
               <Skeleton className="h-48 w-full" />
             ) : complianceItems.length === 0 ? (
-              <EmptyState label="No carrier compliance records submitted yet." />
+              <EmptyState title="No carrier compliance records" description="Submitted records will appear here." />
             ) : (
               complianceItems.map((item) => <ProviderComplianceCard key={item.profileId} item={item} />)
             )}
@@ -1269,7 +1072,7 @@ export default function AdminPage() {
             {credit.isLoading ? (
               <Skeleton className="h-48 w-full" />
             ) : creditItems.length === 0 ? (
-              <EmptyState label="No credit applications submitted yet." />
+              <EmptyState title="No credit applications" description="Submitted applications will appear here." />
             ) : (
               creditItems.map((item) => <CreditCard_ key={item.id} item={item} />)
             )}
@@ -1281,7 +1084,7 @@ export default function AdminPage() {
             {payouts.isLoading ? (
               <Skeleton className="h-48 w-full" />
             ) : payoutItems.length === 0 ? (
-              <EmptyState label="No stuck payouts â all provider transfers are settled." />
+              <EmptyState title="No stuck payouts" description="All provider transfers are settled." />
             ) : (
               payoutItems.map((item) => <StuckPayoutCard key={item.id} item={item} />)
             )}
