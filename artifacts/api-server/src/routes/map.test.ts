@@ -36,8 +36,7 @@ vi.mock("@workspace/db", () => {
     }),
   };
   // Patch count queries used by countLiveMarketplaceRows
-  const origSelect = db.select;
-  db.select = () => ({
+  (db as { select: () => unknown }).select = () => ({
     from: (table: unknown) => ({
       where: () => Promise.resolve(countFor(table)),
       leftJoin: () => ({ limit: () => Promise.resolve([]) }),
