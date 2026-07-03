@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { DocumentGateBanner } from "@/components/documents";
+import { CopilotPanel } from "@/components/copilot-panel";
 
 interface NavItem {
   href: string;
@@ -39,11 +40,12 @@ function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; on
   );
 }
 
-function Sidebar({ navItems, profile, user, onSignOut }: {
+function Sidebar({ navItems, profile, user, onSignOut, onCopilotOpen }: {
   navItems: NavItem[];
   profile: any;
   user: any;
   onSignOut: () => void;
+  onCopilotOpen: () => void;
 }) {
   const [location] = useLocation();
   return (
@@ -84,11 +86,11 @@ function Sidebar({ navItems, profile, user, onSignOut }: {
       </nav>
 
       <div className="p-4 border-t border-sidebar-border/50 space-y-2">
-        <div className="glass-panel rounded-xl p-3 flex items-center gap-2">
+        <div className="glass-panel rounded-xl p-3 flex items-center gap-2 cursor-pointer hover:border-primary/30 transition-colors" onClick={onCopilotOpen} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onCopilotOpen()}>
           <Sparkles className="h-4 w-4 text-primary shrink-0" />
           <div className="min-w-0">
             <p className="text-xs font-semibold text-sidebar-foreground truncate">AI Copilot</p>
-            <p className="text-[10px] text-muted-foreground">Coming soon</p>
+            <p className="text-[10px] text-emerald-400">Online</p>
           </div>
         </div>
         <Button
@@ -109,6 +111,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const { data: profile, isLoading } = useGetMyProfile();
   const { data: adminAccess } = useGetAdminAccess();
 
@@ -136,6 +139,7 @@ export function Layout({ children }: { children: ReactNode }) {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
     { href: "/requests", label: isCustomer ? "My Requests" : "Load Board", icon: ClipboardList, show: true },
     { href: "/fleet", label: "My Fleet", icon: Truck, show: isProvider },
+    { href: "/dispatch", label: "Digital Twin", icon: Radio, show: true },
     { href: "/jobs", label: "Active Jobs", icon: Briefcase, show: true },
     { href: "/projects", label: "Projects", icon: FolderOpen, show: isCustomer },
     { href: "/company", label: "Company", icon: Building2, show: isCustomer || isProvider },
@@ -154,7 +158,7 @@ export function Layout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden md:flex flex-col shrink-0">
-        <Sidebar navItems={navItems} profile={profile} user={user} onSignOut={handleSignOut} />
+        <Sidebar navItems={navItems} profile={profile} user={user} onSignOut={handleSignOut} onCopilotOpen={() => setCopilotOpen(true)} />
       </aside>
 
       {/* Main Content */}
@@ -181,6 +185,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 profile={profile}
                 user={user}
                 onSignOut={() => { setMobileOpen(false); handleSignOut(); }}
+                onCopilotOpen={() => { setMobileOpen(false); setCopilotOpen(true); }}
               />
             </SheetContent>
           </Sheet>
@@ -214,6 +219,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </nav>
       </main>
+      <CopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
     </div>
   );
 }
