@@ -1,4 +1,4 @@
-import { useClerk, useSSO } from "@clerk/expo";
+import { useAuth, useClerk, useSSO } from "@clerk/expo";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as AuthSession from "expo-auth-session";
@@ -7,6 +7,7 @@ import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  DevSettings,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -20,6 +21,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
+
 type Mode = "signin" | "signup";
 type Step = "email" | "otp";
 
@@ -28,9 +31,14 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
-  const clerk = useClerk() as any;
+  const { isLoaded: authLoaded } = useAuth();
+  const clerk = useClerk();
+  const signIn = clerk.client?.signIn;
+  const signUp = clerk.client?.signUp;
+  const setActive = clerk.setActive?.bind(clerk);
   const { startSSOFlow } = useSSO();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
+  const [resettingAuth, setResettingAuth] = useState(false);
 
   // Preload browser on Android so OAuth pops faster
   useEffect(() => {
@@ -50,6 +58,7 @@ export default function SignInScreen() {
       });
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
+        await markClerkActiveSession();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         // New users land in onboarding to pick a role; returning users go home.
         // The root /index route already routes signed-in users without a profile to /onboarding.
@@ -71,14 +80,6 @@ export default function SignInScreen() {
     }
   };
 
-  const clerkLoaded = !!clerk?.loaded;
-  const signIn = clerk?.client?.signIn;
-  const signUp = clerk?.client?.signUp;
-  const setSignInActive = clerk?.setActive?.bind(clerk);
-  const setSignUpActive = clerk?.setActive?.bind(clerk);
-  const signInLoaded = clerkLoaded && !!signIn;
-  const signUpLoaded = clerkLoaded && !!signUp;
-
   const [mode, setMode] = useState<Mode>("signin");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -86,7 +87,25 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clerkReady = signInLoaded && signUpLoaded;
+  const clerkReady = authLoaded && !!signIn && !!signUp && !!setActive;
+  const authStuck = authLoaded && (!signIn || !signUp);
+
+  const handleResetAuth = async () => {
+    setResettingAuth(true);
+    setError("");
+    try {
+      await resetAllClerkLocalState();
+      if (Platform.OS === "web") {
+        window.location.reload();
+        return;
+      }
+      DevSettings.reload();
+    } catch (err: any) {
+      setError(err?.message ?? "Could not reset authentication data.");
+    } finally {
+      setResettingAuth(false);
+    }
+  };
 
   const handleSendCode = async () => {
     setError("");
@@ -105,8 +124,8 @@ export default function SignInScreen() {
         try {
           await signIn.create({ identifier: email.trim() });
           const firstFactor = signIn.supportedFirstFactors?.find(
-            (f: any) => f.strategy === "email_code"
-          );
+            (f) => f.strategy === "email_code"
+          ) as { strategy: "email_code"; emailAddressId: string } | undefined;
           if (firstFactor) {
             await signIn.prepareFirstFactor({
               strategy: "email_code",
@@ -140,8 +159,8 @@ export default function SignInScreen() {
             setMode("signin");
             await signIn.create({ identifier: email.trim() });
             const firstFactor = signIn.supportedFirstFactors?.find(
-              (f: any) => f.strategy === "email_code"
-            );
+              (f) => f.strategy === "email_code"
+            ) as { strategy: "email_code"; emailAddressId: string } | undefined;
             if (firstFactor) {
               await signIn.prepareFirstFactor({
                 strategy: "email_code",
@@ -169,6 +188,10 @@ export default function SignInScreen() {
       setError("Please enter the 6-digit code from your email.");
       return;
     }
+    if (!clerkReady || !signIn || !signUp || !setActive) {
+      setError("Authentication is initialising. Please wait a moment.");
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
@@ -179,7 +202,8 @@ export default function SignInScreen() {
         });
         if (result.status === "complete") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await setSignInActive({ session: result.createdSessionId });
+          await setActive({ session: result.createdSessionId });
+          await markClerkActiveSession();
           router.replace("/" as any);
         } else {
           setError("Sign-in incomplete. Please try again.");
@@ -188,7 +212,8 @@ export default function SignInScreen() {
         const result = await signUp.attemptEmailAddressVerification({ code: code.trim() });
         if (result.status === "complete") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await setSignUpActive({ session: result.createdSessionId });
+          await setActive({ session: result.createdSessionId });
+          await markClerkActiveSession();
           router.replace("/onboarding" as any);
         } else {
           setError("Verification incomplete. Please try again.");
@@ -337,7 +362,24 @@ export default function SignInScreen() {
             </Pressable>
 
             {!clerkReady && (
-              <Text style={styles.initText}>Authentication initialising…</Text>
+              <>
+                <Text style={styles.initText}>
+                  {authStuck
+                    ? "Clerk could not start. Enable Native applications in the Clerk dashboard, then reset below."
+                    : "Authentication initialising…"}
+                </Text>
+                <Pressable
+                  onPress={handleResetAuth}
+                  disabled={resettingAuth}
+                  style={styles.resetBtn}
+                >
+                  {resettingAuth ? (
+                    <ActivityIndicator size="small" color="#e9a600" />
+                  ) : (
+                    <Text style={styles.resetText}>Reset saved auth data</Text>
+                  )}
+                </Pressable>
+              </>
             )}
           </>
         ) : (
@@ -486,6 +528,15 @@ const styles = StyleSheet.create({
   initText: {
     color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 12,
     textAlign: "center", marginTop: -4,
+  },
+  resetBtn: {
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  resetText: {
+    color: "#e9a600", fontFamily: "Inter_600SemiBold", fontSize: 12,
+    textAlign: "center",
   },
   codeHint: {
     flexDirection: "row", alignItems: "center", gap: 6,

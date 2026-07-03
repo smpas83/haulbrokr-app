@@ -5,6 +5,7 @@
   "main": "expo-router/entry",
   "scripts": {
     "dev": "sh scripts/dev.sh",
+    "start": "expo start --go --clear",
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
     "check:web-build": "node scripts/check-web-build.js",

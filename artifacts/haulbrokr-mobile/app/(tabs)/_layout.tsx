@@ -7,7 +7,7 @@ import { View, StyleSheet } from "react-native";
 export default function TabLayout() {
   const colors = useColors();
   const { isOnline, profile } = useApp();
-  const isProvider = profile.role === "provider";
+  const isProvider = profile?.role === "provider";
 
   return (
     <Tabs

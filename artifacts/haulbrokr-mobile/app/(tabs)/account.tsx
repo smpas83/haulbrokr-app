@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { useAuth } from "@clerk/expo";
+import { clearClerkSignOutPending, markClerkSignOutPending, resetAllClerkLocalState } from "@/lib/clerkTokenCache";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/RefreshingIndicator";
@@ -339,8 +340,10 @@ export default function AccountScreen() {
                   { text: "Cancel", style: "cancel" },
                   { text: "Sign Out", style: "destructive", onPress: async () => {
                     try {
+                      await markClerkSignOutPending();
+                      await resetAllClerkLocalState();
                       await signOut();
-                      router.replace("/sign-in" as any);
+                      await clearClerkSignOutPending();
                     } catch (err: any) {
                       Alert.alert("Sign out failed", err?.message ?? "Please try again.");
                     }
@@ -1013,8 +1016,10 @@ export default function AccountScreen() {
               { text: "Cancel", style: "cancel" },
               { text: "Sign Out", style: "destructive", onPress: async () => {
                 try {
+                  await markClerkSignOutPending();
+                  await resetAllClerkLocalState();
                   await signOut();
-                  router.replace("/sign-in" as any);
+                  await clearClerkSignOutPending();
                 } catch (err: any) {
                   Alert.alert("Sign out failed", err?.message ?? "Please try again.");
                 }

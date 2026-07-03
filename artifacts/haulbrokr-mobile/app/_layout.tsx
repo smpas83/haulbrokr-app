@@ -7,12 +7,11 @@ import {
 } from "@expo-google-fonts/inter";
 import { Feather } from "@expo/vector-icons";
 import { ClerkProvider, useAuth } from "@clerk/expo";
-import * as SecureStore from "expo-secure-store";
 import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
-import { Stack, router } from "expo-router";
+import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
-import { AppState, type AppStateStatus, Platform } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, AppState, type AppStateStatus, Platform, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -22,6 +21,7 @@ import { AppProvider } from "@/context/AppContext";
 import { ClerkAuthProvider } from "@/context/ClerkAuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { useMyProfile } from "@/hooks/useLiveApi";
+import { recoverStaleClientJwtOnStartup, syncClerkSessionStorage, tokenCache } from "@/lib/clerkTokenCache";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,37 +40,61 @@ if (Platform.OS !== "web") {
   });
 }
 
-const tokenCache = {
-  async getToken(key: string) {
-    try { return await SecureStore.getItemAsync(key); } catch { return null; }
-  },
-  async saveToken(key: string, value: string) {
-    try { await SecureStore.setItemAsync(key, value); } catch {}
-  },
-  async clearToken(key: string) {
-    try { await SecureStore.deleteItemAsync(key); } catch {}
-  },
-};
+function ClerkSessionStorageSync() {
+  const { isSignedIn, isLoaded } = useAuth();
+
+  useEffect(() => {
+    void syncClerkSessionStorage(isLoaded, !!isSignedIn);
+  }, [isLoaded, isSignedIn]);
+
+  return null;
+}
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useAuth();
   const profileQuery = useMyProfile();
+  const segments = useSegments();
+  const isPublicRoute = segments[0] === "sign-in" || segments[0] === "onboarding";
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded) {
+      if (!isPublicRoute) {
+        router.replace("/sign-in" as any);
+      }
+      return;
+    }
     if (!isSignedIn) {
-      router.replace("/sign-in" as any);
+      if (!isPublicRoute) {
+        router.replace("/sign-in" as any);
+      }
       return;
     }
     if (profileQuery.isError) {
       router.replace("/onboarding" as any);
     }
-  }, [isLoaded, isSignedIn, profileQuery.isError]);
+  }, [isLoaded, isSignedIn, profileQuery.isError, isPublicRoute]);
+
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
+
+  if (!isLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#1e2235", alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color="#e9a600" />
+      </View>
+    );
+  }
+
+  if (!isSignedIn) {
+    return null;
+  }
 
   return <>{children}</>;
 }
 
 export default function RootLayout() {
+  const [authStorageReady, setAuthStorageReady] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -80,12 +104,38 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    void recoverStaleClientJwtOnStartup().finally(() => setAuthStorageReady(true));
+  }, []);
+
+  useEffect(() => {
+    if ((fontsLoaded || fontError) && authStorageReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, authStorageReady]);
 
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+  const clerkKeyInvalid =
+    !publishableKey ||
+    publishableKey.includes("xxx") ||
+    publishableKey.includes("...") ||
+    !/^pk_(test|live)_/.test(publishableKey);
+
+  if ((!fontsLoaded && !fontError) || !authStorageReady) {
+    return null;
+  }
+
+  if (clerkKeyInvalid) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#1e2235", justifyContent: "center", padding: 24 }}>
+        <Text style={{ color: "#f87171", fontFamily: "Inter_600SemiBold", fontSize: 16, textAlign: "center", marginBottom: 12 }}>
+          Clerk key missing or invalid
+        </Text>
+        <Text style={{ color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21 }}>
+          Set exactly one EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in .env to your real pk_live_... or pk_test_... value, then restart Expo with --clear.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -93,6 +143,7 @@ export default function RootLayout() {
         <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
           <QueryClientProvider client={queryClient}>
             <ClerkAuthProvider>
+              <ClerkSessionStorageSync />
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
                   <LanguageProvider>
