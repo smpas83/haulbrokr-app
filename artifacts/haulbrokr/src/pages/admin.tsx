@@ -23,6 +23,7 @@ import {
 } from "@workspace/api-client-react";
 
 import { useToast } from "@/hooks/use-toast";
+import { StatCard } from "@/components/shared/stat-card";
 import { apiFetch } from "@/lib/apiFetch";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -924,28 +925,6 @@ function money(n: number): string {
   return `$${Math.round(n).toLocaleString()}`;
 }
 
-function StatCard({
-  icon, label, value, hint, accent,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: ReactNode;
-  hint?: string;
-  accent?: boolean;
-}) {
-  return (
-    <Card className="rounded-none border-2">
-      <CardContent className="pt-6">
-        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {icon} {label}
-        </div>
-        <div className={`mt-2 text-2xl font-bold tracking-tight ${accent ? "text-primary" : ""}`}>{value}</div>
-        {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
-      </CardContent>
-    </Card>
-  );
-}
-
 // A pending-review tile that doubles as a jump link into the relevant tab.
 function ReviewQueueTile({
   icon, label, count, onClick,
@@ -1009,50 +988,50 @@ function OverviewPanel({
           Business at a glance
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
+          <StatCard variant="compact"
             icon={<DollarSign className="w-3.5 h-3.5" />}
             label="GMV"
             value={money(data.gmv)}
             hint="Total customer-billed"
             accent
           />
-          <StatCard
+          <StatCard variant="compact"
             icon={<TrendingUp className="w-3.5 h-3.5" />}
             label="Broker Fees"
             value={money(data.brokerFees)}
             hint="Platform revenue earned"
             accent
           />
-          <StatCard
+          <StatCard variant="compact"
             icon={<Briefcase className="w-3.5 h-3.5" />}
             label="Total Jobs"
             value={data.totalJobs.toLocaleString()}
             hint="All hauls brokered"
           />
-          <StatCard
+          <StatCard variant="compact"
             icon={<Activity className="w-3.5 h-3.5" />}
             label="Active Jobs"
             value={data.activeJobs.toLocaleString()}
             hint="In progress now"
           />
-          <StatCard
+          <StatCard variant="compact"
             icon={<PackageCheck className="w-3.5 h-3.5" />}
             label="Completed Hauls"
             value={data.completedJobs.toLocaleString()}
           />
-          <StatCard
+          <StatCard variant="compact"
             icon={<Truck className="w-3.5 h-3.5" />}
             label="Carriers"
             value={data.newCarriers.toLocaleString()}
             hint="Provider accounts"
           />
-          <StatCard
+          <StatCard variant="compact"
             icon={<UserPlus className="w-3.5 h-3.5" />}
             label="Customers"
             value={data.newCustomers.toLocaleString()}
             hint="Customer accounts"
           />
-          <StatCard
+          <StatCard variant="compact"
             icon={<Banknote className="w-3.5 h-3.5" />}
             label="Stuck Payouts"
             value={

@@ -2,15 +2,17 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Truck, ClipboardList, Briefcase, LayoutDashboard,
-  LogOut, Loader2, Settings, Menu, X, Trash2,
+  LogOut, Settings, Menu, X, Trash2,
   FolderOpen, DollarSign, Plug, ShieldCheck, Building2
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/react";
 import { useGetMyProfile, useGetAdminAccess } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { DocumentGateBanner } from "@/components/documents";
+import { OfflineBanner } from "@/components/shared/page-states";
 
 interface NavItem {
   href: string;
@@ -91,8 +93,8 @@ export function Layout({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-muted/30">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-muted/30" role="status" aria-live="polite">
+        <Spinner className="h-8 w-8 text-primary" />
       </div>
     );
   }
@@ -139,6 +141,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
+        <OfflineBanner />
         {/* Mobile Header */}
         <header className="h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 md:hidden sticky top-0 z-40">
           <div className="flex items-center gap-2 text-sidebar-primary font-bold text-lg">
