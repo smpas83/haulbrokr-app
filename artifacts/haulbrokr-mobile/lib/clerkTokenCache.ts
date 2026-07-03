@@ -76,6 +76,34 @@ export async function resetAllClerkLocalState() {
   ]);
 }
 
+function isBenignSignOutError(err: unknown) {
+  const msg =
+    (err as any)?.errors?.[0]?.message ??
+    (err as any)?.errors?.[0]?.longMessage ??
+    (err as any)?.message ??
+    "";
+  return /signed out|signed_out|already signed|session.*not found|not signed in/i.test(msg);
+}
+
+/**
+ * Sign out via Clerk, then clear persisted client JWT.
+ * JWT must be cleared after signOut (not before) so Clerk can finish cleanly.
+ */
+export async function signOutAndClearLocalState(signOut: () => Promise<void>) {
+  await markClerkSignOutPending();
+  try {
+    await signOut();
+  } catch (err) {
+    if (!isBenignSignOutError(err)) {
+      await clearClerkSignOutPending();
+      throw err;
+    }
+  }
+  await clearClerkClientJwt();
+  await clearClerkActiveSession();
+  await clearClerkSignOutPending();
+}
+
 /**
  * Before Clerk mounts: remove orphaned client JWT (persisted JWT without an
  * active session marker). This is the root cause of isLoaded staying false.
