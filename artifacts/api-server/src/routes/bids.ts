@@ -4,6 +4,9 @@ import { db, bidsTable, requestsTable, profilesTable, jobsTable, activityTable }
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { getCarrierComplianceSnapshot } from "../lib/adminComplianceBundle";
 import { describeCanBidBlockers } from "../lib/providerCompliance";
+import { calculateCommissionFromHours, recordCommissionCalculation, resolveCommission } from "../lib/commissionEngine";
+import { calculateDynamicPricingFromHours, listActiveSurchargeConfigs, recordPricingCalculation } from "../lib/dynamicPricingEngine";
+import { sendNotification } from "../lib/notificationService";
 import {
   ListBidsParams,
   ListBidsResponse,
@@ -238,11 +241,29 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
 
     const [provider] = await db.select().from(profilesTable).where(eq(profilesTable.id, existingBid.providerId));
 
-    await db.insert(jobsTable).values({
+    const resolvedCommission = await resolveCommission({
+      customerId: request.customerId,
+      vendorId: existingBid.providerId,
+      projectId: request.projectId,
+    });
+    const estimatedHours = existingBid.estimatedHours ?? request.estimatedHours;
+    const pricingBreakdown = calculateDynamicPricingFromHours(
+      parseFloat(existingBid.ratePerHour),
+      parseFloat(estimatedHours),
+      await listActiveSurchargeConfigs(),
+    );
+    const commissionBreakdown = calculateCommissionFromHours(
+      pricingBreakdown.pricedAmount,
+      1,
+      resolvedCommission.rate,
+    );
+
+    const [job] = await db.insert(jobsTable).values({
       requestId: request.id,
       bidId: existingBid.id,
       customerId: request.customerId,
       providerId: existingBid.providerId,
+      projectId: request.projectId,
       ratePerHour: existingBid.ratePerHour,
       trucksAssigned: existingBid.trucksOffered,
       status: "awarded",
@@ -253,7 +274,22 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       scheduledDate: request.scheduledDate,
       startTime: request.startTime,
       estimatedHours: request.estimatedHours,
+      totalAmount: String(commissionBreakdown.workAmount),
+      platformFeeRate: String(commissionBreakdown.commissionRate),
+      platformFeeAmount: String(commissionBreakdown.platformCommission),
+      customerTotalAmount: String(commissionBreakdown.customerTotal),
+      providerNetAmount: String(commissionBreakdown.vendorPayout),
       notes: request.notes,
+    }).returning();
+
+    await recordCommissionCalculation({
+      jobId: job.id,
+      resolved: resolvedCommission,
+      breakdown: commissionBreakdown,
+    });
+    await recordPricingCalculation({
+      jobId: job.id,
+      breakdown: pricingBreakdown,
     });
 
     await db.update(requestsTable).set({ status: "awarded" }).where(eq(requestsTable.id, request.id));
@@ -268,17 +304,19 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       .returning();
 
     if (provider) {
-      await db.insert(activityTable).values({
-        profileId: profile.id,
-        type: "bid_awarded",
-        description: `Awarded job to ${provider.companyName} at $${existingBid.ratePerHour}/hr — awaiting hauler acceptance`,
-        relatedId: existingBid.id,
+      await sendNotification({
+        eventType: "job_assigned",
+        recipientProfileId: profile.id,
+        jobId: job.id,
+        subject: "Job awarded",
+        body: `Awarded job to ${provider.companyName} at $${existingBid.ratePerHour}/hr — awaiting hauler acceptance`,
       });
-      await db.insert(activityTable).values({
-        profileId: existingBid.providerId,
-        type: "bid_awarded",
-        description: `You were awarded a job at $${existingBid.ratePerHour}/hr — accept or decline to proceed`,
-        relatedId: existingBid.id,
+      await sendNotification({
+        eventType: "job_assigned",
+        recipientProfileId: existingBid.providerId,
+        jobId: job.id,
+        subject: "You were awarded a job",
+        body: `You were awarded a job at $${existingBid.ratePerHour}/hr — accept or decline to proceed`,
       });
     }
 

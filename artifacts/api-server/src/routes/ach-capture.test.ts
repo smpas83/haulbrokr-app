@@ -95,6 +95,8 @@ vi.mock("@workspace/db", () => {
     profilesTable: makeTable("profiles"),
     requestsTable: makeTable("requests"),
     activityTable: makeTable("activity"),
+    notificationDeliveriesTable: makeTable("notificationDeliveries"),
+    marketplacePaymentsTable: makeTable("marketplacePayments"),
     paymentMethodsTable: makeTable("paymentMethods"),
     ticketsTable: makeTable("tickets"),
     trucksTable: makeTable("trucks"),
@@ -120,6 +122,15 @@ vi.mock("../lib/payoutStatus", async (importActual) => {
 vi.mock("../lib/stripeClient", () => ({
   getUncachableStripeClient: vi.fn(),
   getStripePublishableKey: vi.fn(async () => "pk_test_e2e"),
+}));
+
+vi.mock("../lib/dynamicPricingEngine", () => ({
+  calculateDynamicPricingFromHours: (ratePerHour: number, hours: number) => {
+    const baseAmount = Math.round(ratePerHour * hours * 100) / 100;
+    return { baseAmount, surchargeTotal: 0, pricedAmount: baseAmount, appliedSurcharges: [] };
+  },
+  listActiveSurchargeConfigs: async () => [],
+  recordPricingCalculation: vi.fn(async () => undefined),
 }));
 
 // Authenticated customer (id 1) with a Stripe Customer already provisioned, so

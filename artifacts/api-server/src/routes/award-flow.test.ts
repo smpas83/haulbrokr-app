@@ -23,6 +23,7 @@ vi.mock("@workspace/db", () => {
   const jobsTable = makeTable("jobs");
   const profilesTable = makeTable("profiles");
   const activityTable = makeTable("activity");
+  const notificationDeliveriesTable = makeTable("notificationDeliveries");
   const jobStatusUpdatesTable = makeTable("job_status_updates");
 
   const db = {
@@ -45,7 +46,7 @@ vi.mock("@workspace/db", () => {
           h.jobs.push(job);
           return { returning: () => Promise.resolve([job]) };
         }
-        if (table === activityTable || table === jobStatusUpdatesTable) {
+        if (table === activityTable || table === notificationDeliveriesTable || table === jobStatusUpdatesTable) {
           return Promise.resolve(undefined);
         }
         return Promise.resolve(undefined);
@@ -90,7 +91,7 @@ vi.mock("@workspace/db", () => {
     }),
   };
 
-  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable, jobStatusUpdatesTable };
+  return { db, requestsTable, bidsTable, jobsTable, profilesTable, activityTable, notificationDeliveriesTable, jobStatusUpdatesTable };
 });
 
 vi.mock("../middlewares/requireAuth", () => ({
@@ -109,6 +110,35 @@ vi.mock("../lib/access", () => ({
   isDriverAssignedToJob: async () => false,
   DRIVER_SIDE: new Set(["provider", "driver"]),
   CUSTOMER_SIDE: new Set(["customer", "supervisor"]),
+}));
+
+vi.mock("../lib/commissionEngine", () => ({
+  calculateCommissionFromHours: (ratePerHour: number, hours: number, commissionRate: number) => {
+    const workAmount = Math.round(ratePerHour * hours * 100) / 100;
+    const platformCommission = Math.round(workAmount * commissionRate * 100) / 100;
+    const customerTotal = Math.round((workAmount + platformCommission) * 100) / 100;
+    return {
+      workAmount,
+      platformCommission,
+      customerTotal,
+      vendorPayout: workAmount,
+      driverPayout: null,
+      internalProfit: platformCommission,
+      marketplaceGmv: customerTotal,
+      commissionRate,
+    };
+  },
+  resolveCommission: async () => ({ rate: 0.2, scopeType: "global", scopeId: null, configId: null }),
+  recordCommissionCalculation: vi.fn(async () => undefined),
+}));
+
+vi.mock("../lib/dynamicPricingEngine", () => ({
+  calculateDynamicPricingFromHours: (ratePerHour: number, hours: number) => {
+    const baseAmount = Math.round(ratePerHour * hours * 100) / 100;
+    return { baseAmount, surchargeTotal: 0, pricedAmount: baseAmount, appliedSurcharges: [] };
+  },
+  listActiveSurchargeConfigs: async () => [],
+  recordPricingCalculation: vi.fn(async () => undefined),
 }));
 
 import bidsRouter from "./bids";

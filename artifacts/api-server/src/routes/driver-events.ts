@@ -8,6 +8,7 @@ import {
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { loadJobIfMember, DRIVER_SIDE, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { sendNotification } from "../lib/notificationService";
 
 const router: IRouter = Router();
 
@@ -115,6 +116,26 @@ router.post("/jobs/:jobId/driver-events", requireProfile, async (req, res): Prom
     });
     if (eventType === "pickup") {
       await recordJobTimelineEvent(jobId, profile.id, "ticket_uploaded", { ticketId });
+    }
+
+    if (eventType === "checkout") {
+      await sendNotification({
+        eventType: "driver_arrived",
+        recipientProfileId: job.customerId,
+        jobId,
+        subject: "Driver arrived",
+        body: `Driver arrived for job #${jobId}.`,
+      });
+    }
+
+    if (eventType === "pickup") {
+      await sendNotification({
+        eventType: "load_complete",
+        recipientProfileId: job.customerId,
+        jobId,
+        subject: "Load complete",
+        body: `A load was completed for job #${jobId}.`,
+      });
     }
 
     if (eventType === "delivery") {

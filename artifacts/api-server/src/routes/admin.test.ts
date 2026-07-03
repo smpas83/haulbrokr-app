@@ -68,6 +68,7 @@ vi.mock("@workspace/db", () => {
     activityTable: makeTable("activity"),
     jobsTable: makeTable("jobs"),
     requestsTable: makeTable("requests"),
+    ratingsTable: makeTable("ratings"),
     binOrders: makeTable("binOrders"),
     w9SubmissionsTable: makeTable("w9Submissions"),
     insuranceSubmissionsTable: makeTable("insuranceSubmissions"),
@@ -164,6 +165,25 @@ describe("PATCH /admin/compliance/:profileId", () => {
       .patch(`/admin/compliance/${APPLICANT_ID}`)
       .send({ action: "maybe" });
     expect(res.status).toBe(400);
+  });
+});
+
+describe("PATCH /admin/ratings/:id", () => {
+  it("moderates a rating with status and reviewer note", async () => {
+    h.profile = { id: 1, staffRole: "ceo" };
+    h.updateBase = { id: 77, stars: 2, comment: "Needs review" };
+
+    const res = await request(makeApp())
+      .patch("/admin/ratings/77")
+      .send({ moderationStatus: "hidden", moderationNote: "Contains personal information." });
+
+    expect(res.status).toBe(200);
+    expect(h.updates[0]).toMatchObject({
+      moderationStatus: "hidden",
+      moderationNote: "Contains personal information.",
+      moderatedByProfileId: 1,
+    });
+    expect(h.updates[0].moderatedAt).toBeInstanceOf(Date);
   });
 });
 
@@ -411,7 +431,7 @@ describe("per-role permission gating", () => {
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
     expect(res.body.permissions.sort()).toEqual([
-      "bins", "compliance", "credit", "overview", "payouts", "view_staff",
+      "bins", "compliance", "credit", "marketplace", "overview", "payouts", "view_staff",
     ]);
   });
 
@@ -421,7 +441,7 @@ describe("per-role permission gating", () => {
       const res = await request(makeApp()).get("/admin/access");
       expect(res.status).toBe(200);
       expect(res.body.permissions.sort()).toEqual([
-        "bins", "compliance", "credit", "manage_staff", "overview", "payouts", "view_staff",
+        "bins", "compliance", "credit", "manage_staff", "marketplace", "overview", "payouts", "view_staff",
       ]);
     }
   });
@@ -431,7 +451,7 @@ describe("per-role permission gating", () => {
     const res = await request(makeApp()).get("/admin/access");
     expect(res.status).toBe(200);
     expect(res.body.permissions.sort()).toEqual([
-      "compliance", "credit", "manage_staff", "overview", "payouts", "view_staff",
+      "compliance", "credit", "manage_staff", "marketplace", "overview", "payouts", "view_staff",
     ]);
     expect(res.body.permissions).not.toContain("bins");
   });
