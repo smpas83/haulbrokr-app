@@ -27,6 +27,8 @@ const QuerySchema = z.object({
   radiusMiles: z.coerce.number().min(1).max(500).optional(),
 });
 
+const GeocodeBody = z.object({ address: z.string().min(3).max(500) });
+
 const OPEN_STATUSES = ["open", "bid_received", "bidding"] as const;
 const ACTIVE_JOB_STATUSES = ["active", "awarded", "accepted", "in_progress"] as const;
 
@@ -224,6 +226,24 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
     res.json(buildDemoMarketplace());
   }
 }
+
+/**
+ * Forward-geocode a street address (Google Geocoding API when configured, else Nominatim).
+ * Kept for clients that predate GET /map/marketplace server-side geocoding.
+ */
+router.post("/maps/geocode", requireProfile, async (req, res): Promise<void> => {
+  const parsed = GeocodeBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const coord = await geocodeAddressCached(parsed.data.address);
+  if (!coord) {
+    res.status(404).json({ error: "Address not found" });
+    return;
+  }
+  res.json(coord);
+});
 
 /**
  * Nationwide marketplace map data — loads, trucks, heat zones.

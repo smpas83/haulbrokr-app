@@ -63,6 +63,14 @@ vi.mock("../middlewares/requireAuth", () => ({
   getRequestProfile: (req: any) => req.profile,
 }));
 
+vi.mock("../lib/geocodeCache", () => ({
+  geocodeAddressCached: vi.fn(async (address: string) => {
+    if (address.includes("Unknown")) return null;
+    return { latitude: 32.7767, longitude: -96.797 };
+  }),
+  resetGeocodeCacheForTests: vi.fn(),
+}));
+
 import mapRouter from "./map";
 
 function app() {
@@ -93,5 +101,27 @@ describe("GET /api/map/marketplace", () => {
     expect(res.status).toBe(200);
     expect(res.body.demoMode).toBe(true);
     expect(res.body.loads.length).toBe(250);
+  });
+});
+
+describe("POST /api/maps/geocode", () => {
+  it("returns coordinates for a valid address", async () => {
+    const res = await request(app())
+      .post("/api/maps/geocode")
+      .send({ address: "123 Main St, Dallas, TX" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ latitude: 32.7767, longitude: -96.797 });
+  });
+
+  it("returns 404 when geocoding fails", async () => {
+    const res = await request(app())
+      .post("/api/maps/geocode")
+      .send({ address: "Unknown place xyz" });
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 for invalid body", async () => {
+    const res = await request(app()).post("/api/maps/geocode").send({ address: "ab" });
+    expect(res.status).toBe(400);
   });
 });
