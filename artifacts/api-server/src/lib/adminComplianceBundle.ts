@@ -1,4 +1,4 @@
-import { eq, and, inArray, desc } from "drizzle-orm";
+import { eq, and, inArray, desc, ne } from "drizzle-orm";
 import {
   db,
   profilesTable,
@@ -11,10 +11,66 @@ import {
 } from "@workspace/db";
 import {
   ADMIN_UPLOAD_DOC_TYPES,
+  CDL_UPLOAD_DOC_TYPES,
+  DOT_UPLOAD_DOC_TYPES,
   computeProviderCanBid,
   hasPendingComplianceReview,
   isAdminUploadDocType,
 } from "./providerCompliance";
+
+function driverDocReviewUpdate(approved: boolean, note: string | null, now: Date) {
+  return approved
+    ? { status: "verified" as const, verifiedAt: now, rejectedAt: null, reviewNote: note }
+    : { status: "rejected" as const, rejectedAt: now, verifiedAt: null, reviewNote: note };
+}
+
+async function syncUploadedDocReview(
+  profileId: number,
+  docType: string,
+  approved: boolean,
+  note: string | null,
+) {
+  if (!isAdminUploadDocType(docType)) return;
+  const now = new Date();
+  await db
+    .update(driverDocumentsTable)
+    .set(driverDocReviewUpdate(approved, note, now))
+    .where(and(
+      eq(driverDocumentsTable.profileId, profileId),
+      eq(driverDocumentsTable.docType, docType),
+      eq(driverDocumentsTable.status, "uploaded"),
+    ));
+}
+
+async function syncW9FormReview(profileId: number, approved: boolean, note: string | null) {
+  const status = approved ? "verified" : "rejected";
+  await db
+    .update(w9SubmissionsTable)
+    .set({ status, reviewNote: note })
+    .where(and(eq(w9SubmissionsTable.profileId, profileId), ne(w9SubmissionsTable.status, "not_submitted")));
+}
+
+async function syncInsuranceFormReview(profileId: number, approved: boolean, note: string | null) {
+  const status = approved ? "verified" : "rejected";
+  await db
+    .update(insuranceSubmissionsTable)
+    .set({ status, reviewNote: note })
+    .where(and(eq(insuranceSubmissionsTable.profileId, profileId), ne(insuranceSubmissionsTable.status, "not_submitted")));
+}
+
+/** When DOT/CDL is approved, mark related uploaded carrier files as verified too. */
+export async function syncDotCdlUploadedDocs(profileId: number, approved: boolean, note: string | null) {
+  const now = new Date();
+  const docTypes = [...DOT_UPLOAD_DOC_TYPES, ...CDL_UPLOAD_DOC_TYPES];
+  await db
+    .update(driverDocumentsTable)
+    .set(driverDocReviewUpdate(approved, note, now))
+    .where(and(
+      eq(driverDocumentsTable.profileId, profileId),
+      inArray(driverDocumentsTable.docType, docTypes),
+      eq(driverDocumentsTable.status, "uploaded"),
+    ));
+}
 
 export function profileSummary(p: Profile) {
   return {
@@ -172,6 +228,7 @@ export async function reviewProviderW9(profileId: number, approved: boolean, not
     .set({ status, reviewNote: note })
     .where(eq(w9SubmissionsTable.profileId, profileId))
     .returning();
+  await syncUploadedDocReview(profileId, "w9", approved, note);
   return rec ?? null;
 }
 
@@ -182,6 +239,7 @@ export async function reviewProviderInsurance(profileId: number, approved: boole
     .set({ status, reviewNote: note })
     .where(eq(insuranceSubmissionsTable.profileId, profileId))
     .returning();
+  await syncUploadedDocReview(profileId, "coi", approved, note);
   return rec ?? null;
 }
 
@@ -195,13 +253,13 @@ export async function reviewProviderUploadedDoc(
   const now = new Date();
   const [rec] = await db
     .update(driverDocumentsTable)
-    .set(
-      approved
-        ? { status: "verified", verifiedAt: now, rejectedAt: null, reviewNote: note }
-        : { status: "rejected", rejectedAt: now, verifiedAt: null, reviewNote: note },
-    )
+    .set(driverDocReviewUpdate(approved, note, now))
     .where(and(eq(driverDocumentsTable.profileId, profileId), eq(driverDocumentsTable.docType, docType)))
     .returning();
+  if (rec) {
+    if (docType === "w9") await syncW9FormReview(profileId, approved, note);
+    if (docType === "coi") await syncInsuranceFormReview(profileId, approved, note);
+  }
   return rec ?? null;
 }
 

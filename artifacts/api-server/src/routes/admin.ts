@@ -33,6 +33,7 @@ import {
   reviewProviderUploadedDoc,
   getProviderCanBid,
   profileSummary,
+  syncDotCdlUploadedDocs,
 } from "../lib/adminComplianceBundle";
 
 const router: IRouter = Router();
@@ -883,7 +884,7 @@ router.patch("/admin/compliance/:profileId/documents/:docType", requireStaffOrPr
   const note = parsed.data.note?.trim() || null;
   const rec = await reviewProviderUploadedDoc(profileId, docType, approved, note);
   if (!rec) {
-    res.status(404).json({ error: "No uploaded document of that type for that carrier." });
+    res.status(404).json({ error: "No uploaded document of that type for that profile." });
     return;
   }
   await notifyApplicationReviewed(profileId, "compliance document", approved, note);
@@ -936,9 +937,10 @@ router.patch("/admin/compliance/:profileId", requireStaffOrProfile, requirePermi
     .where(eq(dotCdlTable.profileId, profileId))
     .returning();
   if (!rec) {
-    res.status(404).json({ error: "No compliance record for that carrier." });
+    res.status(404).json({ error: "No compliance record for that profile." });
     return;
   }
+  await syncDotCdlUploadedDocs(profileId, approved, note);
   await notifyApplicationReviewed(profileId, "DOT/CDL compliance", approved, note);
   res.json({ ...rec, canBid: await getProviderCanBid(profileId) });
 });

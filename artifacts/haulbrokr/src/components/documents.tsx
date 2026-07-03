@@ -68,7 +68,15 @@ function StatusBadge({ status, expiry }: { status: string; expiry?: string | nul
     rejected: "border-red-500 text-red-600",
     missing: "border-muted-foreground/40 text-muted-foreground",
   };
-  return <Badge variant="outline" className={`rounded-none capitalize ${map[status] ?? map.missing}`}>{status || "missing"}</Badge>;
+  const labels: Record<string, string> = {
+    verified: "Approved",
+    uploaded: "Pending review",
+    rejected: "Rejected",
+    missing: "Missing",
+    pending: "Pending review",
+  };
+  const label = labels[status] ?? (status || "missing").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return <Badge variant="outline" className={`rounded-none ${map[status] ?? map.missing}`}>{label}</Badge>;
 }
 
 // ── Vendor self-service upload list (Account page) ───────────────────────────
