@@ -50,8 +50,10 @@ export default function TabLayout() {
           options={{ title: "Projects", tabBarIcon: ({ color }) => <Feather name="folder" size={22} color={color} /> }}
         />
       )}
-      {/* Map tab hidden for launch — live GPS/location infrastructure not yet available. */}
-      <Tabs.Screen name="map" options={{ href: null }} />
+      <Tabs.Screen
+        name="map"
+        options={{ title: "Map", tabBarIcon: ({ color }) => <Feather name="map" size={22} color={color} /> }}
+      />
       <Tabs.Screen
         name="bins"
         options={{ title: "Bins", tabBarIcon: ({ color }) => <Feather name="package" size={22} color={color} /> }}
