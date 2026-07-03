@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, or, sql, inArray } from "drizzle-orm";
+import { z } from "zod";
 import {
   db,
   jobsTable,
@@ -13,6 +14,7 @@ import {
   trucksTable,
   jobStatusUpdatesTable,
   driverDocumentsTable,
+  deliveryEvidenceTable,
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isAdmin } from "../middlewares/requireAdmin";
@@ -23,6 +25,9 @@ import { settleConfirmedPayout } from "../lib/payoutRetry";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { computeBreakdown } from "../lib/jobSettlement";
+import { DRIVER_WORKFLOW_ACTIONS, transitionDriverWorkflow } from "../lib/driverWorkflow";
+import { estimateGoogleMapsEta } from "../lib/mapsEta";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -60,6 +65,27 @@ import {
 const router: IRouter = Router();
 
 const DEFAULT_FEE_RATE = 0.15;
+
+export { computeBreakdown };
+
+const DriverWorkflowBody = z.object({
+  action: z.enum(DRIVER_WORKFLOW_ACTIONS),
+  ticketId: z.number().int().positive().optional(),
+  gps: z.object({
+    lat: z.number().optional(),
+    long: z.number().optional(),
+  }).optional(),
+  weightTons: z.union([z.number(), z.string()]).optional(),
+  totalHours: z.union([z.number(), z.string()]).optional(),
+  notes: z.string().optional(),
+  files: z.array(z.object({
+    role: z.string(),
+    url: z.string(),
+    caption: z.string().nullable().optional(),
+  })).optional(),
+});
+
+const JobIdParam = z.object({ id: z.number().int().positive() });
 
 function num(v: string | null | undefined): number | null {
   return v == null ? null : parseFloat(v);
@@ -149,22 +175,6 @@ async function notifyPayoutDelayed(
   } catch (err) {
     console.error("Failed to record payout_delayed notification", err);
   }
-}
-
-/**
- * Broker-fee model: the customer is billed the work value PLUS a 15% broker fee.
- * HaulBrokr deducts that 15% from the customer's gross payment BEFORE the
- * provider/driver is paid, so the driver receives the full work value (net) and
- * HaulBrokr retains the fee.
- *   base  = ratePerHour * hours   (work value → provider net)
- *   fee   = base * feeRate        (HaulBrokr's retained profit)
- *   gross = base + fee            (what the customer pays)
- */
-export function computeBreakdown(ratePerHour: number, hours: number, feeRate: number) {
-  const base = Math.round(ratePerHour * hours * 100) / 100;
-  const fee = Math.round(base * feeRate * 100) / 100;
-  const gross = Math.round((base + fee) * 100) / 100;
-  return { base, fee, gross };
 }
 
 /**
@@ -655,6 +665,138 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
 
   const { customerCompany, providerCompany } = await companiesFor(job);
   res.json(UpdateJobResponse.parse(serializeJob(job, customerCompany, providerCompany)));
+});
+
+router.post("/jobs/:id/cancel", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const params = JobIdParam.safeParse({ id: parseInt(String(req.params.id), 10) });
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const job = await loadJobIfMember(params.data.id, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  if (!CUSTOMER_SIDE.has(profile.role) && !profile.staffRole) {
+    res.status(403).json({ error: "Only the customer side or staff can cancel a job." });
+    return;
+  }
+  if (["completed", "cancelled"].includes(job.status) || ["paid", "released"].includes(job.paymentStatus)) {
+    res.status(409).json({ error: "This job can no longer be cancelled." });
+    return;
+  }
+
+  const [updated] = await db.update(jobsTable)
+    .set({ status: "cancelled", notes: req.body?.reason ? `${job.notes ?? ""}\nCancellation reason: ${req.body.reason}`.trim() : job.notes })
+    .where(eq(jobsTable.id, job.id))
+    .returning();
+  await db.update(requestsTable).set({ status: "cancelled" }).where(eq(requestsTable.id, job.requestId));
+  await db.update(ticketsTable).set({ status: "cancelled" }).where(eq(ticketsTable.jobId, job.id));
+  await db.insert(activityTable).values([
+    {
+      profileId: job.customerId,
+      type: "job_cancelled",
+      description: `Cancelled job #${job.id} - ${job.materialType} delivery`,
+      relatedId: job.id,
+    },
+    {
+      profileId: job.providerId,
+      type: "job_cancelled",
+      description: `Customer cancelled job #${job.id} - ${job.materialType} delivery`,
+      relatedId: job.id,
+    },
+  ]);
+
+  const { customerCompany, providerCompany } = await companiesFor(updated);
+  res.json(serializeJob(updated, customerCompany, providerCompany));
+});
+
+router.post("/jobs/:id/approve-invoice", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const params = JobIdParam.safeParse({ id: parseInt(String(req.params.id), 10) });
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const job = await loadJobIfMember(params.data.id, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+  if (!CUSTOMER_SIDE.has(profile.role)) {
+    res.status(403).json({ error: "Only the customer side can approve invoices." });
+    return;
+  }
+  if (job.status !== "completed") {
+    res.status(409).json({ error: "The job must be completed before invoice approval." });
+    return;
+  }
+  if (!(await canReviewCompletion(job, profile))) {
+    res.status(403).json({ error: "You are not assigned to approve this job." });
+    return;
+  }
+
+  const [updated] = await db.update(jobsTable)
+    .set({
+      invoiceApprovedAt: new Date(),
+      invoiceApprovedByProfileId: profile.id,
+      completionApproval: job.completionApproval === "flagged" ? "flagged" : "approved",
+      approvedByProfileId: job.approvedByProfileId ?? profile.id,
+      completionApprovedAt: job.completionApprovedAt ?? new Date(),
+    })
+    .where(eq(jobsTable.id, job.id))
+    .returning();
+  await db.insert(activityTable).values({
+    profileId: job.providerId,
+    type: "invoice_approved",
+    description: `Customer approved invoice for job #${job.id} - ${job.materialType} delivery`,
+    relatedId: job.id,
+  });
+
+  const { customerCompany, providerCompany } = await companiesFor(updated);
+  res.json(serializeJob(updated, customerCompany, providerCompany));
+});
+
+router.get("/jobs/:id/tracking", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const params = JobIdParam.safeParse({ id: parseInt(String(req.params.id), 10) });
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const job = await loadJobIfMember(params.data.id, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+
+  const updates = await db
+    .select()
+    .from(jobStatusUpdatesTable)
+    .where(eq(jobStatusUpdatesTable.jobId, job.id))
+    .orderBy(sql`${jobStatusUpdatesTable.createdAt} asc`);
+  const tickets = await db.select().from(ticketsTable)
+    .where(eq(ticketsTable.jobId, job.id))
+    .orderBy(sql`${ticketsTable.loadNumber} asc`);
+  const evidence = await db.select().from(deliveryEvidenceTable)
+    .where(eq(deliveryEvidenceTable.jobId, job.id));
+
+  const latestStatus = updates[updates.length - 1] ?? null;
+  const isDone = job.status === "completed" || latestStatus?.status === "completed";
+  const mapsEta = !isDone && (latestStatus?.status === "en_route_delivery" || latestStatus?.status === "left_pickup")
+    ? await estimateGoogleMapsEta(job.pickupAddress, job.deliveryAddress)
+    : null;
+  const fallbackEta = isDone
+    ? null
+    : latestStatus?.status === "en_route_delivery" || latestStatus?.status === "left_pickup"
+      ? new Date(Date.now() + 45 * 60 * 1000).toISOString()
+      : latestStatus?.status === "en_route_pickup"
+        ? new Date(Date.now() + 30 * 60 * 1000).toISOString()
+        : job.scheduledDate.toISOString();
+
+  const { customerCompany, providerCompany } = await companiesFor(job);
+  res.json({
+    job: serializeJob(job, customerCompany, providerCompany),
+    latestStatus,
+    eta: mapsEta?.eta ?? fallbackEta,
+    etaSource: mapsEta?.source ?? (fallbackEta ? "fallback" : null),
+    etaDurationSeconds: mapsEta?.durationSeconds ?? null,
+    tickets: tickets.map((ticket) => ({
+      ...ticket,
+      weightTons: ticket.weightTons == null ? null : parseFloat(ticket.weightTons),
+    })),
+    evidenceCount: evidence.length,
+    deliveryPhotoCount: evidence.filter((row) => row.photoCaption?.includes("delivery")).length,
+    scaleTicketCount: tickets.filter((ticket) => !!ticket.photoUrl).length,
+    signedTicketCount: evidence.filter((row) => row.photoCaption?.includes("signed")).length,
+  });
 });
 
 /**
@@ -1246,6 +1388,26 @@ router.post("/jobs/:id/assign", requireProfile, async (req, res): Promise<void> 
     ...ticket,
     weightTons: ticket.weightTons != null ? parseFloat(ticket.weightTons) : null,
   });
+});
+
+router.post("/jobs/:id/driver-workflow", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const jobId = parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(jobId)) { res.status(400).json({ error: "Invalid job id" }); return; }
+
+  const parsed = DriverWorkflowBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const job = await loadJobIfMember(jobId, profile);
+  if (!job) { res.status(404).json({ error: "Job not found" }); return; }
+
+  const result = await transitionDriverWorkflow(job, profile, parsed.data);
+  if (!result.ok) {
+    res.status(result.status).json(result);
+    return;
+  }
+
+  res.status(200).json(result);
 });
 
 // ── Driver status-update timeline ───────────────────────────────────────────

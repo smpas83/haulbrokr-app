@@ -646,6 +646,10 @@ export interface Job {
   /** @nullable */
   invoicedAt?: string | null;
   /** @nullable */
+  invoiceApprovedAt?: string | null;
+  /** @nullable */
+  invoiceApprovedByProfileId?: number | null;
+  /** @nullable */
   paidAt?: string | null;
   /** @nullable */
   releasedAt?: string | null;
@@ -678,6 +682,161 @@ export interface JobUpdate {
   notes?: string;
 }
 
+/**
+ * @nullable
+ */
+export type JobTrackingEtaSource = typeof JobTrackingEtaSource[keyof typeof JobTrackingEtaSource] | null;
+
+
+export const JobTrackingEtaSource = {
+  google_maps: 'google_maps',
+  fallback: 'fallback',
+} as const;
+
+export type JobStatusUpdateStatus = typeof JobStatusUpdateStatus[keyof typeof JobStatusUpdateStatus];
+
+
+export const JobStatusUpdateStatus = {
+  en_route: 'en_route',
+  arrived: 'arrived',
+  loading: 'loading',
+  loaded: 'loaded',
+  dumping: 'dumping',
+  checked_in: 'checked_in',
+  started: 'started',
+  ticket_uploaded: 'ticket_uploaded',
+  photo_uploaded: 'photo_uploaded',
+  completed: 'completed',
+  driver_accepted: 'driver_accepted',
+  driver_declined: 'driver_declined',
+  en_route_pickup: 'en_route_pickup',
+  left_pickup: 'left_pickup',
+  en_route_delivery: 'en_route_delivery',
+  arrived_delivery: 'arrived_delivery',
+  loading_photos_uploaded: 'loading_photos_uploaded',
+  scale_ticket_uploaded: 'scale_ticket_uploaded',
+  delivery_photos_uploaded: 'delivery_photos_uploaded',
+  signed_ticket_uploaded: 'signed_ticket_uploaded',
+  checked_out: 'checked_out',
+} as const;
+
+export interface JobStatusUpdate {
+  id: number;
+  jobId: number;
+  /** @nullable */
+  ticketId?: number | null;
+  actorProfileId: number;
+  /** @nullable */
+  actorName?: string | null;
+  status: JobStatusUpdateStatus;
+  /** @nullable */
+  note?: string | null;
+  createdAt: string;
+}
+
+export type TicketStatus = typeof TicketStatus[keyof typeof TicketStatus];
+
+
+export const TicketStatus = {
+  pending: 'pending',
+  in_progress: 'in_progress',
+  completed: 'completed',
+  verified: 'verified',
+  declined: 'declined',
+  cancelled: 'cancelled',
+} as const;
+
+export type TicketWorkflowState = typeof TicketWorkflowState[keyof typeof TicketWorkflowState];
+
+
+export const TicketWorkflowState = {
+  assigned: 'assigned',
+  accepted: 'accepted',
+  declined: 'declined',
+  en_route_pickup: 'en_route_pickup',
+  checked_in: 'checked_in',
+  loading: 'loading',
+  loading_photos_uploaded: 'loading_photos_uploaded',
+  scale_ticket_uploaded: 'scale_ticket_uploaded',
+  left_pickup: 'left_pickup',
+  en_route_delivery: 'en_route_delivery',
+  arrived_delivery: 'arrived_delivery',
+  delivery_photos_uploaded: 'delivery_photos_uploaded',
+  signed_ticket_uploaded: 'signed_ticket_uploaded',
+  checked_out: 'checked_out',
+  completed: 'completed',
+} as const;
+
+export interface Ticket {
+  id: number;
+  jobId: number;
+  driverProfileId: number;
+  /** @nullable */
+  truckId?: number | null;
+  loadNumber: number;
+  status: TicketStatus;
+  workflowState?: TicketWorkflowState;
+  /** @nullable */
+  acceptedAt?: string | null;
+  /** @nullable */
+  declinedAt?: string | null;
+  /** @nullable */
+  enRoutePickupAt?: string | null;
+  /** @nullable */
+  pickupCheckedInAt?: string | null;
+  /** @nullable */
+  loadingStartedAt?: string | null;
+  /** @nullable */
+  loadingPhotosUploadedAt?: string | null;
+  /** @nullable */
+  scaleTicketUploadedAt?: string | null;
+  /** @nullable */
+  leftPickupAt?: string | null;
+  /** @nullable */
+  enRouteDeliveryAt?: string | null;
+  /** @nullable */
+  arrivedDeliveryAt?: string | null;
+  /** @nullable */
+  deliveryPhotosUploadedAt?: string | null;
+  /** @nullable */
+  signedTicketUploadedAt?: string | null;
+  /** @nullable */
+  checkedOutAt?: string | null;
+  /** @nullable */
+  completedAt?: string | null;
+  /** @nullable */
+  lastWorkflowTransitionAt?: string | null;
+  /** @nullable */
+  clockedInAt?: string | null;
+  /** @nullable */
+  clockedOutAt?: string | null;
+  /** @nullable */
+  weightTons?: number | null;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  photoUrl?: string | null;
+  /** @nullable */
+  verifiedAt?: string | null;
+  createdAt: string;
+}
+
+export interface JobTracking {
+  job: Job;
+  latestStatus?: JobStatusUpdate | null;
+  /** @nullable */
+  eta: string | null;
+  /** @nullable */
+  etaSource: JobTrackingEtaSource;
+  /** @nullable */
+  etaDurationSeconds: number | null;
+  tickets: Ticket[];
+  evidenceCount: number;
+  deliveryPhotoCount: number;
+  scaleTicketCount: number;
+  signedTicketCount: number;
+}
+
 export interface DashboardStats {
   openRequests: number;
   activeJobs: number;
@@ -698,8 +857,13 @@ export const ActivityItemType = {
   bid_accepted: 'bid_accepted',
   job_accepted: 'job_accepted',
   job_declined: 'job_declined',
+  job_cancelled: 'job_cancelled',
   job_started: 'job_started',
   job_completed: 'job_completed',
+  invoice_approved: 'invoice_approved',
+  delivery_evidence_submitted: 'delivery_evidence_submitted',
+  driver_event_rejected: 'driver_event_rejected',
+  driver_workflow_updated: 'driver_workflow_updated',
   payment_failed: 'payment_failed',
   payment_requires_action: 'payment_requires_action',
   application_approved: 'application_approved',
@@ -1396,6 +1560,7 @@ export type AdminAccessPermissionsItem = typeof AdminAccessPermissionsItem[keyof
 
 export const AdminAccessPermissionsItem = {
   overview: 'overview',
+  dispatch: 'dispatch',
   payouts: 'payouts',
   credit: 'credit',
   compliance: 'compliance',
@@ -1798,39 +1963,6 @@ export interface UpdateMemberRoleInput {
   orgRole: UpdateMemberRoleInputOrgRole;
 }
 
-export type TicketStatus = typeof TicketStatus[keyof typeof TicketStatus];
-
-
-export const TicketStatus = {
-  pending: 'pending',
-  in_progress: 'in_progress',
-  completed: 'completed',
-  verified: 'verified',
-} as const;
-
-export interface Ticket {
-  id: number;
-  jobId: number;
-  driverProfileId: number;
-  /** @nullable */
-  truckId?: number | null;
-  loadNumber: number;
-  status: TicketStatus;
-  /** @nullable */
-  clockedInAt?: string | null;
-  /** @nullable */
-  clockedOutAt?: string | null;
-  /** @nullable */
-  weightTons?: number | null;
-  /** @nullable */
-  notes?: string | null;
-  /** @nullable */
-  photoUrl?: string | null;
-  /** @nullable */
-  verifiedAt?: string | null;
-  createdAt: string;
-}
-
 export interface JobMessage {
   id: number;
   jobId: number;
@@ -1853,34 +1985,10 @@ export interface AssignJobInput {
   truckId?: number;
 }
 
-export type JobStatusUpdateStatus = typeof JobStatusUpdateStatus[keyof typeof JobStatusUpdateStatus];
-
-
-export const JobStatusUpdateStatus = {
-  en_route: 'en_route',
-  arrived: 'arrived',
-  loading: 'loading',
-  loaded: 'loaded',
-  dumping: 'dumping',
-  checked_in: 'checked_in',
-  started: 'started',
-  ticket_uploaded: 'ticket_uploaded',
-  photo_uploaded: 'photo_uploaded',
-  completed: 'completed',
-} as const;
-
-export interface JobStatusUpdate {
-  id: number;
-  jobId: number;
+export interface AdminAssignmentInput {
+  driverProfileId: number;
   /** @nullable */
-  ticketId?: number | null;
-  actorProfileId: number;
-  /** @nullable */
-  actorName?: string | null;
-  status: JobStatusUpdateStatus;
-  /** @nullable */
-  note?: string | null;
-  createdAt: string;
+  truckId?: number | null;
 }
 
 export type JobStatusUpdateInputStatus = typeof JobStatusUpdateInputStatus[keyof typeof JobStatusUpdateInputStatus];
@@ -1897,6 +2005,17 @@ export const JobStatusUpdateInputStatus = {
   ticket_uploaded: 'ticket_uploaded',
   photo_uploaded: 'photo_uploaded',
   completed: 'completed',
+  driver_accepted: 'driver_accepted',
+  driver_declined: 'driver_declined',
+  en_route_pickup: 'en_route_pickup',
+  left_pickup: 'left_pickup',
+  en_route_delivery: 'en_route_delivery',
+  arrived_delivery: 'arrived_delivery',
+  loading_photos_uploaded: 'loading_photos_uploaded',
+  scale_ticket_uploaded: 'scale_ticket_uploaded',
+  delivery_photos_uploaded: 'delivery_photos_uploaded',
+  signed_ticket_uploaded: 'signed_ticket_uploaded',
+  checked_out: 'checked_out',
 } as const;
 
 export interface JobStatusUpdateInput {
@@ -1988,6 +2107,10 @@ export const ListJobsStatus = {
   completed: 'completed',
 } as const;
 
+export type CancelJobBody = {
+  reason?: string;
+};
+
 export type GetJobRating200 = {
   mine: RatingResponse | null;
   theirs: RatingResponse | null;
@@ -2009,6 +2132,8 @@ export const ListDumpSitesType = {
   hazardous_waste: 'hazardous_waste',
   compost: 'compost',
 } as const;
+
+export type GetAdminDispatch200 = { [key: string]: unknown };
 
 export type GetMyOrganization200 = { [key: string]: unknown };
 
@@ -2125,4 +2250,50 @@ export type CreateDriverEventBody = {
 export type CreateDriverEvent201 = { [key: string]: unknown };
 
 export type CreateDriverEvent422 = { [key: string]: unknown };
+
+export type CreateDriverWorkflowTransitionBodyAction = typeof CreateDriverWorkflowTransitionBodyAction[keyof typeof CreateDriverWorkflowTransitionBodyAction];
+
+
+export const CreateDriverWorkflowTransitionBodyAction = {
+  accept_job: 'accept_job',
+  decline_job: 'decline_job',
+  navigate_to_pickup: 'navigate_to_pickup',
+  check_in: 'check_in',
+  start_loading: 'start_loading',
+  upload_loading_photos: 'upload_loading_photos',
+  upload_scale_ticket: 'upload_scale_ticket',
+  leave_pickup: 'leave_pickup',
+  navigate_to_delivery: 'navigate_to_delivery',
+  arrive_delivery: 'arrive_delivery',
+  upload_delivery_photos: 'upload_delivery_photos',
+  upload_signed_ticket: 'upload_signed_ticket',
+  check_out: 'check_out',
+  complete_job: 'complete_job',
+} as const;
+
+export type CreateDriverWorkflowTransitionBodyGps = {
+  lat?: number;
+  long?: number;
+};
+
+export type CreateDriverWorkflowTransitionBodyFilesItem = {
+  role: string;
+  url: string;
+  /** @nullable */
+  caption?: string | null;
+};
+
+export type CreateDriverWorkflowTransitionBody = {
+  action: CreateDriverWorkflowTransitionBodyAction;
+  ticketId?: number;
+  gps?: CreateDriverWorkflowTransitionBodyGps;
+  weightTons?: number | string;
+  totalHours?: number | string;
+  notes?: string;
+  files?: CreateDriverWorkflowTransitionBodyFilesItem[];
+};
+
+export type CreateDriverWorkflowTransition200 = { [key: string]: unknown };
+
+export type CreateDriverWorkflowTransition409 = { [key: string]: unknown };
 

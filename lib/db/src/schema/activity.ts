@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, uuid, pgEnum } from "drizzle-orm/pg-core";
+import { index, pgTable, text, serial, timestamp, integer, uuid, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -10,10 +10,13 @@ export const activityTypeEnum = pgEnum("activity_type", [
   "bid_accepted",
   "job_accepted",
   "job_declined",
+  "job_cancelled",
   "job_started",
   "job_completed",
+  "invoice_approved",
   "delivery_evidence_submitted",
   "driver_event_rejected",
+  "driver_workflow_updated",
   "payment_failed",
   "payment_requires_action",
   "application_approved",
@@ -37,7 +40,11 @@ export const activityTable = pgTable("activity", {
   // activity carries its reference here instead.
   relatedBinOrderId: uuid("related_bin_order_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  index("activity_profile_id_idx").on(table.profileId),
+  index("activity_related_id_idx").on(table.relatedId),
+  index("activity_created_at_idx").on(table.createdAt),
+]);
 
 export const insertActivitySchema = createInsertSchema(activityTable).omit({ id: true, createdAt: true });
 export type InsertActivity = z.infer<typeof insertActivitySchema>;

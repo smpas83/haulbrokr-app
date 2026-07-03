@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { TicketStatus } from './ticketStatus';
+import type { TicketWorkflowState } from './ticketWorkflowState';
 
 export interface Ticket {
   id: number;
@@ -15,6 +16,37 @@ export interface Ticket {
   truckId?: number | null;
   loadNumber: number;
   status: TicketStatus;
+  workflowState?: TicketWorkflowState;
+  /** @nullable */
+  acceptedAt?: Date | null;
+  /** @nullable */
+  declinedAt?: Date | null;
+  /** @nullable */
+  enRoutePickupAt?: Date | null;
+  /** @nullable */
+  pickupCheckedInAt?: Date | null;
+  /** @nullable */
+  loadingStartedAt?: Date | null;
+  /** @nullable */
+  loadingPhotosUploadedAt?: Date | null;
+  /** @nullable */
+  scaleTicketUploadedAt?: Date | null;
+  /** @nullable */
+  leftPickupAt?: Date | null;
+  /** @nullable */
+  enRouteDeliveryAt?: Date | null;
+  /** @nullable */
+  arrivedDeliveryAt?: Date | null;
+  /** @nullable */
+  deliveryPhotosUploadedAt?: Date | null;
+  /** @nullable */
+  signedTicketUploadedAt?: Date | null;
+  /** @nullable */
+  checkedOutAt?: Date | null;
+  /** @nullable */
+  completedAt?: Date | null;
+  /** @nullable */
+  lastWorkflowTransitionAt?: Date | null;
   /** @nullable */
   clockedInAt?: Date | null;
   /** @nullable */

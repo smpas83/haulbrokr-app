@@ -168,7 +168,13 @@ router.post("/tickets/:id/clock-in", requireProfile, async (req, res): Promise<v
   if (!found) { res.status(404).json({ error: "Ticket not found" }); return; }
   if (found.ticket.clockedInAt) { res.status(409).json({ error: "Already clocked in." }); return; }
   const [updated] = await db.update(ticketsTable)
-    .set({ clockedInAt: new Date(), status: "in_progress" })
+    .set({
+      clockedInAt: new Date(),
+      pickupCheckedInAt: new Date(),
+      lastWorkflowTransitionAt: new Date(),
+      workflowState: "checked_in",
+      status: "in_progress",
+    })
     .where(eq(ticketsTable.id, id))
     .returning();
   await recordJobTimelineEvent(found.ticket.jobId, profile.id, "checked_in", {
@@ -188,7 +194,13 @@ router.post("/tickets/:id/clock-out", requireProfile, async (req, res): Promise<
   if (!found.ticket.clockedInAt) { res.status(409).json({ error: "Clock in first." }); return; }
   if (found.ticket.clockedOutAt) { res.status(409).json({ error: "Already clocked out." }); return; }
   const [updated] = await db.update(ticketsTable)
-    .set({ clockedOutAt: new Date(), status: "completed" })
+    .set({
+      clockedOutAt: new Date(),
+      checkedOutAt: new Date(),
+      lastWorkflowTransitionAt: new Date(),
+      workflowState: "checked_out",
+      status: "completed",
+    })
     .where(eq(ticketsTable.id, id))
     .returning();
   res.json(updated);

@@ -11,7 +11,7 @@ import {
   useChargeJob, useReleaseJobPayment, useConfirmJobPayment, getJobPaymentConfirmation,
   useCreateJobCheckoutSession, useVerifyJobCheckout,
   useGetPaymentMethod, useSetPaymentMethod, useUpdatePaymentMethod, getGetPaymentMethodQueryKey,
-  useAssignJob, useApproveJobCompletion, useFlagJobCompletion,
+  useAssignJob, useApproveJobCompletion, useFlagJobCompletion, useCreateDriverWorkflowTransition,
   useListJobStatusUpdates, useListOrgMembers, useListTrucks, getListJobStatusUpdatesQueryKey,
   type Job
 } from "@workspace/api-client-react";
@@ -689,7 +689,50 @@ const STATUS_UPDATE_LABEL: Record<string, string> = {
   loaded: "Loaded",
   dumping: "Dumping",
   completed: "Completed",
+  driver_accepted: "Driver Accepted",
+  driver_declined: "Driver Declined",
+  en_route_pickup: "En Route to Pickup",
+  left_pickup: "Left Pickup",
+  en_route_delivery: "En Route to Delivery",
+  arrived_delivery: "Arrived at Delivery",
+  loading_photos_uploaded: "Loading Photos Uploaded",
+  scale_ticket_uploaded: "Scale Ticket Uploaded",
+  delivery_photos_uploaded: "Delivery Photos Uploaded",
+  signed_ticket_uploaded: "Signed Ticket Uploaded",
+  checked_out: "Checked Out",
 };
+
+type DriverWorkflowAction =
+  | "accept_job"
+  | "decline_job"
+  | "navigate_to_pickup"
+  | "check_in"
+  | "start_loading"
+  | "upload_loading_photos"
+  | "upload_scale_ticket"
+  | "leave_pickup"
+  | "navigate_to_delivery"
+  | "arrive_delivery"
+  | "upload_delivery_photos"
+  | "upload_signed_ticket"
+  | "check_out"
+  | "complete_job";
+
+const FIELD_WORKFLOW_STEPS: { state: string; action: DriverWorkflowAction; label: string; upload?: boolean }[] = [
+  { state: "accepted", action: "accept_job", label: "Accept Job" },
+  { state: "en_route_pickup", action: "navigate_to_pickup", label: "Navigate to Pickup" },
+  { state: "checked_in", action: "check_in", label: "Check In" },
+  { state: "loading", action: "start_loading", label: "Start Loading" },
+  { state: "loading_photos_uploaded", action: "upload_loading_photos", label: "Upload Loading Photos", upload: true },
+  { state: "scale_ticket_uploaded", action: "upload_scale_ticket", label: "Upload Scale Ticket", upload: true },
+  { state: "left_pickup", action: "leave_pickup", label: "Leave Pickup" },
+  { state: "en_route_delivery", action: "navigate_to_delivery", label: "Navigate to Delivery" },
+  { state: "arrived_delivery", action: "arrive_delivery", label: "Arrive at Delivery" },
+  { state: "delivery_photos_uploaded", action: "upload_delivery_photos", label: "Upload Delivery Photos", upload: true },
+  { state: "signed_ticket_uploaded", action: "upload_signed_ticket", label: "Upload Signed Ticket", upload: true },
+  { state: "checked_out", action: "check_out", label: "Check Out" },
+  { state: "completed", action: "complete_job", label: "Complete Job" },
+];
 
 function HaulTicketsPanel({ jobId }: { jobId: number }) {
   const { data, isLoading } = useQuery({
@@ -735,7 +778,7 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: profile } = useGetMyProfile();
-  const updateJob = useUpdateJob();
+  const workflow = useCreateDriverWorkflowTransition();
   const [ticketForm, setTicketForm] = useState({ weightTons: "", notes: "" });
   const [ticketFile, setTicketFile] = useState<File | null>(null);
   const [photoForm, setPhotoForm] = useState({ photoCaption: "" });
@@ -755,11 +798,19 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
     qc.invalidateQueries({ queryKey: getListJobStatusUpdatesQueryKey(job.id) });
   };
 
-  const checkIn = useMutation({
-    mutationFn: () => apiFetch(`/tickets/${myTicket.id}/clock-in`, { method: "POST" }),
-    onSuccess: () => { toast({ title: "Checked in" }); refresh(); },
-    onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
-  });
+  const transition = (action: DriverWorkflowAction, extra?: Record<string, unknown>) => {
+    workflow.mutate({
+      id: job.id,
+      data: {
+        action,
+        ticketId: myTicket.id,
+        ...extra,
+      },
+    }, {
+      onSuccess: () => { toast({ title: "Workflow updated" }); refresh(); },
+      onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
+    });
+  };
 
   const uploadTicket = useMutation({
     mutationFn: async () => {
@@ -768,11 +819,13 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
         const { objectPath } = await uploadFileToStorage(ticketFile);
         photoUrl = storagePublicUrl(objectPath);
       }
-      return apiFetch(`/jobs/${job.id}/tickets`, {
+      return apiFetch(`/jobs/${job.id}/driver-workflow`, {
         method: "POST",
         body: JSON.stringify({
+          action: "upload_scale_ticket",
+          ticketId: myTicket.id,
           weightTons: ticketForm.weightTons ? Number(ticketForm.weightTons) : undefined,
-          photoUrl,
+          files: photoUrl ? [{ role: "scale_ticket", url: photoUrl, caption: "Scale ticket" }] : [],
           notes: ticketForm.notes || undefined,
         }),
       });
@@ -790,11 +843,20 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
     mutationFn: async () => {
       if (!photoFile) throw new Error("Choose a photo to upload");
       const { objectPath } = await uploadFileToStorage(photoFile);
-      return apiFetch(`/jobs/${job.id}/evidence`, {
+      const action =
+        myTicket.workflowState === "loading" ? "upload_loading_photos"
+        : myTicket.workflowState === "delivery_photos_uploaded" ? "upload_signed_ticket"
+        : "upload_delivery_photos";
+      const role =
+        action === "upload_loading_photos" ? "loading_photo"
+        : action === "upload_signed_ticket" ? "signed_ticket"
+        : "delivery_photo";
+      return apiFetch(`/jobs/${job.id}/driver-workflow`, {
         method: "POST",
         body: JSON.stringify({
-          photoUrl: storagePublicUrl(objectPath),
-          photoCaption: photoForm.photoCaption || undefined,
+          action,
+          ticketId: myTicket.id,
+          files: [{ role, url: storagePublicUrl(objectPath), caption: photoForm.photoCaption || undefined }],
         }),
       });
     },
@@ -806,20 +868,6 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
     },
     onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
   });
-
-  const handleStart = () => {
-    updateJob.mutate({ id: job.id, data: { status: "in_progress" } }, {
-      onSuccess: () => { toast({ title: "Work started" }); refresh(); },
-      onError: (e) => toast({ title: e instanceof Error ? e.message : "Failed", variant: "destructive" }),
-    });
-  };
-
-  const handleComplete = () => {
-    updateJob.mutate({ id: job.id, data: { status: "completed" } }, {
-      onSuccess: () => { toast({ title: "Job completed" }); refresh(); },
-      onError: (e) => toast({ title: e instanceof Error ? e.message : "Failed", variant: "destructive" }),
-    });
-  };
 
   if (!myTicket) {
     return (
@@ -839,30 +887,24 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
   const activeStatuses = ["accepted", "active", "in_progress"];
   if (!activeStatuses.includes(job.status)) return null;
 
+  const currentState = myTicket.workflowState ?? "assigned";
+  const currentIndex = FIELD_WORKFLOW_STEPS.findIndex((step) => step.state === currentState);
+  const nextStep = currentState === "declined" ? null : FIELD_WORKFLOW_STEPS[currentIndex + 1] ?? FIELD_WORKFLOW_STEPS[0];
+  const nextUploadCopy = nextStep?.upload ? `Use the ${nextStep.action === "upload_scale_ticket" ? "haul ticket" : "job photo"} upload below to continue.` : null;
+
   return (
     <div className="border-t-2 border-border p-6 md:p-8 space-y-6">
       <h3 className="font-bold text-lg flex items-center gap-2">
         <Truck className="h-5 w-5 text-muted-foreground" /> Field Operations
       </h3>
       <div className="flex flex-wrap gap-3">
-        {!myTicket.clockedInAt && (
-          <Button className="rounded-none font-bold" onClick={() => checkIn.mutate()} disabled={checkIn.isPending}>
-            {checkIn.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-            Check In
+        {nextStep && !nextStep.upload && (
+          <Button className="rounded-none font-bold" onClick={() => transition(nextStep.action)} disabled={workflow.isPending}>
+            {workflow.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Flag className="mr-2 h-4 w-4" />}
+            Next: {nextStep.label}
           </Button>
         )}
-        {(job.status === "accepted" || job.status === "active") && (
-          <Button className="rounded-none font-bold bg-purple-600 hover:bg-purple-700 text-white" onClick={handleStart} disabled={updateJob.isPending}>
-            {updateJob.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Flag className="mr-2 h-4 w-4" />}
-            Start Work
-          </Button>
-        )}
-        {job.status === "in_progress" && (
-          <Button className="rounded-none font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleComplete} disabled={updateJob.isPending}>
-            {updateJob.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-            Complete Job
-          </Button>
-        )}
+        {nextUploadCopy && <p className="text-sm text-muted-foreground self-center">{nextUploadCopy}</p>}
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">

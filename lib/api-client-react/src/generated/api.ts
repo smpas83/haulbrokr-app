@@ -23,6 +23,7 @@ import type {
   AccountStatus,
   ActivityItem,
   AdminAccess,
+  AdminAssignmentInput,
   AdminCreditApplicationItem,
   AdminOverview,
   AdminProviderCompliance,
@@ -35,6 +36,7 @@ import type {
   BidInput,
   BidUpdate,
   BinOrder,
+  CancelJobBody,
   CheckoutSession,
   CheckoutSessionInput,
   ClockInTicket200,
@@ -48,6 +50,9 @@ import type {
   CreateDriverEvent201,
   CreateDriverEvent422,
   CreateDriverEventBody,
+  CreateDriverWorkflowTransition200,
+  CreateDriverWorkflowTransition409,
+  CreateDriverWorkflowTransitionBody,
   CreateFactoringRequest201,
   CreateFactoringRequestBody,
   CreateJobEvidence201,
@@ -63,6 +68,7 @@ import type {
   DisconnectQuickBooks200,
   DumpSite,
   FlagCompletionInput,
+  GetAdminDispatch200,
   GetBinOrder200,
   GetJobRating200,
   GetMyOrganization200,
@@ -79,6 +85,7 @@ import type {
   JobRequestUpdate,
   JobStatusUpdate,
   JobStatusUpdateInput,
+  JobTracking,
   JobUpdate,
   ListBinCatalog200,
   ListBinOrders200Item,
@@ -1861,6 +1868,225 @@ export const useDeclineJob = <TError = ErrorType<void>,
       > => {
       return useMutation(getDeclineJobMutationOptions(options));
     }
+
+export const getCancelJobUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/cancel`
+}
+
+/**
+ * @summary Customer cancels an active job before completion/payment
+ */
+export const cancelJob = async (id: number,
+    cancelJobBody?: CancelJobBody, options?: RequestInit): Promise<Job> => {
+
+  return customFetch<Job>(getCancelJobUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      cancelJobBody,)
+  }
+);}
+
+
+
+
+export const getCancelJobMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{id: number;data?: BodyType<CancelJobBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{id: number;data?: BodyType<CancelJobBody>}, TContext> => {
+
+const mutationKey = ['cancelJob'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelJob>>, {id: number;data?: BodyType<CancelJobBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  cancelJob(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelJobMutationResult = NonNullable<Awaited<ReturnType<typeof cancelJob>>>
+    export type CancelJobMutationBody = BodyType<CancelJobBody> | undefined
+    export type CancelJobMutationError = ErrorType<void>
+
+    /**
+ * @summary Customer cancels an active job before completion/payment
+ */
+export const useCancelJob = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelJob>>, TError,{id: number;data?: BodyType<CancelJobBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof cancelJob>>,
+        TError,
+        {id: number;data?: BodyType<CancelJobBody>},
+        TContext
+      > => {
+      return useMutation(getCancelJobMutationOptions(options));
+    }
+
+export const getApproveJobInvoiceUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/approve-invoice`
+}
+
+/**
+ * @summary Customer approves a completed job invoice
+ */
+export const approveJobInvoice = async (id: number, options?: RequestInit): Promise<Job> => {
+
+  return customFetch<Job>(getApproveJobInvoiceUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getApproveJobInvoiceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveJobInvoice>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveJobInvoice>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['approveJobInvoice'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveJobInvoice>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  approveJobInvoice(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveJobInvoiceMutationResult = NonNullable<Awaited<ReturnType<typeof approveJobInvoice>>>
+
+    export type ApproveJobInvoiceMutationError = ErrorType<void>
+
+    /**
+ * @summary Customer approves a completed job invoice
+ */
+export const useApproveJobInvoice = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveJobInvoice>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof approveJobInvoice>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getApproveJobInvoiceMutationOptions(options));
+    }
+
+export const getGetJobTrackingUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/tracking`
+}
+
+/**
+ * @summary Get contractor tracking summary for a job
+ */
+export const getJobTracking = async (id: number, options?: RequestInit): Promise<JobTracking> => {
+
+  return customFetch<JobTracking>(getGetJobTrackingUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetJobTrackingQueryKey = (id: number,) => {
+    return [
+    `/api/jobs/${id}/tracking`
+    ] as const;
+    }
+
+
+export const getGetJobTrackingQueryOptions = <TData = Awaited<ReturnType<typeof getJobTracking>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobTracking>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetJobTrackingQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobTracking>>> = ({ signal }) => getJobTracking(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getJobTracking>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetJobTrackingQueryResult = NonNullable<Awaited<ReturnType<typeof getJobTracking>>>
+export type GetJobTrackingQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get contractor tracking summary for a job
+ */
+
+export function useGetJobTracking<TData = Awaited<ReturnType<typeof getJobTracking>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getJobTracking>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetJobTrackingQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetJobRatingUrl = (id: number,) => {
 
@@ -4235,6 +4461,297 @@ export function useGetAdminOverview<TData = Awaited<ReturnType<typeof getAdminOv
 
 
 
+
+export const getGetAdminDispatchUrl = () => {
+
+
+
+
+  return `/api/admin/dispatch`
+}
+
+/**
+ * @summary Active dispatch board with jobs, drivers, trucks, assignments, compliance, notifications, and audit context
+ */
+export const getAdminDispatch = async ( options?: RequestInit): Promise<GetAdminDispatch200> => {
+
+  return customFetch<GetAdminDispatch200>(getGetAdminDispatchUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminDispatchQueryKey = () => {
+    return [
+    `/api/admin/dispatch`
+    ] as const;
+    }
+
+
+export const getGetAdminDispatchQueryOptions = <TData = Awaited<ReturnType<typeof getAdminDispatch>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminDispatch>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminDispatchQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminDispatch>>> = ({ signal }) => getAdminDispatch({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminDispatch>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminDispatchQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminDispatch>>>
+export type GetAdminDispatchQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Active dispatch board with jobs, drivers, trucks, assignments, compliance, notifications, and audit context
+ */
+
+export function useGetAdminDispatch<TData = Awaited<ReturnType<typeof getAdminDispatch>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminDispatch>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminDispatchQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAdminAssignDriverUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/jobs/${id}/assign`
+}
+
+/**
+ * @summary Assign a driver and optional truck to a job
+ */
+export const adminAssignDriver = async (id: number,
+    adminAssignmentInput: AdminAssignmentInput, options?: RequestInit): Promise<Ticket> => {
+
+  return customFetch<Ticket>(getAdminAssignDriverUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      adminAssignmentInput,)
+  }
+);}
+
+
+
+
+export const getAdminAssignDriverMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminAssignDriver>>, TError,{id: number;data: BodyType<AdminAssignmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminAssignDriver>>, TError,{id: number;data: BodyType<AdminAssignmentInput>}, TContext> => {
+
+const mutationKey = ['adminAssignDriver'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminAssignDriver>>, {id: number;data: BodyType<AdminAssignmentInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminAssignDriver(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminAssignDriverMutationResult = NonNullable<Awaited<ReturnType<typeof adminAssignDriver>>>
+    export type AdminAssignDriverMutationBody = BodyType<AdminAssignmentInput>
+    export type AdminAssignDriverMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Assign a driver and optional truck to a job
+ */
+export const useAdminAssignDriver = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminAssignDriver>>, TError,{id: number;data: BodyType<AdminAssignmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminAssignDriver>>,
+        TError,
+        {id: number;data: BodyType<AdminAssignmentInput>},
+        TContext
+      > => {
+      return useMutation(getAdminAssignDriverMutationOptions(options));
+    }
+
+export const getAdminReassignDriverUrl = (ticketId: number,) => {
+
+
+
+
+  return `/api/admin/assignments/${ticketId}`
+}
+
+/**
+ * @summary Reassign an existing driver/truck assignment
+ */
+export const adminReassignDriver = async (ticketId: number,
+    adminAssignmentInput: AdminAssignmentInput, options?: RequestInit): Promise<Ticket> => {
+
+  return customFetch<Ticket>(getAdminReassignDriverUrl(ticketId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      adminAssignmentInput,)
+  }
+);}
+
+
+
+
+export const getAdminReassignDriverMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminReassignDriver>>, TError,{ticketId: number;data: BodyType<AdminAssignmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminReassignDriver>>, TError,{ticketId: number;data: BodyType<AdminAssignmentInput>}, TContext> => {
+
+const mutationKey = ['adminReassignDriver'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminReassignDriver>>, {ticketId: number;data: BodyType<AdminAssignmentInput>}> = (props) => {
+          const {ticketId,data} = props ?? {};
+
+          return  adminReassignDriver(ticketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminReassignDriverMutationResult = NonNullable<Awaited<ReturnType<typeof adminReassignDriver>>>
+    export type AdminReassignDriverMutationBody = BodyType<AdminAssignmentInput>
+    export type AdminReassignDriverMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Reassign an existing driver/truck assignment
+ */
+export const useAdminReassignDriver = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminReassignDriver>>, TError,{ticketId: number;data: BodyType<AdminAssignmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminReassignDriver>>,
+        TError,
+        {ticketId: number;data: BodyType<AdminAssignmentInput>},
+        TContext
+      > => {
+      return useMutation(getAdminReassignDriverMutationOptions(options));
+    }
+
+export const getAdminCancelAssignmentUrl = (ticketId: number,) => {
+
+
+
+
+  return `/api/admin/assignments/${ticketId}`
+}
+
+/**
+ * @summary Cancel an assignment and free its truck
+ */
+export const adminCancelAssignment = async (ticketId: number, options?: RequestInit): Promise<Ticket> => {
+
+  return customFetch<Ticket>(getAdminCancelAssignmentUrl(ticketId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getAdminCancelAssignmentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCancelAssignment>>, TError,{ticketId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminCancelAssignment>>, TError,{ticketId: number}, TContext> => {
+
+const mutationKey = ['adminCancelAssignment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCancelAssignment>>, {ticketId: number}> = (props) => {
+          const {ticketId} = props ?? {};
+
+          return  adminCancelAssignment(ticketId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminCancelAssignmentMutationResult = NonNullable<Awaited<ReturnType<typeof adminCancelAssignment>>>
+
+    export type AdminCancelAssignmentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Cancel an assignment and free its truck
+ */
+export const useAdminCancelAssignment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCancelAssignment>>, TError,{ticketId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminCancelAssignment>>,
+        TError,
+        {ticketId: number},
+        TContext
+      > => {
+      return useMutation(getAdminCancelAssignmentMutationOptions(options));
+    }
 
 export const getListAdminComplianceUrl = () => {
 
@@ -8915,5 +9432,77 @@ export const useCreateDriverEvent = <TError = ErrorType<CreateDriverEvent422>,
         TContext
       > => {
       return useMutation(getCreateDriverEventMutationOptions(options));
+    }
+
+export const getCreateDriverWorkflowTransitionUrl = (id: number,) => {
+
+
+
+
+  return `/api/jobs/${id}/driver-workflow`
+}
+
+/**
+ * @summary Advance an assigned driver's production workflow
+ */
+export const createDriverWorkflowTransition = async (id: number,
+    createDriverWorkflowTransitionBody: CreateDriverWorkflowTransitionBody, options?: RequestInit): Promise<CreateDriverWorkflowTransition200> => {
+
+  return customFetch<CreateDriverWorkflowTransition200>(getCreateDriverWorkflowTransitionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createDriverWorkflowTransitionBody,)
+  }
+);}
+
+
+
+
+export const getCreateDriverWorkflowTransitionMutationOptions = <TError = ErrorType<CreateDriverWorkflowTransition409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDriverWorkflowTransition>>, TError,{id: number;data: BodyType<CreateDriverWorkflowTransitionBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDriverWorkflowTransition>>, TError,{id: number;data: BodyType<CreateDriverWorkflowTransitionBody>}, TContext> => {
+
+const mutationKey = ['createDriverWorkflowTransition'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDriverWorkflowTransition>>, {id: number;data: BodyType<CreateDriverWorkflowTransitionBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createDriverWorkflowTransition(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDriverWorkflowTransitionMutationResult = NonNullable<Awaited<ReturnType<typeof createDriverWorkflowTransition>>>
+    export type CreateDriverWorkflowTransitionMutationBody = BodyType<CreateDriverWorkflowTransitionBody>
+    export type CreateDriverWorkflowTransitionMutationError = ErrorType<CreateDriverWorkflowTransition409>
+
+    /**
+ * @summary Advance an assigned driver's production workflow
+ */
+export const useCreateDriverWorkflowTransition = <TError = ErrorType<CreateDriverWorkflowTransition409>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDriverWorkflowTransition>>, TError,{id: number;data: BodyType<CreateDriverWorkflowTransitionBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDriverWorkflowTransition>>,
+        TError,
+        {id: number;data: BodyType<CreateDriverWorkflowTransitionBody>},
+        TContext
+      > => {
+      return useMutation(getCreateDriverWorkflowTransitionMutationOptions(options));
     }
 
