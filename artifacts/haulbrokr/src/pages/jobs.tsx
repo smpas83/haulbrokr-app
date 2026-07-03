@@ -1,16 +1,25 @@
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { Briefcase, ArrowRight, HardHat, Truck, Clock } from "lucide-react";
-import { useListJobs, useGetMyProfile } from "@workspace/api-client-react";
+import { useListJobs, useGetMyProfile, type UserProfile } from "@workspace/api-client-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import DriverJobsBoard from "@/pages/driver/DriverJobsBoard";
 
 export default function JobsPage() {
   const { data: profile } = useGetMyProfile();
+
+  if (profile?.role === "driver") {
+    return <DriverJobsBoard />;
+  }
+
+  return <StandardJobsPage profile={profile} />;
+}
+
+function StandardJobsPage({ profile }: { profile?: UserProfile | null }) {
   const { data: jobs, isLoading } = useListJobs();
-  
   const isCustomer = profile?.role === "customer";
 
   const getStatusColor = (status: string) => {

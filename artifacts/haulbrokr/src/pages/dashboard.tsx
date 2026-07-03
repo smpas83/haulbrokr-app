@@ -12,7 +12,8 @@ import {
 } from "recharts";
 import {
   useGetDashboardStats, useGetDashboardActivity,
-  useGetMyProfile, useGetAccountStatus
+  useGetMyProfile, useGetAccountStatus,
+  type UserProfile,
 } from "@workspace/api-client-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import DriverDashboard from "@/pages/driver/DriverDashboard";
 
 const AMBER = "#e9a800";
 const NAVY = "#1c2333";
@@ -76,6 +78,15 @@ const CustomPieTooltip = ({ active, payload }: any) => {
 
 export default function DashboardPage() {
   const { data: profile } = useGetMyProfile();
+
+  if (profile?.role === "driver") {
+    return <DriverDashboard />;
+  }
+
+  return <StandardDashboard profile={profile} />;
+}
+
+function StandardDashboard({ profile }: { profile?: UserProfile | null }) {
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: activities, isLoading: activityLoading } = useGetDashboardActivity();
   const { data: accountStatus } = useGetAccountStatus();
