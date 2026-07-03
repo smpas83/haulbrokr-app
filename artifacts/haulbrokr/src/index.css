@@ -39,6 +39,15 @@
   --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-destructive-border: var(--destructive-border);
 
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-danger: hsl(var(--destructive));
+  --color-danger-foreground: hsl(var(--destructive-foreground));
+  --color-map-route: hsl(var(--map-route));
+  --color-map-marker: hsl(var(--map-marker));
+
   --color-sidebar: hsl(var(--sidebar));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
@@ -85,6 +94,18 @@
   
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
+  --success: 142 71% 45%;
+  --success-foreground: 0 0% 98%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 5%;
+  --map-route: var(--primary);
+  --map-marker: var(--primary);
+  --chart-primary: hsl(var(--primary));
+  --chart-secondary: hsl(217 91% 60%);
+  --chart-success: hsl(var(--success));
+  --chart-danger: hsl(var(--destructive));
+  --chart-accent: hsl(262 83% 58%);
+  --chart-warning: hsl(var(--warning));
   
   --sidebar: 0 0% 8%;
   --sidebar-foreground: 0 0% 98%;
@@ -124,6 +145,18 @@
   
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
+  --success: 142 71% 45%;
+  --success-foreground: 0 0% 98%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 5%;
+  --map-route: var(--primary);
+  --map-marker: var(--primary);
+  --chart-primary: hsl(var(--primary));
+  --chart-secondary: hsl(217 91% 60%);
+  --chart-success: hsl(var(--success));
+  --chart-danger: hsl(var(--destructive));
+  --chart-accent: hsl(262 83% 58%);
+  --chart-warning: hsl(var(--warning));
 
   --sidebar: 0 0% 8%;
   --sidebar-foreground: 0 0% 98%;

@@ -6,9 +6,15 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Card,
+  EmptyState,
+  PrimaryButton,
+  SecondaryButton,
+  Skeleton,
+  StatusPill,
+} from "@/components/design-system";
+import { PageTransition } from "@/components/design-system/animation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -28,15 +34,15 @@ const UNASSIGNED = "unassigned";
 function CoiBadge({ status }: { status?: string | null }) {
   const s = status ?? "none";
   if (s === "active") {
-    return <Badge className="rounded-none bg-green-600 text-white font-bold uppercase text-[10px]"><ShieldCheck className="h-3 w-3 mr-1" /> COI Active</Badge>;
+    return <StatusPill intent="success"><ShieldCheck className="h-3 w-3 mr-1" /> COI Active</StatusPill>;
   }
   if (s === "expired") {
-    return <Badge className="rounded-none bg-destructive text-destructive-foreground font-bold uppercase text-[10px]"><ShieldAlert className="h-3 w-3 mr-1" /> COI Expired</Badge>;
+    return <StatusPill intent="danger"><ShieldAlert className="h-3 w-3 mr-1" /> COI Expired</StatusPill>;
   }
   if (s === "pending") {
-    return <Badge variant="secondary" className="rounded-none font-bold uppercase text-[10px]"><ShieldQuestion className="h-3 w-3 mr-1" /> COI Pending</Badge>;
+    return <StatusPill intent="secondary"><ShieldQuestion className="h-3 w-3 mr-1" /> COI Pending</StatusPill>;
   }
-  return <Badge variant="outline" className="rounded-none font-bold uppercase text-[10px] text-muted-foreground"><ShieldQuestion className="h-3 w-3 mr-1" /> No COI</Badge>;
+  return <StatusPill intent="muted"><ShieldQuestion className="h-3 w-3 mr-1" /> No COI</StatusPill>;
 }
 
 export default function FleetPage() {
@@ -89,17 +95,17 @@ export default function FleetPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
+    <PageTransition className="space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Fleet</h1>
           <p className="text-muted-foreground">Manage your dump trucks, compliance, and driver assignments.</p>
         </div>
         <Link href="/fleet/new">
-          <Button className="font-bold rounded-none" data-testid="btn-add-truck">
+          <PrimaryButton data-testid="btn-add-truck">
             <Plus className="mr-2 h-4 w-4" />
             Add Truck
-          </Button>
+          </PrimaryButton>
         </Link>
       </div>
 
@@ -110,14 +116,14 @@ export default function FleetPage() {
       ) : trucks && trucks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {trucks.map(truck => (
-            <div key={truck.id} className="bg-card border-2 border-border p-5 flex flex-col hover:border-primary/50 transition-colors">
+            <Card key={truck.id} className="p-5 flex flex-col hover:border-primary/50 transition-colors shadow-none">
               <div className="flex justify-between items-start mb-4">
                 <div className="bg-muted p-3 rounded-sm">
                   <Truck className="h-8 w-8 text-primary" />
                 </div>
-                <Badge variant={truck.isAvailable ? "default" : "secondary"} className="rounded-none font-bold uppercase text-[10px]">
+                <StatusPill intent={truck.isAvailable ? "primary" : "secondary"}>
                   {truck.isAvailable ? "Available" : "In Use / Offline"}
-                </Badge>
+                </StatusPill>
               </div>
               
               <div className="mb-3 flex-1">
@@ -147,7 +153,7 @@ export default function FleetPage() {
                 )}
                 {truck.licensePlate && (
                   <div className="flex items-center gap-2 font-mono">
-                    <span className="bg-yellow-200 text-yellow-900 border border-yellow-400 px-2 py-0.5 text-xs font-bold rounded-sm dark:bg-yellow-900 dark:text-yellow-200 dark:border-yellow-700">
+                    <span className="bg-warning/20 text-warning border border-warning/50 px-2 py-0.5 text-xs font-bold rounded-sm">
                       {truck.licensePlate}
                     </span>
                   </div>
@@ -185,12 +191,12 @@ export default function FleetPage() {
 
               <div className="flex gap-2 mt-auto">
                 <Link href={`/fleet/${truck.id}/edit`} className="flex-1">
-                  <Button variant="outline" className="w-full rounded-none border-2 font-semibold">Edit</Button>
+                  <SecondaryButton className="w-full">Edit</SecondaryButton>
                 </Link>
                 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" className="rounded-none border-2 text-destructive hover:bg-destructive/10 hover:border-destructive">Remove</Button>
+                    <SecondaryButton className="text-destructive hover:bg-destructive/10 hover:border-destructive">Remove</SecondaryButton>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="rounded-none border-2">
                     <AlertDialogHeader>
@@ -211,21 +217,22 @@ export default function FleetPage() {
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       ) : (
-        <div className="bg-card border-2 border-dashed border-border p-12 text-center">
-          <Truck className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-          <h3 className="text-xl font-bold mb-2">Your fleet is empty</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Add your dump trucks to start bidding on jobs. Accurate truck profiles help customers choose your bids.
-          </p>
-          <Link href="/fleet/new">
-            <Button size="lg" className="font-bold rounded-none h-12 px-8">Add Your First Truck</Button>
-          </Link>
-        </div>
+        <EmptyState
+          className="p-12"
+          icon={<Truck className="h-16 w-16 text-muted-foreground opacity-50" />}
+          title="Your fleet is empty"
+          description="Add your dump trucks to start bidding on jobs. Accurate truck profiles help customers choose your bids."
+          action={(
+            <Link href="/fleet/new">
+              <PrimaryButton size="lg" className="h-12 px-8">Add Your First Truck</PrimaryButton>
+            </Link>
+          )}
+        />
       )}
-    </div>
+    </PageTransition>
   );
 }
