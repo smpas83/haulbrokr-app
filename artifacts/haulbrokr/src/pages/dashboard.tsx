@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 import { format, subDays, parseISO } from "date-fns";
 import {
-  ArrowRight, Activity, Plus, Truck, AlertCircle,
-  CircleCheck, CheckCircle2, TrendingUp,
-  ShieldAlert, ArrowUpRight, ClipboardList, Briefcase
+  ArrowRight, Activity, Plus, Truck,
+  CircleCheck, TrendingUp,
+  ShieldAlert, ArrowUpRight, Briefcase
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -12,7 +12,8 @@ import {
 } from "recharts";
 import {
   useGetDashboardStats, useGetDashboardActivity,
-  useGetMyProfile, useGetAccountStatus
+  useGetMyProfile, useGetAccountStatus,
+  type UserProfile,
 } from "@workspace/api-client-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,9 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import CustomerDashboard from "@/pages/customer/CustomerDashboard";
 
 const AMBER = "#e9a800";
-const NAVY = "#1c2333";
 const CHART_COLORS = [AMBER, "#3b82f6", "#22c55e", "#ef4444", "#8b5cf6", "#f97316"];
 
 function StatCard({
@@ -76,6 +77,15 @@ const CustomPieTooltip = ({ active, payload }: any) => {
 
 export default function DashboardPage() {
   const { data: profile } = useGetMyProfile();
+
+  if (profile?.role === "customer") {
+    return <CustomerDashboard />;
+  }
+
+  return <StandardDashboard profile={profile} />;
+}
+
+function StandardDashboard({ profile }: { profile?: UserProfile | null }) {
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: activities, isLoading: activityLoading } = useGetDashboardActivity();
   const { data: accountStatus } = useGetAccountStatus();
@@ -132,14 +142,6 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          {isCustomer && (
-            <Link href="/requests/new">
-              <Button className="h-10 px-5 font-bold shadow-sm rounded-none" data-testid="button-new-request">
-                <Plus className="mr-2 h-4 w-4" />
-                Post Job Request
-              </Button>
-            </Link>
-          )}
           {isProvider && (
             <Link href="/requests">
               <Button className="h-10 px-5 font-bold shadow-sm rounded-none" data-testid="button-browse-jobs">
@@ -157,9 +159,7 @@ export default function DashboardPage() {
           <ShieldAlert className="h-4 w-4 text-amber-600" />
           <AlertTitle className="text-amber-700 font-bold">Action Required</AlertTitle>
           <AlertDescription className="text-amber-700/80">
-            {isProvider
-              ? "Complete your W-9 and insurance verification to start bidding on jobs."
-              : "Complete your profile to post job requests."}
+            Complete your W-9 and insurance verification to start bidding on jobs.
             {" "}
             <Link href="/account">
               <span className="underline font-semibold cursor-pointer">Go to Account →</span>
@@ -175,9 +175,6 @@ export default function DashboardPage() {
         </div>
       ) : stats ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {isCustomer && (
-            <StatCard title="Open Requests" value={stats.openRequests ?? 0} icon={AlertCircle} />
-          )}
           <StatCard title="Active Jobs" value={stats.activeJobs ?? 0} icon={Activity} />
           {isProvider && (
             <>
@@ -188,18 +185,6 @@ export default function DashboardPage() {
                 icon={ArrowUpRight}
                 accent
                 sub="Lifetime earnings"
-              />
-            </>
-          )}
-          {isCustomer && (
-            <>
-              <StatCard title="Completed Jobs" value={stats.completedJobs ?? 0} icon={CheckCircle2} />
-              <StatCard
-                title="Total Spent"
-                value={`$${(stats.totalSpent ?? 0).toLocaleString()}`}
-                icon={CircleCheck}
-                accent
-                sub="Lifetime spend"
               />
             </>
           )}
@@ -304,12 +289,8 @@ export default function DashboardPage() {
               <div className="space-y-1">
                 {activities.slice(0, 8).map((activity) => {
                   const isFailure = activity.type === "payment_failed" || activity.type === "application_rejected";
-                  // Recoverable: bank needs the customer to confirm their card. Not
-                  // a hard failure, so it gets its own amber treatment, not red.
                   const isActionNeeded = activity.type === "payment_requires_action" || activity.type === "payout_delayed";
                   const isApproved = activity.type === "application_approved";
-                  // Bin order status updates (confirmed/delivered/picked_up/cancelled)
-                  // deep-link back to the order on the Bins page via relatedBinOrderId.
                   const isBin = activity.type.startsWith("bin_");
                   const dotClass = isFailure
                     ? "bg-destructive"
@@ -376,37 +357,6 @@ export default function DashboardPage() {
             <CardTitle className="text-base font-bold">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {isCustomer && (
-              <>
-                <Link href="/requests/new">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <Plus className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Post a new request</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-                <Link href="/requests">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <ClipboardList className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Review open bids</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-                <Link href="/jobs">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <Briefcase className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Track active jobs</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-              </>
-            )}
             {isProvider && (
               <>
                 <Link href="/requests">
@@ -453,4 +403,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
