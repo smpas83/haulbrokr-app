@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { LiveRefreshBadge, PageTransition } from "@/components/realtime/microinteractions";
+import { liveQueryOptions } from "@/hooks/use-realtime-feedback";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -97,10 +99,11 @@ export default function BinDetailPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: order, isLoading, isError } = useQuery<BinOrder>({
+  const { data: order, isLoading, isFetching, isError } = useQuery<BinOrder>({
     queryKey: ["bin-order", id],
     queryFn: () => apiFetch(`/bin-orders/${id}`),
     enabled: !!id,
+    ...liveQueryOptions,
   });
 
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -149,12 +152,15 @@ export default function BinDetailPage() {
     : order.binSize;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <PageTransition className="max-w-3xl mx-auto space-y-6 pb-12">
       {/* Back */}
-      <Link href="/bins" className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft className="h-4 w-4" />
-        Back to Bin Rental
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/bins" className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Bin Rental
+        </Link>
+        <LiveRefreshBadge isFetching={isFetching} label="Order live" />
+      </div>
 
       {/* Header card */}
       <div className="bg-card border-2 border-border p-6">
@@ -340,7 +346,7 @@ export default function BinDetailPage() {
           )}
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 }
 

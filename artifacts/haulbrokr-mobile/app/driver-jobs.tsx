@@ -15,8 +15,13 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { ACCENT } from "@/constants/theme";
+import { useApp } from "@/context/AppContext";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/RefreshingIndicator";
 import { useColors } from "@/hooks/useColors";
 import {
   useLiveJobs,
@@ -46,11 +51,16 @@ const STATUS_FLOW: { key: JobStatusUpdateStatus; label: string; icon: keyof type
 export default function DriverJobsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { isOnline, userLocation } = useApp();
   const jobsQuery = useLiveJobs();
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const topPad = Platform.OS === "web" ? 16 : insets.top + 4;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom + 24;
+  const isUpdating = isRefreshingPillVisible({
+    isFetching: jobsQuery.isFetching,
+    isLoading: jobsQuery.isLoading,
+  });
 
   const activeJobs: any[] = useMemo(() => {
     const all = (jobsQuery.data as any[]) ?? [];
@@ -66,6 +76,7 @@ export default function DriverJobsScreen() {
           headerTintColor: "#f0f6ff",
         }}
       />
+      <RefreshingIndicator visible={isUpdating} />
       <ScrollView
         style={[styles.scroll, { backgroundColor: colors.background }]}
         contentContainerStyle={[styles.content, { paddingTop: topPad, paddingBottom: bottomPad }]}
@@ -75,31 +86,42 @@ export default function DriverJobsScreen() {
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
           Check in, report status, and upload proof for jobs you're hauling.
         </Text>
-
-        {jobsQuery.isLoading ? (
-          <View style={styles.centerBox}>
-            <ActivityIndicator color={colors.primary} />
-          </View>
-        ) : activeJobs.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="truck" size={32} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No assigned loads</Text>
-            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
-              When your dispatcher assigns you to a job, it will appear here ready to start.
+        <View style={[styles.signalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.signalRow}>
+            <View style={[styles.signalDot, { backgroundColor: isOnline ? ACCENT.green : ACCENT.red }]} />
+            <Text style={[styles.signalText, { color: colors.foreground }]}>
+              {isOnline ? "Network connected" : "Reconnect to sync dispatch updates"}
             </Text>
           </View>
+          <View style={styles.signalRow}>
+            <Feather name="navigation" size={13} color={colors.mutedForeground} />
+            <Text style={[styles.signalMeta, { color: colors.mutedForeground }]}>
+              GPS status: {userLocation ? userLocation : "Location not set"}
+            </Text>
+          </View>
+        </View>
+
+        {jobsQuery.isLoading ? (
+          <LoadingSkeleton rows={3} />
+        ) : activeJobs.length === 0 ? (
+          <EmptyState
+            icon="truck"
+            title="No assigned loads"
+            description="When your dispatcher assigns you to a job, it will appear here ready to start."
+          />
         ) : (
-          activeJobs.map((job) => (
-            <DriverJobCard
-              key={job.id}
-              job={job}
-              colors={colors}
-              expanded={selectedId === job.id}
-              onToggle={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedId(selectedId === job.id ? null : job.id);
-              }}
-            />
+          activeJobs.map((job, index) => (
+            <Animated.View key={job.id} entering={FadeInDown.delay(index * 45).springify()}>
+              <DriverJobCard
+                job={job}
+                colors={colors}
+                expanded={selectedId === job.id}
+                onToggle={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedId(selectedId === job.id ? null : job.id);
+                }}
+              />
+            </Animated.View>
           ))
         )}
       </ScrollView>
@@ -217,7 +239,7 @@ function DriverJobCard({
             {STATUS_FLOW.map((step, i) => {
               const done = i <= currentIdx;
               return (
-                <View key={step.key} style={styles.timelineRow}>
+                <Animated.View key={step.key} entering={FadeInDown.delay(i * 35).springify()} style={styles.timelineRow}>
                   <View
                     style={[
                       styles.timelineDot,
@@ -234,7 +256,7 @@ function DriverJobCard({
                       <Text style={[styles.currentBadgeText, { color: ACCENT.green }]}>Current</Text>
                     </View>
                   )}
-                </View>
+                </Animated.View>
               );
             })}
           </View>
@@ -330,7 +352,10 @@ function DriverJobCard({
             style={[styles.outlineBtn, { borderColor: colors.border, opacity: busyProof ? 0.6 : 1 }]}
           >
             {busyProof ? (
-              <ActivityIndicator size="small" color={colors.foreground} />
+              <>
+                <ActivityIndicator size="small" color={colors.foreground} />
+                <Text style={[styles.outlineBtnText, { color: colors.foreground }]}>Uploading proof…</Text>
+              </>
             ) : (
               <>
                 <Feather name="camera" size={15} color={colors.foreground} />
@@ -349,6 +374,11 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 16 },
   title: { fontSize: 22, fontFamily: "Inter_700Bold", marginBottom: 4 },
   subtitle: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 18, lineHeight: 19 },
+  signalCard: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 8, marginBottom: 16 },
+  signalRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  signalDot: { width: 8, height: 8, borderRadius: 4 },
+  signalText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  signalMeta: { fontSize: 12, fontFamily: "Inter_400Regular" },
   centerBox: { paddingVertical: 48, alignItems: "center" },
   emptyCard: { borderWidth: 1, borderRadius: 12, padding: 28, alignItems: "center", gap: 10 },
   emptyTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },

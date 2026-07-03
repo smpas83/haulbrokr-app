@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/reac
 import { Loader2 } from "lucide-react";
 
 import { Layout } from "./components/layout";
+import { PageTransition } from "@/components/realtime/microinteractions";
 import { Toaster } from "@/components/ui/toaster";
 import { useGetMyProfile } from "@workspace/api-client-react";
 import { SignInPage, SignUpPage } from "./pages/auth";
@@ -134,7 +135,7 @@ function RequireProfile({ children }: { children: React.ReactNode }) {
 }
 
 function AuthShellRoutes() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   return (
     <ClerkProvider
       publishableKey={clerkPubKey}
@@ -150,7 +151,8 @@ function AuthShellRoutes() {
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
         <Suspense fallback={<AppLoader />}>
-          <Switch>
+          <PageTransition key={location}>
+            <Switch>
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/">
               <Show when="signed-in"><Redirect to="/dashboard" /></Show>
@@ -267,7 +269,8 @@ function AuthShellRoutes() {
 
 
             <Route component={NotFoundPage} />
-          </Switch>
+            </Switch>
+          </PageTransition>
         </Suspense>
         <Toaster />
       </QueryClientProvider>

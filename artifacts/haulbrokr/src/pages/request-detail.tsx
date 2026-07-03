@@ -26,6 +26,13 @@ import {
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  EmptyStatePanel,
+  ErrorStatePanel,
+  LiveRefreshBadge,
+  PageTransition,
+} from "@/components/realtime/microinteractions";
+import { liveQueryOptions } from "@/hooks/use-realtime-feedback";
 
 const bidSchema = z.object({
   ratePerHour: z.coerce.number().positive("Rate must be positive."),
@@ -54,11 +61,11 @@ export default function RequestDetailPage() {
   const queryClient = useQueryClient();
 
   const { data: profile } = useGetMyProfile();
-  const { data: request, isLoading: requestLoading } = useGetRequest(id, {
-    query: { enabled: !!id } as any
+  const { data: request, isLoading: requestLoading, isFetching: requestFetching, isError: requestError } = useGetRequest(id, {
+    query: { enabled: !!id, ...liveQueryOptions } as any
   });
-  const { data: bids, isLoading: bidsLoading } = useListBids(id, {
-    query: { enabled: !!id } as any
+  const { data: bids, isLoading: bidsLoading, isFetching: bidsFetching } = useListBids(id, {
+    query: { enabled: !!id, ...liveQueryOptions } as any
   });
 
   const createBid = useCreateBid();
@@ -145,31 +152,47 @@ export default function RequestDetailPage() {
 
   if (requestLoading) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6">
+      <PageTransition className="max-w-6xl mx-auto space-y-6">
         <Skeleton className="h-10 w-48" />
         <div className="grid md:grid-cols-3 gap-6">
           <Skeleton className="h-[400px] md:col-span-2" />
           <Skeleton className="h-[400px] md:col-span-1" />
         </div>
-      </div>
+      </PageTransition>
+    );
+  }
+
+  if (requestError) {
+    return (
+      <PageTransition className="max-w-6xl mx-auto space-y-6">
+        <Button variant="ghost" className="-ml-4" onClick={() => setLocation("/requests")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <ErrorStatePanel title="Request unavailable" description="Live request details could not be refreshed." />
+      </PageTransition>
     );
   }
 
   if (!request) {
     return (
-      <div className="max-w-6xl mx-auto text-center py-20">
-        <h2 className="text-2xl font-bold">Request not found</h2>
+      <PageTransition className="max-w-6xl mx-auto py-20">
+        <EmptyStatePanel title="Request not found" description="This request may have been removed or is no longer visible.">
         <Button className="mt-4" onClick={() => setLocation("/requests")}>Back to Requests</Button>
-      </div>
+        </EmptyStatePanel>
+      </PageTransition>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/requests")}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
+    <PageTransition className="max-w-6xl mx-auto space-y-6 pb-12">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button variant="ghost" className="-ml-4" onClick={() => setLocation("/requests")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <LiveRefreshBadge isFetching={requestFetching || bidsFetching} label="Bids live" />
+      </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
@@ -452,6 +475,6 @@ export default function RequestDetailPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

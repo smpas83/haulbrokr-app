@@ -142,3 +142,116 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .hb-page-transition {
+    animation: hb-page-in 220ms ease-out both;
+  }
+
+  .hb-value-pop {
+    display: inline-block;
+    animation: hb-value-pop 280ms ease-out both;
+  }
+
+  .hb-feed-item {
+    animation: hb-feed-in 260ms ease-out both;
+  }
+
+  .hb-live-dot {
+    animation: hb-live-pulse 1600ms ease-out infinite;
+  }
+
+  .hb-route-progress {
+    position: relative;
+    transition: width 420ms ease;
+  }
+
+  .hb-route-progress::after {
+    animation: hb-route-sweep 1400ms linear infinite;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.7), transparent);
+    content: "";
+    inset: 0;
+    position: absolute;
+    transform: translateX(-100%);
+  }
+
+  .hb-truck-marker {
+    transition: left 420ms ease;
+    animation: hb-truck-bob 1200ms ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hb-page-transition,
+    .hb-value-pop,
+    .hb-feed-item,
+    .hb-live-dot,
+    .hb-route-progress::after,
+    .hb-truck-marker {
+      animation: none !important;
+    }
+
+    .hb-route-progress,
+    .hb-truck-marker {
+      transition: none !important;
+    }
+  }
+}
+
+@keyframes hb-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hb-value-pop {
+  0% {
+    opacity: 0.75;
+    transform: translateY(4px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hb-feed-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes hb-live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.35);
+  }
+  55% {
+    box-shadow: 0 0 0 6px hsl(var(--primary) / 0);
+  }
+}
+
+@keyframes hb-route-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes hb-truck-bob {
+  0%,
+  100% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(calc(-50% - 2px));
+  }
+}

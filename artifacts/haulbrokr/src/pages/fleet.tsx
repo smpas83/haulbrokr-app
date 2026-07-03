@@ -8,9 +8,17 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import {
+  EmptyStatePanel,
+  ErrorStatePanel,
+  LiveRefreshBadge,
+  LiveStatValue,
+  LoadingCardGrid,
+  PageTransition,
+} from "@/components/realtime/microinteractions";
+import { liveQueryOptions } from "@/hooks/use-realtime-feedback";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,12 +50,18 @@ function CoiBadge({ status }: { status?: string | null }) {
 export default function FleetPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: trucks, isLoading } = useListTrucks();
+  const { data: trucks, isLoading, isFetching, isError } = useListTrucks(undefined, {
+    query: liveQueryOptions as any,
+  });
   const { data: membersResp } = useListOrgMembers();
   const deleteTruck = useDeleteTruck();
   const updateTruck = useUpdateTruck();
 
   const drivers = (membersResp?.members ?? []).filter(m => m.role === "driver");
+  const totalTrucks = trucks?.length ?? 0;
+  const availableTrucks = trucks?.filter((truck) => truck.isAvailable).length ?? 0;
+  const complianceAlerts = trucks?.filter((truck) => truck.coiStatus === "expired" || truck.coiStatus == null).length ?? 0;
+  const revenueRate = trucks?.reduce((sum, truck) => sum + Number(truck.ratePerHour ?? 0), 0) ?? 0;
 
   const handleDelete = (id: number) => {
     deleteTruck.mutate(
@@ -89,33 +103,53 @@ export default function FleetPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
+    <PageTransition className="space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Fleet</h1>
           <p className="text-muted-foreground">Manage your dump trucks, compliance, and driver assignments.</p>
         </div>
-        <Link href="/fleet/new">
-          <Button className="font-bold rounded-none" data-testid="btn-add-truck">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Truck
-          </Button>
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <LiveRefreshBadge isFetching={isFetching} />
+          <Link href="/fleet/new">
+            <Button className="font-bold rounded-none" data-testid="btn-add-truck">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Truck
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-48 w-full rounded-none" />)}
-        </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          ["Total Vehicles", totalTrucks],
+          ["Available", availableTrucks],
+          ["Compliance Alerts", complianceAlerts],
+          ["Revenue Capacity", `$${revenueRate.toLocaleString()}/hr`],
+        ].map(([label, value]) => (
+          <div key={label} className="border-2 border-border bg-card p-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+            <p className="mt-1 text-2xl font-black">
+              <LiveStatValue value={value} />
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {isError ? (
+        <ErrorStatePanel title="Fleet unavailable" description="Vehicle availability could not be refreshed." />
+      ) : isLoading ? (
+        <LoadingCardGrid count={3} className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3" itemClassName="h-48" />
       ) : trucks && trucks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {trucks.map(truck => (
-            <div key={truck.id} className="bg-card border-2 border-border p-5 flex flex-col hover:border-primary/50 transition-colors">
+            <div key={truck.id} className="hb-feed-item bg-card border-2 border-border p-5 flex flex-col hover:border-primary/50 transition-colors">
               <div className="flex justify-between items-start mb-4">
                 <div className="bg-muted p-3 rounded-sm">
                   <Truck className="h-8 w-8 text-primary" />
                 </div>
                 <Badge variant={truck.isAvailable ? "default" : "secondary"} className="rounded-none font-bold uppercase text-[10px]">
+                  <span className={truck.isAvailable ? "hb-live-dot mr-1.5 h-1.5 w-1.5 rounded-full bg-current" : "mr-1.5 h-1.5 w-1.5 rounded-full bg-current opacity-50"} />
                   {truck.isAvailable ? "Available" : "In Use / Offline"}
                 </Badge>
               </div>
@@ -215,17 +249,17 @@ export default function FleetPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-card border-2 border-dashed border-border p-12 text-center">
-          <Truck className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-          <h3 className="text-xl font-bold mb-2">Your fleet is empty</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Add your dump trucks to start bidding on jobs. Accurate truck profiles help customers choose your bids.
-          </p>
+        <EmptyStatePanel
+          icon={Truck}
+          title="Your fleet is empty"
+          description="Add your dump trucks to start bidding on jobs. Accurate truck profiles help customers choose your bids."
+          className="p-12"
+        >
           <Link href="/fleet/new">
             <Button size="lg" className="font-bold rounded-none h-12 px-8">Add Your First Truck</Button>
           </Link>
-        </div>
+        </EmptyStatePanel>
       )}
-    </div>
+    </PageTransition>
   );
 }
