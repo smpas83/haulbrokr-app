@@ -129,4 +129,86 @@ pnpm --filter @workspace/haulbrokr run build
 
 ## Next package
 
-**Driver Job Detail** — not started. Stop after Package 2 per design program.
+**Package 4+** — wait for the next approved ChatGPT design package.
+
+---
+
+## Package 3 — Driver Job Detail (Production)
+
+### Route
+
+| Route | Entry | Driver component |
+|-------|-------|------------------|
+| `/jobs/:id` | `pages/job-detail.tsx` (role gate) | `pages/driver/DriverJobDetail.tsx` |
+
+When `profile.role === "driver"`, the standard multi-role job detail page is bypassed in favor of the operational hub layout.
+
+### Section order (vertical scroll)
+
+1. **Header** — job number, status badge, driver pay, material, ETA, online/offline
+2. **Primary Action Card** — assignment summary, navigate / call / message / facility, check-in
+3. **Live Progress** — 11-step timeline from `resolveDriverProgress`
+4. **Facility Information** — dump-site directory match + design placeholders for hours/instructions
+5. **Documents** — load ticket, scale, BOL, POD, photos with upload/preview/replace
+6. **Map** — lazy `MapContainer` with route placeholder
+7. **Earnings** — driver pay breakdown only
+8. **Job Notes** — driver/site/safety fields (broker notes redacted)
+9. **Activity** — filtered `ActivityFeed` for this job
+10. **Quick Actions** — sticky bottom bar on mobile
+
+### APIs consumed
+
+| Endpoint | Hook / usage |
+|----------|----------------|
+| `GET /jobs/:id` | `useGetJob` |
+| `GET /jobs/:id/tickets` | `useListJobTickets` |
+| `POST /jobs/:id/tickets` | `apiFetch` (photo body not in OpenAPI) |
+| `POST /tickets/:id/clock-in` | `useClockInTicket` |
+| `GET /jobs/:id/evidence` | `useListJobEvidence` |
+| `POST /jobs/:id/evidence` | `useCreateJobEvidence` |
+| `GET /jobs/:id/status-updates` | `useListJobStatusUpdates` |
+| `POST /jobs/:id/status-updates` | `useCreateJobStatusUpdate` |
+| `GET /jobs/:id/messages` | (message dispatcher via `useCreateJobMessage`) |
+| `GET /dump-sites` | `useListDumpSites` |
+| `GET /organizations/members` | `useListOrgMembers` (dispatcher phone) |
+| `GET /trucks` | `useListTrucks` (assigned truck label) |
+| `GET /dashboard/activity` | `useGetDashboardActivity` (filtered per job) |
+
+### Utilities (`lib/driverJobView.ts`)
+
+- `DRIVER_LIVE_PROGRESS_STEPS`, `resolveDriverProgress`, `liveProgressPercent`
+- `matchDumpSiteForAddress`, `computeRemainingTime`
+- `computeDriverEarningsBreakdown`, `buildDriverDocumentCards`
+- `filterActivityForJob`
+
+### Loading / empty / error
+
+- Page load: `AppLoader`
+- Sections: `Skeleton` while fetching
+- Not found: `EmptyState`
+- Offline / API error: `OfflineBanner` + retry
+- Unassigned driver: alert in primary action card
+
+### Accessibility
+
+- Timeline uses `aria-current="step"` on active step
+- Map uses `role="img"` + `aria-label`
+- Sticky quick actions in `role="region"` with `aria-label`
+- `motion-reduce:animate-none` on page enter animation
+
+### Performance
+
+- `MapContainer` lazy-loaded via `React.lazy` + `Suspense`
+- Job-derived lists memoized with `useMemo`
+- Activity filtered client-side to current job
+
+### Placeholders (design package pending)
+
+| UI element | Status |
+|------------|--------|
+| Facility hours / gate / scale / unload / safety | Placeholder copy |
+| Facility open/busy/closed + wait time | Placeholder copy |
+| Scale ticket / BOL document cards | Placeholder — no API fields |
+| Live GPS / traffic on map | Placeholder in `MapContainer` |
+| Bonus / waiting / fuel line items | `$0` until payroll API exists |
+| Required PPE / special requirements detail | Placeholder copy |

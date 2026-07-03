@@ -5,8 +5,11 @@ import type { Job } from "@workspace/api-client-react";
 import {
   applyDriverJobFilters,
   categorizeDriverJob,
+  computeDriverEarningsBreakdown,
   computeDriverPay,
+  matchDumpSiteForAddress,
   redactJobForDriver,
+  resolveDriverProgress,
 } from "@/lib/driverJobView";
 
 const baseJob: Job = {
@@ -82,5 +85,48 @@ describe("driverJobView filters", () => {
     const filtered = applyDriverJobFilters(jobs, { material: "gravel", minPay: 500 });
     expect(filtered).toHaveLength(1);
     expect(filtered[0]?.id).toBe(1);
+  });
+});
+
+describe("driverJobView progress timeline", () => {
+  it("marks accepted and en_route steps from status updates", () => {
+    const { completedKeys, currentKey } = resolveDriverProgress(
+      { status: "in_progress" },
+      [{ status: "en_route" }],
+      { clockedInAt: null },
+      [],
+    );
+    expect(completedKeys.has("accepted")).toBe(true);
+    expect(completedKeys.has("en_route")).toBe(true);
+    expect(currentKey).toBe("checked_in_pickup");
+  });
+
+  it("marks POD uploaded when evidence exists", () => {
+    const { completedKeys } = resolveDriverProgress(
+      { status: "in_progress" },
+      [],
+      null,
+      [{ photoUrl: "https://example.com/pod.jpg" }],
+    );
+    expect(completedKeys.has("pod_uploaded")).toBe(true);
+  });
+});
+
+describe("driverJobView facility match", () => {
+  it("matches dump site by address tokens", () => {
+    const site = matchDumpSiteForAddress("456 Riverside Transfer, Austin TX", [
+      { name: "Riverside Transfer", address: "456 Riverside Dr", city: "Austin", state: "TX", zip: "78701" },
+      { name: "Other Site", address: "999 Nowhere", city: "Dallas", state: "TX", zip: "75001" },
+    ]);
+    expect(site?.name).toBe("Riverside Transfer");
+  });
+});
+
+describe("driverJobView earnings", () => {
+  it("returns driver-only earnings breakdown", () => {
+    const breakdown = computeDriverEarningsBreakdown(baseJob);
+    expect(breakdown.driverPay).toBe(960);
+    expect(breakdown.currentTotal).toBe(960);
+    expect(breakdown.bonus).toBe(0);
   });
 });
