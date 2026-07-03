@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, numeric, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -46,6 +46,9 @@ export const jobsTable = pgTable("jobs", {
   totalAmount: numeric("total_amount", { precision: 12, scale: 2 }),
   // ── Broker-fee revenue model (15% taken before the driver is paid) ──
   platformFeeRate: numeric("platform_fee_rate", { precision: 5, scale: 4 }).notNull().default("0.15"),
+  brokerMarginType: text("broker_margin_type").notNull().default("percentage"),
+  brokerMarginValue: numeric("broker_margin_value", { precision: 10, scale: 4 }).notNull().default("0.15"),
+  pricingRules: jsonb("pricing_rules").$type<Record<string, unknown>>().notNull().default({}),
   platformFeeAmount: numeric("platform_fee_amount", { precision: 12, scale: 2 }),
   customerTotalAmount: numeric("customer_total_amount", { precision: 12, scale: 2 }),
   providerNetAmount: numeric("provider_net_amount", { precision: 12, scale: 2 }),

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, numeric, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -31,6 +31,9 @@ export const requestsTable = pgTable("requests", {
   status: requestStatusEnum("status").notNull().default("open"),
   trucksNeeded: integer("trucks_needed").notNull().default(1),
   budgetPerHour: numeric("budget_per_hour", { precision: 10, scale: 2 }),
+  brokerMarginType: text("broker_margin_type").notNull().default("percentage"),
+  brokerMarginValue: numeric("broker_margin_value", { precision: 10, scale: 4 }).notNull().default("0.15"),
+  pricingRules: jsonb("pricing_rules").$type<Record<string, unknown>>().notNull().default({}),
   projectId: integer("project_id").references(() => projectsTable.id),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
