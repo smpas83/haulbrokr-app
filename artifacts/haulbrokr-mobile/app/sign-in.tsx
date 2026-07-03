@@ -1,4 +1,4 @@
-import { useAuth, useClerk, useSSO } from "@clerk/expo";
+import { useAuth, useSignIn, useSignUp, useSSO } from "@clerk/expo";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as AuthSession from "expo-auth-session";
@@ -24,16 +24,20 @@ import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkToke
 
 type Mode = "signin" | "signup";
 type Step = "credentials" | "verify";
+type VerifyReason = "signup" | "trust";
 
 WebBrowser.maybeCompleteAuthSession();
+
+function clerkErrorMessage(error: { message?: string; longMessage?: string } | null | undefined): string {
+  if (!error) return "";
+  return error.longMessage ?? error.message ?? "";
+}
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
   const { isLoaded: authLoaded } = useAuth();
-  const clerk = useClerk();
-  const signIn = clerk.client?.signIn;
-  const signUp = clerk.client?.signUp;
-  const setActive = clerk.setActive?.bind(clerk);
+  const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
+  const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
@@ -75,6 +79,7 @@ export default function SignInScreen() {
 
   const [mode, setMode] = useState<Mode>("signin");
   const [step, setStep] = useState<Step>("credentials");
+  const [verifyReason, setVerifyReason] = useState<VerifyReason>("signup");
   const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -84,8 +89,18 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const clerkReady = authLoaded && !!signIn && !!signUp && !!setActive;
+  const clerkReady = authLoaded && !!signIn && !!signUp;
   const authStuck = authLoaded && (!signIn || !signUp);
+  const busy = loading || signInFetchStatus === "fetching" || signUpFetchStatus === "fetching";
+  const activeFieldError =
+    signInErrors?.fields?.identifier?.message ??
+    signInErrors?.fields?.password?.message ??
+    signUpErrors?.fields?.emailAddress?.message ??
+    signUpErrors?.fields?.username?.message ??
+    signUpErrors?.fields?.password?.message ??
+    signInErrors?.global?.[0]?.message ??
+    signUpErrors?.global?.[0]?.message ??
+    "";
 
   const resetFormForMode = (nextMode: Mode) => {
     setMode(nextMode);
@@ -115,26 +130,40 @@ export default function SignInScreen() {
     }
   };
 
-  const completeSignIn = async (sessionId: string | null | undefined) => {
-    if (!sessionId || !setActive) {
-      setError("Sign-in incomplete. Please try again.");
-      return;
-    }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await setActive({ session: sessionId });
-    await markClerkActiveSession();
-    router.replace("/" as any);
+  const finalizeSignIn = async () => {
+    if (!signIn) return;
+    await signIn.finalize({
+      navigate: async () => {
+        await markClerkActiveSession();
+        router.replace("/" as any);
+      },
+    });
   };
 
-  const completeSignUp = async (sessionId: string | null | undefined) => {
-    if (!sessionId || !setActive) {
-      setError("Sign-up incomplete. Please try again.");
-      return;
+  const finalizeSignUp = async () => {
+    if (!signUp) return;
+    await signUp.finalize({
+      navigate: async () => {
+        await markClerkActiveSession();
+        router.replace("/onboarding" as any);
+      },
+    });
+  };
+
+  const beginSecondFactorEmail = async (): Promise<boolean> => {
+    if (!signIn) return false;
+    const hasEmailCode = signIn.supportedSecondFactors?.some((factor) => factor.strategy === "email_code");
+    if (!hasEmailCode) return false;
+
+    const { error: sendError } = await signIn.mfa.sendEmailCode();
+    if (sendError) {
+      setError(clerkErrorMessage(sendError));
+      return false;
     }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await setActive({ session: sessionId });
-    await markClerkActiveSession();
-    router.replace("/onboarding" as any);
+
+    setVerifyReason("trust");
+    setStep("verify");
+    return true;
   };
 
   const handleSignIn = async () => {
@@ -156,37 +185,32 @@ export default function SignInScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
-      const result = await signIn.create({ identifier: id, password });
-      if (result.status === "complete") {
-        await completeSignIn(result.createdSessionId);
+      const { error: passwordError } = await signIn.password({ identifier: id, password });
+      if (passwordError) {
+        setError(clerkErrorMessage(passwordError));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
 
-      const passwordFactor = signIn.supportedFirstFactors?.find(
-        (f) => f.strategy === "password"
-      );
-      if (passwordFactor) {
-        const attempt = await signIn.attemptFirstFactor({
-          strategy: "password",
-          password,
-        });
-        if (attempt.status === "complete") {
-          await completeSignIn(attempt.createdSessionId);
-          return;
+      if (signIn.status === "needs_client_trust" || signIn.status === "needs_second_factor") {
+        const started = await beginSecondFactorEmail();
+        if (!started) {
+          setError(
+            signIn.status === "needs_second_factor"
+              ? "Two-factor authentication is required for this account."
+              : "Additional verification is required. Check your email for a code."
+          );
         }
+        return;
+      }
+
+      if (signIn.status === "complete") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await finalizeSignIn();
+        return;
       }
 
       setError("Sign-in incomplete. Check your username/email and password.");
-    } catch (err: any) {
-      const errCode = err?.errors?.[0]?.code;
-      if (errCode === "form_identifier_not_found") {
-        setError("No account found with that username or email. Try signing up.");
-      } else if (errCode === "form_password_incorrect") {
-        setError("Incorrect password. Please try again.");
-      } else {
-        setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not sign in. Try again.");
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
     }
@@ -216,35 +240,35 @@ export default function SignInScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
-      const result = await signUp.create({
+      const { error: passwordError } = await signUp.password({
         emailAddress: nextEmail,
         username: nextUsername,
         password,
       });
-
-      if (result.status === "complete") {
-        await completeSignUp(result.createdSessionId);
+      if (passwordError) {
+        setError(clerkErrorMessage(passwordError));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
 
-      if (result.status === "missing_requirements") {
-        const needsEmailVerification = signUp.unverifiedFields?.includes("email_address");
-        if (needsEmailVerification) {
-          await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-          setStep("verify");
+      if (signUp.status === "complete") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await finalizeSignUp();
+        return;
+      }
+
+      if (signUp.status === "missing_requirements") {
+        const { error: sendError } = await signUp.verifications.sendEmailCode();
+        if (sendError) {
+          setError(clerkErrorMessage(sendError));
           return;
         }
+        setVerifyReason("signup");
+        setStep("verify");
+        return;
       }
 
       setError("Sign-up incomplete. Please try again.");
-    } catch (err: any) {
-      const errCode = err?.errors?.[0]?.code;
-      if (errCode === "form_identifier_exists") {
-        setError("An account with that email or username already exists. Try signing in.");
-      } else {
-        setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not create account. Try again.");
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
     }
@@ -264,7 +288,7 @@ export default function SignInScreen() {
       setError("Please enter the 6-digit code from your email.");
       return;
     }
-    if (!clerkReady || !signUp || !setActive) {
+    if (!clerkReady) {
       setError("Authentication is initialising. Please wait a moment.");
       return;
     }
@@ -272,15 +296,42 @@ export default function SignInScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
-      const result = await signUp.attemptEmailAddressVerification({ code: code.trim() });
-      if (result.status === "complete") {
-        await completeSignUp(result.createdSessionId);
+      if (verifyReason === "trust") {
+        if (!signIn) {
+          setError("Authentication is initialising. Please wait a moment.");
+          return;
+        }
+        const { error: verifyError } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
+        if (verifyError) {
+          setError(clerkErrorMessage(verifyError));
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          return;
+        }
+        if (signIn.status === "complete") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          await finalizeSignIn();
+        } else {
+          setError("Verification incomplete. Please try again.");
+        }
+        return;
+      }
+
+      if (!signUp) {
+        setError("Authentication is initialising. Please wait a moment.");
+        return;
+      }
+      const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code: code.trim() });
+      if (verifyError) {
+        setError(clerkErrorMessage(verifyError));
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      if (signUp.status === "complete") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await finalizeSignUp();
       } else {
         setError("Verification incomplete. Please try again.");
       }
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Incorrect code. Please try again.");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
     }
@@ -339,7 +390,9 @@ export default function SignInScreen() {
             ? mode === "signin"
               ? "Welcome back — sign in with your username or email and password"
               : "Create your account with a username, email, and password"
-            : `We sent a 6-digit code to\n${verifyEmail}`}
+            : verifyReason === "trust"
+              ? `Verify this device — enter the code sent to\n${verifyEmail}`
+              : `We sent a 6-digit code to\n${verifyEmail}`}
         </Text>
 
         {step === "credentials" ? (
@@ -452,14 +505,16 @@ export default function SignInScreen() {
               </Pressable>
             </View>
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error || activeFieldError ? (
+              <Text style={styles.errorText}>{error || activeFieldError}</Text>
+            ) : null}
 
             <Pressable
-              style={[styles.btn, (loading || !clerkReady || ssoBusy !== null) && styles.btnDisabled]}
+              style={[styles.btn, (busy || !clerkReady || ssoBusy !== null) && styles.btnDisabled]}
               onPress={handleSubmit}
-              disabled={loading || !clerkReady || ssoBusy !== null}
+              disabled={busy || !clerkReady || ssoBusy !== null}
             >
-              {loading ? (
+              {busy ? (
                 <ActivityIndicator color="#1e2235" />
               ) : (
                 <Text style={styles.btnText}>
@@ -494,7 +549,9 @@ export default function SignInScreen() {
             <View style={styles.codeHint}>
               <Feather name="mail" size={14} color="#e9a600" />
               <Text style={styles.codeHintText}>
-                Verify your email to finish creating your account
+                {verifyReason === "trust"
+                  ? "Check your inbox for the security verification code"
+                  : "Verify your email to finish creating your account"}
               </Text>
             </View>
 
@@ -517,11 +574,11 @@ export default function SignInScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Pressable
-              style={[styles.btn, (loading || code.length < 6) && styles.btnDisabled]}
+              style={[styles.btn, (busy || code.length < 6) && styles.btnDisabled]}
               onPress={handleVerifyCode}
-              disabled={loading || code.length < 6}
+              disabled={busy || code.length < 6}
             >
-              {loading ? (
+              {busy ? (
                 <ActivityIndicator color="#1e2235" />
               ) : (
                 <Text style={styles.btnText}>Verify & Continue</Text>
