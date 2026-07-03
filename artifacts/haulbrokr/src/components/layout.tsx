@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Truck, ClipboardList, Briefcase, LayoutDashboard,
   LogOut, Loader2, Settings, Menu, X, Trash2,
-  FolderOpen, DollarSign, Plug, ShieldCheck, Building2
+  FolderOpen, DollarSign, Plug, ShieldCheck, Building2, Radio
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/react";
 import { useGetMyProfile, useGetAdminAccess } from "@workspace/api-client-react";
@@ -113,6 +113,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
+    { href: "/dispatcher", label: "Live Dispatch", icon: Radio, show: isProvider },
     { href: "/requests", label: isCustomer ? "My Requests" : "Job Board", icon: ClipboardList, show: true },
     { href: "/fleet", label: "My Fleet", icon: Truck, show: isProvider },
     { href: "/jobs", label: "Active Jobs", icon: Briefcase, show: true },

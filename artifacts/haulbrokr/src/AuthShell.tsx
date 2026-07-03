@@ -31,6 +31,7 @@ const IntegrationsPage = lazy(() => import("./pages/integrations"));
 const MobilePaymentPage = lazy(() => import("./pages/mobile-payment"));
 const AdminPage = lazy(() => import("./pages/admin"));
 const AdminLoginPage = lazy(() => import("./pages/admin-login"));
+const DispatcherPage = lazy(() => import("./pages/dispatcher"));
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient();
@@ -169,6 +170,11 @@ function AuthShellRoutes() {
 
             <Route path="/dashboard">
               <Show when="signed-in"><RequireProfile><DashboardPage /></RequireProfile></Show>
+              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+            </Route>
+
+            <Route path="/dispatcher">
+              <Show when="signed-in"><DispatcherPage /></Show>
               <Show when="signed-out"><Redirect to="/sign-in" /></Show>
             </Route>
 
