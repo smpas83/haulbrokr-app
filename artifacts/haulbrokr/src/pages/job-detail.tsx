@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { 
   ArrowLeft, MapPin, Calendar, Truck, HardHat, DollarSign, 
   Clock, Flag, CheckCircle2, Navigation, Loader2, Camera, MessageSquare, Plus,
-  Receipt, Wallet, ArrowRight, UserCheck, AlertTriangle, ShieldCheck, ListChecks, AlertCircle, CreditCard
+  Receipt, Wallet, ArrowRight, UserCheck, AlertTriangle, ShieldCheck, ListChecks, AlertCircle, CreditCard, Star, Download
 } from "lucide-react";
 import { 
   useGetJob, useUpdateJob, useAcceptJob, useDeclineJob, useGetMyProfile, getGetJobQueryKey,
@@ -13,6 +13,7 @@ import {
   useGetPaymentMethod, useSetPaymentMethod, useUpdatePaymentMethod, getGetPaymentMethodQueryKey,
   useAssignJob, useApproveJobCompletion, useFlagJobCompletion,
   useListJobStatusUpdates, useListOrgMembers, useListTrucks, getListJobStatusUpdatesQueryKey,
+  useGetJobRating, useCreateJobRating, getGetJobRatingQueryKey,
   type Job
 } from "@workspace/api-client-react";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
@@ -496,9 +497,92 @@ function ConfirmCardPayment({ jobId }: { jobId: number }) {
   );
 }
 
+function jobIsInvoiceEligible(job: Job): boolean {
+  return job.status === "completed" || job.paymentStatus === "invoiced" || job.paymentStatus === "paid" || job.paymentStatus === "released";
+}
+
+async function downloadJobInvoice(jobId: number): Promise<void> {
+  const res = await fetch(`/api/jobs/${jobId}/invoice`, { credentials: "include" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "Could not download invoice");
+  }
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const filename = match?.[1] ?? `invoice-${jobId}.pdf`;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function JobRatingPanel({ jobId, isProvider }: { jobId: number; isProvider: boolean }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useGetJobRating(jobId);
+  const submit = useCreateJobRating({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetJobRatingQueryKey(jobId) });
+        toast({ title: "Rating submitted", description: "Thank you for your feedback." });
+      },
+      onError: (err: unknown) =>
+        toast({ title: "Couldn't submit rating", description: err instanceof Error ? err.message : "Try again.", variant: "destructive" }),
+    },
+  });
+
+  const mine = data?.mine ?? null;
+  const [hover, setHover] = useState(0);
+
+  return (
+    <div className="border border-border/60 rounded-xl p-6 space-y-4">
+      <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+        <Star className="h-4 w-4" />
+        {mine ? "Your Rating" : "Rate This Job"}
+      </h3>
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : mine ? (
+        <div className="flex items-center gap-3">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <Star key={s} className={`h-6 w-6 ${s <= mine.stars ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+          ))}
+          <span className="text-sm text-muted-foreground">You rated this {mine.stars}/5</span>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            How was your experience with this {isProvider ? "customer" : "provider"}?
+          </p>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <button
+                key={s}
+                type="button"
+                disabled={submit.isPending}
+                className="p-1 transition-transform hover:scale-110 disabled:opacity-50"
+                onMouseEnter={() => setHover(s)}
+                onMouseLeave={() => setHover(0)}
+                onClick={() => submit.mutate({ id: jobId, data: { stars: s } })}
+                aria-label={`Rate ${s} stars`}
+              >
+                <Star className={`h-8 w-8 ${s <= (hover || 0) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: boolean; isProvider: boolean }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [downloading, setDownloading] = useState(false);
 
   const onSettled = {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetJobQueryKey(job.id) }),
@@ -673,6 +757,32 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
             ? "Customer is on Net terms — your net payout is released once they settle the invoice."
             : "Awaiting customer payment. Your net payout is transferred automatically once they pay."}
         </p>
+      )}
+
+      {jobIsInvoiceEligible(job) && (isCustomer || isProvider) && (
+        <Button
+          variant="outline"
+          className="rounded-xl font-semibold w-full"
+          disabled={downloading}
+          onClick={async () => {
+            setDownloading(true);
+            try {
+              await downloadJobInvoice(job.id);
+              toast({ title: "Invoice downloaded" });
+            } catch (err) {
+              toast({
+                title: "Download failed",
+                description: err instanceof Error ? err.message : "Could not download invoice",
+                variant: "destructive",
+              });
+            } finally {
+              setDownloading(false);
+            }
+          }}
+        >
+          {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+          Download Invoice (PDF)
+        </Button>
       )}
     </div>
   );
@@ -1468,6 +1578,10 @@ export default function JobDetailPage() {
 
         {job.status === "completed" && (
           <PaymentPanel job={job} isCustomer={isCustomer} isProvider={isProvider} />
+        )}
+
+        {job.status === "completed" && (
+          <JobRatingPanel jobId={job.id} isProvider={isProvider} />
         )}
 
         <StatusTimeline jobId={id} />

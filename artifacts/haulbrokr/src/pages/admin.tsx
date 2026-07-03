@@ -70,7 +70,7 @@ function ReviewActions({
         <div className="space-y-2">
           <Textarea
             autoFocus
-            placeholder="Reason for rejection (shared with the applicant)â¦"
+            placeholder="Reason for rejection (shared with the applicant)…"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             className="rounded-xl border-2 min-h-[72px]"
