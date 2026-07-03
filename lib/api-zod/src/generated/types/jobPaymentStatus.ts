@@ -11,9 +11,12 @@ export type JobPaymentStatus = typeof JobPaymentStatus[keyof typeof JobPaymentSt
 
 export const JobPaymentStatus = {
   unpaid: 'unpaid',
+  authorized: 'authorized',
   invoiced: 'invoiced',
   paid: 'paid',
   released: 'released',
   failed: 'failed',
   requires_action: 'requires_action',
+  refunded: 'refunded',
+  partially_refunded: 'partially_refunded',
 } as const;

@@ -13,7 +13,14 @@ import {
   trucksTable,
   jobStatusUpdatesTable,
   driverDocumentsTable,
+  complianceDocumentsTable,
 } from "@workspace/db";
+import {
+  driverCanAcceptJobs,
+  truckCanBeAssigned,
+  vendorCanReceiveDispatch,
+} from "../lib/complianceDocuments";
+import { safeNotify } from "../lib/notifications";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { isAdmin } from "../middlewares/requireAdmin";
 import { buildJobInvoicePdf, canDownloadJobInvoice, jobIsInvoiceEligible } from "../lib/jobInvoice";
@@ -23,6 +30,20 @@ import { settleConfirmedPayout } from "../lib/payoutRetry";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import {
+  DEFAULT_MARKETPLACE_PRICING_CONFIG,
+  computeMarketplacePricing,
+  formatRatePercent,
+  getActiveMarketplacePricingConfig,
+} from "../lib/marketplacePricing";
+import {
+  captureAuthorizedPaymentIntent,
+  chargeIdFromPaymentIntent,
+  createAuthorizedPaymentIntent,
+  receiptUrlFromPaymentIntent,
+  refundJobPayment,
+  type CustomerInstrument,
+} from "../lib/stripePayments";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -59,8 +80,6 @@ import {
 
 const router: IRouter = Router();
 
-const DEFAULT_FEE_RATE = 0.15;
-
 function num(v: string | null | undefined): number | null {
   return v == null ? null : parseFloat(v);
 }
@@ -74,6 +93,10 @@ function serializeJob(j: any, customerCompany: string, providerCompany: string) 
     totalAmount: num(j.totalAmount),
     platformFeeRate: num(j.platformFeeRate),
     platformFeeAmount: num(j.platformFeeAmount),
+    commissionRate: num(j.commissionRate),
+    commissionAmount: num(j.commissionAmount),
+    surchargeRate: num(j.surchargeRate),
+    surchargeAmount: num(j.surchargeAmount),
     customerTotalAmount: num(j.customerTotalAmount),
     providerNetAmount: num(j.providerNetAmount),
     customerCompany,
@@ -146,39 +169,76 @@ async function notifyPayoutDelayed(
       description: `Payout delayed for job #${job.id} — ${job.materialType} delivery. ${reason} Set up your payout account to get paid.`,
       relatedId: job.id,
     });
+    await safeNotify({
+      recipientProfileId: job.providerId,
+      type: "payout_delayed",
+      title: `Payout delayed for job #${job.id}`,
+      body: `${job.materialType} delivery payout is delayed. ${reason} Set up your payout account to get paid.`,
+      relatedType: "job",
+      relatedId: job.id,
+      channels: ["in_app", "email", "sms", "push", "realtime"],
+    });
   } catch (err) {
     console.error("Failed to record payout_delayed notification", err);
   }
 }
 
 /**
- * Broker-fee model: the customer is billed the work value PLUS a 15% broker fee.
- * HaulBrokr deducts that 15% from the customer's gross payment BEFORE the
- * provider/driver is paid, so the driver receives the full work value (net) and
- * HaulBrokr retains the fee.
+ * Marketplace model: the customer is billed the work value plus configured
+ * commission/surcharges. The provider receives the full work value (net) and
+ * HaulBrokr retains the configured marketplace fees.
  *   base  = ratePerHour * hours   (work value → provider net)
- *   fee   = base * feeRate        (HaulBrokr's retained profit)
+ *   fee   = commission + surcharges
  *   gross = base + fee            (what the customer pays)
  */
 export function computeBreakdown(ratePerHour: number, hours: number, feeRate: number) {
-  const base = Math.round(ratePerHour * hours * 100) / 100;
-  const fee = Math.round(base * feeRate * 100) / 100;
-  const gross = Math.round((base + fee) * 100) / 100;
-  return { base, fee, gross };
+  const breakdown = computeMarketplacePricing({
+    ratePerHour,
+    hours,
+    config: {
+      ...DEFAULT_MARKETPLACE_PRICING_CONFIG,
+      name: "legacy-fee-rate",
+      commissionRate: feeRate,
+    },
+  });
+  return { base: breakdown.base, fee: breakdown.platformFee, gross: breakdown.gross };
+}
+
+async function currentProfileComplianceDocs(
+  ownerType: "vendor" | "driver",
+  profileId: number,
+) {
+  return db
+    .select()
+    .from(complianceDocumentsTable)
+    .where(
+      and(
+        eq(complianceDocumentsTable.profileId, profileId),
+        eq(complianceDocumentsTable.ownerType, ownerType),
+        eq(complianceDocumentsTable.isCurrent, true),
+      ),
+    );
+}
+
+async function currentFleetComplianceDocs(truckId: number) {
+  return db
+    .select()
+    .from(complianceDocumentsTable)
+    .where(
+      and(
+        eq(complianceDocumentsTable.truckId, truckId),
+        eq(complianceDocumentsTable.ownerType, "fleet"),
+        eq(complianceDocumentsTable.isCurrent, true),
+      ),
+    );
 }
 
 /**
- * Funds the provider's net payout via Stripe Connect using separate
- * charge + transfer: charge the customer the GROSS on the platform account,
- * then transfer ONLY the net to the provider's connected account. The 15%
- * broker fee therefore never leaves the platform — it is retained by design.
+ * Funds the provider's net payout via Stripe Connect using separate charge +
+ * transfer: charge the customer the GROSS on the platform account, then transfer
+ * ONLY the net to the provider's connected account. Marketplace fees therefore
+ * never leave the platform — they are retained by design.
  */
-interface CustomerInstrument {
-  stripeCustomerId: string | null;
-  stripePaymentMethodId: string | null;
-  methodType: string;
-}
-
 async function settleProviderPayout(job: any, stripeAccountId: string, customer: CustomerInstrument, attempt: number) {
   const stripe = await getUncachableStripeClient();
   const grossCents = Math.round(parseFloat(job.customerTotalAmount) * 100);
@@ -232,7 +292,10 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
     { idempotencyKey: `job-charge:${job.id}:${attempt}` },
   );
 
-  const chargeId = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge?.id;
+  const chargeId = chargeIdFromPaymentIntent(pi);
+  if (!chargeId) {
+    throw new Error("Stripe PaymentIntent has no charge to transfer from.");
+  }
 
   const transfer = await stripe.transfers.create(
     {
@@ -240,13 +303,13 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
       currency: "usd",
       destination: stripeAccountId,
       source_transaction: chargeId,
-      description: `HaulBrokr payout for job #${job.id} (net of 15% broker fee)`,
+      description: `HaulBrokr payout for job #${job.id} (net of marketplace fees)`,
       metadata: { jobId: String(job.id), attempt: String(attempt) },
     },
     { idempotencyKey: `job-transfer:${job.id}:${attempt}` },
   );
 
-  return { paymentIntentId: pi.id, transferId: transfer.id };
+  return { paymentIntentId: pi.id, transferId: transfer.id, chargeId, receiptUrl: receiptUrlFromPaymentIntent(pi) };
 }
 
 /**
@@ -476,6 +539,16 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
     return;
   }
 
+  const vendorCompliance = vendorCanReceiveDispatch(
+    await currentProfileComplianceDocs("vendor", job.providerId),
+  );
+  if (!vendorCompliance.allowed) {
+    res.status(403).json({
+      error: `Cannot accept this job — vendor compliance is not approved: ${vendorCompliance.blockers.join(", ")}. Upload current versions for review.`,
+    });
+    return;
+  }
+
   const [updated] = await db
     .update(jobsTable)
     .set({ status: "accepted" })
@@ -500,6 +573,24 @@ router.post("/jobs/:id/accept", requireProfile, async (req, res): Promise<void> 
     type: "job_accepted",
     description: `Hauler accepted job #${job.id} — ${job.materialType} delivery`,
     relatedId: job.id,
+  });
+  await safeNotify({
+    recipientProfileId: profile.id,
+    type: "job_accepted",
+    title: `Job #${job.id} accepted`,
+    body: `You accepted the ${job.materialType} delivery.`,
+    relatedType: "job",
+    relatedId: job.id,
+    channels: ["in_app", "push", "realtime"],
+  });
+  await safeNotify({
+    recipientProfileId: job.customerId,
+    type: "job_accepted",
+    title: `Hauler accepted job #${job.id}`,
+    body: `The hauler accepted your ${job.materialType} delivery.`,
+    relatedType: "job",
+    relatedId: job.id,
+    channels: ["in_app", "email", "push", "realtime"],
   });
 
   const { customerCompany, providerCompany } = await companiesFor(updated);
@@ -612,13 +703,19 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     const hours = parsed.data.totalHours ?? (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
     if (hours != null) {
       const rate = parseFloat(existingJob.ratePerHour);
-      const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_FEE_RATE;
-      const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
+      const config = await getActiveMarketplacePricingConfig();
+      const pricing = computeMarketplacePricing({ ratePerHour: rate, hours, config });
       updates.totalHours = String(hours);
-      updates.totalAmount = String(base);
-      updates.customerTotalAmount = String(gross);
-      updates.platformFeeAmount = String(fee);
-      updates.providerNetAmount = String(base);
+      updates.totalAmount = String(pricing.base);
+      updates.pricingConfigId = config.id;
+      updates.platformFeeRate = String(config.commissionRate);
+      updates.platformFeeAmount = String(pricing.platformFee);
+      updates.commissionRate = String(config.commissionRate);
+      updates.commissionAmount = String(pricing.commission);
+      updates.surchargeRate = String(config.surchargeRate);
+      updates.surchargeAmount = String(pricing.surcharge);
+      updates.customerTotalAmount = String(pricing.gross);
+      updates.providerNetAmount = String(pricing.providerNet);
     }
   }
 
@@ -660,7 +757,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
 /**
  * POST /jobs/:id/charge — customer pays for a completed job.
  * - Instant methods (credit_card / ach): charge gross, immediately transfer net
- *   to the provider (15% retained). Marks job released.
+ *   to the provider (marketplace fees retained). Marks job released.
  * - Net terms (net_15/30/45): create an invoice with a due date. No money moves
  *   and the provider is NOT paid until the customer's invoice is paid (release).
  */
@@ -762,7 +859,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
   };
 
   try {
-    const { paymentIntentId, transferId } = await settleProviderPayout(job, readiness.stripeAccountId, instrument, attempt);
+    const { paymentIntentId, transferId, chargeId, receiptUrl } = await settleProviderPayout(job, readiness.stripeAccountId, instrument, attempt);
     const now = new Date();
     const [updated] = await db.update(jobsTable)
       .set({
@@ -771,7 +868,10 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
         releasedAt: now,
         paymentAttempts: attempt,
         stripePaymentIntentId: paymentIntentId,
+        stripeChargeId: chargeId,
         stripeTransferId: transferId,
+        stripeReceiptUrl: receiptUrl,
+        payoutStatus: "paid",
       })
       .where(eq(jobsTable.id, job.id)).returning();
     const { customerCompany, providerCompany } = await companiesFor(updated);
@@ -797,9 +897,191 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
   }
 });
 
+async function customerInstrumentForJob(job: { customerId: number }, pm: { methodType?: string | null; stripePaymentMethodId?: string | null } | undefined | null): Promise<CustomerInstrument> {
+  const [customerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.customerId));
+  return {
+    stripeCustomerId: customerProfile?.stripeCustomerId ?? null,
+    stripePaymentMethodId: pm?.stripePaymentMethodId ?? null,
+    methodType: pm?.methodType ?? "credit_card",
+  };
+}
+
+router.post("/jobs/:id/authorize-payment", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid job id." });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable)
+    .where(and(eq(jobsTable.id, id), eq(jobsTable.customerId, profile.id)));
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+  if (job.status !== "completed") {
+    res.status(400).json({ error: "Job must be completed before payment can be authorized." });
+    return;
+  }
+  if (job.customerTotalAmount == null || job.providerNetAmount == null) {
+    res.status(400).json({ error: "Job has no computed amount. Mark it completed with hours first." });
+    return;
+  }
+  if (["authorized", "paid", "released", "refunded", "partially_refunded"].includes(job.paymentStatus)) {
+    res.status(409).json({ error: "This job already has a payment in progress or completed." });
+    return;
+  }
+
+  const [pm] = await db.select().from(paymentMethodsTable).where(eq(paymentMethodsTable.profileId, job.customerId));
+  if (pm?.methodType === "ach" && pm.verificationStatus === "pending") {
+    res.status(409).json({ error: "Your bank account is still being verified. Finish verifying it in Account before authorizing payment." });
+    return;
+  }
+
+  const readiness = await checkProviderPayoutReadiness(job.providerId);
+  if (!readiness.ok) {
+    await notifyPayoutDelayed(job, readiness.message);
+    res.status(409).json({ error: readiness.message });
+    return;
+  }
+
+  const attempt = (job.paymentAttempts ?? 0) + 1;
+  try {
+    const instrument = await customerInstrumentForJob(job, pm);
+    const pi = await createAuthorizedPaymentIntent({
+      id: job.id,
+      customerId: job.customerId,
+      customerTotalAmount: job.customerTotalAmount,
+      providerNetAmount: job.providerNetAmount,
+      paymentAttempts: job.paymentAttempts,
+      materialType: job.materialType,
+    }, instrument, attempt);
+    const [updated] = await db.update(jobsTable)
+      .set({
+        paymentStatus: "authorized",
+        paymentAttempts: attempt,
+        stripePaymentIntentId: pi.id,
+        stripeChargeId: chargeIdFromPaymentIntent(pi),
+        stripeReceiptUrl: receiptUrlFromPaymentIntent(pi),
+      })
+      .where(eq(jobsTable.id, job.id))
+      .returning();
+    const { customerCompany, providerCompany } = await companiesFor(updated);
+    res.json(serializeJob(updated, customerCompany, providerCompany));
+  } catch (err: any) {
+    req.log?.error?.({ err }, "Job payment authorization failed");
+    await db.update(jobsTable).set({ paymentStatus: "failed", paymentAttempts: attempt }).where(eq(jobsTable.id, job.id));
+    await notifyPaymentFailed(job);
+    res.status(err?.status ?? 502).json({ error: err?.message ?? "Payment authorization failed" });
+  }
+});
+
+router.post("/jobs/:id/capture-payment", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid job id." });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable)
+    .where(and(eq(jobsTable.id, id), eq(jobsTable.customerId, profile.id)));
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+  if (job.paymentStatus !== "authorized" || !job.stripePaymentIntentId) {
+    res.status(409).json({ error: "This job does not have an authorized payment to capture." });
+    return;
+  }
+  if (job.providerNetAmount == null || job.customerTotalAmount == null) {
+    res.status(400).json({ error: "Job has no computed amount." });
+    return;
+  }
+
+  const readiness = await checkProviderPayoutReadiness(job.providerId);
+  if (!readiness.ok) {
+    await notifyPayoutDelayed(job, readiness.message);
+    res.status(409).json({ error: readiness.message });
+    return;
+  }
+
+  try {
+    const pi = await captureAuthorizedPaymentIntent({
+      id: job.id,
+      customerId: job.customerId,
+      customerTotalAmount: job.customerTotalAmount,
+      providerNetAmount: job.providerNetAmount,
+      paymentAttempts: job.paymentAttempts,
+      materialType: job.materialType,
+      stripePaymentIntentId: job.stripePaymentIntentId,
+    });
+    const updated = await settleConfirmedPayout({
+      id: job.id,
+      providerNetAmount: job.providerNetAmount,
+      paymentAttempts: job.paymentAttempts,
+    }, readiness.stripeAccountId, pi as any);
+    await db.update(jobsTable)
+      .set({
+        stripeChargeId: chargeIdFromPaymentIntent(pi),
+        stripeReceiptUrl: receiptUrlFromPaymentIntent(pi),
+        payoutStatus: "paid",
+      })
+      .where(eq(jobsTable.id, job.id));
+    const { customerCompany, providerCompany } = await companiesFor(updated);
+    res.json(serializeJob(updated, customerCompany, providerCompany));
+  } catch (err: any) {
+    req.log?.error?.({ err }, "Job payment capture failed");
+    await db.update(jobsTable).set({ paymentStatus: "failed" }).where(eq(jobsTable.id, job.id));
+    await notifyPaymentFailed(job);
+    res.status(502).json({ error: err?.message ?? "Payment capture failed" });
+  }
+});
+
+router.post("/jobs/:id/refund", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid job id." });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, id));
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+  const admin = await isAdmin(req);
+  if (!admin && job.customerId !== profile.id) {
+    res.status(403).json({ error: "Only the customer or HaulBrokr staff can refund this job." });
+    return;
+  }
+  if (!["paid", "released", "failed", "requires_action"].includes(job.paymentStatus)) {
+    res.status(409).json({ error: "This job does not have a refundable payment." });
+    return;
+  }
+
+  const amountCents = typeof req.body?.amountCents === "number" ? req.body.amountCents : undefined;
+  if (amountCents != null && (!Number.isInteger(amountCents) || amountCents <= 0)) {
+    res.status(400).json({ error: "amountCents must be a positive integer." });
+    return;
+  }
+
+  try {
+    await refundJobPayment(job, amountCents);
+    const [updated] = await db.select().from(jobsTable).where(eq(jobsTable.id, job.id));
+    const { customerCompany, providerCompany } = await companiesFor(updated);
+    res.json(serializeJob(updated, customerCompany, providerCompany));
+  } catch (err: any) {
+    req.log?.error?.({ err }, "Job refund failed");
+    res.status(err?.status ?? 502).json({ error: err?.message ?? "Refund failed" });
+  }
+});
+
 /**
  * POST /jobs/:id/release — release the provider's net payout for a Net-terms
- * invoice once the customer has paid it. The 15% broker fee is retained.
+ * invoice once the customer has paid it. Marketplace fees are retained.
  */
 router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
@@ -857,7 +1139,7 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
   const attempt = (job.paymentAttempts ?? 0) + 1;
 
   try {
-    const { paymentIntentId, transferId } = await settleProviderPayout(job, readiness.stripeAccountId, instrument, attempt);
+    const { paymentIntentId, transferId, chargeId, receiptUrl } = await settleProviderPayout(job, readiness.stripeAccountId, instrument, attempt);
     const now = new Date();
     const [updated] = await db.update(jobsTable)
       .set({
@@ -866,7 +1148,10 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
         releasedAt: now,
         paymentAttempts: attempt,
         stripePaymentIntentId: paymentIntentId,
+        stripeChargeId: chargeId,
         stripeTransferId: transferId,
+        stripeReceiptUrl: receiptUrl,
+        payoutStatus: "paid",
       })
       .where(eq(jobsTable.id, job.id)).returning();
     const { customerCompany, providerCompany } = await companiesFor(updated);
@@ -928,7 +1213,7 @@ router.get("/jobs/:id/payment-confirmation", requireProfile, async (req, res): P
  * POST /jobs/:id/confirm-payment — finalize a job after the customer has
  * re-authenticated the card on-session. The charge is already captured; here we
  * verify the PaymentIntent succeeded and release the provider's net payout
- * (15% broker fee retained), marking the job released.
+ * (marketplace fees retained), marking the job released.
  */
 router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
@@ -997,7 +1282,7 @@ router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promi
  * off-session /charge flow (charge on the platform + a separate Transfer of the
  * net), Checkout uses a DESTINATION CHARGE: the gross is charged on the platform
  * and the net is routed to the provider's connected account automatically, with
- * the 15% broker fee taken as the application fee. The provider nets the same
+ * marketplace fees taken as the application fee. The provider nets the same
  * amount either way; the fee never leaves the platform.
  *
  * Gating mirrors /charge so a job that is already paid/released/awaiting
@@ -1056,7 +1341,9 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
 
   const grossCents = Math.round(parseFloat(job.customerTotalAmount) * 100);
   const netCents = Math.round(parseFloat(job.providerNetAmount) * 100);
-  const feeCents = grossCents - netCents; // the retained 15% broker fee
+  const feeCents = grossCents - netCents; // retained marketplace fees
+  const feeRate = job.platformFeeRate == null ? null : parseFloat(job.platformFeeRate);
+  const feeLabel = Number.isFinite(feeRate) && feeRate != null ? formatRatePercent(feeRate) : "configured";
 
   const base = returnUrlBase(req);
   const rawReturnTo = parsedBody.data.returnTo ?? "";
@@ -1074,7 +1361,7 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
             unit_amount: grossCents,
             product_data: {
               name: `HaulBrokr job #${job.id} — ${job.materialType} delivery`,
-              description: "Includes the 15% HaulBrokr broker fee.",
+              description: `Includes HaulBrokr marketplace fees (${feeLabel} commission plus surcharges as configured).`,
             },
           },
           quantity: 1,
@@ -1083,7 +1370,7 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
       payment_intent_data: {
         application_fee_amount: feeCents,
         transfer_data: { destination: readiness.stripeAccountId },
-        description: `HaulBrokr job #${job.id} (gross, net of 15% fee routed to provider)`,
+        description: `HaulBrokr job #${job.id} (gross, net of marketplace fees routed to provider)`,
         metadata: { jobId: String(job.id), kind: "checkout" },
       },
       metadata: { jobId: String(job.id), kind: "checkout" },
@@ -1178,7 +1465,11 @@ router.post("/jobs/:id/verify-checkout", requireProfile, async (req, res): Promi
         paidAt: now,
         releasedAt: now,
         stripePaymentIntentId: paymentIntentId,
+        stripeCheckoutSessionId: session.id,
+        stripeChargeId: charge?.id ?? null,
+        stripeReceiptUrl: charge?.receipt_url ?? null,
         ...(transferId ? { stripeTransferId: transferId } : {}),
+        payoutStatus: "paid",
         // A successful payment clears any prior stuck-payout failure tracking.
         payoutRetryFailures: 0,
         payoutAlertSentAt: null,
@@ -1220,11 +1511,30 @@ router.post("/jobs/:id/assign", requireProfile, async (req, res): Promise<void> 
   );
   if (!driverOk) { res.status(400).json({ error: "Driver is not part of your company." }); return; }
 
+  const driverCompliance = driverCanAcceptJobs(
+    await currentProfileComplianceDocs("driver", parsed.data.driverProfileId),
+  );
+  if (!driverCompliance.allowed) {
+    res.status(403).json({
+      error: `Driver cannot accept jobs until compliance is current: ${driverCompliance.blockers.join(", ")}.`,
+    });
+    return;
+  }
+
   let truckId: number | null = null;
   if (parsed.data.truckId != null) {
     const [truck] = await db.select().from(trucksTable).where(eq(trucksTable.id, parsed.data.truckId));
     if (!truck || truck.ownerId !== job.providerId) {
       res.status(400).json({ error: "Truck is not part of your fleet." });
+      return;
+    }
+    const fleetCompliance = truckCanBeAssigned(
+      await currentFleetComplianceDocs(truck.id),
+    );
+    if (!fleetCompliance.allowed) {
+      res.status(403).json({
+        error: `Truck cannot be assigned until registration and insurance are current: ${fleetCompliance.blockers.join(", ")}.`,
+      });
       return;
     }
     truckId = truck.id;

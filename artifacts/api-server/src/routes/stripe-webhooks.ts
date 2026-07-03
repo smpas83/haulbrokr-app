@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import Stripe from "stripe";
-import { handleStripeEvent } from "../lib/stripeWebhooks";
+import { processStripeWebhookEvent } from "../lib/stripeWebhooks";
 import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
@@ -43,7 +43,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const result = await handleStripeEvent(event);
+    const result = await processStripeWebhookEvent(event);
     logger.info({ eventId: event.id, eventType: event.type, result }, "Stripe webhook processed");
     res.json({ received: true, ...result });
   } catch (err) {

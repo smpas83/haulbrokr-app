@@ -516,7 +516,7 @@ export const ListJobsResponseItem = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -565,7 +565,7 @@ export const GetJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -619,7 +619,7 @@ export const UpdateJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -667,7 +667,7 @@ export const AcceptJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -715,7 +715,7 @@ export const DeclineJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -741,6 +741,8 @@ export const getJobRatingResponseMineOneStarsMax = 5;
 
 export const getJobRatingResponseTheirsOneStarsMax = 5;
 
+export const getJobRatingResponseReviewsItemStarsMax = 5;
+
 
 
 export const GetJobRatingResponse = zod.object({
@@ -749,19 +751,46 @@ export const GetJobRatingResponse = zod.object({
   "jobId": zod.number(),
   "raterProfileId": zod.number(),
   "rateeProfileId": zod.number(),
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),
   "stars": zod.number().min(1).max(getJobRatingResponseMineOneStarsMax),
   "comment": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
+  "moderationStatus": zod.enum(['pending', 'approved', 'rejected', 'hidden']),
+  "moderationReason": zod.string().nullish(),
+  "moderatedByProfileId": zod.number().nullish(),
+  "moderatedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
 }),zod.null()]),
   "theirs": zod.union([zod.object({
   "id": zod.number(),
   "jobId": zod.number(),
   "raterProfileId": zod.number(),
   "rateeProfileId": zod.number(),
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),
   "stars": zod.number().min(1).max(getJobRatingResponseTheirsOneStarsMax),
   "comment": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-}),zod.null()])
+  "moderationStatus": zod.enum(['pending', 'approved', 'rejected', 'hidden']),
+  "moderationReason": zod.string().nullish(),
+  "moderatedByProfileId": zod.number().nullish(),
+  "moderatedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+}),zod.null()]),
+  "reviews": zod.array(zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "raterProfileId": zod.number(),
+  "rateeProfileId": zod.number(),
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),
+  "stars": zod.number().min(1).max(getJobRatingResponseReviewsItemStarsMax),
+  "comment": zod.string().nullish(),
+  "moderationStatus": zod.enum(['pending', 'approved', 'rejected', 'hidden']),
+  "moderationReason": zod.string().nullish(),
+  "moderatedByProfileId": zod.number().nullish(),
+  "moderatedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+})).optional()
 })
 
 
@@ -774,25 +803,211 @@ export const CreateJobRatingParams = zod.object({
 
 export const createJobRatingBodyStarsMax = 5;
 
+export const createJobRatingBodyCommentMax = 1000;
+
 
 
 export const CreateJobRatingBody = zod.object({
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']).optional(),
+  "revieweeProfileId": zod.number().optional(),
   "stars": zod.number().min(1).max(createJobRatingBodyStarsMax),
-  "comment": zod.string().optional()
+  "comment": zod.string().max(createJobRatingBodyCommentMax).nullish()
 })
 
-export const createJobRatingResponseStarsMax = 5;
+
+/**
+ * @summary Get approved reviews for a job plus the caller's own submitted review
+ */
+export const GetJobReviewsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const getJobReviewsResponseMineOneStarsMax = 5;
+
+export const getJobReviewsResponseTheirsOneStarsMax = 5;
+
+export const getJobReviewsResponseReviewsItemStarsMax = 5;
 
 
 
-export const CreateJobRatingResponse = zod.object({
+export const GetJobReviewsResponse = zod.object({
+  "mine": zod.union([zod.object({
   "id": zod.number(),
   "jobId": zod.number(),
   "raterProfileId": zod.number(),
   "rateeProfileId": zod.number(),
-  "stars": zod.number().min(1).max(createJobRatingResponseStarsMax),
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),
+  "stars": zod.number().min(1).max(getJobReviewsResponseMineOneStarsMax),
   "comment": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
+  "moderationStatus": zod.enum(['pending', 'approved', 'rejected', 'hidden']),
+  "moderationReason": zod.string().nullish(),
+  "moderatedByProfileId": zod.number().nullish(),
+  "moderatedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+}),zod.null()]),
+  "theirs": zod.union([zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "raterProfileId": zod.number(),
+  "rateeProfileId": zod.number(),
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),
+  "stars": zod.number().min(1).max(getJobReviewsResponseTheirsOneStarsMax),
+  "comment": zod.string().nullish(),
+  "moderationStatus": zod.enum(['pending', 'approved', 'rejected', 'hidden']),
+  "moderationReason": zod.string().nullish(),
+  "moderatedByProfileId": zod.number().nullish(),
+  "moderatedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+}),zod.null()]),
+  "reviews": zod.array(zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "raterProfileId": zod.number(),
+  "rateeProfileId": zod.number(),
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),
+  "stars": zod.number().min(1).max(getJobReviewsResponseReviewsItemStarsMax),
+  "comment": zod.string().nullish(),
+  "moderationStatus": zod.enum(['pending', 'approved', 'rejected', 'hidden']),
+  "moderationReason": zod.string().nullish(),
+  "moderatedByProfileId": zod.number().nullish(),
+  "moderatedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+}))
+})
+
+
+/**
+ * @summary Create a moderated review for a completed job
+ */
+export const CreateJobReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const createJobReviewBodyStarsMax = 5;
+
+export const createJobReviewBodyCommentMax = 1000;
+
+
+
+export const CreateJobReviewBody = zod.object({
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']).optional(),
+  "revieweeProfileId": zod.number().optional(),
+  "stars": zod.number().min(1).max(createJobReviewBodyStarsMax),
+  "comment": zod.string().max(createJobReviewBodyCommentMax).nullish()
+})
+
+
+/**
+ * @summary Get approved customer-to-driver rating summary
+ */
+export const GetDriverRatingSummaryParams = zod.object({
+  "profileId": zod.coerce.number()
+})
+
+export const GetDriverRatingSummaryResponse = zod.object({
+  "profileId": zod.number(),
+  "reviewType": zod.union([zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),zod.null()]),
+  "averageStars": zod.number(),
+  "reviewCount": zod.number(),
+  "starsBreakdown": zod.record(zod.string(), zod.number())
+})
+
+
+/**
+ * @summary Get approved customer rating summary
+ */
+export const GetCustomerRatingSummaryParams = zod.object({
+  "profileId": zod.coerce.number()
+})
+
+export const GetCustomerRatingSummaryResponse = zod.object({
+  "profileId": zod.number(),
+  "reviewType": zod.union([zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),zod.null()]),
+  "averageStars": zod.number(),
+  "reviewCount": zod.number(),
+  "starsBreakdown": zod.record(zod.string(), zod.number())
+})
+
+
+/**
+ * @summary Get approved vendor rating summary
+ */
+export const GetVendorRatingSummaryParams = zod.object({
+  "profileId": zod.coerce.number()
+})
+
+export const GetVendorRatingSummaryResponse = zod.object({
+  "profileId": zod.number(),
+  "reviewType": zod.union([zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),zod.null()]),
+  "averageStars": zod.number(),
+  "reviewCount": zod.number(),
+  "starsBreakdown": zod.record(zod.string(), zod.number())
+})
+
+
+/**
+ * @summary List reviews awaiting admin moderation
+ */
+export const listPendingReviewsResponseReviewsItemStarsMax = 5;
+
+
+
+export const ListPendingReviewsResponse = zod.object({
+  "reviews": zod.array(zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "raterProfileId": zod.number(),
+  "rateeProfileId": zod.number(),
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),
+  "stars": zod.number().min(1).max(listPendingReviewsResponseReviewsItemStarsMax),
+  "comment": zod.string().nullish(),
+  "moderationStatus": zod.enum(['pending', 'approved', 'rejected', 'hidden']),
+  "moderationReason": zod.string().nullish(),
+  "moderatedByProfileId": zod.number().nullish(),
+  "moderatedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
+}))
+})
+
+
+/**
+ * @summary Approve, reject, or hide a review
+ */
+export const ModerateReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const moderateReviewBodyReasonMax = 1000;
+
+
+
+export const ModerateReviewBody = zod.object({
+  "action": zod.enum(['approved', 'rejected', 'hidden']),
+  "reason": zod.string().max(moderateReviewBodyReasonMax).nullish()
+})
+
+export const moderateReviewResponseStarsMax = 5;
+
+
+
+export const ModerateReviewResponse = zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "raterProfileId": zod.number(),
+  "rateeProfileId": zod.number(),
+  "reviewType": zod.enum(['customer_to_driver', 'driver_to_customer', 'vendor_to_customer']),
+  "stars": zod.number().min(1).max(moderateReviewResponseStarsMax),
+  "comment": zod.string().nullish(),
+  "moderationStatus": zod.enum(['pending', 'approved', 'rejected', 'hidden']),
+  "moderationReason": zod.string().nullish(),
+  "moderatedByProfileId": zod.number().nullish(),
+  "moderatedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date().optional()
 })
 
 
@@ -1859,7 +2074,7 @@ export const AdvanceBinOrderStatusResponse = zod.object({
 
 
 /**
- * @summary Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+ * @summary Charge the customer for a completed job using configured marketplace fees. Instant methods immediately transfer the net to the provider; Net terms create an invoice.
  */
 export const ChargeJobParams = zod.object({
   "id": zod.coerce.number()
@@ -1891,7 +2106,7 @@ export const ChargeJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -1907,7 +2122,7 @@ export const ChargeJobResponse = zod.object({
 
 
 /**
- * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+ * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (marketplace fees already retained).
  */
 export const ReleaseJobPaymentParams = zod.object({
   "id": zod.coerce.number()
@@ -1939,7 +2154,7 @@ export const ReleaseJobPaymentResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -2001,7 +2216,7 @@ export const ConfirmJobPaymentResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -2017,7 +2232,7 @@ export const ConfirmJobPaymentResponse = zod.object({
 
 
 /**
- * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+ * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains configured marketplace fees as the application fee.
  */
 export const CreateJobCheckoutSessionParams = zod.object({
   "id": zod.coerce.number()
@@ -2069,7 +2284,7 @@ export const VerifyJobCheckoutResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -2212,7 +2427,7 @@ export const ApproveJobCompletionResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),
@@ -2264,7 +2479,7 @@ export const FlagJobCompletionResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'authorized', 'invoiced', 'paid', 'released', 'failed', 'requires_action', 'refunded', 'partially_refunded']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
   "paidAt": zod.coerce.date().nullish(),

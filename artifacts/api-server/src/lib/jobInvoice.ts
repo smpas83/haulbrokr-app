@@ -54,11 +54,14 @@ export function jobIsInvoiceEligible(job: Pick<Job, "status" | "paymentStatus">)
 export function formatPaymentStatusLabel(status: Job["paymentStatus"]): string {
   const labels: Record<Job["paymentStatus"], string> = {
     unpaid: "Unpaid",
+    authorized: "Authorized",
     invoiced: "Invoiced",
     paid: "Paid",
     released: "Released",
     failed: "Failed",
     requires_action: "Requires action",
+    refunded: "Refunded",
+    partially_refunded: "Partially refunded",
   };
   return labels[status] ?? status;
 }

@@ -587,11 +587,14 @@ export type JobPaymentStatus = typeof JobPaymentStatus[keyof typeof JobPaymentSt
 
 export const JobPaymentStatus = {
   unpaid: 'unpaid',
+  authorized: 'authorized',
   invoiced: 'invoiced',
   paid: 'paid',
   released: 'released',
   failed: 'failed',
   requires_action: 'requires_action',
+  refunded: 'refunded',
+  partially_refunded: 'partially_refunded',
 } as const;
 
 /**
@@ -1924,11 +1927,31 @@ export interface ProjectAssignmentInput {
   supervisorProfileId: number;
 }
 
+export type ReviewType = typeof ReviewType[keyof typeof ReviewType];
+
+
+export const ReviewType = {
+  customer_to_driver: 'customer_to_driver',
+  driver_to_customer: 'driver_to_customer',
+  vendor_to_customer: 'vendor_to_customer',
+} as const;
+
+export type ReviewModerationStatus = typeof ReviewModerationStatus[keyof typeof ReviewModerationStatus];
+
+
+export const ReviewModerationStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+  hidden: 'hidden',
+} as const;
+
 export interface RatingResponse {
   id: number;
   jobId: number;
   raterProfileId: number;
   rateeProfileId: number;
+  reviewType: ReviewType;
   /**
      * @minimum 1
      * @maximum 5
@@ -1936,16 +1959,58 @@ export interface RatingResponse {
   stars: number;
   /** @nullable */
   comment?: string | null;
+  moderationStatus: ReviewModerationStatus;
+  /** @nullable */
+  moderationReason?: string | null;
+  /** @nullable */
+  moderatedByProfileId?: number | null;
+  /** @nullable */
+  moderatedAt?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface CreateRatingRequest {
+  reviewType?: ReviewType;
+  revieweeProfileId?: number;
   /**
      * @minimum 1
      * @maximum 5
      */
   stars: number;
-  comment?: string;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  comment?: string | null;
+}
+
+export type RatingSummaryStarsBreakdown = {[key: string]: number};
+
+export interface RatingSummary {
+  profileId: number;
+  reviewType: ReviewType | null;
+  averageStars: number;
+  reviewCount: number;
+  starsBreakdown: RatingSummaryStarsBreakdown;
+}
+
+export type ModerateReviewRequestAction = typeof ModerateReviewRequestAction[keyof typeof ModerateReviewRequestAction];
+
+
+export const ModerateReviewRequestAction = {
+  approved: 'approved',
+  rejected: 'rejected',
+  hidden: 'hidden',
+} as const;
+
+export interface ModerateReviewRequest {
+  action: ModerateReviewRequestAction;
+  /**
+     * @maxLength 1000
+     * @nullable
+     */
+  reason?: string | null;
 }
 
 export type ListTrucksParams = {
@@ -1991,6 +2056,17 @@ export const ListJobsStatus = {
 export type GetJobRating200 = {
   mine: RatingResponse | null;
   theirs: RatingResponse | null;
+  reviews?: RatingResponse[];
+};
+
+export type GetJobReviews200 = {
+  mine: RatingResponse | null;
+  theirs: RatingResponse | null;
+  reviews: RatingResponse[];
+};
+
+export type ListPendingReviews200 = {
+  reviews: RatingResponse[];
 };
 
 export type ListDumpSitesParams = {
