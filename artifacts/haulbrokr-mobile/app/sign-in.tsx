@@ -6,7 +6,6 @@ import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
   DevSettings,
   Image,
   KeyboardAvoidingView,
@@ -24,9 +23,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
-type Step = "email" | "otp";
+type Step = "credentials" | "verify";
 
-// Complete any pending OAuth redirects when the screen loads
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
@@ -40,7 +38,6 @@ export default function SignInScreen() {
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
 
-  // Preload browser on Android so OAuth pops faster
   useEffect(() => {
     if (Platform.OS !== "android") return;
     void WebBrowser.warmUpAsync();
@@ -60,8 +57,6 @@ export default function SignInScreen() {
         await setActive({ session: createdSessionId });
         await markClerkActiveSession();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // New users land in onboarding to pick a role; returning users go home.
-        // The root /index route already routes signed-in users without a profile to /onboarding.
         router.replace("/" as any);
       } else {
         setError(`Sign-in with ${which} couldn't complete. Please try again.`);
@@ -72,8 +67,6 @@ export default function SignInScreen() {
         setError(`Sign in with ${which === "google" ? "Google" : "Apple"} isn't enabled yet — turn it on in the Auth pane.`);
       } else if (msg) {
         setError(msg);
-      } else {
-        // User cancelled — silent
       }
     } finally {
       setSsoBusy(null);
@@ -81,14 +74,29 @@ export default function SignInScreen() {
   };
 
   const [mode, setMode] = useState<Mode>("signin");
-  const [step, setStep] = useState<Step>("email");
+  const [step, setStep] = useState<Step>("credentials");
+  const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const clerkReady = authLoaded && !!signIn && !!signUp && !!setActive;
   const authStuck = authLoaded && (!signIn || !signUp);
+
+  const resetFormForMode = (nextMode: Mode) => {
+    setMode(nextMode);
+    setStep("credentials");
+    setError("");
+    setCode("");
+    if (nextMode === "signin") {
+      setEmail("");
+      setUsername("");
+    }
+  };
 
   const handleResetAuth = async () => {
     setResettingAuth(true);
@@ -107,78 +115,146 @@ export default function SignInScreen() {
     }
   };
 
-  const handleSendCode = async () => {
-    setError("");
-    if (!email.trim()) {
-      setError("Please enter your email address.");
+  const completeSignIn = async (sessionId: string | null | undefined) => {
+    if (!sessionId || !setActive) {
+      setError("Sign-in incomplete. Please try again.");
       return;
     }
-    if (!clerkReady) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await setActive({ session: sessionId });
+    await markClerkActiveSession();
+    router.replace("/" as any);
+  };
+
+  const completeSignUp = async (sessionId: string | null | undefined) => {
+    if (!sessionId || !setActive) {
+      setError("Sign-up incomplete. Please try again.");
+      return;
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await setActive({ session: sessionId });
+    await markClerkActiveSession();
+    router.replace("/onboarding" as any);
+  };
+
+  const handleSignIn = async () => {
+    setError("");
+    const id = identifier.trim();
+    if (!id) {
+      setError("Please enter your username or email.");
+      return;
+    }
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+    if (!clerkReady || !signIn) {
       setError("Authentication is initialising. Please wait a moment.");
       return;
     }
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
-      if (mode === "signin") {
-        try {
-          await signIn.create({ identifier: email.trim() });
-          const firstFactor = signIn.supportedFirstFactors?.find(
-            (f) => f.strategy === "email_code"
-          ) as { strategy: "email_code"; emailAddressId: string } | undefined;
-          if (firstFactor) {
-            await signIn.prepareFirstFactor({
-              strategy: "email_code",
-              emailAddressId: firstFactor.emailAddressId,
-            });
-            setStep("otp");
-          } else {
-            setError("Email code sign-in is not available. Contact support.");
-          }
-        } catch (err: any) {
-          const code = err?.errors?.[0]?.code;
-          if (code === "form_identifier_not_found") {
-            // Email doesn't exist — auto-switch to sign-up
-            setMode("signup");
-            await signUp.create({ emailAddress: email.trim() });
-            await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-            setStep("otp");
-          } else {
-            setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not send code. Try again.");
-          }
-        }
-      } else {
-        try {
-          await signUp.create({ emailAddress: email.trim() });
-          await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-          setStep("otp");
-        } catch (err: any) {
-          const code = err?.errors?.[0]?.code;
-          if (code === "form_identifier_exists") {
-            // Account exists — switch to sign-in
-            setMode("signin");
-            await signIn.create({ identifier: email.trim() });
-            const firstFactor = signIn.supportedFirstFactors?.find(
-              (f) => f.strategy === "email_code"
-            ) as { strategy: "email_code"; emailAddressId: string } | undefined;
-            if (firstFactor) {
-              await signIn.prepareFirstFactor({
-                strategy: "email_code",
-                emailAddressId: firstFactor.emailAddressId,
-              });
-              setStep("otp");
-            } else {
-              setError("Email code sign-in is not available for this account. Contact support.");
-            }
-          } else {
-            setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not create account. Try again.");
-          }
+      const result = await signIn.create({ identifier: id, password });
+      if (result.status === "complete") {
+        await completeSignIn(result.createdSessionId);
+        return;
+      }
+
+      const passwordFactor = signIn.supportedFirstFactors?.find(
+        (f) => f.strategy === "password"
+      );
+      if (passwordFactor) {
+        const attempt = await signIn.attemptFirstFactor({
+          strategy: "password",
+          password,
+        });
+        if (attempt.status === "complete") {
+          await completeSignIn(attempt.createdSessionId);
+          return;
         }
       }
+
+      setError("Sign-in incomplete. Check your username/email and password.");
     } catch (err: any) {
-      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Something went wrong. Please try again.");
+      const errCode = err?.errors?.[0]?.code;
+      if (errCode === "form_identifier_not_found") {
+        setError("No account found with that username or email. Try signing up.");
+      } else if (errCode === "form_password_incorrect") {
+        setError("Incorrect password. Please try again.");
+      } else {
+        setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not sign in. Try again.");
+      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    setError("");
+    const nextEmail = email.trim();
+    const nextUsername = username.trim();
+    if (!nextEmail) {
+      setError("Please enter your email address.");
+      return;
+    }
+    if (!nextUsername) {
+      setError("Please choose a username.");
+      return;
+    }
+    if (!password || password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (!clerkReady || !signUp) {
+      setError("Authentication is initialising. Please wait a moment.");
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setLoading(true);
+    try {
+      const result = await signUp.create({
+        emailAddress: nextEmail,
+        username: nextUsername,
+        password,
+      });
+
+      if (result.status === "complete") {
+        await completeSignUp(result.createdSessionId);
+        return;
+      }
+
+      if (result.status === "missing_requirements") {
+        const needsEmailVerification = signUp.unverifiedFields?.includes("email_address");
+        if (needsEmailVerification) {
+          await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+          setStep("verify");
+          return;
+        }
+      }
+
+      setError("Sign-up incomplete. Please try again.");
+    } catch (err: any) {
+      const errCode = err?.errors?.[0]?.code;
+      if (errCode === "form_identifier_exists") {
+        setError("An account with that email or username already exists. Try signing in.");
+      } else {
+        setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not create account. Try again.");
+      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (mode === "signin") {
+      void handleSignIn();
+    } else {
+      void handleSignUp();
     }
   };
 
@@ -188,36 +264,19 @@ export default function SignInScreen() {
       setError("Please enter the 6-digit code from your email.");
       return;
     }
-    if (!clerkReady || !signIn || !signUp || !setActive) {
+    if (!clerkReady || !signUp || !setActive) {
       setError("Authentication is initialising. Please wait a moment.");
       return;
     }
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
-      if (mode === "signin") {
-        const result = await signIn.attemptFirstFactor({
-          strategy: "email_code",
-          code: code.trim(),
-        });
-        if (result.status === "complete") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await setActive({ session: result.createdSessionId });
-          await markClerkActiveSession();
-          router.replace("/" as any);
-        } else {
-          setError("Sign-in incomplete. Please try again.");
-        }
+      const result = await signUp.attemptEmailAddressVerification({ code: code.trim() });
+      if (result.status === "complete") {
+        await completeSignUp(result.createdSessionId);
       } else {
-        const result = await signUp.attemptEmailAddressVerification({ code: code.trim() });
-        if (result.status === "complete") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await setActive({ session: result.createdSessionId });
-          await markClerkActiveSession();
-          router.replace("/onboarding" as any);
-        } else {
-          setError("Verification incomplete. Please try again.");
-        }
+        setError("Verification incomplete. Please try again.");
       }
     } catch (err: any) {
       setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Incorrect code. Please try again.");
@@ -227,11 +286,13 @@ export default function SignInScreen() {
     }
   };
 
-  const handleResend = async () => {
+  const handleBackToCredentials = () => {
     setError("");
     setCode("");
-    setStep("email");
+    setStep("credentials");
   };
+
+  const verifyEmail = email.trim() || identifier.trim();
 
   return (
     <KeyboardAvoidingView
@@ -244,7 +305,6 @@ export default function SignInScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Logo */}
         <View style={styles.logoRow}>
           <Image
             source={require("../assets/images/haulbrokr-logo.png")}
@@ -253,11 +313,10 @@ export default function SignInScreen() {
           />
         </View>
 
-        {/* Mode tabs — only show on email step */}
-        {step === "email" && (
+        {step === "credentials" && (
           <View style={styles.modeRow}>
             <Pressable
-              onPress={() => { setMode("signin"); setError(""); }}
+              onPress={() => resetFormForMode("signin")}
               style={[styles.modeTab, mode === "signin" && styles.modeTabActive]}
             >
               <Text style={[styles.modeTabText, mode === "signin" && styles.modeTabTextActive]}>
@@ -265,7 +324,7 @@ export default function SignInScreen() {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => { setMode("signup"); setError(""); }}
+              onPress={() => resetFormForMode("signup")}
               style={[styles.modeTab, mode === "signup" && styles.modeTabActive]}
             >
               <Text style={[styles.modeTabText, mode === "signup" && styles.modeTabTextActive]}>
@@ -275,23 +334,16 @@ export default function SignInScreen() {
           </View>
         )}
 
-        {/* Subtitle */}
         <Text style={styles.subtitle}>
-          {step === "email"
+          {step === "credentials"
             ? mode === "signin"
-              ? "Welcome back — enter your email to receive a sign-in code"
-              : "New here? Enter your email to sign up — you'll pick your role next"
-            : `We sent a 6-digit code to\n${email}`}
+              ? "Welcome back — sign in with your username or email and password"
+              : "Create your account with a username, email, and password"
+            : `We sent a 6-digit code to\n${verifyEmail}`}
         </Text>
 
-        {/* Auto-switched notice */}
-        {step === "email" && error === "" && (
-          <View style={styles.spacer} />
-        )}
-
-        {step === "email" ? (
+        {step === "credentials" ? (
           <>
-            {/* Social sign-in */}
             <Pressable
               style={[styles.ssoBtn, styles.ssoGoogle, (ssoBusy !== null || !clerkReady) && styles.btnDisabled]}
               onPress={() => handleSSO("oauth_google")}
@@ -323,40 +375,95 @@ export default function SignInScreen() {
 
             <View style={styles.dividerRow}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or use email</Text>
+              <Text style={styles.dividerText}>or use password</Text>
               <View style={styles.dividerLine} />
             </View>
 
+            {mode === "signin" ? (
+              <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
+                <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username or email"
+                  placeholderTextColor="#4a5568"
+                  value={identifier}
+                  onChangeText={(t) => { setIdentifier(t); setError(""); }}
+                  autoCapitalize="none"
+                  autoComplete="username"
+                  returnKeyType="next"
+                  editable={clerkReady}
+                />
+              </View>
+            ) : (
+              <>
+                <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
+                  <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Username"
+                    placeholderTextColor="#4a5568"
+                    value={username}
+                    onChangeText={(t) => { setUsername(t); setError(""); }}
+                    autoCapitalize="none"
+                    autoComplete="username"
+                    returnKeyType="next"
+                    editable={clerkReady}
+                  />
+                </View>
+                <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
+                  <Feather name="mail" size={16} color="#8ba0b8" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="your@email.com"
+                    placeholderTextColor="#4a5568"
+                    value={email}
+                    onChangeText={(t) => { setEmail(t); setError(""); }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    returnKeyType="next"
+                    editable={clerkReady}
+                  />
+                </View>
+              </>
+            )}
+
             <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-              <Feather name="mail" size={16} color="#8ba0b8" style={styles.inputIcon} />
+              <Feather name="lock" size={16} color="#8ba0b8" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="your@email.com"
+                placeholder="Password"
                 placeholderTextColor="#4a5568"
-                value={email}
-                onChangeText={(t) => { setEmail(t); setError(""); }}
-                keyboardType="email-address"
+                value={password}
+                onChangeText={(t) => { setPassword(t); setError(""); }}
+                secureTextEntry={!showPassword}
                 autoCapitalize="none"
-                autoComplete="email"
+                autoComplete={mode === "signin" ? "password" : "new-password"}
                 returnKeyType="go"
-                onSubmitEditing={handleSendCode}
+                onSubmitEditing={handleSubmit}
                 editable={clerkReady}
               />
-              {!clerkReady && <ActivityIndicator size="small" color="#8ba0b8" />}
+              <Pressable
+                onPress={() => setShowPassword((v) => !v)}
+                hitSlop={8}
+                disabled={!clerkReady}
+              >
+                <Feather name={showPassword ? "eye-off" : "eye"} size={16} color="#8ba0b8" />
+              </Pressable>
             </View>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Pressable
               style={[styles.btn, (loading || !clerkReady || ssoBusy !== null) && styles.btnDisabled]}
-              onPress={handleSendCode}
+              onPress={handleSubmit}
               disabled={loading || !clerkReady || ssoBusy !== null}
             >
               {loading ? (
                 <ActivityIndicator color="#1e2235" />
               ) : (
                 <Text style={styles.btnText}>
-                  {mode === "signin" ? "Send Sign-In Code" : "Send Verification Code"}
+                  {mode === "signin" ? "Sign In" : "Create Account"}
                 </Text>
               )}
             </Pressable>
@@ -387,7 +494,7 @@ export default function SignInScreen() {
             <View style={styles.codeHint}>
               <Feather name="mail" size={14} color="#e9a600" />
               <Text style={styles.codeHintText}>
-                Check your inbox{mode === "signup" ? " and spam folder" : ""} for the code
+                Verify your email to finish creating your account
               </Text>
             </View>
 
@@ -417,22 +524,19 @@ export default function SignInScreen() {
               {loading ? (
                 <ActivityIndicator color="#1e2235" />
               ) : (
-                <Text style={styles.btnText}>
-                  {mode === "signin" ? "Verify & Sign In" : "Verify & Sign Up"}
-                </Text>
+                <Text style={styles.btnText}>Verify & Continue</Text>
               )}
             </Pressable>
 
             <View style={styles.resendRow}>
-              <Text style={styles.resendLabel}>Didn't receive it? </Text>
-              <Pressable onPress={handleResend}>
-                <Text style={styles.resendLink}>Change email / Resend</Text>
+              <Text style={styles.resendLabel}>Wrong email? </Text>
+              <Pressable onPress={handleBackToCredentials}>
+                <Text style={styles.resendLink}>Go back</Text>
               </Pressable>
             </View>
           </>
         )}
 
-        {/* Footer note */}
         <Text style={styles.footerNote}>
           By continuing you agree to HaulBrokr's Terms of Service and Privacy Policy
         </Text>
@@ -450,13 +554,6 @@ const styles = StyleSheet.create({
   },
   logoRow: { marginBottom: 20, width: "100%", alignItems: "center" },
   logoImg: { width: "82%", height: 96 },
-  title: {
-    fontSize: 28,
-    fontFamily: "Inter_700Bold",
-    color: "#f0f6ff",
-    marginBottom: 20,
-    textAlign: "center",
-  },
   modeRow: {
     flexDirection: "row",
     backgroundColor: "#2a3352",
@@ -485,7 +582,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 21,
   },
-  spacer: { height: 4 },
   inputRow: {
     width: "100%", flexDirection: "row", alignItems: "center",
     backgroundColor: "#2a3352", borderRadius: 12, borderWidth: 1, borderColor: "#3a4565",
