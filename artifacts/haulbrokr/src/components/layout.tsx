@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Truck, ClipboardList, Briefcase, LayoutDashboard,
   LogOut, Loader2, Settings, Menu, Trash2,
-  FolderOpen, DollarSign, Plug, ShieldCheck, Building2,
+  FolderOpen, DollarSign, Plug, ShieldCheck, Building2, MapPin,
   Sparkles, Radio
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/react";
@@ -141,6 +141,7 @@ export function Layout({ children }: { children: ReactNode }) {
     { href: "/fleet", label: "My Fleet", icon: Truck, show: isProvider },
     { href: "/dispatch", label: "Digital Twin", icon: Radio, show: true },
     { href: "/jobs", label: "Active Jobs", icon: Briefcase, show: true },
+    { href: "/map", label: "Live Map", icon: MapPin, show: true },
     { href: "/projects", label: "Projects", icon: FolderOpen, show: isCustomer },
     { href: "/company", label: "Company", icon: Building2, show: isCustomer || isProvider },
     { href: "/factoring", label: "Get Paid Early", icon: DollarSign, show: isProvider },

@@ -10,6 +10,7 @@ import {
   driverDocumentsTable,
 } from "@workspace/db";
 import { requireAutomationKey } from "../middlewares/requireAutomationKey";
+import { buildDemoMarketplace } from "../lib/demoMarketplace";
 
 const router: IRouter = Router();
 
@@ -68,6 +69,11 @@ router.get("/automation/digest", requireAutomationKey, async (_req, res): Promis
   } catch (err) {
     res.status(500).json({ error: "Failed to build digest" });
   }
+});
+
+/** Public demo snapshot — no auth; used by health checks and landing previews. */
+router.get("/automation/demo-map", (_req, res): void => {
+  res.json(buildDemoMarketplace());
 });
 
 export default router;

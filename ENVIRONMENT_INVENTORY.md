@@ -48,6 +48,8 @@ Use this as the source of truth for staging and production configuration. Do not
 | `EXPO_PUBLIC_DOMAIN` | Yes | Expo/API | Release operator | `haulbrokr.com` | Hostname used by mobile for `https://<domain>/api`. |
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Yes | Clerk/Expo | Clerk dashboard | `pk_test_...` / `pk_live_...` | Clerk publishable key for Expo app auth. |
 | `GOOGLE_MAPS_API_KEY` | Yes | Google Maps/Expo | Google Cloud Console | `AIza...` | Maps SDK key for Android/iOS. Restrict by app package/bundle. |
+| `GOOGLE_MAPS_API_KEY` | Optional | API/Render | Google Cloud Console | `AIza...` | Server-side geocoding for marketplace map (falls back to Nominatim). |
+| `VITE_GOOGLE_MAPS_API_KEY` | Yes | Web/Vercel | Google Cloud Console | `AIza...` | Google Maps JavaScript API for haulbrokr.com live map page. |
 
 ## Deployment automation
 

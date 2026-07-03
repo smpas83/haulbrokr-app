@@ -17,9 +17,15 @@ import { STATUS_COLOR } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import type { Job } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
-import { useLiveJobs, useLiveRequests } from "@/hooks/useLiveApi";
+import { useLiveJobs, useLiveRequests, useMarketplaceMap } from "@/hooks/useLiveApi";
 import { useJobCoordinates } from "@/hooks/useJobCoordinates";
 import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
+import {
+  coordFromMarketplace,
+  coordFromTruck,
+  marketplaceLoadToJob,
+  type MarketplaceTruck,
+} from "@/lib/marketplaceMap";
 import { distanceMiles } from "@/lib/geocode";
 
 // Demo fallback coords (legacy seed data only)
@@ -35,19 +41,26 @@ const DEMO_JOB_COORDS: Record<string, { latitude: number; longitude: number }> =
 
 const OPEN_STATUSES = new Set(["open", "bidding", "bid_received"]);
 
-// ── Initial region — wide DFW view ──────────────────────────────────
-const DFW_REGION: Region = {
-  latitude: 32.8341,
-  longitude: -96.8362,
-  latitudeDelta: 0.9,
-  longitudeDelta: 1.0,
+// Nationwide view when marketplace data loads
+const US_REGION: Region = {
+  latitude: 39.8283,
+  longitude: -98.5795,
+  latitudeDelta: 35,
+  longitudeDelta: 35,
 };
 
-// ── Surge heat zones ─────────────────────────────────────────────────
-const SURGE_ZONES = [
+// ── Surge heat zones (overridden by API heatZones when present) ─────
+const DEFAULT_SURGE_ZONES = [
   { latitude: 32.7767, longitude: -96.7970, radius: 9000 },
   { latitude: 32.7700, longitude: -97.2200, radius: 7000 },
 ];
+
+const TRUCK_PIN_COLOR: Record<MarketplaceTruck["status"], string> = {
+  available: "#16a34a",
+  assigned: "#3b82f6",
+  en_route: "#e9a600",
+  offline: "#6b7280",
+};
 
 // ── Dark map style ────────────────────────────────────────────────────
 const DARK_MAP_STYLE = [
@@ -111,7 +124,12 @@ export default function MapScreen() {
     isFetching: fetchingOpenRequests,
   } = useLiveRequests({ mine: false, enabled: isProvider });
 
+  const { data: marketplace, refetch: refetchMarketplace, isFetching: fetchingMarketplace } = useMarketplaceMap();
+
   const jobs = useMemo<Job[]>(() => {
+    if (marketplace?.loads?.length) {
+      return marketplace.loads.map(marketplaceLoadToJob);
+    }
     const fromJobs = Array.isArray(liveJobsRaw)
       ? (liveJobsRaw as LiveJob[]).map(liveJobToViewJob)
       : [];
@@ -129,13 +147,25 @@ export default function MapScreen() {
           .map(liveRequestToViewJob)
       : [];
     return [...fromRequests, ...fromJobs];
-  }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider]);
+  }, [marketplace, liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider]);
 
-  const { coordsByJobId, loading: geocoding } = useJobCoordinates(jobs);
+  const trucks = marketplace?.trucks ?? [];
+  const heatZones = marketplace?.heatZones?.length
+    ? marketplace.heatZones.map((z) => ({ latitude: z.latitude, longitude: z.longitude, radius: z.radius }))
+    : DEFAULT_SURGE_ZONES;
+  const demoMode = marketplace?.demoMode ?? false;
+
+  const { coordsByJobId, loading: geocoding } = useJobCoordinates(
+    marketplace?.loads?.length ? [] : jobs,
+  );
 
   const getCoord = useCallback((job: Job) => {
+    if (marketplace?.loads?.length) {
+      const load = marketplace.loads.find((l) => l.id === job.id);
+      if (load) return coordFromMarketplace(load);
+    }
     return coordsByJobId[job.id] ?? DEMO_JOB_COORDS[job.id] ?? null;
-  }, [coordsByJobId]);
+  }, [coordsByJobId, marketplace]);
 
   const [selectedPin,      setSelectedPin]      = useState<string | null>(null);
   const [activeFilter,     setActiveFilter]      = useState<FilterType>("all");
@@ -144,7 +174,7 @@ export default function MapScreen() {
   const [isFullscreen,     setIsFullscreen]      = useState(false);
   const [mapType,          setMapType]           = useState<MapType>("standard");
   // Committed visible region (updated by "Search this area")
-  const [visibleRegion,    setVisibleRegion]     = useState<Region>(DFW_REGION);
+  const [visibleRegion,    setVisibleRegion]     = useState<Region>(US_REGION);
   // Pending region while dragging — triggers the search button
   const [pendingRegion,    setPendingRegion]     = useState<Region | null>(null);
   const [showSearchHere,   setShowSearchHere]    = useState(false);
@@ -153,15 +183,15 @@ export default function MapScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetchJobs(), refetchRequests(), refetchOpenRequests()]);
-      setVisibleRegion(pendingRegion ?? DFW_REGION);
+      await Promise.all([refetchJobs(), refetchRequests(), refetchOpenRequests(), refetchMarketplace()]);
+      setVisibleRegion(pendingRegion ?? US_REGION);
       setPendingRegion(null);
       setShowSearchHere(false);
       setSelectedPin(null);
     } finally {
       setRefreshing(false);
     }
-  }, [pendingRegion, refetchJobs, refetchRequests, refetchOpenRequests]);
+  }, [pendingRegion, refetchJobs, refetchRequests, refetchOpenRequests, refetchMarketplace]);
 
   const mapRef = useRef<MapView>(null);
   const didFitRef = useRef(false);
@@ -199,7 +229,7 @@ export default function MapScreen() {
   const topPad     = Platform.OS === "web" ? 67 : insets.top;
   const openCount  = jobs.filter((j) => j.status === "open" || j.status === "bidding").length;
   const isSurge    = openCount >= 3;
-  const isLoading  = fetchingJobs || fetchingRequests || fetchingOpenRequests || geocoding;
+  const isLoading  = fetchingJobs || fetchingRequests || fetchingOpenRequests || fetchingMarketplace || geocoding;
 
   // Jobs that match the active filter type
   const typeFiltered = jobs.filter((j) => {
@@ -207,7 +237,7 @@ export default function MapScreen() {
     if (activeFilter === "nearby") {
       const coord = getCoord(j);
       if (!coord) return false;
-      return distanceMiles(coord, { latitude: DFW_REGION.latitude, longitude: DFW_REGION.longitude }) < searchRadius;
+      return distanceMiles(coord, { latitude: US_REGION.latitude, longitude: US_REGION.longitude }) < searchRadius;
     }
     return j.status !== "completed" && j.status !== "cancelled";
   });
@@ -354,7 +384,21 @@ export default function MapScreen() {
       )}
 
       {/* ── Surge banner ──────────────────────────────────────────── */}
-      {!isFullscreen && isSurge && showSurge && (
+      {!isFullscreen && demoMode && (
+        <Animated.View entering={FadeInDown.duration(300)}>
+          <View style={[styles.surgeBanner, {
+            backgroundColor:   "#1e3a54",
+            borderBottomColor: "#3b82f640",
+          }]}>
+            <Text style={styles.surgeEmoji}>🗺️</Text>
+            <Text style={[styles.surgeText, { fontFamily: "Inter_700Bold", color: "#93c5fd" }]}>
+              DEMO MODE — {marketplace?.loads.length ?? 0} loads · {marketplace?.trucks.length ?? 0} trucks nationwide
+            </Text>
+          </View>
+        </Animated.View>
+      )}
+
+      {!isFullscreen && isSurge && showSurge && !demoMode && (
         <Animated.View entering={FadeInDown.duration(300)}>
           <View style={[styles.surgeBanner, {
             backgroundColor:   "#78350f",
@@ -373,7 +417,7 @@ export default function MapScreen() {
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFill}
-          initialRegion={DFW_REGION}
+          initialRegion={US_REGION}
           mapType={mapType}
           showsUserLocation
           showsMyLocationButton={false}
@@ -384,6 +428,21 @@ export default function MapScreen() {
           customMapStyle={mapType === "standard" ? DARK_MAP_STYLE : []}
           userInterfaceStyle="dark"
         >
+          {/* Truck markers */}
+          {trucks.map((truck) => {
+            const coord = coordFromTruck(truck);
+            const pinColor = TRUCK_PIN_COLOR[truck.status] ?? "#16a34a";
+            return (
+              <Marker
+                key={`truck-${truck.id}`}
+                coordinate={coord}
+                pinColor={pinColor}
+                title={truck.label}
+                description={`${truck.ownerCompany} · ${truck.status}`}
+              />
+            );
+          })}
+
           {/* Job markers */}
           {typeFiltered.map((job) => {
             const coord = getCoord(job);
@@ -403,7 +462,7 @@ export default function MapScreen() {
           })}
 
           {/* Surge heat circles */}
-          {showSurge && isSurge && SURGE_ZONES.map((zone, i) => (
+          {showSurge && isSurge && heatZones.map((zone, i) => (
             <React.Fragment key={i}>
               <Circle
                 center={{ latitude: zone.latitude, longitude: zone.longitude }}
@@ -480,6 +539,7 @@ export default function MapScreen() {
             { color: "#e9a600", label: "Open"    },
             { color: "#3b82f6", label: "Bidding" },
             { color: "#16a34a", label: "Active"  },
+            { color: "#22c55e", label: "Trucks"  },
           ].map((l) => (
             <View key={l.label} style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: l.color }]} />
@@ -642,7 +702,9 @@ export default function MapScreen() {
                   }]}>
                     {jobs.length === 0
                       ? "Post a load from the Loads tab or check back soon"
-                      : "Pan the map to the pickup location and tap \"Search this area\""}
+                      : demoMode
+                        ? "Pan the map — demo loads and trucks are active nationwide"
+                        : "Pan the map to the pickup location and tap \"Search this area\""}
                   </Text>
                 </View>
               ) : (

@@ -24,8 +24,9 @@ import { LastUpdated } from "@/components/LastUpdated";
 import { useApp } from "@/context/AppContext";
 import type { Job, JobStatus, ProjectType } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
-import { useLiveJobs, useLiveRequests, useCreateRequest } from "@/hooks/useLiveApi";
+import { useLiveJobs, useLiveRequests, useCreateRequest, useMarketplaceMap } from "@/hooks/useLiveApi";
 import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
+import { marketplaceLoadToJob } from "@/lib/marketplaceMap";
 
 type Filter = "all" | JobStatus;
 
@@ -82,6 +83,7 @@ export default function JobsScreen() {
     dataUpdatedAt: openRequestsUpdatedAt,
   } = useLiveRequests({ mine: false, enabled: isProvider });
   const createRequest = useCreateRequest();
+  const { data: marketplace, refetch: refetchMarketplace } = useMarketplaceMap();
 
   const jobs = useMemo<Job[]>(() => {
     const fromJobs = Array.isArray(liveJobsRaw)
@@ -93,19 +95,24 @@ export default function JobsScreen() {
             .filter((r) => r.status === "open" || r.status === "bidding" || r.status === "bid_received")
             .map(liveRequestToViewJob)
         : [];
-      return [...fromOpenRequests, ...fromJobs];
+      const combined = [...fromOpenRequests, ...fromJobs];
+      if (combined.length === 0 && marketplace?.demoMode && marketplace.loads.length) {
+        return marketplace.loads.slice(0, 50).map(marketplaceLoadToJob);
+      }
+      return combined;
     }
-    // Customers also see their posted load requests that haven't yet been
-    // converted into a job (open/bidding). Once a bid is accepted the request
-    // becomes a job, so we drop those statuses here to avoid showing both.
     const fromRequests =
       Array.isArray(liveRequestsRaw)
         ? (liveRequestsRaw as LiveRequest[])
             .filter((r) => r.status === "open" || r.status === "bidding" || r.status === "bid_received")
             .map(liveRequestToViewJob)
         : [];
-    return [...fromRequests, ...fromJobs];
-  }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider]);
+    const combined = [...fromRequests, ...fromJobs];
+    if (combined.length === 0 && marketplace?.demoMode && marketplace.loads.length) {
+      return marketplace.loads.slice(0, 50).map(marketplaceLoadToJob);
+    }
+    return combined;
+  }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider, marketplace]);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -114,11 +121,11 @@ export default function JobsScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchRequests(), refetchOpenRequests()]);
+      await Promise.all([refetch(), refetchRequests(), refetchOpenRequests(), refetchMarketplace()]);
     } finally {
       setRefreshing(false);
     }
-  }, [refetch, refetchRequests, refetchOpenRequests]);
+  }, [refetch, refetchRequests, refetchOpenRequests, refetchMarketplace]);
 
   const filtered = useMemo(() => {
     let result = jobs;
