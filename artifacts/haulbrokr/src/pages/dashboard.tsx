@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import FleetDashboard from "@/pages/fleet/FleetDashboard";
 
 const AMBER = "#e9a800";
 const NAVY = "#1c2333";
@@ -82,6 +83,10 @@ export default function DashboardPage() {
 
   const isCustomer = profile?.role === "customer";
   const isProvider = profile?.role === "provider";
+
+  if (isProvider) {
+    return <FleetDashboard />;
+  }
 
   const canOperate = isCustomer
     ? accountStatus?.profileComplete
