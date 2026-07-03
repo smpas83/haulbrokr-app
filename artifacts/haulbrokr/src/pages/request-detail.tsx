@@ -165,7 +165,7 @@ export default function RequestDetailPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-6xl mx-auto space-y-6 page-enter pb-12">
       <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/requests")}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
@@ -190,11 +190,11 @@ export default function RequestDetailPage() {
         {canBid && (
           <Dialog>
             <DialogTrigger asChild>
-              <Button size="lg" className="font-bold rounded-none h-12 px-8 shadow-md border-2 border-transparent hover:border-foreground" data-testid="btn-place-bid">
+              <Button size="lg" className="font-bold rounded-xl h-12 px-8 shadow-md border-2 border-transparent hover:border-foreground" data-testid="btn-place-bid">
                 Place a Bid
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] border-2 rounded-none p-0">
+            <DialogContent className="sm:max-w-[500px] border-2 rounded-xl p-0">
               <div className="bg-primary/10 border-b-2 border-border p-6">
                 <DialogTitle className="text-2xl font-bold">Submit Bid</DialogTitle>
                 <DialogDescription className="text-foreground/80 mt-2 font-medium space-y-2">
@@ -219,7 +219,7 @@ export default function RequestDetailPage() {
                           <FormItem>
                             <FormLabel>Rate ($/Hour)</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="125" {...field} className="h-12 border-2 rounded-none font-bold text-lg" />
+                              <Input type="number" placeholder="125" {...field} className="h-12 border-2 rounded-xl font-bold text-lg" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -232,7 +232,7 @@ export default function RequestDetailPage() {
                           <FormItem>
                             <FormLabel>Trucks Offered</FormLabel>
                             <FormControl>
-                              <Input type="number" min="1" {...field} className="h-12 border-2 rounded-none" />
+                              <Input type="number" min="1" {...field} className="h-12 border-2 rounded-xl" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -246,7 +246,7 @@ export default function RequestDetailPage() {
                         <FormItem>
                           <FormLabel>Est. Total Hours (Optional)</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="e.g. 8" {...field} className="h-12 border-2 rounded-none" />
+                            <Input type="number" placeholder="e.g. 8" {...field} className="h-12 border-2 rounded-xl" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -259,13 +259,13 @@ export default function RequestDetailPage() {
                         <FormItem>
                           <FormLabel>Message (Optional)</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Any terms or notes for the customer..." className="border-2 rounded-none resize-none" {...field} />
+                            <Textarea placeholder="Any terms or notes for the customer..." className="border-2 rounded-xl resize-none" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full h-12 font-bold rounded-none" disabled={createBid.isPending}>
+                    <Button type="submit" className="w-full h-12 font-bold rounded-xl" disabled={createBid.isPending}>
                       {createBid.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       Submit Bid
                     </Button>
@@ -280,7 +280,7 @@ export default function RequestDetailPage() {
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main Details */}
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-card border-2 border-border p-6 shadow-sm">
+          <div className="bg-card border border-border/60 p-6 shadow-sm">
             <h2 className="text-lg font-bold flex items-center gap-2 mb-6 border-b-2 border-border pb-2">
               <FileText className="h-5 w-5 text-primary" />
               Job Specifications
@@ -377,7 +377,7 @@ export default function RequestDetailPage() {
 
         {/* Bids Sidebar */}
         <div className="space-y-6">
-          <div className="bg-card border-2 border-border shadow-sm flex flex-col h-full max-h-[800px]">
+          <div className="bg-card border border-border/60 shadow-sm flex flex-col h-full max-h-[800px]">
             <div className="p-4 border-b-2 border-border bg-muted/30">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-primary" />
@@ -387,7 +387,7 @@ export default function RequestDetailPage() {
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/10">
               {bidsLoading ? (
-                Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-none" />)
+                Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
               ) : bids && bids.length > 0 ? (
                 bids.map((bid) => (
                   <div key={bid.id} className={`border-2 p-4 bg-card ${bid.status === 'awarded' || bid.status === 'accepted' ? 'border-primary shadow-md' : 'border-border'}`}>
@@ -398,7 +398,7 @@ export default function RequestDetailPage() {
                       </div>
                       <div className="text-right">
                         <p className="font-black text-xl">${bid.ratePerHour}<span className="text-sm text-muted-foreground font-medium">/hr</span></p>
-                        <Badge variant="outline" className={`rounded-none mt-1 uppercase text-[10px] font-bold ${
+                        <Badge variant="outline" className={`rounded-xl mt-1 uppercase text-[10px] font-bold ${
                           bid.status === 'awarded' || bid.status === 'accepted' ? 'bg-primary/20 text-primary border-primary' : 
                           bid.status === 'rejected' ? 'bg-destructive/10 text-destructive border-destructive/20' : 
                           'bg-secondary text-secondary-foreground border-secondary-foreground/20'
@@ -424,7 +424,7 @@ export default function RequestDetailPage() {
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="flex-1 rounded-none border-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+                          className="flex-1 rounded-xl border-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
                           onClick={() => handleRejectBid(bid.id)}
                           disabled={updateBid.isPending}
                         >
@@ -432,7 +432,7 @@ export default function RequestDetailPage() {
                         </Button>
                         <Button 
                           size="sm" 
-                          className="flex-1 rounded-none font-bold"
+                          className="flex-1 rounded-xl font-bold"
                           onClick={() => handleAwardBid(bid.id)}
                           disabled={updateBid.isPending}
                           data-testid={`btn-award-bid-${bid.id}`}

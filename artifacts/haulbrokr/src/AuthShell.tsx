@@ -20,6 +20,7 @@ const FleetPage = lazy(() => import("./pages/fleet"));
 const NewTruckPage = lazy(() => import("./pages/fleet-new"));
 const JobsPage = lazy(() => import("./pages/jobs"));
 const JobDetailPage = lazy(() => import("./pages/job-detail"));
+const DispatchPage = lazy(() => import("./pages/dispatch"));
 const AccountPage = lazy(() => import("./pages/account"));
 const CompanyPage = lazy(() => import("./pages/company"));
 const BinsPage = lazy(() => import("./pages/bins"));
@@ -52,41 +53,41 @@ const clerkAppearance = {
     logoImageUrl: `${window.location.origin}${basePath}/logo.png`,
   },
   variables: {
-    colorPrimary: "hsl(45 93% 47%)",
-    colorForeground: "hsl(222 47% 11%)",
-    colorMutedForeground: "hsl(215 16% 47%)",
-    colorDanger: "hsl(0 84% 60%)",
-    colorBackground: "hsl(0 0% 100%)",
-    colorInput: "hsl(214 32% 91%)",
-    colorInputForeground: "hsl(222 47% 11%)",
-    colorNeutral: "hsl(214 32% 91%)",
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    borderRadius: "0rem",
+    colorPrimary: "hsl(217 91% 60%)",
+    colorForeground: "hsl(0 0% 96%)",
+    colorMutedForeground: "hsl(240 4% 55%)",
+    colorDanger: "hsl(0 72% 51%)",
+    colorBackground: "hsl(240 6% 4%)",
+    colorInput: "hsl(240 4% 12%)",
+    colorInputForeground: "hsl(0 0% 96%)",
+    colorNeutral: "hsl(240 4% 16%)",
+    fontFamily: '"Inter", ui-sans-serif, system-ui, sans-serif',
+    borderRadius: "0.5rem",
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox: "bg-white border-2 border-border shadow-2xl rounded-none w-[440px] max-w-full overflow-hidden",
+    cardBox: "bg-card border border-border/60 shadow-2xl shadow-black/40 rounded-xl w-[440px] max-w-full overflow-hidden",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
     headerTitle: "text-2xl font-bold tracking-tight text-foreground",
     headerSubtitle: "text-muted-foreground",
     socialButtonsBlockButtonText: "font-semibold",
-    formFieldLabel: "font-bold text-foreground",
-    footerActionLink: "text-primary font-bold hover:underline",
+    formFieldLabel: "font-semibold text-foreground",
+    footerActionLink: "text-primary font-semibold hover:underline",
     footerActionText: "text-muted-foreground",
     dividerText: "text-muted-foreground font-mono text-xs uppercase tracking-wider",
     identityPreviewEditButton: "text-primary",
-    formFieldSuccessText: "text-green-600",
+    formFieldSuccessText: "text-emerald-400",
     alertText: "text-destructive",
     logoBox: "mb-6 flex justify-center",
     logoImage: "h-12 w-auto",
-    socialButtonsBlockButton: "rounded-none border-2 border-border hover:bg-muted font-bold h-11",
-    formButtonPrimary: "rounded-none bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-11 shadow-sm",
-    formFieldInput: "rounded-none border-2 border-border focus:border-primary focus:ring-1 focus:ring-primary h-11 bg-background",
+    socialButtonsBlockButton: "rounded-lg border border-border hover:bg-muted font-semibold h-11",
+    formButtonPrimary: "rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-11 shadow-sm",
+    formFieldInput: "rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary h-11 bg-muted/30",
     footerAction: "mt-6 border-t border-border pt-6",
     dividerLine: "bg-border",
-    alert: "rounded-none border-2 border-destructive bg-destructive/10 text-destructive",
-    otpCodeFieldInput: "rounded-none border-2 border-border focus:border-primary focus:ring-1 focus:ring-primary",
+    alert: "rounded-xl border border-destructive/50 bg-destructive/10 text-destructive",
+    otpCodeFieldInput: "rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary",
     formFieldRow: "mb-4",
     main: "p-8",
   },
@@ -199,6 +200,11 @@ function AuthShellRoutes() {
 
             <Route path="/fleet">
               <Show when="signed-in"><RequireProfile><FleetPage /></RequireProfile></Show>
+              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+            </Route>
+
+            <Route path="/dispatch">
+              <Show when="signed-in"><RequireProfile><DispatchPage /></RequireProfile></Show>
               <Show when="signed-out"><Redirect to="/sign-in" /></Show>
             </Route>
 

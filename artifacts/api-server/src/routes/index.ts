@@ -23,6 +23,9 @@ import messagesRouter from "./messages";
 import staffAuthRouter from "./staff-auth";
 import adminRouter from "./admin";
 import ratingsRouter from "./ratings";
+import trackingRouter from "./tracking";
+import copilotRouter from "./copilot";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -50,5 +53,8 @@ router.use(messagesRouter);
 router.use(staffAuthRouter);
 router.use(adminRouter);
 router.use(ratingsRouter);
+router.use(trackingRouter);
+router.use(copilotRouter);
+router.use(notificationsRouter);
 
 export default router;

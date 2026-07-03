@@ -93,7 +93,7 @@ export default function SupportPage() {
         {/* Contact */}
         <section className="py-16 px-4 bg-background border-b border-border">
           <div className="container mx-auto max-w-5xl">
-            <div className="border-2 border-border bg-card p-8 md:p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="border border-border/60 bg-card p-8 md:p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 bg-primary/10 flex items-center justify-center text-primary shrink-0">
                   <Mail className="h-6 w-6" />
@@ -125,7 +125,7 @@ export default function SupportPage() {
                 {SUPPORT_EMAIL}
               </a>.
             </p>
-            <div className="grid md:grid-cols-2 gap-px bg-border border-2 border-border">
+            <div className="grid md:grid-cols-2 gap-px bg-border border border-border/60">
               {faqs.map((faq) => (
                 <div key={faq.question} className="bg-card p-8 space-y-4">
                   <div className="h-12 w-12 bg-primary/10 flex items-center justify-center text-primary">

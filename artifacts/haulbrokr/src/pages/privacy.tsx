@@ -116,7 +116,7 @@ export default function PrivacyPage() {
         {/* Sections */}
         <section className="py-16 md:py-20 px-4 bg-background">
           <div className="container mx-auto max-w-5xl">
-            <div className="grid md:grid-cols-2 gap-px bg-border border-2 border-border">
+            <div className="grid md:grid-cols-2 gap-px bg-border border border-border/60">
               {sections.map((s) => (
                 <div key={s.title} className="bg-card p-8 space-y-4">
                   <div className="h-12 w-12 bg-primary/10 flex items-center justify-center text-primary">
@@ -140,14 +140,14 @@ export default function PrivacyPage() {
         {/* Children & changes */}
         <section className="py-4 px-4 bg-background">
           <div className="container mx-auto max-w-5xl space-y-8">
-            <div className="border-2 border-border bg-card p-8 space-y-3">
+            <div className="border border-border/60 bg-card p-8 space-y-3">
               <h2 className="text-xl font-bold">Children's privacy</h2>
               <p className="text-muted-foreground leading-relaxed">
                 HaulBrokr is intended for business use by adults and is not directed to children under 18. We do not
                 knowingly collect personal information from children.
               </p>
             </div>
-            <div className="border-2 border-border bg-card p-8 space-y-3">
+            <div className="border border-border/60 bg-card p-8 space-y-3">
               <h2 className="text-xl font-bold">Changes to this policy</h2>
               <p className="text-muted-foreground leading-relaxed">
                 We may update this Privacy Policy from time to time. When we do, we will revise the effective date
@@ -160,7 +160,7 @@ export default function PrivacyPage() {
         {/* Contact */}
         <section className="py-16 px-4 bg-background">
           <div className="container mx-auto max-w-5xl">
-            <div className="border-2 border-border bg-card p-8 md:p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="border border-border/60 bg-card p-8 md:p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 bg-primary/10 flex items-center justify-center text-primary shrink-0">
                   <Mail className="h-6 w-6" />

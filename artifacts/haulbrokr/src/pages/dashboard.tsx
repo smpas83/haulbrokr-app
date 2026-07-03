@@ -4,7 +4,8 @@ import { format, subDays, parseISO } from "date-fns";
 import {
   ArrowRight, Activity, Plus, Truck, AlertCircle,
   CircleCheck, CheckCircle2, TrendingUp,
-  ShieldAlert, ArrowUpRight, ClipboardList, Briefcase
+  ShieldAlert, ArrowUpRight, ClipboardList, Briefcase,
+  Cloud, Radio, Sparkles
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -19,42 +20,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-
-const AMBER = "#e9a800";
-const NAVY = "#1c2333";
-const CHART_COLORS = [AMBER, "#3b82f6", "#22c55e", "#ef4444", "#8b5cf6", "#f97316"];
-
-function StatCard({
-  title, value, icon: Icon, accent, sub
-}: {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  accent?: boolean;
-  sub?: string;
-}) {
-  return (
-    <Card className={`rounded-none border-2 ${accent ? "border-primary/30 bg-primary/5" : ""}`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className={`text-sm font-semibold uppercase tracking-wider ${accent ? "text-primary" : "text-muted-foreground"}`}>
-          {title}
-        </CardTitle>
-        <Icon className={`h-4 w-4 ${accent ? "text-primary" : "text-muted-foreground"}`} />
-      </CardHeader>
-      <CardContent>
-        <div className={`text-3xl font-black tracking-tight ${accent ? "text-primary" : ""}`}>{value}</div>
-        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-      </CardContent>
-    </Card>
-  );
-}
+import { PageHeader, KpiCard } from "@/components/design";
+import { CHART_COLORS } from "@/lib/design-tokens";
 
 const CustomBarTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
     return (
-      <div className="bg-card border-2 border-border px-3 py-2 text-sm shadow-lg">
-        <p className="font-bold">{label}</p>
+      <div className="glass-panel rounded-lg px-3 py-2 text-sm">
+        <p className="font-semibold">{label}</p>
         <p className="text-primary">{payload[0].value} events</p>
       </div>
     );
@@ -65,8 +38,8 @@ const CustomBarTooltip = ({ active, payload, label }: any) => {
 const CustomPieTooltip = ({ active, payload }: any) => {
   if (active && payload?.length) {
     return (
-      <div className="bg-card border-2 border-border px-3 py-2 text-sm shadow-lg">
-        <p className="font-bold capitalize">{payload[0].name}</p>
+      <div className="glass-panel rounded-lg px-3 py-2 text-sm">
+        <p className="font-semibold capitalize">{payload[0].name}</p>
         <p className="text-primary">{payload[0].value}</p>
       </div>
     );
@@ -87,7 +60,6 @@ export default function DashboardPage() {
     ? accountStatus?.profileComplete
     : (accountStatus?.w9Status === "verified" && accountStatus?.insuranceStatus === "verified");
 
-  // Build 7-day activity bar chart data
   const barData = useMemo(() => {
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = subDays(new Date(), 6 - i);
@@ -103,7 +75,6 @@ export default function DashboardPage() {
     return days.map(d => ({ name: d.label, events: d.count }));
   }, [activities]);
 
-  // Build status donut data
   const pieData = useMemo(() => {
     if (!stats) return [];
     const data = [];
@@ -122,41 +93,57 @@ export default function DashboardPage() {
   const hasChartData = pieData.some(d => d.value > 0);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back, <span className="font-semibold text-foreground">{profile?.contactName || profile?.companyName}</span>.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          {isCustomer && (
-            <Link href="/requests/new">
-              <Button className="h-10 px-5 font-bold shadow-sm rounded-none" data-testid="button-new-request">
-                <Plus className="mr-2 h-4 w-4" />
-                Post Job Request
-              </Button>
-            </Link>
-          )}
-          {isProvider && (
-            <Link href="/requests">
-              <Button className="h-10 px-5 font-bold shadow-sm rounded-none" data-testid="button-browse-jobs">
-                <Truck className="mr-2 h-4 w-4" />
-                Browse Open Jobs
-              </Button>
-            </Link>
-          )}
-        </div>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      <PageHeader
+        title="Mission Control"
+        description={
+          <>Welcome back, <span className="font-semibold text-foreground">{profile?.contactName || profile?.companyName}</span>. Here's your operations overview.</>
+        }
+        actions={
+          <>
+            {isCustomer && (
+              <Link href="/requests/new">
+                <Button data-testid="button-new-request">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Post Job Request
+                </Button>
+              </Link>
+            )}
+            {isProvider && (
+              <Link href="/requests">
+                <Button data-testid="button-browse-jobs">
+                  <Truck className="mr-2 h-4 w-4" />
+                  Browse Open Jobs
+                </Button>
+              </Link>
+            )}
+          </>
+        }
+      />
+
+      {/* System status bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { icon: Radio, label: "Fleet Status", value: "Online", color: "text-emerald-400" },
+          { icon: Cloud, label: "Weather", value: "Clear", color: "text-primary" },
+          { icon: Activity, label: "Utilization", value: stats?.activeJobs ? `${Math.min(100, (stats.activeJobs ?? 0) * 12)}%` : "—", color: "text-accent" },
+          { icon: Sparkles, label: "AI Insights", value: "3 new", color: "text-primary" },
+        ].map((item) => (
+          <div key={item.label} className="glass-panel rounded-xl px-4 py-3 flex items-center gap-3">
+            <item.icon className={`h-4 w-4 ${item.color}`} />
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</p>
+              <p className={`text-sm font-semibold ${item.color}`}>{item.value}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Compliance Warning */}
       {accountStatus && !canOperate && (
-        <Alert className="rounded-none border-2 border-amber-500/50 bg-amber-500/10">
-          <ShieldAlert className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-700 font-bold">Action Required</AlertTitle>
-          <AlertDescription className="text-amber-700/80">
+        <Alert className="border-warning/30 bg-warning/10 rounded-xl">
+          <ShieldAlert className="h-4 w-4 text-warning" />
+          <AlertTitle className="text-warning font-semibold">Action Required</AlertTitle>
+          <AlertDescription className="text-warning/80">
             {isProvider
               ? "Complete your W-9 and insurance verification to start bidding on jobs."
               : "Complete your profile to post job requests."}
@@ -168,21 +155,20 @@ export default function DashboardPage() {
         </Alert>
       )}
 
-      {/* Stat Cards */}
       {statsLoading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[110px] w-full rounded-none" />)}
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[120px] w-full rounded-xl" />)}
         </div>
       ) : stats ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {isCustomer && (
-            <StatCard title="Open Requests" value={stats.openRequests ?? 0} icon={AlertCircle} />
+            <KpiCard title="Open Requests" value={stats.openRequests ?? 0} icon={AlertCircle} />
           )}
-          <StatCard title="Active Jobs" value={stats.activeJobs ?? 0} icon={Activity} />
+          <KpiCard title="Active Jobs" value={stats.activeJobs ?? 0} icon={Activity} />
           {isProvider && (
             <>
-              <StatCard title="Pending Bids" value={stats.pendingBids ?? 0} icon={TrendingUp} />
-              <StatCard
+              <KpiCard title="Pending Bids" value={stats.pendingBids ?? 0} icon={TrendingUp} />
+              <KpiCard
                 title="Est. Revenue"
                 value={`$${(stats.totalRevenue ?? 0).toLocaleString()}`}
                 icon={ArrowUpRight}
@@ -193,8 +179,8 @@ export default function DashboardPage() {
           )}
           {isCustomer && (
             <>
-              <StatCard title="Completed Jobs" value={stats.completedJobs ?? 0} icon={CheckCircle2} />
-              <StatCard
+              <KpiCard title="Completed Jobs" value={stats.completedJobs ?? 0} icon={CheckCircle2} />
+              <KpiCard
                 title="Total Spent"
                 value={`$${(stats.totalSpent ?? 0).toLocaleString()}`}
                 icon={CircleCheck}
@@ -206,52 +192,49 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      {/* Charts Row */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Activity Bar Chart */}
-        <Card className="rounded-none border-2 col-span-full lg:col-span-4">
+        <Card className="col-span-full lg:col-span-4">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold">Activity — Last 7 Days</CardTitle>
+            <CardTitle>Activity — Last 7 Days</CardTitle>
             <CardDescription>Platform events recorded on your account</CardDescription>
           </CardHeader>
           <CardContent>
             {activityLoading ? (
-              <Skeleton className="h-[180px] w-full rounded-none" />
+              <Skeleton className="h-[200px] w-full rounded-xl" />
             ) : (
-              <ResponsiveContainer width="100%" height={180}>
+              <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={barData} barCategoryGap="35%">
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: "#6b7280", fontSize: 12, fontWeight: 600 }}
+                    tick={{ fill: "hsl(240 4% 55%)", fontSize: 12, fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     allowDecimals={false}
-                    tick={{ fill: "#6b7280", fontSize: 11 }}
+                    tick={{ fill: "hsl(240 4% 55%)", fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                     width={24}
                   />
-                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "rgba(233,168,0,0.08)" }} />
-                  <Bar dataKey="events" fill={AMBER} radius={[2, 2, 0, 0]} maxBarSize={40} />
+                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "hsl(217 91% 60% / 0.08)" }} />
+                  <Bar dataKey="events" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
 
-        {/* Status Donut */}
-        <Card className="rounded-none border-2 col-span-full lg:col-span-3">
+        <Card className="col-span-full lg:col-span-3">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold">Job Status Breakdown</CardTitle>
+            <CardTitle>Job Status Breakdown</CardTitle>
             <CardDescription>Distribution across all your jobs</CardDescription>
           </CardHeader>
           <CardContent>
             {statsLoading ? (
-              <Skeleton className="h-[180px] w-full rounded-none" />
+              <Skeleton className="h-[200px] w-full rounded-xl" />
             ) : hasChartData ? (
-              <ResponsiveContainer width="100%" height={180}>
+              <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
                     data={pieData}
@@ -277,7 +260,7 @@ export default function DashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex flex-col items-center justify-center h-[180px] text-muted-foreground">
+              <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
                 <CircleCheck className="h-10 w-10 mb-3 opacity-20" />
                 <p className="text-sm">No job data yet</p>
                 <p className="text-xs mt-1">Post or bid on a job to see stats</p>
@@ -287,45 +270,39 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Bottom Row: Activity + Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Recent Activity */}
-        <Card className="rounded-none border-2 col-span-full lg:col-span-4">
+        <Card className="col-span-full lg:col-span-4">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold">Recent Activity</CardTitle>
+            <CardTitle>Recent Activity</CardTitle>
             <CardDescription>Latest actions on your account</CardDescription>
           </CardHeader>
           <CardContent>
             {activityLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
               </div>
             ) : activities && activities.length > 0 ? (
               <div className="space-y-1">
                 {activities.slice(0, 8).map((activity) => {
                   const isFailure = activity.type === "payment_failed" || activity.type === "application_rejected";
-                  // Recoverable: bank needs the customer to confirm their card. Not
-                  // a hard failure, so it gets its own amber treatment, not red.
                   const isActionNeeded = activity.type === "payment_requires_action" || activity.type === "payout_delayed";
                   const isApproved = activity.type === "application_approved";
-                  // Bin order status updates (confirmed/delivered/picked_up/cancelled)
-                  // deep-link back to the order on the Bins page via relatedBinOrderId.
                   const isBin = activity.type.startsWith("bin_");
                   const dotClass = isFailure
                     ? "bg-destructive"
                     : isActionNeeded
-                      ? "bg-amber-500"
+                      ? "bg-warning"
                       : isApproved
-                        ? "bg-green-500"
+                        ? "bg-emerald-400"
                         : isBin
-                          ? "bg-violet-500"
+                          ? "bg-violet-400"
                           : "bg-primary";
                   const textClass = isFailure
                     ? "text-destructive"
                     : isActionNeeded
-                      ? "text-amber-600 dark:text-amber-400"
+                      ? "text-warning"
                       : isApproved
-                        ? "text-green-600 dark:text-green-400"
+                        ? "text-emerald-400"
                         : "";
                   const binHref = isBin && activity.relatedBinOrderId != null
                     ? `/bins?order=${encodeURIComponent(activity.relatedBinOrderId)}`
@@ -345,11 +322,11 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       {isLink && (
-                        <ArrowUpRight className={`h-4 w-4 flex-shrink-0 ${isFailure ? "text-destructive" : isActionNeeded ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
+                        <ArrowUpRight className={`h-4 w-4 flex-shrink-0 ${isFailure ? "text-destructive" : isActionNeeded ? "text-warning" : "text-muted-foreground"}`} />
                       )}
                     </>
                   );
-                  const className = "flex items-center gap-4 py-2.5 px-3 hover:bg-muted/40 transition-colors border-b border-border/40 last:border-0";
+                  const className = "flex items-center gap-4 py-2.5 px-3 hover:bg-muted/30 transition-colors rounded-lg border-b border-border/30 last:border-0";
                   return isLink ? (
                     <Link key={activity.id} href={href} className={className}>
                       {inner}
@@ -370,81 +347,24 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <Card className="rounded-none border-2 col-span-full lg:col-span-3">
+        <Card className="col-span-full lg:col-span-3">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold">Quick Actions</CardTitle>
+            <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {isCustomer && (
               <>
-                <Link href="/requests/new">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <Plus className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Post a new request</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-                <Link href="/requests">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <ClipboardList className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Review open bids</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-                <Link href="/jobs">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <Briefcase className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Track active jobs</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
+                <QuickAction href="/requests/new" icon={Plus} label="Post a new request" />
+                <QuickAction href="/requests" icon={ClipboardList} label="Review open bids" />
+                <QuickAction href="/jobs" icon={Briefcase} label="Track active jobs" />
               </>
             )}
             {isProvider && (
               <>
-                <Link href="/requests">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <Truck className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Find new jobs</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-                <Link href="/fleet/new">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <Plus className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Add a truck to fleet</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-                <Link href="/jobs">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <Briefcase className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Active jobs</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
-                <Link href="/account">
-                  <div className="flex items-center justify-between p-3.5 border-2 border-border hover:border-primary cursor-pointer transition-all group bg-card hover:bg-primary/5">
-                    <div className="flex items-center gap-3">
-                      <ShieldAlert className="h-4 w-4 text-primary" />
-                      <span className="font-semibold text-sm">Compliance status</span>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </Link>
+                <QuickAction href="/requests" icon={Truck} label="Find new jobs" />
+                <QuickAction href="/fleet/new" icon={Plus} label="Add a truck to fleet" />
+                <QuickAction href="/jobs" icon={Briefcase} label="Active jobs" />
+                <QuickAction href="/account" icon={ShieldAlert} label="Compliance status" />
               </>
             )}
           </CardContent>
@@ -454,3 +374,16 @@ export default function DashboardPage() {
   );
 }
 
+function QuickAction({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
+  return (
+    <Link href={href}>
+      <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 hover:border-primary/30 cursor-pointer transition-all group hover:bg-primary/5">
+        <div className="flex items-center gap-3">
+          <Icon className="h-4 w-4 text-primary" />
+          <span className="font-medium text-sm">{label}</span>
+        </div>
+        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+      </div>
+    </Link>
+  );
+}

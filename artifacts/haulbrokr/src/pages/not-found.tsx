@@ -1,23 +1,27 @@
+import { Link } from "wouter";
+import { AlertCircle, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">404 — Page Not Found</h1>
+    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-8 pb-8 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 mx-auto mb-6">
+            <AlertCircle className="h-8 w-8 text-destructive" />
           </div>
-
-          <p className="mt-4 text-sm text-gray-600">
-            The page you're looking for doesn't exist or has been moved.{" "}
-            <a href="/" className="text-primary font-semibold hover:underline">
-              Return to HaulBrokr
-            </a>{" "}
-            to post loads, find haulers, and get back on the road.
+          <h1 className="text-3xl font-bold tracking-tight">404</h1>
+          <p className="mt-2 text-lg font-medium text-muted-foreground">Page not found</p>
+          <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+            The page you're looking for doesn't exist or has been moved.
           </p>
+          <Button asChild className="mt-8">
+            <Link href="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Return to HaulBrokr
+            </Link>
+          </Button>
         </CardContent>
       </Card>
     </div>

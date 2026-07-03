@@ -46,7 +46,7 @@ function QuickBooksCard() {
   const isConnected = qb?.connected === true;
 
   return (
-    <div className="bg-card border-2 border-border overflow-hidden">
+    <div className="bg-card border border-border/60 overflow-hidden">
       <div className="bg-secondary text-secondary-foreground p-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-[#2ca01c] p-2 rounded">
@@ -58,7 +58,7 @@ function QuickBooksCard() {
           </div>
         </div>
         {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-          <Badge className={`rounded-none border-2 font-bold text-xs ${isConnected ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-700 border-gray-200"}`}>
+          <Badge className={`rounded-xl border-2 font-bold text-xs ${isConnected ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-700 border-gray-200"}`}>
             {isConnected ? <><CheckCircle2 className="h-3 w-3 mr-1" />Connected</> : "Not Connected"}
           </Badge>
         )}
@@ -83,18 +83,18 @@ function QuickBooksCard() {
             </div>
 
             {qb.lastSyncStatus === "success" && (
-              <Alert className="rounded-none border-green-200 bg-green-50">
+              <Alert className="rounded-xl border-green-200 bg-green-50">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-700 text-sm">Last sync successful</AlertDescription>
               </Alert>
             )}
 
             <div className="flex gap-3">
-              <Button className="flex-1 rounded-none font-bold" disabled={sync.isPending} onClick={() => sync.mutate()}>
+              <Button className="flex-1 rounded-xl font-bold" disabled={sync.isPending} onClick={() => sync.mutate()}>
                 {sync.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                 Sync Now
               </Button>
-              <Button variant="outline" className="rounded-none border-2" disabled={disconnect.isPending} onClick={() => disconnect.mutate()}>
+              <Button variant="outline" className="rounded-xl border-2" disabled={disconnect.isPending} onClick={() => disconnect.mutate()}>
                 {disconnect.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2Off className="h-4 w-4" />}
               </Button>
             </div>
@@ -118,13 +118,13 @@ function QuickBooksCard() {
             </div>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button className="w-full rounded-none font-bold bg-[#2ca01c] hover:bg-[#238016]"><Link2 className="mr-2 h-4 w-4" />Connect QuickBooks</Button>
+                <Button className="w-full rounded-xl font-bold bg-[#2ca01c] hover:bg-[#238016]"><Link2 className="mr-2 h-4 w-4" />Connect QuickBooks</Button>
               </DialogTrigger>
-              <DialogContent className="rounded-none border-2 max-w-sm">
+              <DialogContent className="rounded-xl border-2 max-w-sm">
                 <DialogHeader><DialogTitle>Connect QuickBooks Online</DialogTitle></DialogHeader>
                 <div className="space-y-4 mt-2">
-                  <div><Label>QuickBooks Company Name</Label><Input className="rounded-none mt-1" value={connectName} onChange={e => setConnectName(e.target.value)} placeholder="My Construction LLC" /></div>
-                  <Button className="w-full rounded-none font-bold bg-[#2ca01c] hover:bg-[#238016]" disabled={!connectName || connect.isPending} onClick={() => connect.mutate()}>
+                  <div><Label>QuickBooks Company Name</Label><Input className="rounded-xl mt-1" value={connectName} onChange={e => setConnectName(e.target.value)} placeholder="My Construction LLC" /></div>
+                  <Button className="w-full rounded-xl font-bold bg-[#2ca01c] hover:bg-[#238016]" disabled={!connectName || connect.isPending} onClick={() => connect.mutate()}>
                     {connect.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Connect & Authorize
                   </Button>
                   <p className="text-xs text-muted-foreground text-center">You'll be redirected to QuickBooks to authorize access</p>
@@ -140,19 +140,19 @@ function QuickBooksCard() {
 
 function ComingSoonCard({ name, description, icon: Icon, color }: { name: string; description: string; icon: any; color: string }) {
   return (
-    <div className="bg-card border-2 border-dashed border-border p-5 opacity-60">
+    <div className="bg-card border border-dashed border-border/60 p-5 opacity-60">
       <div className="flex items-center gap-3 mb-3">
         <div className={`${color} p-2 rounded`}><Icon className="h-5 w-5 text-white" /></div>
         <div><h3 className="font-bold">{name}</h3><p className="text-xs text-muted-foreground">{description}</p></div>
       </div>
-      <Badge variant="outline" className="rounded-none text-xs">Coming Soon</Badge>
+      <Badge variant="outline" className="rounded-xl text-xs">Coming Soon</Badge>
     </div>
   );
 }
 
 export default function IntegrationsPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-4xl mx-auto space-y-6 page-enter pb-12">
       <div>
         <h1 className="text-3xl font-black uppercase tracking-tight">Integrations</h1>
         <p className="text-muted-foreground mt-1">Connect your HaulBrokr account with the tools you already use</p>

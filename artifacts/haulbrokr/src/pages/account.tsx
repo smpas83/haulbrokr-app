@@ -41,15 +41,15 @@ import { MicrodepositVerify } from "@/components/microdeposit-verify";
 
 function StatusBadge({ status, text }: { status: "not_submitted"|"not_set"|"pending"|"verified"|"rejected", text?: string }) {
   if (status === "verified") {
-    return <Badge className="bg-green-500 hover:bg-green-600 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1"/> {text || "Verified"}</Badge>;
+    return <Badge className="bg-green-500 hover:bg-green-600 rounded-xl"><CheckCircle2 className="w-3 h-3 mr-1"/> {text || "Verified"}</Badge>;
   }
   if (status === "pending") {
-    return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none"><Clock className="w-3 h-3 mr-1"/> {text || "Pending Review"}</Badge>;
+    return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl"><Clock className="w-3 h-3 mr-1"/> {text || "Pending Review"}</Badge>;
   }
   if (status === "rejected") {
-    return <Badge variant="destructive" className="rounded-none"><AlertCircle className="w-3 h-3 mr-1"/> {text || "Rejected"}</Badge>;
+    return <Badge variant="destructive" className="rounded-xl"><AlertCircle className="w-3 h-3 mr-1"/> {text || "Rejected"}</Badge>;
   }
-  return <Badge variant="secondary" className="rounded-none text-muted-foreground">{text || "Not Submitted"}</Badge>;
+  return <Badge variant="secondary" className="rounded-xl text-muted-foreground">{text || "Not Submitted"}</Badge>;
 }
 
 const profileSchema = z.object({
@@ -102,7 +102,7 @@ function ProfileTab() {
   }
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader>
         <CardTitle>Company Profile</CardTitle>
         <CardDescription>Basic information about your business</CardDescription>
@@ -117,7 +117,7 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company Name</FormLabel>
-                    <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -128,7 +128,7 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Primary Contact</FormLabel>
-                    <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -139,7 +139,7 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
-                    <FormControl><Input type="tel" {...field} className="rounded-none" /></FormControl>
+                    <FormControl><Input type="tel" {...field} className="rounded-xl" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -150,7 +150,7 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>City</FormLabel>
-                    <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -161,13 +161,13 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>State</FormLabel>
-                    <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <Button type="submit" disabled={updateProfile.isPending} className="rounded-none font-bold">
+            <Button type="submit" disabled={updateProfile.isPending} className="rounded-xl font-bold">
               {updateProfile.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Save Profile
             </Button>
@@ -254,7 +254,7 @@ function W9Tab() {
   const isPending = submitW9.isPending || updateW9.isPending;
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -266,7 +266,7 @@ function W9Tab() {
       </CardHeader>
       <CardContent>
         {w9?.status === "rejected" && (
-          <Alert variant="destructive" className="mb-6 rounded-none">
+          <Alert variant="destructive" className="mb-6 rounded-xl">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
             <AlertDescription>
@@ -286,7 +286,7 @@ function W9Tab() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Name (as shown on your income tax return)</FormLabel>
-                      <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                      <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -297,7 +297,7 @@ function W9Tab() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Business name/disregarded entity name (optional)</FormLabel>
-                      <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                      <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -353,7 +353,7 @@ function W9Tab() {
                   render={({ field }) => (
                     <FormItem className="col-span-full">
                       <FormLabel>Address (number, street, and apt. or suite no.)</FormLabel>
-                      <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                      <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -364,7 +364,7 @@ function W9Tab() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>City</FormLabel>
-                      <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                      <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -376,7 +376,7 @@ function W9Tab() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>State</FormLabel>
-                        <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                        <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -387,7 +387,7 @@ function W9Tab() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>ZIP code</FormLabel>
-                        <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                        <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -431,7 +431,7 @@ function W9Tab() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Last 4 Digits</FormLabel>
-                      <FormControl><Input {...field} maxLength={4} placeholder="1234" className="rounded-none font-mono" /></FormControl>
+                      <FormControl><Input {...field} maxLength={4} placeholder="1234" className="rounded-xl font-mono" /></FormControl>
                       <FormDescription>For security, we only collect the last 4 digits.</FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -468,14 +468,14 @@ function W9Tab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Digital Signature (Full Legal Name)</FormLabel>
-                    <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <Button type="submit" disabled={isPending || form.watch("agreedToTerms") !== "true"} className="rounded-none font-bold">
+            <Button type="submit" disabled={isPending || form.watch("agreedToTerms") !== "true"} className="rounded-xl font-bold">
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isExisting ? "Update W-9" : "Submit W-9"}
             </Button>
@@ -571,7 +571,7 @@ function InsuranceTab() {
   const isPending = submitIns.isPending || updateIns.isPending;
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -583,7 +583,7 @@ function InsuranceTab() {
       </CardHeader>
       <CardContent>
         {ins?.status === "rejected" && (
-          <Alert variant="destructive" className="mb-6 rounded-none">
+          <Alert variant="destructive" className="mb-6 rounded-xl">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
             <AlertDescription>
@@ -600,16 +600,16 @@ function InsuranceTab() {
                 <AccordionContent className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="glCarrier" render={({ field }) => (
-                      <FormItem><FormLabel>Carrier Name</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Carrier Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="glPolicyNumber" render={({ field }) => (
-                      <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="glCoverageAmount" render={({ field }) => (
-                      <FormItem><FormLabel>Coverage Amount ($)</FormLabel><FormControl><Input type="number" {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Coverage Amount ($)</FormLabel><FormControl><Input type="number" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="glExpirationDate" render={({ field }) => (
-                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                   </div>
                 </AccordionContent>
@@ -619,16 +619,16 @@ function InsuranceTab() {
                 <AccordionContent className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="autoCarrier" render={({ field }) => (
-                      <FormItem><FormLabel>Carrier Name</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Carrier Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="autoPolicyNumber" render={({ field }) => (
-                      <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="autoCoverageAmount" render={({ field }) => (
-                      <FormItem><FormLabel>Coverage Amount ($)</FormLabel><FormControl><Input type="number" {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Coverage Amount ($)</FormLabel><FormControl><Input type="number" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="autoExpirationDate" render={({ field }) => (
-                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                   </div>
                 </AccordionContent>
@@ -638,13 +638,13 @@ function InsuranceTab() {
                 <AccordionContent className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="wcCarrier" render={({ field }) => (
-                      <FormItem><FormLabel>Carrier Name</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Carrier Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="wcPolicyNumber" render={({ field }) => (
-                      <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="wcExpirationDate" render={({ field }) => (
-                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                   </div>
                 </AccordionContent>
@@ -654,13 +654,13 @@ function InsuranceTab() {
                 <AccordionContent className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="bondCompany" render={({ field }) => (
-                      <FormItem><FormLabel>Bond Company</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Bond Company</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="bondAmount" render={({ field }) => (
-                      <FormItem><FormLabel>Bond Amount ($)</FormLabel><FormControl><Input type="number" {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Bond Amount ($)</FormLabel><FormControl><Input type="number" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="bondExpirationDate" render={({ field }) => (
-                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
                   </div>
                 </AccordionContent>
@@ -670,12 +670,12 @@ function InsuranceTab() {
             <FormField control={form.control} name="certificateHolderName" render={({ field }) => (
               <FormItem>
                 <FormLabel>Certificate Holder Name (if applicable)</FormLabel>
-                <FormControl><Input {...field} className="rounded-none" /></FormControl>
+                <FormControl><Input {...field} className="rounded-xl" /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
 
-            <Button type="submit" disabled={isPending} className="rounded-none font-bold">
+            <Button type="submit" disabled={isPending} className="rounded-xl font-bold">
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isExisting ? "Update Insurance" : "Submit Insurance"}
             </Button>
@@ -795,7 +795,7 @@ function PaymentMethodTab() {
   const isPending = setPm.isPending || updatePm.isPending;
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader>
         <CardTitle>Billing & Payment Method</CardTitle>
         <CardDescription>Set up how you will pay for completed jobs.</CardDescription>
@@ -841,7 +841,7 @@ function PaymentMethodTab() {
                   </p>
                 )}
                 <FormField control={form.control} name="cardholderName" render={({ field }) => (
-                  <FormItem className="max-w-md"><FormLabel>Cardholder Name</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                  <FormItem className="max-w-md"><FormLabel>Cardholder Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                 )} />
                 <div className="space-y-2">
                   <FormLabel>Card</FormLabel>
@@ -874,7 +874,7 @@ function PaymentMethodTab() {
                   />
                 )}
                 <FormField control={form.control} name="cardholderName" render={({ field }) => (
-                  <FormItem className="max-w-md"><FormLabel>Account Holder Name</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                  <FormItem className="max-w-md"><FormLabel>Account Holder Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                 )} />
                 <StripeBankForm
                   onSaved={onBankSaved}
@@ -887,7 +887,7 @@ function PaymentMethodTab() {
             )}
 
             {methodType.startsWith("net_") && (
-              <Alert className="rounded-none">
+              <Alert className="rounded-xl">
                 <ShieldAlert className="h-4 w-4" />
                 <AlertTitle>Credit Approval Required</AlertTitle>
                 <AlertDescription>Net terms are subject to credit approval. Our team will review your account history before activating this payment method.</AlertDescription>
@@ -899,23 +899,23 @@ function PaymentMethodTab() {
                 <h4 className="font-bold">Billing Address</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="billingAddress" render={({ field }) => (
-                    <FormItem className="col-span-full"><FormLabel>Address</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                    <FormItem className="col-span-full"><FormLabel>Address</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="billingCity" render={({ field }) => (
-                    <FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="billingState" render={({ field }) => (
-                    <FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="billingZip" render={({ field }) => (
-                    <FormItem><FormLabel>ZIP</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>ZIP</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
               </div>
             )}
 
             {methodType.startsWith("net_") && (
-              <Button type="submit" disabled={isPending} className="rounded-none font-bold">
+              <Button type="submit" disabled={isPending} className="rounded-xl font-bold">
                 {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Save Payment Method
               </Button>
@@ -1049,7 +1049,7 @@ function PayoutAccountTab() {
   const isPending = setPayout.isPending || updatePayout.isPending;
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -1069,7 +1069,7 @@ function PayoutAccountTab() {
                 <p className="text-sm text-muted-foreground capitalize">{payout.accountType}</p>
               </div>
             </div>
-            <Badge variant="outline" className="rounded-none">Current</Badge>
+            <Badge variant="outline" className="rounded-xl">Current</Badge>
           </div>
         )}
 
@@ -1087,7 +1087,7 @@ function PayoutAccountTab() {
 
           if (enabled) {
             return (
-              <Alert className="mb-6 rounded-none bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+              <Alert className="mb-6 rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
                 <CheckCircle2 className="h-4 w-4" />
                 <AlertTitle>Payouts enabled</AlertTitle>
                 <AlertDescription>You're all set — completed jobs pay out to your bank automatically.</AlertDescription>
@@ -1110,7 +1110,7 @@ function PayoutAccountTab() {
                   type="button"
                   onClick={handleConnectPayout}
                   disabled={connectPayout.isPending}
-                  className="rounded-none font-bold"
+                  className="rounded-xl font-bold"
                 >
                   {connectPayout.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Connect payout account
@@ -1171,7 +1171,7 @@ function PayoutAccountTab() {
                   type="button"
                   onClick={handleConnectPayout}
                   disabled={connectPayout.isPending}
-                  className="rounded-none font-bold"
+                  className="rounded-xl font-bold"
                 >
                   {connectPayout.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Continue onboarding
@@ -1181,7 +1181,7 @@ function PayoutAccountTab() {
           );
         })()}
 
-        <Alert className="mb-6 rounded-none bg-blue-50/50 text-blue-900 border-blue-200 dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-800">
+        <Alert className="mb-6 rounded-xl bg-blue-50/50 text-blue-900 border-blue-200 dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-800">
           <ShieldAlert className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <AlertTitle>Secure Storage</AlertTitle>
           <AlertDescription>Your bank information is encrypted and stored securely. We only display the last 4 digits after saving.</AlertDescription>
@@ -1191,10 +1191,10 @@ function PayoutAccountTab() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="bankName" render={({ field }) => (
-                <FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="accountHolderName" render={({ field }) => (
-                <FormItem><FormLabel>Name on Account</FormLabel><FormControl><Input {...field} className="rounded-none" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Name on Account</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
 
@@ -1219,17 +1219,17 @@ function PayoutAccountTab() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="routingNumber" render={({ field }) => (
-                <FormItem className="col-span-full"><FormLabel>Routing Number (9 digits)</FormLabel><FormControl><Input {...field} maxLength={9} className="rounded-none font-mono" /></FormControl><FormMessage /></FormItem>
+                <FormItem className="col-span-full"><FormLabel>Routing Number (9 digits)</FormLabel><FormControl><Input {...field} maxLength={9} className="rounded-xl font-mono" /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="accountNumber" render={({ field }) => (
-                <FormItem><FormLabel>Account Number</FormLabel><FormControl><Input type="password" {...field} className="rounded-none font-mono" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Account Number</FormLabel><FormControl><Input type="password" {...field} className="rounded-xl font-mono" /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="confirmAccountNumber" render={({ field }) => (
-                <FormItem><FormLabel>Confirm Account Number</FormLabel><FormControl><Input type="password" {...field} className="rounded-none font-mono" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Confirm Account Number</FormLabel><FormControl><Input type="password" {...field} className="rounded-xl font-mono" /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
 
-            <Button type="submit" disabled={isPending} className="rounded-none font-bold">
+            <Button type="submit" disabled={isPending} className="rounded-xl font-bold">
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isExisting ? "Update Bank Account" : "Save Bank Account"}
             </Button>
@@ -1250,7 +1250,7 @@ function ComplianceTab() {
   const isProvider = profile.role === "provider";
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader>
         <CardTitle>Account Status</CardTitle>
         <CardDescription>Overview of your account verification and readiness.</CardDescription>
@@ -1258,7 +1258,7 @@ function ComplianceTab() {
       <CardContent className="space-y-6">
         
         {(!status.canBid && isProvider) || (!status.canPost && isCustomer) ? (
-          <Alert variant="destructive" className="rounded-none bg-destructive/5 text-destructive border-destructive/20">
+          <Alert variant="destructive" className="rounded-xl bg-destructive/5 text-destructive border-destructive/20">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
             <AlertDescription>
@@ -1266,7 +1266,7 @@ function ComplianceTab() {
             </AlertDescription>
           </Alert>
         ) : (
-          <Alert className="rounded-none bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+          <Alert className="rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
             <CheckCircle2 className="h-4 w-4" />
             <AlertTitle>Ready to Go</AlertTitle>
             <AlertDescription>Your account is fully verified and ready.</AlertDescription>
@@ -1274,7 +1274,7 @@ function ComplianceTab() {
         )}
 
         <div className="grid gap-4">
-          <div className="flex items-center justify-between p-4 border-2 border-border bg-card">
+          <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
             <div className="flex flex-col">
               <span className="font-bold">Profile Completeness</span>
               <span className="text-sm text-muted-foreground">Basic contact information</span>
@@ -1284,7 +1284,7 @@ function ComplianceTab() {
 
           {isProvider && (
             <>
-              <div className="flex items-center justify-between p-4 border-2 border-border bg-card">
+              <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
                 <div className="flex flex-col">
                   <span className="font-bold">W-9 Tax Form</span>
                   <span className="text-sm text-muted-foreground">Required for payout reporting</span>
@@ -1292,7 +1292,7 @@ function ComplianceTab() {
                 <StatusBadge status={status.w9Status as any} />
               </div>
 
-              <div className="flex items-center justify-between p-4 border-2 border-border bg-card">
+              <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
                 <div className="flex flex-col">
                   <span className="font-bold">Insurance & Bonding</span>
                   <span className="text-sm text-muted-foreground">Liability coverage verification</span>
@@ -1300,7 +1300,7 @@ function ComplianceTab() {
                 <StatusBadge status={status.insuranceStatus as any} />
               </div>
 
-              <div className="flex items-center justify-between p-4 border-2 border-border bg-card">
+              <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
                 <div className="flex flex-col">
                   <span className="font-bold">DOT / CDL Compliance</span>
                   <span className="text-sm text-muted-foreground">Carrier operating credentials</span>
@@ -1308,7 +1308,7 @@ function ComplianceTab() {
                 <StatusBadge status={status.dotCdlStatus as any} />
               </div>
 
-              <div className="flex items-center justify-between p-4 border-2 border-border bg-card">
+              <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
                 <div className="flex flex-col">
                   <span className="font-bold">Payout Account</span>
                   <span className="text-sm text-muted-foreground">Bank account for receiving funds</span>
@@ -1319,7 +1319,7 @@ function ComplianceTab() {
           )}
 
           {isCustomer && (
-            <div className="flex items-center justify-between p-4 border-2 border-border bg-card">
+            <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
               <div className="flex flex-col">
                 <span className="font-bold">Payment Method</span>
                 <span className="text-sm text-muted-foreground">Billing source for accepted bids</span>
@@ -1327,7 +1327,7 @@ function ComplianceTab() {
               {status.paymentStatus === "set" ? (
                 <StatusBadge status="verified" text="Set" />
               ) : (
-                <a href="?tab=payment" className="inline-flex items-center gap-2 rounded-none border-2 border-amber-400 px-3 py-1 text-sm font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-400/10">
+                <a href="?tab=payment" className="inline-flex items-center gap-2 rounded-xl border-2 border-amber-400 px-3 py-1 text-sm font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-400/10">
                   Set up
                   <ArrowRight className="h-4 w-4" />
                 </a>
@@ -1399,7 +1399,7 @@ function DotCdlTab() {
     record.status === "rejected" ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50";
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
@@ -1420,14 +1420,14 @@ function DotCdlTab() {
       </CardHeader>
       <CardContent className="space-y-6">
         {record?.status === "verified" && (
-          <Alert className="rounded-none border-green-200 bg-green-50">
+          <Alert className="rounded-xl border-green-200 bg-green-50">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-green-800">Verified</AlertTitle>
             <AlertDescription className="text-green-700">Your DOT number and CDL are verified. You can bid on all job types.</AlertDescription>
           </Alert>
         )}
         {record?.status === "rejected" && (
-          <Alert variant="destructive" className="rounded-none">
+          <Alert variant="destructive" className="rounded-xl">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
             <AlertDescription>
@@ -1436,12 +1436,12 @@ function DotCdlTab() {
           </Alert>
         )}
         {record?.status === "pending" && (
-          <Alert className={`rounded-none ${statusColor}`}>
+          <Alert className={`rounded-xl ${statusColor}`}>
             <Clock className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-amber-800">Under Review</AlertTitle>
             <AlertDescription className="text-amber-700 space-y-2">
               <span>Your credentials are being verified (typically 1–2 business days).</span>
-              <Button size="sm" variant="outline" className="rounded-none border-amber-400 text-amber-800 mt-2 block" onClick={() => verify.mutate({})} disabled={verify.isPending}>
+              <Button size="sm" variant="outline" className="rounded-xl border-amber-400 text-amber-800 mt-2 block" onClick={() => verify.mutate({})} disabled={verify.isPending}>
                 {verify.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}Simulate Verification (Demo)
               </Button>
             </AlertDescription>
@@ -1451,22 +1451,22 @@ function DotCdlTab() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">USDOT Number</Label>
-            <Input className="rounded-none mt-1 font-mono" value={form.dotNumber} onChange={e => setForm(f => ({ ...f, dotNumber: e.target.value }))} placeholder="1234567" />
+            <Input className="rounded-xl mt-1 font-mono" value={form.dotNumber} onChange={e => setForm(f => ({ ...f, dotNumber: e.target.value }))} placeholder="1234567" />
             {record?.dotVerified && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Verified</p>}
           </div>
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Number</Label>
-            <Input className="rounded-none mt-1 font-mono" value={form.cdlNumber} onChange={e => setForm(f => ({ ...f, cdlNumber: e.target.value }))} placeholder="D1234-56789-01234" />
+            <Input className="rounded-xl mt-1 font-mono" value={form.cdlNumber} onChange={e => setForm(f => ({ ...f, cdlNumber: e.target.value }))} placeholder="D1234-56789-01234" />
             {record?.cdlVerified && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Verified</p>}
           </div>
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Issuing State</Label>
-            <Input className="rounded-none mt-1" value={form.cdlState} onChange={e => setForm(f => ({ ...f, cdlState: e.target.value }))} placeholder="TX" maxLength={2} />
+            <Input className="rounded-xl mt-1" value={form.cdlState} onChange={e => setForm(f => ({ ...f, cdlState: e.target.value }))} placeholder="TX" maxLength={2} />
           </div>
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Class</Label>
             <Select value={form.cdlClass} onValueChange={v => setForm(f => ({ ...f, cdlClass: v }))}>
-              <SelectTrigger className="rounded-none mt-1"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="A">Class A — Combination vehicles</SelectItem>
                 <SelectItem value="B">Class B — Heavy straight vehicles</SelectItem>
@@ -1476,17 +1476,17 @@ function DotCdlTab() {
           </div>
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Expiry Date</Label>
-            <Input className="rounded-none mt-1" type="date" value={form.cdlExpiry} onChange={e => setForm(f => ({ ...f, cdlExpiry: e.target.value }))} />
+            <Input className="rounded-xl mt-1" type="date" value={form.cdlExpiry} onChange={e => setForm(f => ({ ...f, cdlExpiry: e.target.value }))} />
           </div>
         </div>
 
         <div>
           <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">MC Number</Label>
-          <Input className="rounded-none mt-1 font-mono" value={form.mcNumber} onChange={e => setForm(f => ({ ...f, mcNumber: e.target.value }))} placeholder="MC-123456" />
+          <Input className="rounded-xl mt-1 font-mono" value={form.mcNumber} onChange={e => setForm(f => ({ ...f, mcNumber: e.target.value }))} placeholder="MC-123456" />
         </div>
 
         {record && (
-          <div className="border-2 border-border">
+          <div className="border border-border/60">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-4 pt-4">FMCSA Authority Checks</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border mt-3">
               {[
@@ -1498,11 +1498,11 @@ function DotCdlTab() {
                 <div key={c.label} className="bg-background p-3 flex items-center justify-between gap-2">
                   <span className="text-sm">{c.label}</span>
                   {c.value === "verified" ? (
-                    <Badge className="bg-green-500 hover:bg-green-600 rounded-none text-xs"><CheckCircle2 className="w-3 h-3 mr-1" />Verified</Badge>
+                    <Badge className="bg-green-500 hover:bg-green-600 rounded-xl text-xs"><CheckCircle2 className="w-3 h-3 mr-1" />Verified</Badge>
                   ) : c.value === "failed" ? (
-                    <Badge variant="destructive" className="rounded-none text-xs"><AlertCircle className="w-3 h-3 mr-1" />Failed</Badge>
+                    <Badge variant="destructive" className="rounded-xl text-xs"><AlertCircle className="w-3 h-3 mr-1" />Failed</Badge>
                   ) : (
-                    <Badge variant="secondary" className="rounded-none text-xs text-muted-foreground"><Clock className="w-3 h-3 mr-1" />Unknown</Badge>
+                    <Badge variant="secondary" className="rounded-xl text-xs text-muted-foreground"><Clock className="w-3 h-3 mr-1" />Unknown</Badge>
                   )}
                 </div>
               ))}
@@ -1523,7 +1523,7 @@ function DotCdlTab() {
           ))}
         </div>
 
-        <Button className="rounded-none font-bold w-full" disabled={submit.isPending} onClick={submitForm}>
+        <Button className="rounded-xl font-bold w-full" disabled={submit.isPending} onClick={submitForm}>
           {submit.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
           {record ? "Update & Resubmit" : "Submit for Verification"}
         </Button>
@@ -1569,7 +1569,7 @@ function CreditApplicationTab() {
   });
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
@@ -1586,14 +1586,14 @@ function CreditApplicationTab() {
       </CardHeader>
       <CardContent className="space-y-6">
         {record?.status === "approved" && (
-          <Alert className="rounded-none border-green-200 bg-green-50">
+          <Alert className="rounded-xl border-green-200 bg-green-50">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-green-800">Credit Approved</AlertTitle>
             <AlertDescription className="text-green-700">You can select Net payment terms when paying for completed jobs.</AlertDescription>
           </Alert>
         )}
         {record?.status === "pending" && (
-          <Alert className="rounded-none border-amber-200 bg-amber-50">
+          <Alert className="rounded-xl border-amber-200 bg-amber-50">
             <Clock className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-amber-800">Under Review</AlertTitle>
             <AlertDescription className="text-amber-700">Our team is reviewing your credit application (typically 1–3 business days).</AlertDescription>
@@ -1607,18 +1607,18 @@ function CreditApplicationTab() {
 
         <div>
           <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Estimated Monthly Spend ($)</Label>
-          <Input className="rounded-none mt-1" type="number" inputMode="decimal" value={form.estimatedMonthlySpend} onChange={e => setForm(f => ({ ...f, estimatedMonthlySpend: e.target.value }))} placeholder="25000" />
+          <Input className="rounded-xl mt-1" type="number" inputMode="decimal" value={form.estimatedMonthlySpend} onChange={e => setForm(f => ({ ...f, estimatedMonthlySpend: e.target.value }))} placeholder="25000" />
         </div>
         <div>
           <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Trade References</Label>
-          <Input className="rounded-none mt-1" value={form.tradeReferences} onChange={e => setForm(f => ({ ...f, tradeReferences: e.target.value }))} placeholder="Supplier names, contacts, account #s" />
+          <Input className="rounded-xl mt-1" value={form.tradeReferences} onChange={e => setForm(f => ({ ...f, tradeReferences: e.target.value }))} placeholder="Supplier names, contacts, account #s" />
         </div>
         <div>
           <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bank Reference</Label>
-          <Input className="rounded-none mt-1" value={form.bankReference} onChange={e => setForm(f => ({ ...f, bankReference: e.target.value }))} placeholder="Bank name & account officer" />
+          <Input className="rounded-xl mt-1" value={form.bankReference} onChange={e => setForm(f => ({ ...f, bankReference: e.target.value }))} placeholder="Bank name & account officer" />
         </div>
 
-        <Button className="rounded-none font-bold w-full" disabled={submit.isPending} onClick={submitForm}>
+        <Button className="rounded-xl font-bold w-full" disabled={submit.isPending} onClick={submitForm}>
           {submit.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
           {record ? "Update & Resubmit" : "Submit Credit Application"}
         </Button>
@@ -1643,23 +1643,23 @@ export default function AccountPage() {
   const isProvider = profile?.role === "provider";
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto animate-in fade-in duration-500">
+    <div className="space-y-6 max-w-5xl mx-auto page-enter">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
         <p className="text-muted-foreground">Manage your profile, compliance, and billing information.</p>
       </div>
 
       <Tabs defaultValue={initialTab} className="w-full">
-        <TabsList className="flex flex-wrap h-auto rounded-none justify-start gap-2 bg-transparent p-0 mb-6">
-          <TabsTrigger value="status" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Status</TabsTrigger>
-          <TabsTrigger value="profile" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Profile</TabsTrigger>
-          {isProvider && <TabsTrigger value="w9" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">W-9 Form</TabsTrigger>}
-          {isProvider && <TabsTrigger value="insurance" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Insurance</TabsTrigger>}
-          {isProvider && <TabsTrigger value="payout" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payout Account</TabsTrigger>}
-          {isProvider && <TabsTrigger value="dotcdl" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">DOT / CDL</TabsTrigger>}
-          {(isProvider || isCustomer) && <TabsTrigger value="documents" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
-          {isCustomer && <TabsTrigger value="payment" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payment Method</TabsTrigger>}
-          {isCustomer && <TabsTrigger value="credit" className="rounded-none border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Credit Application</TabsTrigger>}
+        <TabsList className="flex flex-wrap h-auto rounded-xl justify-start gap-2 bg-transparent p-0 mb-6">
+          <TabsTrigger value="status" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Status</TabsTrigger>
+          <TabsTrigger value="profile" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Profile</TabsTrigger>
+          {isProvider && <TabsTrigger value="w9" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">W-9 Form</TabsTrigger>}
+          {isProvider && <TabsTrigger value="insurance" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Insurance</TabsTrigger>}
+          {isProvider && <TabsTrigger value="payout" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payout Account</TabsTrigger>}
+          {isProvider && <TabsTrigger value="dotcdl" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">DOT / CDL</TabsTrigger>}
+          {(isProvider || isCustomer) && <TabsTrigger value="documents" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
+          {isCustomer && <TabsTrigger value="payment" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payment Method</TabsTrigger>}
+          {isCustomer && <TabsTrigger value="credit" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Credit Application</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="status" className="mt-0"><ComplianceTab /></TabsContent>

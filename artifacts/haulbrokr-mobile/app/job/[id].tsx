@@ -23,6 +23,7 @@ import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/Refre
 import { LastUpdated } from "@/components/LastUpdated";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useDriverLocationPing } from "@/hooks/useDriverTracking";
 import { TYPE_COLOR, ACCENT } from "@/constants/theme";
 import {
   useJobEvidence,
@@ -118,6 +119,9 @@ export default function JobDetailScreen() {
     ? liveRequestToViewJob(liveRequest)
     : jobs.find((j) => j.id === id);
   const isProvider = profile.role === "provider";
+  const isDriverRole = profile.role === "provider" || profile.role === "driver";
+  const trackActive = isLiveJob && isDriverRole && ["accepted", "active", "in_progress"].includes(job?.status ?? "");
+  useDriverLocationPing(numericId, trackActive);
 
   // Freshness of the live data feeding this screen — the most recent successful
   // refetch across the live job / request queries. Used by the LastUpdated label.

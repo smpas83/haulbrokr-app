@@ -283,11 +283,11 @@ export default function BinsPage() {
   const pastOrders = orders.filter(o => ["cancelled", "picked_up"].includes(o.status));
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-5xl mx-auto space-y-8 page-enter pb-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <Trash2 className="h-8 w-8 text-primary" />
             Bin & Dumpster Rental
           </h1>
@@ -296,7 +296,7 @@ export default function BinsPage() {
           </p>
         </div>
         {!showForm && (
-          <Button className="font-bold rounded-none h-10 px-5" onClick={() => setShowForm(true)}>
+          <Button className="font-bold rounded-xl h-10 px-5" onClick={() => setShowForm(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Order Bin Service
           </Button>
@@ -320,7 +320,7 @@ export default function BinsPage() {
             {/* Service Type Toggle */}
             <div>
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Service Type</Label>
-              <div className="flex mt-2 border-2 border-border">
+              <div className="flex mt-2 border border-border/60">
                 <button
                   type="button"
                   onClick={() => { setTab("temporary"); setSelectedSize(""); }}
@@ -377,16 +377,16 @@ export default function BinsPage() {
                   max={20}
                   value={quantity}
                   onChange={e => setQuantity(Math.max(1, Number(e.target.value)))}
-                  className="mt-2 h-11 border-2 rounded-none"
+                  className="mt-2 h-11 border-2 rounded-xl"
                 />
               </div>
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Waste Type</Label>
                 <Select value={wasteType} onValueChange={setWasteType}>
-                  <SelectTrigger className="mt-2 h-11 border-2 rounded-none">
+                  <SelectTrigger className="mt-2 h-11 border-2 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2 rounded-none">
+                  <SelectContent className="border-2 rounded-xl">
                     <SelectItem value="general">General Waste</SelectItem>
                     <SelectItem value="construction">Construction / Demolition</SelectItem>
                     <SelectItem value="yard">Yard / Organic Waste</SelectItem>
@@ -398,10 +398,10 @@ export default function BinsPage() {
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Preferred Provider</Label>
                 <Select value={provider} onValueChange={setProvider}>
-                  <SelectTrigger className="mt-2 h-11 border-2 rounded-none">
+                  <SelectTrigger className="mt-2 h-11 border-2 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="border-2 rounded-none">
+                  <SelectContent className="border-2 rounded-xl">
                     {PROVIDERS.map(p => (
                       <SelectItem key={p.id} value={p.id}>
                         <div>
@@ -425,7 +425,7 @@ export default function BinsPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs rounded-none border-2 border-primary/50 text-primary hover:bg-primary/10 gap-1.5"
+                  className="h-7 text-xs rounded-xl border-2 border-primary/50 text-primary hover:bg-primary/10 gap-1.5"
                   onClick={handleUseMyLocation}
                   disabled={geoLoading}
                 >
@@ -441,7 +441,7 @@ export default function BinsPage() {
                 placeholder="e.g. 4500 Construction Blvd, Houston, TX 77001"
                 value={deliveryAddress}
                 onChange={e => setDeliveryAddress(e.target.value)}
-                className="min-h-[72px] border-2 rounded-none resize-none focus-visible:ring-primary"
+                className="min-h-[72px] border-2 rounded-xl resize-none focus-visible:ring-primary"
               />
             </div>
 
@@ -456,7 +456,7 @@ export default function BinsPage() {
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full h-11 border-2 rounded-none pl-3 text-left font-normal justify-start",
+                        "w-full h-11 border-2 rounded-xl pl-3 text-left font-normal justify-start",
                         !deliveryDate && "text-muted-foreground"
                       )}
                     >
@@ -464,7 +464,7 @@ export default function BinsPage() {
                       {deliveryDate ? format(deliveryDate, "PPP") : "Select date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 border-2 rounded-none">
+                  <PopoverContent className="w-auto p-0 border-2 rounded-xl">
                     <Calendar
                       mode="single"
                       selected={deliveryDate}
@@ -486,7 +486,7 @@ export default function BinsPage() {
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-full h-11 border-2 rounded-none pl-3 text-left font-normal justify-start",
+                          "w-full h-11 border-2 rounded-xl pl-3 text-left font-normal justify-start",
                           !pickupDate && "text-muted-foreground"
                         )}
                       >
@@ -494,7 +494,7 @@ export default function BinsPage() {
                         {pickupDate ? format(pickupDate, "PPP") : "Select date (7-day default)"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 border-2 rounded-none">
+                    <PopoverContent className="w-auto p-0 border-2 rounded-xl">
                       <Calendar
                         mode="single"
                         selected={pickupDate}
@@ -517,7 +517,7 @@ export default function BinsPage() {
                 placeholder="Gate codes, placement instructions, weight restrictions, etc."
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                className="min-h-[72px] border-2 rounded-none resize-none focus-visible:ring-primary"
+                className="min-h-[72px] border-2 rounded-xl resize-none focus-visible:ring-primary"
               />
             </div>
 
@@ -543,13 +543,13 @@ export default function BinsPage() {
             <div className="flex justify-end gap-3 pt-2 border-t-2 border-border">
               <Button
                 variant="outline"
-                className="h-11 px-6 font-bold rounded-none border-2"
+                className="h-11 px-6 font-bold rounded-xl border-2"
                 onClick={() => setShowForm(false)}
               >
                 Cancel
               </Button>
               <Button
-                className="h-11 px-8 font-bold rounded-none"
+                className="h-11 px-8 font-bold rounded-xl"
                 onClick={handleSubmit}
                 disabled={createOrder.isPending}
               >
@@ -569,7 +569,7 @@ export default function BinsPage() {
             { icon: "♻️", title: "Permanent Service", desc: "Weekly front-load bin service for businesses. From 2-yard to 8-yard containers, any frequency." },
             { icon: "🏢", title: "Top Providers", desc: "Waste Management, Republic, Key Disposal, Clean Earth, and more — all matched to your location." },
           ].map((card) => (
-            <div key={card.title} className="bg-card border-2 border-border p-5">
+            <div key={card.title} className="bg-card border border-border/60 p-5">
               <div className="text-3xl mb-3">{card.icon}</div>
               <h3 className="font-bold text-base mb-1">{card.title}</h3>
               <p className="text-sm text-muted-foreground">{card.desc}</p>
@@ -604,7 +604,7 @@ export default function BinsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-card border-2 border-dashed border-border p-10 text-center">
+          <div className="bg-card border border-dashed border-border/60 p-10 text-center">
             <Trash2 className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-20" />
             <p className="font-semibold text-muted-foreground">No active bin orders</p>
             <p className="text-sm text-muted-foreground mt-1">Click "Order Bin Service" to get started.</p>
@@ -669,7 +669,7 @@ function OrderCard({ order, onCancel, cancelling, past, highlighted, cardRef }: 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-black group-hover:text-primary transition-colors">{sizeLabels[order.binSize] ?? order.binSize}</span>
             <span className="text-muted-foreground text-sm">× {order.quantity}</span>
-            <Badge variant="outline" className={cn("rounded-none border text-[10px] uppercase tracking-wider font-bold", STATUS_STYLE[order.status] || "")}>
+            <Badge variant="outline" className={cn("rounded-xl border text-[10px] uppercase tracking-wider font-bold", STATUS_STYLE[order.status] || "")}>
               {STATUS_LABEL[order.status] ?? order.status}
             </Badge>
           </div>
@@ -712,7 +712,7 @@ function OrderCard({ order, onCancel, cancelling, past, highlighted, cardRef }: 
             <Button
               variant="outline"
               size="sm"
-              className="rounded-none border-2 border-destructive/50 text-destructive hover:bg-destructive/10 font-bold h-8"
+              className="rounded-xl border-2 border-destructive/50 text-destructive hover:bg-destructive/10 font-bold h-8"
               onClick={onCancel}
               disabled={cancelling}
             >

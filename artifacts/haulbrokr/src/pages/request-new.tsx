@@ -112,7 +112,7 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 text-xs rounded-none border-2 border-primary/50 text-primary hover:bg-primary/10 gap-1.5"
+          className="h-8 text-xs rounded-xl border-2 border-primary/50 text-primary hover:bg-primary/10 gap-1.5"
         >
           <Building2 className="h-3.5 w-3.5" />
           Browse Dump Sites
@@ -120,7 +120,7 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[440px] p-0 rounded-none border-2 shadow-xl"
+        className="w-[440px] p-0 rounded-xl border-2 shadow-xl"
         align="start"
         side="bottom"
       >
@@ -140,10 +140,10 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">State</label>
               <Select value={selectedState} onValueChange={(v) => { setSelectedState(v); setSearch(""); }}>
-                <SelectTrigger className="h-9 border-2 rounded-none text-sm focus:ring-primary">
+                <SelectTrigger className="h-9 border-2 rounded-xl text-sm focus:ring-primary">
                   <SelectValue placeholder="Pick a state..." />
                 </SelectTrigger>
-                <SelectContent className="border-2 rounded-none max-h-[200px]">
+                <SelectContent className="border-2 rounded-xl max-h-[200px]">
                   {USA_STATES.filter(s => states.includes(s.abbr)).map((s) => (
                     <SelectItem key={s.abbr} value={s.abbr} className="text-sm">
                       {s.name} ({s.abbr})
@@ -155,10 +155,10 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Facility Type</label>
               <Select value={selectedType} onValueChange={setSelectedType} disabled={!selectedState}>
-                <SelectTrigger className="h-9 border-2 rounded-none text-sm focus:ring-primary">
+                <SelectTrigger className="h-9 border-2 rounded-xl text-sm focus:ring-primary">
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
-                <SelectContent className="border-2 rounded-none">
+                <SelectContent className="border-2 rounded-xl">
                   <SelectItem value="all">All Types</SelectItem>
                   {Object.entries(SITE_TYPE_LABELS).map(([key, label]) => (
                     <SelectItem key={key} value={key}>{label}</SelectItem>
@@ -175,7 +175,7 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
                 placeholder="Search by name or city..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-9 border-2 rounded-none text-sm focus-visible:ring-primary"
+                className="pl-8 h-9 border-2 rounded-xl text-sm focus-visible:ring-primary"
               />
               {search && (
                 <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -224,7 +224,7 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
                         <p className="text-xs text-muted-foreground/70 mt-0.5">{site.phone}</p>
                       )}
                     </div>
-                    <Badge className={cn("text-[10px] px-1.5 py-0 rounded-none text-white flex-shrink-0", SITE_TYPE_COLORS[site.type] || "bg-slate-500")}>
+                    <Badge className={cn("text-[10px] px-1.5 py-0 rounded-xl text-white flex-shrink-0", SITE_TYPE_COLORS[site.type] || "bg-slate-500")}>
                       {SITE_TYPE_LABELS[site.type] || site.type}
                     </Badge>
                   </div>
@@ -361,7 +361,7 @@ export default function NewRequestPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-4xl mx-auto space-y-6 page-enter pb-12">
       <div>
         <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/requests")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -373,7 +373,7 @@ export default function NewRequestPage() {
         </p>
       </div>
 
-      <div className="bg-card border-2 border-border shadow-sm p-6 md:p-8">
+      <div className="bg-card border border-border/60 shadow-sm p-6 md:p-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
@@ -394,11 +394,11 @@ export default function NewRequestPage() {
                         <FormLabel>Truck Type <span className="text-destructive">*</span></FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-12 border-2 rounded-none focus:ring-primary">
+                            <SelectTrigger className="h-12 border-2 rounded-xl focus:ring-primary">
                               <SelectValue placeholder="Select truck type" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="border-2 rounded-none max-h-[240px]">
+                          <SelectContent className="border-2 rounded-xl max-h-[240px]">
                             {Object.values(JobRequestInputTruckType).map((type) => (
                               <SelectItem key={type} value={type} className="capitalize">
                                 {type.replace(/_/g, " ")}
@@ -419,11 +419,11 @@ export default function NewRequestPage() {
                         <FormLabel>Material <span className="text-destructive">*</span></FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="h-12 border-2 rounded-none focus:ring-primary">
+                            <SelectTrigger className="h-12 border-2 rounded-xl focus:ring-primary">
                               <SelectValue placeholder="Select material" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="border-2 rounded-none">
+                          <SelectContent className="border-2 rounded-xl">
                             {Object.values(JobRequestInputMaterialType).map(type => (
                               <SelectItem key={type} value={type} className="capitalize">
                                 {type.replace('_', ' ')}
@@ -443,7 +443,7 @@ export default function NewRequestPage() {
                       <FormItem>
                         <FormLabel>Quantity (Tons) <span className="text-destructive">*</span></FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="1000" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                          <Input type="number" placeholder="1000" {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -459,7 +459,7 @@ export default function NewRequestPage() {
                       <FormItem>
                         <FormLabel>Start Time <span className="text-destructive">*</span></FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                          <Input type="time" {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary" />
                         </FormControl>
                         <FormDescription>Local time trucks should arrive on site.</FormDescription>
                         <FormMessage />
@@ -474,7 +474,7 @@ export default function NewRequestPage() {
                       <FormItem>
                         <FormLabel>Estimated Hours <span className="text-destructive">*</span></FormLabel>
                         <FormControl>
-                          <Input type="number" min="0.5" step="0.5" placeholder="8" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                          <Input type="number" min="0.5" step="0.5" placeholder="8" {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -495,7 +495,7 @@ export default function NewRequestPage() {
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "h-12 border-2 rounded-none pl-3 text-left font-normal",
+                                  "h-12 border-2 rounded-xl pl-3 text-left font-normal",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
@@ -504,7 +504,7 @@ export default function NewRequestPage() {
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0 border-2 rounded-none" align="start">
+                          <PopoverContent className="w-auto p-0 border-2 rounded-xl" align="start">
                             <Calendar
                               mode="single"
                               selected={field.value}
@@ -526,7 +526,7 @@ export default function NewRequestPage() {
                       <FormItem>
                         <FormLabel>Trucks Needed <span className="text-destructive">*</span></FormLabel>
                         <FormControl>
-                          <Input type="number" min="1" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                          <Input type="number" min="1" {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -543,7 +543,7 @@ export default function NewRequestPage() {
                       <FormControl>
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                          <Input type="number" placeholder="120" {...field} className="h-12 pl-8 border-2 rounded-none focus-visible:ring-primary" />
+                          <Input type="number" placeholder="120" {...field} className="h-12 pl-8 border-2 rounded-xl focus-visible:ring-primary" />
                         </div>
                       </FormControl>
                       <FormDescription>Leave blank to accept open bids.</FormDescription>
@@ -575,7 +575,7 @@ export default function NewRequestPage() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-8 text-xs rounded-none border-2 border-blue-500/50 text-blue-600 hover:bg-blue-50 gap-1.5"
+                            className="h-8 text-xs rounded-xl border-2 border-blue-500/50 text-blue-600 hover:bg-blue-50 gap-1.5"
                             onClick={handleUseMyLocation}
                             disabled={geoLoading}
                           >
@@ -595,7 +595,7 @@ export default function NewRequestPage() {
                       <FormControl>
                         <Textarea
                           placeholder="e.g. Acme Quarry, 123 Main St, Houston, TX 77001"
-                          className="min-h-[80px] border-2 rounded-none focus-visible:ring-primary resize-none"
+                          className="min-h-[80px] border-2 rounded-xl focus-visible:ring-primary resize-none"
                           {...field}
                         />
                       </FormControl>
@@ -622,7 +622,7 @@ export default function NewRequestPage() {
                       <FormControl>
                         <Textarea
                           placeholder="e.g. Apex Landfill, 4250 Losee Rd, North Las Vegas, NV 89030"
-                          className="min-h-[80px] border-2 rounded-none focus-visible:ring-primary resize-none"
+                          className="min-h-[80px] border-2 rounded-xl focus-visible:ring-primary resize-none"
                           {...field}
                         />
                       </FormControl>
@@ -640,7 +640,7 @@ export default function NewRequestPage() {
                       <FormControl>
                         <Textarea
                           placeholder="Site access codes, specific truck types needed, etc."
-                          className="min-h-[80px] border-2 rounded-none focus-visible:ring-primary resize-none"
+                          className="min-h-[80px] border-2 rounded-xl focus-visible:ring-primary resize-none"
                           {...field}
                         />
                       </FormControl>
@@ -655,14 +655,14 @@ export default function NewRequestPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="h-12 px-6 font-bold rounded-none border-2"
+                className="h-12 px-6 font-bold rounded-xl border-2"
                 onClick={() => setLocation("/requests")}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="h-12 px-8 font-bold rounded-none"
+                className="h-12 px-8 font-bold rounded-xl"
                 disabled={createRequest.isPending}
                 data-testid="btn-submit-request"
               >
