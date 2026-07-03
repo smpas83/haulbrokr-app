@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 
 import SupportPage from "./pages/support";
 import PrivacyPage from "./pages/privacy";
+import { ThemeProvider } from "@/theme";
 
 const AuthShell = lazy(() => import("./AuthShell"));
 
@@ -33,9 +34,11 @@ function PublicRouter() {
 
 function App() {
   return (
-    <WouterRouter base={basePath}>
-      <PublicRouter />
-    </WouterRouter>
+    <ThemeProvider>
+      <WouterRouter base={basePath}>
+        <PublicRouter />
+      </WouterRouter>
+    </ThemeProvider>
   );
 }
 export default App;
