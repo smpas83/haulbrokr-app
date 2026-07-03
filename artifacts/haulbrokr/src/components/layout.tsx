@@ -99,6 +99,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const isCustomer = profile?.role === "customer";
   const isProvider = profile?.role === "provider";
+  const isDriver = profile?.role === "driver";
 
   // HAULBROKR staff are identified by an @haulbrokr.com email address. Admin
   // surfaces are reserved for staff only, so we require BOTH the backend admin
@@ -113,13 +114,13 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
-    { href: "/requests", label: isCustomer ? "My Requests" : "Job Board", icon: ClipboardList, show: true },
+    { href: "/requests", label: isCustomer ? "My Requests" : isDriver ? "Dispatch Board" : "Job Board", icon: ClipboardList, show: !isDriver },
     { href: "/fleet", label: "My Fleet", icon: Truck, show: isProvider },
-    { href: "/jobs", label: "Active Jobs", icon: Briefcase, show: true },
+    { href: "/jobs", label: isDriver ? "Load Board" : "Active Jobs", icon: Briefcase, show: true },
     { href: "/projects", label: "Projects", icon: FolderOpen, show: isCustomer },
     { href: "/company", label: "Company", icon: Building2, show: isCustomer || isProvider },
     { href: "/factoring", label: "Get Paid Early", icon: DollarSign, show: isProvider },
-    { href: "/bins", label: "Bin Rental", icon: Trash2, show: true },
+    { href: "/bins", label: "Bin Rental", icon: Trash2, show: !isDriver },
     // Integrations and Admin are staff-only (HAULBROKR employees).
     { href: "/integrations", label: "Integrations", icon: Plug, show: isStaff },
     { href: "/admin", label: "Admin", icon: ShieldCheck, show: isStaff },

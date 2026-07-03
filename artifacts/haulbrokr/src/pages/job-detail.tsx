@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { storagePublicUrl, uploadFileToStorage } from "@/lib/storageUpload";
+import DriverJobDetail from "@/pages/driver/DriverJobDetail";
 
 async function apiFetch(path: string, options?: RequestInit) {
   const url = path.startsWith("/api") ? path : `/api${path.startsWith("/") ? path : `/${path}`}`;
@@ -1243,6 +1244,14 @@ export default function JobDetailPage() {
       <div className="max-w-4xl mx-auto text-center py-20">
         <h2 className="text-2xl font-bold">Job not found</h2>
         <Button className="mt-4" onClick={() => setLocation("/jobs")}>Back to Jobs</Button>
+      </div>
+    );
+  }
+
+  if (isDriver) {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <DriverJobDetail jobId={id} />
       </div>
     );
   }
