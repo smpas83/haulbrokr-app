@@ -8,14 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useGetMyProfile, useListJobs } from "@workspace/api-client-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { apiFetch } from "@/lib/apiFetch";
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 border-amber-200",
-  approved: "bg-blue-100 text-blue-800 border-blue-200",
-  funded: "bg-green-100 text-green-800 border-green-200",
-  settled: "bg-gray-100 text-gray-800 border-gray-200",
-  denied: "bg-red-100 text-red-800 border-red-200",
-};
+import { StatusBadge } from "@/components/shared/status-badge";
+import { ProgressBar } from "@/components/shared/progress-bar";
 
 const STATUS_ICON: Record<string, any> = {
   pending: Clock,
@@ -148,7 +142,7 @@ export default function FactoringPage() {
                       <p className="text-sm text-muted-foreground">Advanced ${r.netAmount.toFixed(2)} (fee: ${r.feeAmount.toFixed(2)}) · {format(new Date(r.requestedAt), "MMM d, yyyy")}</p>
                     </div>
                   </div>
-                  <Badge className={`rounded-none border font-bold uppercase text-xs px-3 ${STATUS_COLORS[r.status]}`}>{r.status}</Badge>
+                  <StatusBadge status={r.status} domain="factoring" size="md" />
                 </div>
               );
             })}

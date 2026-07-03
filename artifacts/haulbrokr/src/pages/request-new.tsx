@@ -35,6 +35,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useReverseGeocode } from "@/hooks/use-reverse-geocode";
 import { cn } from "@/lib/utils";
 
 const USA_STATES = [
@@ -263,41 +264,6 @@ const formSchema = z.object({
   budgetPerHour: z.coerce.number().positive().optional().or(z.literal("")),
   notes: z.string().optional(),
 });
-
-function useReverseGeocode() {
-  const [geoLoading, setGeoLoading] = useState(false);
-
-  const getAddressFromLocation = useCallback(async (): Promise<string | null> => {
-    if (!navigator.geolocation) return null;
-    setGeoLoading(true);
-    try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-      );
-      const { latitude, longitude } = pos.coords;
-      const resp = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const data = await resp.json();
-      const a = data.address || {};
-      const parts = [
-        a.house_number,
-        a.road,
-        a.city || a.town || a.village || a.county,
-        a.state,
-        a.postcode,
-      ].filter(Boolean);
-      return parts.join(", ") || data.display_name || null;
-    } catch {
-      return null;
-    } finally {
-      setGeoLoading(false);
-    }
-  }, []);
-
-  return { getAddressFromLocation, geoLoading };
-}
 
 export default function NewRequestPage() {
   const [, setLocation] = useLocation();

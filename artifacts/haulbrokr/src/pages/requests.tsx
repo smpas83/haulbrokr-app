@@ -6,20 +6,9 @@ import { useListRequests, useGetMyProfile, ListRequestsStatus, JobRequestInputMa
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const STATUS_COLORS: Record<string, string> = {
-  open: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
-  bid_received: "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800",
-  bidding: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
-  awarded: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
-  accepted: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
-  in_progress: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
-  completed: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
-  cancelled: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-};
+import { StatusBadge } from "@/components/shared/status-badge";
 
 const MATERIAL_LABELS: Record<string, string> = {
   dirt: "Dirt",
@@ -190,9 +179,7 @@ export default function RequestsPage() {
                     <h3 className="text-lg font-black">
                       {request.quantityTons} Tons — {MATERIAL_LABELS[request.materialType] || request.materialType}
                     </h3>
-                    <Badge variant="outline" className={`rounded-none border font-bold uppercase text-[10px] tracking-wider ${STATUS_COLORS[request.status] || ""}`}>
-                      {request.status.replace("_", " ")}
-                    </Badge>
+                    <StatusBadge status={request.status} domain="request" className="border-2" />
                   </div>
 
                   {!isCustomer && request.customerCompany && (

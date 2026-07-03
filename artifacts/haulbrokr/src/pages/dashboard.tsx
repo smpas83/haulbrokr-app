@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 import { format, subDays, parseISO } from "date-fns";
 import {
-  ArrowRight, Activity, Plus, Truck, AlertCircle,
-  CircleCheck, CheckCircle2, TrendingUp,
-  ShieldAlert, ArrowUpRight, ClipboardList, Briefcase
+  ArrowRight, Plus, Truck, AlertCircle,
+  CircleCheck, CheckCircle2, TrendingUp, Activity, ArrowUpRight,
+  ShieldAlert, ClipboardList, Briefcase
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -20,35 +20,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/shared/stat-card";
+import { ActivityFeed } from "@/components/shared/activity-feed";
+import { PageHeader } from "@/components/shared/page-header";
 
 const AMBER = "#e9a800";
 const NAVY = "#1c2333";
 const CHART_COLORS = [AMBER, "#3b82f6", "#22c55e", "#ef4444", "#8b5cf6", "#f97316"];
-
-function StatCard({
-  title, value, icon: Icon, accent, sub
-}: {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  accent?: boolean;
-  sub?: string;
-}) {
-  return (
-    <Card className={`rounded-none border-2 ${accent ? "border-primary/30 bg-primary/5" : ""}`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className={`text-sm font-semibold uppercase tracking-wider ${accent ? "text-primary" : "text-muted-foreground"}`}>
-          {title}
-        </CardTitle>
-        <Icon className={`h-4 w-4 ${accent ? "text-primary" : "text-muted-foreground"}`} />
-      </CardHeader>
-      <CardContent>
-        <div className={`text-3xl font-black tracking-tight ${accent ? "text-primary" : ""}`}>{value}</div>
-        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-      </CardContent>
-    </Card>
-  );
-}
 
 const CustomBarTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -296,77 +274,10 @@ export default function DashboardPage() {
             <CardDescription>Latest actions on your account</CardDescription>
           </CardHeader>
           <CardContent>
-            {activityLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-              </div>
-            ) : activities && activities.length > 0 ? (
-              <div className="space-y-1">
-                {activities.slice(0, 8).map((activity) => {
-                  const isFailure = activity.type === "payment_failed" || activity.type === "application_rejected";
-                  // Recoverable: bank needs the customer to confirm their card. Not
-                  // a hard failure, so it gets its own amber treatment, not red.
-                  const isActionNeeded = activity.type === "payment_requires_action" || activity.type === "payout_delayed";
-                  const isApproved = activity.type === "application_approved";
-                  // Bin order status updates (confirmed/delivered/picked_up/cancelled)
-                  // deep-link back to the order on the Bins page via relatedBinOrderId.
-                  const isBin = activity.type.startsWith("bin_");
-                  const dotClass = isFailure
-                    ? "bg-destructive"
-                    : isActionNeeded
-                      ? "bg-amber-500"
-                      : isApproved
-                        ? "bg-green-500"
-                        : isBin
-                          ? "bg-violet-500"
-                          : "bg-primary";
-                  const textClass = isFailure
-                    ? "text-destructive"
-                    : isActionNeeded
-                      ? "text-amber-600 dark:text-amber-400"
-                      : isApproved
-                        ? "text-green-600 dark:text-green-400"
-                        : "";
-                  const binHref = isBin && activity.relatedBinOrderId != null
-                    ? `/bins?order=${encodeURIComponent(activity.relatedBinOrderId)}`
-                    : null;
-                  const jobHref = (isFailure || isActionNeeded) && activity.relatedId != null
-                    ? `/jobs/${activity.relatedId}`
-                    : null;
-                  const href = binHref ?? jobHref;
-                  const isLink = href != null;
-                  const inner = (
-                    <>
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium leading-tight truncate ${textClass}`}>{activity.description}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {format(new Date(activity.createdAt), "MMM d, h:mm a")}
-                        </p>
-                      </div>
-                      {isLink && (
-                        <ArrowUpRight className={`h-4 w-4 flex-shrink-0 ${isFailure ? "text-destructive" : isActionNeeded ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} />
-                      )}
-                    </>
-                  );
-                  const className = "flex items-center gap-4 py-2.5 px-3 hover:bg-muted/40 transition-colors border-b border-border/40 last:border-0";
-                  return isLink ? (
-                    <Link key={activity.id} href={href} className={className}>
-                      {inner}
-                    </Link>
-                  ) : (
-                    <div key={activity.id} className={className}>
-                      {inner}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                <Activity className="mx-auto h-8 w-8 mb-3 opacity-20" />
-                <p className="text-sm">No recent activity</p>
-              </div>
-            )}
+            <ActivityFeed
+              activities={activities}
+              isLoading={activityLoading}
+            />
           </CardContent>
         </Card>
 

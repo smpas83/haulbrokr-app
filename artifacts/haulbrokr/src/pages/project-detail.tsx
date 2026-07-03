@@ -16,6 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/apiFetch";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { ProgressBar } from "@/components/shared/progress-bar";
 
 function ForemanAssignments({ projectId }: { projectId: number }) {
   const { toast } = useToast();
@@ -111,33 +113,20 @@ function ForemanAssignments({ projectId }: { projectId: number }) {
   );
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  active: "bg-green-100 text-green-800 border-green-200",
-  on_hold: "bg-amber-100 text-amber-800 border-amber-200",
-  completed: "bg-gray-100 text-gray-800 border-gray-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
-};
-
 function BudgetProgress({ spent, total }: { spent: number; total: number | null }) {
   if (!total) return null;
   const pct = Math.min((spent / total) * 100, 100);
   const remaining = total - spent;
-  const color = pct > 90 ? "bg-red-500" : pct > 70 ? "bg-amber-500" : "bg-green-500";
   return (
-    <div className="bg-muted/30 p-6 border-2 border-border space-y-4">
-      <h3 className="font-bold uppercase tracking-wider text-sm">Budget Tracker</h3>
+    <div className="space-y-4 border-2 border-border bg-muted/30 p-6">
+      <h3 className="text-sm font-bold uppercase tracking-wider">Budget Tracker</h3>
       <div className="grid grid-cols-3 gap-4 text-center">
-        <div><p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Budget</p><p className="text-2xl font-black">${total.toLocaleString()}</p></div>
-        <div><p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Spent</p><p className="text-2xl font-black text-primary">${spent.toLocaleString()}</p></div>
-        <div><p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Remaining</p><p className={`text-2xl font-black ${remaining < 0 ? "text-red-500" : "text-green-600"}`}>${remaining.toLocaleString()}</p></div>
+        <div><p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Total Budget</p><p className="text-2xl font-black">${total.toLocaleString()}</p></div>
+        <div><p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Spent</p><p className="text-2xl font-black text-primary">${spent.toLocaleString()}</p></div>
+        <div><p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Remaining</p><p className={`text-2xl font-black ${remaining < 0 ? "text-red-500" : "text-green-600"}`}>${remaining.toLocaleString()}</p></div>
       </div>
-      <div>
-        <div className="flex justify-between text-xs mb-1 font-medium">
-          <span>{pct.toFixed(1)}% used</span><span>{(100 - pct).toFixed(1)}% left</span>
-        </div>
-        <div className="h-3 bg-muted rounded-full overflow-hidden"><div className={`h-full ${color} transition-all`} style={{ width: `${pct}%` }} /></div>
-      </div>
-      {pct > 90 && <p className="text-sm font-bold text-red-600 flex items-center gap-2"><AlertCircle className="h-4 w-4" />Budget nearly exhausted</p>}
+      <ProgressBar value={spent} max={total} showLabel labelLeft={`${pct.toFixed(1)}% used`} labelRight={`${(100 - pct).toFixed(1)}% left`} />
+      {pct > 90 && <p className="flex items-center gap-2 text-sm font-bold text-red-600"><AlertCircle className="h-4 w-4" />Budget nearly exhausted</p>}
     </div>
   );
 }
@@ -208,7 +197,7 @@ export default function ProjectDetailPage() {
                 </SelectContent>
               </Select>
             ) : (
-              <Badge className={`rounded-none border-2 font-bold uppercase text-xs px-3 py-1 ${STATUS_COLORS[project.status]}`}>{project.status.replace("_"," ")}</Badge>
+              <StatusBadge status={project.status} domain="project" size="md" className="border-2 px-3 py-1" />
             )}
             {editing ? (
               <div className="flex gap-2">

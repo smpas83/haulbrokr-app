@@ -142,3 +142,31 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Landing page design tokens (marketing surfaces) */
+@layer utilities {
+  .industrial-panel {
+    @apply relative overflow-hidden border border-primary/20 bg-black/50;
+  }
+  .industrial-panel::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent;
+  }
+  .neon-orange {
+    box-shadow: 0 0 24px hsl(var(--primary) / 0.35);
+  }
+  .text-haulbrokr-glow {
+    text-shadow: 0 0 40px hsl(var(--primary) / 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

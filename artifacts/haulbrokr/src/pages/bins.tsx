@@ -17,18 +17,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/apiFetch";
+import { useReverseGeocode } from "@/hooks/use-reverse-geocode";
+import { StatusBadge } from "@/components/shared/status-badge";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const resp = await fetch(`${BASE}/api${path}`, {
-    ...options,
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-  });
-  if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
-  return resp.json();
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,59 +71,6 @@ const PROVIDERS = [
   { id: "casella", label: "Casella Waste", desc: "Northeast & Mid-Atlantic" },
   { id: "advanced", label: "Advanced Disposal", desc: "Southeast US" },
 ];
-
-const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-  delivered: "bg-green-100 text-green-800 border-green-200",
-  picked_up: "bg-gray-100 text-gray-700 border-gray-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "Pending Confirmation",
-  confirmed: "Confirmed",
-  delivered: "Delivered",
-  picked_up: "Picked Up",
-  cancelled: "Cancelled",
-};
-
-// ── Location Hook ─────────────────────────────────────────────────────────────
-
-function useReverseGeocode() {
-  const [loading, setLoading] = useState(false);
-
-  const getAddress = useCallback(async (): Promise<string | null> => {
-    if (!navigator.geolocation) return null;
-    setLoading(true);
-    try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-      );
-      const { latitude, longitude } = pos.coords;
-      const resp = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const data = await resp.json();
-      const a = data.address || {};
-      const parts = [
-        a.house_number,
-        a.road,
-        a.city || a.town || a.village || a.county,
-        a.state,
-        a.postcode,
-      ].filter(Boolean);
-      return parts.join(", ") || data.display_name || null;
-    } catch {
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  return { getAddress, loading };
-}
 
 // ── Bin Card ──────────────────────────────────────────────────────────────────
 
@@ -669,9 +609,7 @@ function OrderCard({ order, onCancel, cancelling, past, highlighted, cardRef }: 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-black group-hover:text-primary transition-colors">{sizeLabels[order.binSize] ?? order.binSize}</span>
             <span className="text-muted-foreground text-sm">× {order.quantity}</span>
-            <Badge variant="outline" className={cn("rounded-none border text-[10px] uppercase tracking-wider font-bold", STATUS_STYLE[order.status] || "")}>
-              {STATUS_LABEL[order.status] ?? order.status}
-            </Badge>
+            <StatusBadge status={order.status} domain="bin" />
           </div>
 
           <div className="flex items-start gap-1.5 text-sm text-muted-foreground">
