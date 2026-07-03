@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   Platform, Pressable, RefreshControl, ScrollView, StyleSheet,
   Switch, Text, View,
@@ -15,10 +15,15 @@ import Animated, {
 import { LocationFilterModal } from "@/components/LocationFilterModal";
 import { STATUS_COLOR } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
+import type { Job } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useLiveJobs, useLiveRequests } from "@/hooks/useLiveApi";
+import { useJobCoordinates } from "@/hooks/useJobCoordinates";
+import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
+import { distanceMiles } from "@/lib/geocode";
 
-// ── Real DFW coordinates for each seed job ──────────────────────────
-const JOB_COORDS: Record<string, { latitude: number; longitude: number }> = {
+// Demo fallback coords (legacy seed data only)
+const DEMO_JOB_COORDS: Record<string, { latitude: number; longitude: number }> = {
   "1": { latitude: 32.7767, longitude: -96.7970 }, // Dallas — Industrial Blvd
   "2": { latitude: 32.7555, longitude: -97.3308 }, // Fort Worth — Commerce St
   "3": { latitude: 33.1976, longitude: -96.6397 }, // McKinney — US-75
@@ -27,6 +32,8 @@ const JOB_COORDS: Record<string, { latitude: number; longitude: number }> = {
   "6": { latitude: 33.1032, longitude: -96.6706 }, // Allen — delivery area
   "7": { latitude: 32.3868, longitude: -96.8448 }, // Waxahachie — farm
 };
+
+const OPEN_STATUSES = new Set(["open", "bidding", "bid_received"]);
 
 // ── Initial region — wide DFW view ──────────────────────────────────
 const DFW_REGION: Region = {
@@ -88,8 +95,47 @@ type FilterType = "all" | "open" | "nearby";
 export default function MapScreen() {
   const colors  = useColors();
   const insets  = useSafeAreaInsets();
-  const { jobs, profile, isOnline, setIsOnline,
+  const { profile, isOnline, setIsOnline,
           userLocation, setUserLocation, searchRadius, setSearchRadius } = useApp();
+  const isProvider = profile.role === "provider";
+
+  const { data: liveJobsRaw, refetch: refetchJobs, isFetching: fetchingJobs } = useLiveJobs();
+  const {
+    data: liveRequestsRaw,
+    refetch: refetchRequests,
+    isFetching: fetchingRequests,
+  } = useLiveRequests({ mine: true, enabled: !isProvider });
+  const {
+    data: liveOpenRequestsRaw,
+    refetch: refetchOpenRequests,
+    isFetching: fetchingOpenRequests,
+  } = useLiveRequests({ mine: false, enabled: isProvider });
+
+  const jobs = useMemo<Job[]>(() => {
+    const fromJobs = Array.isArray(liveJobsRaw)
+      ? (liveJobsRaw as LiveJob[]).map(liveJobToViewJob)
+      : [];
+    if (isProvider) {
+      const fromOpenRequests = Array.isArray(liveOpenRequestsRaw)
+        ? (liveOpenRequestsRaw as LiveRequest[])
+            .filter((r) => OPEN_STATUSES.has(r.status))
+            .map(liveRequestToViewJob)
+        : [];
+      return [...fromOpenRequests, ...fromJobs];
+    }
+    const fromRequests = Array.isArray(liveRequestsRaw)
+      ? (liveRequestsRaw as LiveRequest[])
+          .filter((r) => OPEN_STATUSES.has(r.status))
+          .map(liveRequestToViewJob)
+      : [];
+    return [...fromRequests, ...fromJobs];
+  }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider]);
+
+  const { coordsByJobId, loading: geocoding } = useJobCoordinates(jobs);
+
+  const getCoord = useCallback((job: Job) => {
+    return coordsByJobId[job.id] ?? DEMO_JOB_COORDS[job.id] ?? null;
+  }, [coordsByJobId]);
 
   const [selectedPin,      setSelectedPin]      = useState<string | null>(null);
   const [activeFilter,     setActiveFilter]      = useState<FilterType>("all");
@@ -104,22 +150,43 @@ export default function MapScreen() {
   const [showSearchHere,   setShowSearchHere]    = useState(false);
   const [refreshing,       setRefreshing]        = useState(false);
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setVisibleRegion(pendingRegion ?? DFW_REGION);
-    setPendingRegion(null);
-    setShowSearchHere(false);
-    setSelectedPin(null);
-    setTimeout(() => setRefreshing(false), 600);
-  }, [pendingRegion]);
+    try {
+      await Promise.all([refetchJobs(), refetchRequests(), refetchOpenRequests()]);
+      setVisibleRegion(pendingRegion ?? DFW_REGION);
+      setPendingRegion(null);
+      setShowSearchHere(false);
+      setSelectedPin(null);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [pendingRegion, refetchJobs, refetchRequests, refetchOpenRequests]);
 
   const mapRef = useRef<MapView>(null);
+  const didFitRef = useRef(false);
   // Prevent the initial map animation from triggering "Search this area"
   const mapReadyRef = useRef(false);
   useEffect(() => {
     const t = setTimeout(() => { mapReadyRef.current = true; }, 700);
     return () => clearTimeout(t);
   }, []);
+
+  // Pan to the first geocoded job once live data loads.
+  useEffect(() => {
+    if (didFitRef.current || jobs.length === 0) return;
+    const coord = jobs.map((j) => getCoord(j)).find(Boolean);
+    if (!coord || !mapRef.current) return;
+    didFitRef.current = true;
+    const region = {
+      latitude: coord.latitude,
+      longitude: coord.longitude,
+      latitudeDelta: 0.45,
+      longitudeDelta: 0.45,
+    };
+    mapRef.current.animateToRegion(region, 600);
+    setVisibleRegion(region);
+  }, [coordsByJobId, jobs, getCoord]);
 
   const cycleMapType = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -131,19 +198,24 @@ export default function MapScreen() {
 
   const isProvider = profile.role === "provider";
   const topPad     = Platform.OS === "web" ? 67 : insets.top;
-  const openCount  = jobs.filter((j) => j.status === "open").length;
+  const openCount  = jobs.filter((j) => j.status === "open" || j.status === "bidding").length;
   const isSurge    = openCount >= 3;
+  const isLoading  = fetchingJobs || fetchingRequests || fetchingOpenRequests || geocoding;
 
   // Jobs that match the active filter type
   const typeFiltered = jobs.filter((j) => {
-    if (activeFilter === "open")   return j.status === "open";
-    if (activeFilter === "nearby") return j.distanceToStart < searchRadius;
+    if (activeFilter === "open") return OPEN_STATUSES.has(j.status);
+    if (activeFilter === "nearby") {
+      const coord = getCoord(j);
+      if (!coord) return false;
+      return distanceMiles(coord, { latitude: DFW_REGION.latitude, longitude: DFW_REGION.longitude }) < searchRadius;
+    }
     return j.status !== "completed" && j.status !== "cancelled";
   });
 
   // Jobs whose pin falls inside the current committed region
   const visibleJobs = typeFiltered.filter((j) => {
-    const coord = JOB_COORDS[j.id];
+    const coord = getCoord(j);
     return coord ? isInRegion(coord, visibleRegion) : false;
   });
 
@@ -315,7 +387,7 @@ export default function MapScreen() {
         >
           {/* Job markers */}
           {typeFiltered.map((job) => {
-            const coord = JOB_COORDS[job.id];
+            const coord = getCoord(job);
             if (!coord) return null;
             const pinColor = STATUS_COLOR[job.status] ?? colors.primary;
             return (
@@ -546,20 +618,32 @@ export default function MapScreen() {
               }]}>
                 {visibleJobs.length} JOBS IN VIEW
               </Text>
-              {visibleJobs.length === 0 ? (
+              {isLoading ? (
+                <View style={styles.emptyState}>
+                  <Feather name="loader" size={28} color={colors.mutedForeground} />
+                  <Text style={[styles.emptyTitle, {
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_500Medium",
+                  }]}>
+                    Loading jobs on map…
+                  </Text>
+                </View>
+              ) : visibleJobs.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Feather name="map" size={28} color={colors.mutedForeground} />
                   <Text style={[styles.emptyTitle, {
                     color:      colors.mutedForeground,
                     fontFamily: "Inter_500Medium",
                   }]}>
-                    No jobs in this area
+                    {jobs.length === 0 ? "No open loads right now" : "No jobs in this area"}
                   </Text>
                   <Text style={[styles.emptySub, {
                     color:      colors.mutedForeground,
                     fontFamily: "Inter_400Regular",
                   }]}>
-                    Pan the map and tap "Search this area"
+                    {jobs.length === 0
+                      ? "Post a load from the Loads tab or check back soon"
+                      : "Pan the map to the pickup location and tap \"Search this area\""}
                   </Text>
                 </View>
               ) : (

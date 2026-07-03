@@ -90,7 +90,7 @@ export default function JobsScreen() {
     if (isProvider) {
       const fromOpenRequests = Array.isArray(liveOpenRequestsRaw)
         ? (liveOpenRequestsRaw as LiveRequest[])
-            .filter((r) => r.status === "open" || r.status === "bidding")
+            .filter((r) => r.status === "open" || r.status === "bidding" || r.status === "bid_received")
             .map(liveRequestToViewJob)
         : [];
       return [...fromOpenRequests, ...fromJobs];
@@ -101,7 +101,7 @@ export default function JobsScreen() {
     const fromRequests =
       Array.isArray(liveRequestsRaw)
         ? (liveRequestsRaw as LiveRequest[])
-            .filter((r) => r.status === "open" || r.status === "bidding")
+            .filter((r) => r.status === "open" || r.status === "bidding" || r.status === "bid_received")
             .map(liveRequestToViewJob)
         : [];
     return [...fromRequests, ...fromJobs];
