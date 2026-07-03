@@ -8,6 +8,7 @@ const h = vi.hoisted(() => ({
   tickets: [] as Record<string, unknown>[],
   evidence: [] as Record<string, unknown>[],
   timeline: [] as Record<string, unknown>[],
+  activity: [] as Record<string, unknown>[],
   nextTicketId: 1,
   nextEvidenceId: 1,
   nextTimelineId: 1,
@@ -71,6 +72,7 @@ vi.mock("@workspace/db", () => {
           return Promise.resolve(undefined);
         }
         if (table === activityTable) {
+          h.activity.push(vals);
           return Promise.resolve(undefined);
         }
         return Promise.resolve(undefined);
@@ -97,6 +99,7 @@ vi.mock("@workspace/db", () => {
         }),
       }),
     }),
+    transaction: async (callback: (tx: unknown) => unknown) => callback(db),
   };
 
   return {
@@ -133,6 +136,7 @@ vi.mock("../lib/access", () => ({
 import jobsRouter from "./jobs";
 import ticketsRouter from "./tickets";
 import evidenceRouter from "./evidence";
+import driverEventsRouter from "./driver-events";
 
 function makeApp(): Express {
   const app = express();
@@ -140,6 +144,7 @@ function makeApp(): Express {
   app.use(jobsRouter);
   app.use(ticketsRouter);
   app.use(evidenceRouter);
+  app.use(driverEventsRouter);
   return app;
 }
 
@@ -182,6 +187,7 @@ beforeEach(() => {
   }];
   h.evidence = [];
   h.timeline = [];
+  h.activity = [];
   h.nextTicketId = 2;
   h.nextEvidenceId = 1;
   h.nextTimelineId = 1;
@@ -251,5 +257,66 @@ describe("Driver field operations workflow", () => {
 
     const complete = await request(app).patch("/jobs/9").send({ status: "completed" });
     expect(complete.status).toBe(403);
+  });
+
+  it("driver issues a ticket QR code and the customer verifies it", async () => {
+    const app = makeApp();
+
+    h.profile = { id: 30, role: "driver", companyName: "Haul Co", contactName: "Dave" };
+    const issued = await request(app).post("/tickets/1/qr");
+    expect(issued.status).toBe(200);
+    expect(issued.body.token).toEqual(expect.any(String));
+    expect(h.tickets[0].qrNonce).toBeTruthy();
+
+    h.profile = { id: 10, role: "customer", companyName: "Customer Co", contactName: "Carol" };
+    const verified = await request(app)
+      .post("/tickets/verify")
+      .send({ token: issued.body.token });
+
+    expect(verified.status).toBe(200);
+    expect(verified.body.ok).toBe(true);
+    expect(h.tickets[0]).toMatchObject({
+      status: "verified",
+      verifiedByProfileId: 10,
+      qrNonce: null,
+      qrExpiresAt: null,
+    });
+  });
+
+  it("driver event workflow rejects incomplete evidence and stores a pickup event", async () => {
+    const app = makeApp();
+
+    const rejected = await request(app)
+      .post("/jobs/9/driver-events")
+      .send({ eventType: "pickup", files: [{ role: "loaded_truck", url: "https://example.com/loaded.jpg" }] });
+    expect(rejected.status).toBe(422);
+    expect(rejected.body.missing).toContain("scale_ticket");
+    expect(h.activity.some((a) => a.type === "driver_event_rejected")).toBe(true);
+
+    const accepted = await request(app)
+      .post("/jobs/9/driver-events")
+      .send({
+        eventType: "pickup",
+        weightTons: 18.5,
+        loadNumber: 2,
+        files: [
+          { role: "loaded_truck", url: "https://example.com/loaded.jpg" },
+          { role: "scale_ticket", url: "https://example.com/scale-ticket.jpg" },
+        ],
+      });
+
+    expect(accepted.status).toBe(201);
+    expect(accepted.body.eventType).toBe("pickup");
+    expect(accepted.body.evidence).toHaveLength(2);
+    expect(accepted.body.ticketId).toBe(2);
+    expect(h.tickets[1]).toMatchObject({
+      jobId: 9,
+      driverProfileId: 30,
+      loadNumber: 2,
+      weightTons: "18.5",
+      photoUrl: "https://example.com/scale-ticket.jpg",
+    });
+    expect(h.timeline.some((t) => t.status === "loaded")).toBe(true);
+    expect(h.timeline.some((t) => t.status === "ticket_uploaded")).toBe(true);
   });
 });

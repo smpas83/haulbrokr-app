@@ -15,6 +15,9 @@ pnpm --filter @workspace/haulbrokr run test
 echo "==> Mobile tests"
 pnpm --filter @workspace/haulbrokr-mobile run test
 
+echo "==> Deployment readiness"
+SKIP_ENDPOINT_CHECKS="${SKIP_ENDPOINT_CHECKS:-1}" pnpm run verify:deployment
+
 echo "==> API production build"
 pnpm --filter @workspace/api-server run build
 

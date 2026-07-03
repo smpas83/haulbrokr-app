@@ -78,6 +78,26 @@ describe("validateProductionEnv", () => {
     expect(issues.some((issue) => issue.variable === "PAYMENTS_MOCK_MODE")).toBe(true);
   });
 
+  it("rejects Stripe test keys in production", () => {
+    const issues = collectProductionEnvIssues({
+      ...VALID_PRODUCTION_ENV,
+      STRIPE_SECRET_KEY: "sk_test_stripe_secret",
+      STRIPE_PUBLISHABLE_KEY: "pk_test_stripe_publishable",
+    });
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          variable: "STRIPE_SECRET_KEY",
+          message: expect.stringMatching(/sk_live_/),
+        }),
+        expect.objectContaining({
+          variable: "STRIPE_PUBLISHABLE_KEY",
+          message: expect.stringMatching(/pk_live_/),
+        }),
+      ]),
+    );
+  });
+
   it("rejects Neon URLs without sslmode=require", () => {
     const issues = collectProductionEnvIssues({
       ...VALID_PRODUCTION_ENV,

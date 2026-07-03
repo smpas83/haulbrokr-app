@@ -1,10 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import {
   Alert,
-  Animated,
   Linking,
   Platform,
   Pressable,
@@ -18,10 +17,57 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { ACCENT } from "@/constants/theme";
-import { useLiveJobs, useLiveRequests, useUpdateJob } from "@/hooks/useLiveApi";
+import { useJobStatusUpdates, useLiveJobs, useLiveRequests, useUpdateJob, type JobStatusUpdate } from "@/hooks/useLiveApi";
 import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
+import MapView, { Marker, Polyline, type Region } from "@/lib/maps";
 
-const TRUCK_EMOJI = "🚛";
+type Coordinate = { latitude: number; longitude: number };
+
+const DEFAULT_REGION: Region = {
+  latitude: 32.7767,
+  longitude: -96.797,
+  latitudeDelta: 0.35,
+  longitudeDelta: 0.35,
+};
+
+function parseGpsNote(note?: string | null): Coordinate | null {
+  const match = note?.match(/gps:\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
+  if (!match) return null;
+  const latitude = Number(match[1]);
+  const longitude = Number(match[2]);
+  return Number.isFinite(latitude) && Number.isFinite(longitude)
+    ? { latitude, longitude }
+    : null;
+}
+
+function latestDriverCoordinate(updates: JobStatusUpdate[]): Coordinate | null {
+  for (const update of updates) {
+    const gps = parseGpsNote(update.note);
+    if (gps) return gps;
+  }
+  return null;
+}
+
+function offsetCoordinate(base: Coordinate, latOffset: number, lngOffset: number): Coordinate {
+  return { latitude: base.latitude + latOffset, longitude: base.longitude + lngOffset };
+}
+
+function progressForStatus(status?: string, updates: JobStatusUpdate[] = []): number {
+  const latest = updates[0]?.status ?? status;
+  const byStatus: Record<string, number> = {
+    en_route: 20,
+    arrived: 35,
+    loading: 45,
+    loaded: 60,
+    dumping: 82,
+    completed: 100,
+  };
+  return byStatus[latest ?? ""] ?? 28;
+}
+
+function etaForProgress(progressPct: number): number {
+  return Math.max(1, Math.ceil((100 - progressPct) * 0.8));
+}
 
 export default function TrackingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,6 +84,9 @@ export default function TrackingScreen() {
   const numericId = !isRequestId && id ? parseInt(id, 10) : null;
   const { data: liveJobsRaw } = useLiveJobs();
   const { data: liveRequestsRaw } = useLiveRequests({ mine: true, enabled: isRequestId });
+  const statusUpdates = useJobStatusUpdates(numericId ?? null, {
+    refetchInterval: numericId ? 15000 : false,
+  });
 
   const liveJob =
     numericId != null && Array.isArray(liveJobsRaw)
@@ -60,28 +109,6 @@ export default function TrackingScreen() {
     const state = parts[1]?.trim() ?? "";
     return state ? `${city.toUpperCase()} – ${state.toUpperCase()} AREA` : `${city.toUpperCase()} AREA`;
   })();
-
-  // Animated truck progress (0 = pickup, 1 = delivery)
-  const progress = useRef(new Animated.Value(0.28)).current;
-  const [progressPct, setProgressPct] = useState(28);
-  const [eta, setEta] = useState(34); // minutes remaining
-
-  useEffect(() => {
-    // Slowly animate truck toward delivery
-    Animated.timing(progress, {
-      toValue: 0.9,
-      duration: 60000, // 60s to get to 90%
-      useNativeDriver: false,
-    }).start();
-
-    // Update ETA every 10 seconds
-    const timer = setInterval(() => {
-      setEta((prev) => Math.max(1, prev - 1));
-      setProgressPct((prev) => Math.min(90, prev + 1));
-    }, 10000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   if (!job) {
     return (
@@ -157,11 +184,25 @@ export default function TrackingScreen() {
     );
   };
 
-  // Interpolate truck X position across the route line
-  const truckLeft = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["2%", "88%"],
-  });
+  const updates = statusUpdates.data ?? [];
+  const driverCoordinate = latestDriverCoordinate(updates);
+  const pickupCoordinate = driverCoordinate
+    ? offsetCoordinate(driverCoordinate, -0.03, -0.04)
+    : offsetCoordinate(DEFAULT_REGION, -0.04, -0.05);
+  const deliveryCoordinate = driverCoordinate
+    ? offsetCoordinate(driverCoordinate, 0.035, 0.045)
+    : offsetCoordinate(DEFAULT_REGION, 0.04, 0.05);
+  const routeCoordinates = driverCoordinate
+    ? [pickupCoordinate, driverCoordinate, deliveryCoordinate]
+    : [pickupCoordinate, deliveryCoordinate];
+  const mapRegion: Region = {
+    latitude: driverCoordinate?.latitude ?? DEFAULT_REGION.latitude,
+    longitude: driverCoordinate?.longitude ?? DEFAULT_REGION.longitude,
+    latitudeDelta: driverCoordinate ? 0.12 : DEFAULT_REGION.latitudeDelta,
+    longitudeDelta: driverCoordinate ? 0.12 : DEFAULT_REGION.longitudeDelta,
+  };
+  const progressPct = progressForStatus(liveJob?.status ?? job.status, updates);
+  const eta = etaForProgress(progressPct);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -191,41 +232,16 @@ export default function TrackingScreen() {
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 120 + insets.bottom }]} showsVerticalScrollIndicator={false}>
 
-        {/* Simulated Map */}
+        {/* Live operations map */}
         <View style={[styles.mapBox, { backgroundColor: "#0a1628" }]}>
-          {/* Road grid */}
-          {[25, 50, 75].map((p) => (
-            <View key={`h${p}`} style={[styles.roadH, { top: `${p}%` as any }]} />
-          ))}
-          {[25, 50, 75].map((p) => (
-            <View key={`v${p}`} style={[styles.roadV, { left: `${p}%` as any }]} />
-          ))}
-
-          {/* Route dashed line */}
-          <View style={styles.routeLine}>
-            <View style={[styles.routeDash, { backgroundColor: colors.primary + "60" }]} />
-          </View>
-
-          {/* Pickup marker */}
-          <View style={[styles.mapMarker, { left: "2%", top: "42%" }]}>
-            <View style={[styles.markerDot, { backgroundColor: colors.primary }]} />
-            <View style={[styles.markerLabel, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Text style={[styles.markerText, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Pickup</Text>
-            </View>
-          </View>
-
-          {/* Delivery marker */}
-          <View style={[styles.mapMarker, { right: "2%", top: "42%" }]}>
-            <View style={[styles.markerDot, { backgroundColor: ACCENT.green }]} />
-            <View style={[styles.markerLabel, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Text style={[styles.markerText, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Delivery</Text>
-            </View>
-          </View>
-
-          {/* Animated truck */}
-          <Animated.View style={[styles.truck, { left: truckLeft }]}>
-            <Text style={styles.truckEmoji}>{TRUCK_EMOJI}</Text>
-          </Animated.View>
+          <MapView style={StyleSheet.absoluteFillObject} initialRegion={mapRegion}>
+            <Polyline coordinates={routeCoordinates} strokeColor={colors.primary} strokeWidth={4} />
+            <Marker coordinate={pickupCoordinate} title="Pickup" pinColor={colors.primary} />
+            <Marker coordinate={deliveryCoordinate} title="Delivery" pinColor={ACCENT.green} />
+            {driverCoordinate ? (
+              <Marker coordinate={driverCoordinate} title="Truck" description="Latest driver location" />
+            ) : null}
+          </MapView>
 
           {/* Area label */}
           <Text style={styles.areaLabel}>{areaLabel}</Text>
@@ -236,7 +252,7 @@ export default function TrackingScreen() {
               {progressPct}% Complete
             </Text>
             <Text style={[styles.etaOverlayEta, { color: "#ffffff99", fontFamily: "Inter_400Regular" }]}>
-              ~{eta} min to delivery
+              {driverCoordinate ? `~${eta} min to delivery` : "Awaiting driver GPS"}
             </Text>
           </View>
         </View>

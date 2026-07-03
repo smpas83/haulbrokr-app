@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import { router, Stack } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -42,6 +43,20 @@ const STATUS_FLOW: { key: JobStatusUpdateStatus; label: string; icon: keyof type
   { key: "dumping", label: "Dumping", icon: "upload" },
   { key: "completed", label: "Completed", icon: "check-circle" },
 ];
+
+async function getDriverLocationNote(): Promise<string | undefined> {
+  try {
+    const permission = await Location.requestForegroundPermissionsAsync();
+    if (permission.status !== "granted") return undefined;
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    const { latitude, longitude } = position.coords;
+    return `gps:${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+  } catch {
+    return undefined;
+  }
+}
 
 export default function DriverJobsScreen() {
   const colors = useColors();
@@ -137,11 +152,12 @@ function DriverJobCard({
   const currentIdx = STATUS_FLOW.reduce((acc, s, i) => (reached.has(s.key) ? i : acc), -1);
   const nextStep = STATUS_FLOW[currentIdx + 1];
 
-  const advance = () => {
+  const advance = async () => {
     if (!nextStep) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const locationNote = await getDriverLocationNote();
     createUpdate.mutate(
-      { jobId: job.id, status: nextStep.key },
+      { jobId: job.id, status: nextStep.key, note: locationNote },
       {
         onSuccess: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
         onError: (err: any) => Alert.alert("Couldn't update status", err?.message ?? "Try again."),
