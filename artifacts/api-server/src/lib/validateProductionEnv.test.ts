@@ -16,6 +16,7 @@ const VALID_PRODUCTION_ENV: Record<string, string> = {
   STRIPE_PUBLISHABLE_KEY: "pk_live_stripe_publishable",
   STRIPE_WEBHOOK_SECRET: "whsec_stripe_webhook",
   PAYMENTS_MOCK_MODE: "false",
+  GOOGLE_MAPS_SERVER_API_KEY: "google-maps-server-key",
   RESEND_API_KEY: "re_resend_api_key",
   RESEND_FROM_EMAIL: "noreply@haulbrokr.com",
   R2_ACCOUNT_ID: "cloudflare-account-id",
@@ -37,6 +38,7 @@ describe("validateProductionEnv", () => {
     expect(services.has("neon")).toBe(true);
     expect(services.has("clerk")).toBe(true);
     expect(services.has("stripe")).toBe(true);
+    expect(services.has("google_maps")).toBe(true);
     expect(services.has("resend")).toBe(true);
     expect(services.has("r2")).toBe(true);
     expect(services.has("render")).toBe(true);
@@ -64,6 +66,7 @@ describe("validateProductionEnv", () => {
     expect(variables).toContain("DATABASE_URL");
     expect(variables).toContain("CLERK_SECRET_KEY");
     expect(variables).toContain("STRIPE_SECRET_KEY");
+    expect(variables).toContain("GOOGLE_MAPS_SERVER_API_KEY");
     expect(variables).toContain("RESEND_API_KEY");
     expect(variables).toContain("R2_BUCKET");
     expect(variables).toContain("UPLOAD_TOKEN_SECRET");

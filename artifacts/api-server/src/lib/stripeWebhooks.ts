@@ -4,6 +4,13 @@ import { db, jobsTable, payoutAccountsTable, activityTable } from "@workspace/db
 import { checkProviderPayoutReadiness, syncStripeStatus } from "./payoutStatus";
 import { settleConfirmedPayout } from "./payoutRetry";
 import { logger } from "./logger";
+import {
+  beginWebhookEvent,
+  finishWebhookEvent,
+  recordPaymentAudit,
+  safeMetadataJson,
+} from "./paymentAudit";
+import { chargeIdFromPaymentIntent, receiptUrlFromPaymentIntent } from "./stripePayments";
 
 export type WebhookHandleResult =
   | { handled: true; action: string }
@@ -26,6 +33,8 @@ async function markJobReleased(
   jobId: number,
   paymentIntentId: string | null,
   transferId: string | null,
+  chargeId: string | null = null,
+  receiptUrl: string | null = null,
 ): Promise<void> {
   const now = new Date();
   await db
@@ -35,7 +44,10 @@ async function markJobReleased(
       paidAt: now,
       releasedAt: now,
       stripePaymentIntentId: paymentIntentId,
+      ...(chargeId ? { stripeChargeId: chargeId } : {}),
       ...(transferId ? { stripeTransferId: transferId } : {}),
+      ...(receiptUrl ? { stripeReceiptUrl: receiptUrl } : {}),
+      payoutStatus: "paid",
       payoutRetryFailures: 0,
       payoutAlertSentAt: null,
     })
@@ -56,6 +68,12 @@ async function loadJobByMetadataJobId(jobIdRaw: string | undefined): Promise<(ty
   const jobId = parseInt(jobIdRaw, 10);
   if (!Number.isFinite(jobId)) return null;
   const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+  return job ?? null;
+}
+
+async function loadJobByPaymentIntentId(paymentIntentId: string | null | undefined): Promise<(typeof jobsTable.$inferSelect) | null> {
+  if (!paymentIntentId) return null;
+  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.stripePaymentIntentId, paymentIntentId));
   return job ?? null;
 }
 
@@ -83,7 +101,7 @@ async function finalizeCheckoutFromPaymentIntent(
   if (!paymentIntentMatchesJob(job, pi)) {
     return { handled: false, reason: "pi_mismatch" };
   }
-  await markJobReleased(job.id, pi.id, transferIdFromPaymentIntent(pi));
+  await markJobReleased(job.id, pi.id, transferIdFromPaymentIntent(pi), chargeIdFromPaymentIntent(pi), receiptUrlFromPaymentIntent(pi));
   return { handled: true, action: "checkout_finalized" };
 }
 
@@ -103,7 +121,7 @@ async function finalizeChargeTransferFromPaymentIntent(
   }
 
   if (job.stripeTransferId) {
-    await markJobReleased(job.id, pi.id, job.stripeTransferId);
+    await markJobReleased(job.id, pi.id, job.stripeTransferId, chargeIdFromPaymentIntent(pi), receiptUrlFromPaymentIntent(pi));
     return { handled: true, action: "marked_released_existing_transfer" };
   }
 
@@ -134,10 +152,25 @@ export async function handlePaymentIntentSucceeded(
   const job = await loadJobByMetadataJobId(pi.metadata?.jobId);
   if (!job) return { handled: false, reason: "job_not_found" };
 
-  if (pi.metadata?.kind === "checkout") {
-    return finalizeCheckoutFromPaymentIntent(job, pi);
-  }
-  return finalizeChargeTransferFromPaymentIntent(job, pi);
+  const result = pi.metadata?.kind === "checkout"
+    ? await finalizeCheckoutFromPaymentIntent(job, pi)
+    : await finalizeChargeTransferFromPaymentIntent(job, pi);
+
+  await recordPaymentAudit({
+    jobId: job.id,
+    profileId: job.customerId,
+    eventType: "payment_intent.succeeded",
+    status: result.handled ? result.action : result.reason,
+    amountCents: pi.amount_received ?? pi.amount ?? null,
+    currency: pi.currency ?? "usd",
+    stripePaymentIntentId: pi.id,
+    stripeChargeId: chargeIdFromPaymentIntent(pi),
+    stripeTransferId: transferIdFromPaymentIntent(pi),
+    message: "Stripe payment intent succeeded.",
+    metadataJson: safeMetadataJson(pi.metadata),
+  });
+
+  return result;
 }
 
 export async function handlePaymentIntentPaymentFailed(
@@ -158,9 +191,22 @@ export async function handlePaymentIntentPaymentFailed(
     .set({
       paymentStatus: "failed",
       stripePaymentIntentId: pi.id,
+      stripeChargeId: chargeIdFromPaymentIntent(pi),
     })
     .where(eq(jobsTable.id, job.id));
   await notifyPaymentFailed(job);
+  await recordPaymentAudit({
+    jobId: job.id,
+    profileId: job.customerId,
+    eventType: "payment_intent.payment_failed",
+    status: "failed",
+    amountCents: pi.amount ?? null,
+    currency: pi.currency ?? "usd",
+    stripePaymentIntentId: pi.id,
+    stripeChargeId: chargeIdFromPaymentIntent(pi),
+    message: pi.last_payment_error?.message ?? "Stripe payment intent failed.",
+    metadataJson: safeMetadataJson(pi.metadata),
+  });
   return { handled: true, action: "marked_failed" };
 }
 
@@ -188,12 +234,16 @@ export async function handleCheckoutSessionCompleted(
       : session.payment_intent?.id ?? null;
 
   let transferId: string | null = null;
+  let chargeId: string | null = null;
+  let receiptUrl: string | null = null;
   if (paymentIntentId) {
     const pi = await retrievePaymentIntent(paymentIntentId);
     transferId = transferIdFromPaymentIntent(pi);
+    chargeId = chargeIdFromPaymentIntent(pi);
+    receiptUrl = receiptUrlFromPaymentIntent(pi);
   }
 
-  await markJobReleased(job.id, paymentIntentId, transferId);
+  await markJobReleased(job.id, paymentIntentId, transferId, chargeId, receiptUrl);
   return { handled: true, action: "checkout_session_finalized" };
 }
 
@@ -217,6 +267,151 @@ export async function handleAccountUpdated(account: Stripe.Account): Promise<Web
   return { handled: true, action: "payout_status_synced" };
 }
 
+export async function handleChargeRefunded(charge: Stripe.Charge): Promise<WebhookHandleResult> {
+  const paymentIntentId = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id ?? null;
+  const job = await loadJobByMetadataJobId(charge.metadata?.jobId) ?? await loadJobByPaymentIntentId(paymentIntentId);
+  if (!job) return { handled: false, reason: "job_not_found" };
+
+  const latestRefund = typeof charge.refunds?.data?.[0]?.id === "string" ? charge.refunds.data[0] : null;
+  const isFullRefund = typeof charge.amount === "number"
+    && typeof charge.amount_refunded === "number"
+    && charge.amount_refunded >= charge.amount;
+  const now = new Date();
+
+  await db.update(jobsTable)
+    .set({
+      paymentStatus: isFullRefund ? "refunded" : "partially_refunded",
+      refundStatus: isFullRefund ? "succeeded" : "partial",
+      stripePaymentIntentId: paymentIntentId,
+      stripeChargeId: charge.id,
+      stripeRefundId: latestRefund?.id ?? job.stripeRefundId,
+      refundedAt: isFullRefund ? now : job.refundedAt,
+    })
+    .where(eq(jobsTable.id, job.id));
+
+  await recordPaymentAudit({
+    jobId: job.id,
+    profileId: job.customerId,
+    eventType: "charge.refunded",
+    status: isFullRefund ? "refunded" : "partially_refunded",
+    amountCents: charge.amount_refunded ?? null,
+    currency: charge.currency ?? "usd",
+    stripePaymentIntentId: paymentIntentId,
+    stripeChargeId: charge.id,
+    stripeRefundId: latestRefund?.id ?? null,
+    message: isFullRefund ? "Charge fully refunded." : "Charge partially refunded.",
+    metadataJson: safeMetadataJson(charge.metadata),
+  });
+
+  return { handled: true, action: isFullRefund ? "marked_refunded" : "marked_partially_refunded" };
+}
+
+export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<WebhookHandleResult> {
+  const paymentIntent = (invoice as any).payment_intent;
+  const paymentIntentId = typeof paymentIntent === "string" ? paymentIntent : paymentIntent?.id ?? null;
+  const job = await loadJobByMetadataJobId(invoice.metadata?.jobId) ?? await loadJobByPaymentIntentId(paymentIntentId);
+  if (!job) return { handled: false, reason: "job_not_found" };
+
+  await db.update(jobsTable)
+    .set({
+      paymentStatus: "paid",
+      paidAt: new Date(),
+      stripeInvoiceId: invoice.id,
+      ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}),
+    })
+    .where(eq(jobsTable.id, job.id));
+
+  await recordPaymentAudit({
+    jobId: job.id,
+    profileId: job.customerId,
+    eventType: "invoice.paid",
+    status: "paid",
+    amountCents: invoice.amount_paid ?? null,
+    currency: invoice.currency ?? "usd",
+    stripeInvoiceId: invoice.id,
+    stripePaymentIntentId: paymentIntentId,
+    message: "Stripe invoice paid.",
+    metadataJson: safeMetadataJson(invoice.metadata),
+  });
+
+  return { handled: true, action: "invoice_marked_paid" };
+}
+
+export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<WebhookHandleResult> {
+  const paymentIntent = (invoice as any).payment_intent;
+  const paymentIntentId = typeof paymentIntent === "string" ? paymentIntent : paymentIntent?.id ?? null;
+  const job = await loadJobByMetadataJobId(invoice.metadata?.jobId) ?? await loadJobByPaymentIntentId(paymentIntentId);
+  if (!job) return { handled: false, reason: "job_not_found" };
+
+  await db.update(jobsTable)
+    .set({
+      paymentStatus: "failed",
+      stripeInvoiceId: invoice.id,
+      ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}),
+    })
+    .where(eq(jobsTable.id, job.id));
+  await notifyPaymentFailed(job);
+
+  await recordPaymentAudit({
+    jobId: job.id,
+    profileId: job.customerId,
+    eventType: "invoice.payment_failed",
+    status: "failed",
+    amountCents: invoice.amount_due ?? null,
+    currency: invoice.currency ?? "usd",
+    stripeInvoiceId: invoice.id,
+    stripePaymentIntentId: paymentIntentId,
+    message: "Stripe invoice payment failed.",
+    metadataJson: safeMetadataJson(invoice.metadata),
+  });
+
+  return { handled: true, action: "invoice_marked_failed" };
+}
+
+export async function handlePayoutStatus(
+  payout: Stripe.Payout,
+  stripeAccountId: string | null | undefined,
+  status: "paid" | "failed",
+): Promise<WebhookHandleResult> {
+  if (!stripeAccountId) return { handled: false, reason: "connected_account_missing" };
+
+  const [account] = await db.select().from(payoutAccountsTable).where(eq(payoutAccountsTable.stripeAccountId, stripeAccountId));
+  if (!account) return { handled: false, reason: "payout_account_not_found" };
+
+  await db.update(payoutAccountsTable)
+    .set({
+      lastStripePayoutId: payout.id,
+      lastPayoutStatus: status,
+      lastStripeSyncAt: new Date(),
+    })
+    .where(eq(payoutAccountsTable.id, account.id));
+
+  const jobIdRaw = payout.metadata?.jobId;
+  const jobId = jobIdRaw ? Number.parseInt(jobIdRaw, 10) : NaN;
+  if (Number.isFinite(jobId)) {
+    await db.update(jobsTable)
+      .set({
+        stripePayoutId: payout.id,
+        payoutStatus: status,
+      })
+      .where(eq(jobsTable.id, jobId));
+  }
+
+  await recordPaymentAudit({
+    profileId: account.profileId,
+    jobId: Number.isFinite(jobId) ? jobId : null,
+    eventType: `payout.${status}`,
+    status,
+    amountCents: payout.amount ?? null,
+    currency: payout.currency ?? "usd",
+    stripePayoutId: payout.id,
+    message: status === "paid" ? "Stripe payout paid." : "Stripe payout failed.",
+    metadataJson: safeMetadataJson(payout.metadata),
+  });
+
+  return { handled: true, action: status === "paid" ? "payout_marked_paid" : "payout_marked_failed" };
+}
+
 export async function handleStripeEvent(event: Stripe.Event): Promise<WebhookHandleResult> {
   switch (event.type) {
     case "payment_intent.succeeded":
@@ -234,7 +429,37 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<WebhookHan
       );
     case "account.updated":
       return handleAccountUpdated(event.data.object as Stripe.Account);
+    case "charge.refunded":
+      return handleChargeRefunded(event.data.object as Stripe.Charge);
+    case "invoice.paid":
+      return handleInvoicePaid(event.data.object as Stripe.Invoice);
+    case "invoice.payment_failed":
+      return handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+    case "payout.paid":
+      return handlePayoutStatus(event.data.object as Stripe.Payout, event.account, "paid");
+    case "payout.failed":
+      return handlePayoutStatus(event.data.object as Stripe.Payout, event.account, "failed");
     default:
       return { handled: false, reason: "ignored_event_type" };
+  }
+}
+
+export async function processStripeWebhookEvent(event: Stripe.Event): Promise<WebhookHandleResult> {
+  const started = await beginWebhookEvent(event);
+  if (started === "duplicate") {
+    return { handled: true, action: "duplicate_event" };
+  }
+
+  try {
+    const result = await handleStripeEvent(event);
+    await finishWebhookEvent(
+      event.id,
+      result.handled ? "succeeded" : "ignored",
+      result.handled ? result.action : result.reason,
+    );
+    return result;
+  } catch (err: any) {
+    await finishWebhookEvent(event.id, "failed", "handler_failed", err?.message ?? "Webhook handler failed");
+    throw err;
   }
 }

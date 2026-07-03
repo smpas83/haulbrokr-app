@@ -6,6 +6,7 @@ import { requestsTable } from "./requests";
 import { bidsTable } from "./bids";
 import { projectsTable } from "./projects";
 import { truckTypeEnum } from "./trucks";
+import { marketplaceConfigsTable } from "./marketplace";
 
 export const jobStatusEnum = pgEnum("job_status", [
   "active",
@@ -20,7 +21,7 @@ export const jobStatusEnum = pgEnum("job_status", [
 export const jobCompletionApprovalEnum = pgEnum("job_completion_approval", ["pending", "approved", "flagged"]);
 
 export const jobPaymentStatusEnum = pgEnum("job_payment_status", [
-  "unpaid", "invoiced", "paid", "released", "failed", "requires_action",
+  "unpaid", "authorized", "invoiced", "paid", "released", "failed", "requires_action", "refunded", "partially_refunded",
 ]);
 
 export const jobsTable = pgTable("jobs", {
@@ -44,9 +45,15 @@ export const jobsTable = pgTable("jobs", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
   totalHours: numeric("total_hours", { precision: 8, scale: 2 }),
   totalAmount: numeric("total_amount", { precision: 12, scale: 2 }),
-  // ── Broker-fee revenue model (15% taken before the driver is paid) ──
-  platformFeeRate: numeric("platform_fee_rate", { precision: 5, scale: 4 }).notNull().default("0.15"),
+  // Marketplace economics are snapshotted on completion so later admin config
+  // changes never alter settled invoices or provider payouts.
+  pricingConfigId: integer("pricing_config_id").references(() => marketplaceConfigsTable.id),
+  platformFeeRate: numeric("platform_fee_rate", { precision: 5, scale: 4 }).notNull().default("0.20"),
   platformFeeAmount: numeric("platform_fee_amount", { precision: 12, scale: 2 }),
+  commissionRate: numeric("commission_rate", { precision: 5, scale: 4 }).notNull().default("0.20"),
+  commissionAmount: numeric("commission_amount", { precision: 12, scale: 2 }),
+  surchargeRate: numeric("surcharge_rate", { precision: 5, scale: 4 }).notNull().default("0"),
+  surchargeAmount: numeric("surcharge_amount", { precision: 12, scale: 2 }),
   customerTotalAmount: numeric("customer_total_amount", { precision: 12, scale: 2 }),
   providerNetAmount: numeric("provider_net_amount", { precision: 12, scale: 2 }),
   paymentStatus: jobPaymentStatusEnum("payment_status").notNull().default("unpaid"),
@@ -55,7 +62,16 @@ export const jobsTable = pgTable("jobs", {
   paidAt: timestamp("paid_at", { withTimezone: true }),
   releasedAt: timestamp("released_at", { withTimezone: true }),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripeChargeId: text("stripe_charge_id"),
   stripeTransferId: text("stripe_transfer_id"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+  stripeInvoiceId: text("stripe_invoice_id"),
+  stripeRefundId: text("stripe_refund_id"),
+  stripeReceiptUrl: text("stripe_receipt_url"),
+  stripePayoutId: text("stripe_payout_id"),
+  refundStatus: text("refund_status"),
+  refundedAt: timestamp("refunded_at", { withTimezone: true }),
+  payoutStatus: text("payout_status"),
   // Number of settlement attempts made for this job. Incremented on every
   // charge/release attempt so each retry uses a fresh Stripe idempotency key
   // (otherwise Stripe replays the previously declined intent).

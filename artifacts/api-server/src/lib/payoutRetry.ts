@@ -4,6 +4,7 @@ import { getUncachableStripeClient } from "./stripeClient";
 import { getUncachableResendClient } from "./resendClient";
 import { checkProviderPayoutReadiness } from "./payoutStatus";
 import { logger } from "./logger";
+import { chargeIdFromPaymentIntent } from "./stripePayments";
 
 /**
  * Number of CONSECUTIVE transfer-leg failures (across sweeps) a stuck payout may
@@ -31,7 +32,10 @@ export async function settleConfirmedPayout(
 ) {
   const stripe = await getUncachableStripeClient();
   const netCents = Math.round(parseFloat(job.providerNetAmount) * 100);
-  const chargeId = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge?.id;
+  const chargeId = chargeIdFromPaymentIntent(pi as any);
+  if (!chargeId) {
+    throw new Error("Stripe PaymentIntent has no charge to transfer from.");
+  }
   // The attempt is UNCHANGED — this is the same logical settlement, only the
   // transfer leg is being (re)tried. Bumping it would change the idempotency key
   // and defeat Stripe's dedupe protection against a double transfer.
@@ -43,7 +47,7 @@ export async function settleConfirmedPayout(
       currency: "usd",
       destination: stripeAccountId,
       source_transaction: chargeId,
-      description: `HaulBrokr payout for job #${job.id} (net of 15% broker fee)`,
+      description: `HaulBrokr payout for job #${job.id} (net of marketplace fees)`,
       metadata: { jobId: String(job.id), attempt: String(attempt) },
     },
     { idempotencyKey: `job-transfer:${job.id}:${attempt}` },
@@ -57,7 +61,9 @@ export async function settleConfirmedPayout(
       paidAt: now,
       releasedAt: now,
       stripePaymentIntentId: pi.id,
+      stripeChargeId: chargeId,
       stripeTransferId: transfer.id,
+      payoutStatus: "paid",
       // A successful release clears any stuck-payout failure tracking so a later
       // (unrelated) hiccup starts counting fresh and never carries a stale alert.
       payoutRetryFailures: 0,
