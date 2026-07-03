@@ -196,7 +196,6 @@ export default function MapScreen() {
     });
   }, []);
 
-  const isProvider = profile.role === "provider";
   const topPad     = Platform.OS === "web" ? 67 : insets.top;
   const openCount  = jobs.filter((j) => j.status === "open" || j.status === "bidding").length;
   const isSurge    = openCount >= 3;
