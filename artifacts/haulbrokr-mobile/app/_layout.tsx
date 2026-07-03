@@ -63,16 +63,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       }
       return;
     }
-    if (!isSignedIn) {
-      if (!isPublicRoute) {
-        router.replace("/sign-in" as any);
+    if (isSignedIn) {
+      if (segments[0] === "sign-in") {
+        router.replace("/" as any);
+        return;
+      }
+      if (profileQuery.isError) {
+        router.replace("/onboarding" as any);
       }
       return;
     }
-    if (profileQuery.isError) {
-      router.replace("/onboarding" as any);
+    if (!isPublicRoute) {
+      router.replace("/sign-in" as any);
     }
-  }, [isLoaded, isSignedIn, profileQuery.isError, isPublicRoute]);
+  }, [isLoaded, isSignedIn, profileQuery.isError, isPublicRoute, segments]);
 
   if (isPublicRoute) {
     return <>{children}</>;

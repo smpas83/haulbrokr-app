@@ -1,10 +1,10 @@
-import { useAuth, useSignIn, useSignUp, useSSO } from "@clerk/expo";
+import { useAuth, useClerk, useSignIn, useSignUp, useSSO } from "@clerk/expo";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as AuthSession from "expo-auth-session";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   DevSettings,
   Image,
@@ -35,7 +35,8 @@ function clerkErrorMessage(error: { message?: string; longMessage?: string } | n
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
-  const { isLoaded: authLoaded } = useAuth();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const clerk = useClerk();
   const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
@@ -47,6 +48,13 @@ export default function SignInScreen() {
     void WebBrowser.warmUpAsync();
     return () => { void WebBrowser.coolDownAsync(); };
   }, []);
+
+  useEffect(() => {
+    if (!authLoaded) return;
+    if (isSignedIn) {
+      router.replace("/" as any);
+    }
+  }, [authLoaded, isSignedIn]);
 
   const handleSSO = async (strategy: "oauth_google" | "oauth_apple") => {
     const which = strategy === "oauth_google" ? "google" : "apple";
@@ -88,6 +96,7 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const recoveryAttemptedRef = useRef(false);
 
   const clerkReady = authLoaded && !!signIn && !!signUp;
   const authStuck = authLoaded && (!signIn || !signUp);
@@ -118,6 +127,7 @@ export default function SignInScreen() {
     setError("");
     try {
       await resetAllClerkLocalState();
+      recoveryAttemptedRef.current = false;
       if (Platform.OS === "web") {
         window.location.reload();
         return;
@@ -130,15 +140,51 @@ export default function SignInScreen() {
     }
   };
 
-  const finalizeSignIn = async () => {
-    if (!signIn) return;
-    await signIn.finalize({
-      navigate: async () => {
+  const finalizeSignIn = async (): Promise<boolean> => {
+    if (!signIn) return false;
+
+    const sessionId = signIn.createdSessionId ?? signIn.existingSession?.sessionId ?? null;
+    const { error } = await signIn.finalize({
+      navigate: async ({ session }) => {
         await markClerkActiveSession();
+        if (session?.currentTask) {
+          router.replace("/onboarding" as any);
+          return;
+        }
         router.replace("/" as any);
       },
     });
+
+    if (!error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return true;
+    }
+
+    if (sessionId && clerk.setActive) {
+      try {
+        await clerk.setActive({ session: sessionId });
+        await markClerkActiveSession();
+        router.replace("/" as any);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        return true;
+      } catch {
+        setError(clerkErrorMessage(error));
+        return false;
+      }
+    }
+
+    setError(clerkErrorMessage(error));
+    return false;
   };
+
+  useEffect(() => {
+    if (!authLoaded || isSignedIn || !signIn || recoveryAttemptedRef.current) return;
+    const pendingSessionId = signIn.createdSessionId ?? signIn.existingSession?.sessionId;
+    if (signIn.status === "complete" && pendingSessionId) {
+      recoveryAttemptedRef.current = true;
+      void finalizeSignIn();
+    }
+  }, [authLoaded, isSignedIn, signIn?.status, signIn?.createdSessionId, signIn?.existingSession?.sessionId]);
 
   const finalizeSignUp = async () => {
     if (!signUp) return;
@@ -187,7 +233,16 @@ export default function SignInScreen() {
     try {
       const { error: passwordError } = await signIn.password({ identifier: id, password });
       if (passwordError) {
-        setError(clerkErrorMessage(passwordError));
+        const msg = clerkErrorMessage(passwordError);
+        if (/already signed in/i.test(msg)) {
+          const finalized = await finalizeSignIn();
+          if (!finalized && signIn.status === "complete") {
+            await signIn.reset();
+            setError("Session was stale — please sign in again.");
+          }
+          return;
+        }
+        setError(msg);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
@@ -205,7 +260,6 @@ export default function SignInScreen() {
       }
 
       if (signIn.status === "complete") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         await finalizeSignIn();
         return;
       }
@@ -308,7 +362,6 @@ export default function SignInScreen() {
           return;
         }
         if (signIn.status === "complete") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           await finalizeSignIn();
         } else {
           setError("Verification incomplete. Please try again.");
@@ -337,13 +390,23 @@ export default function SignInScreen() {
     }
   };
 
-  const handleBackToCredentials = () => {
+  const handleBackToCredentials = async () => {
+    if (verifyReason === "trust" && signIn?.status === "complete") {
+      setError("Enter your verification code to finish signing in.");
+      return;
+    }
+    if (verifyReason === "trust" && signIn) {
+      await signIn.reset();
+    }
     setError("");
     setCode("");
     setStep("credentials");
   };
 
   const verifyEmail = email.trim() || identifier.trim();
+  const stuckSignedIn =
+    /already signed in/i.test(error || activeFieldError) ||
+    (mode === "signin" && signIn?.status === "complete" && !isSignedIn);
 
   return (
     <KeyboardAvoidingView
@@ -507,6 +570,20 @@ export default function SignInScreen() {
 
             {error || activeFieldError ? (
               <Text style={styles.errorText}>{error || activeFieldError}</Text>
+            ) : null}
+
+            {stuckSignedIn ? (
+              <Pressable
+                style={[styles.btn, busy && styles.btnDisabled]}
+                onPress={() => void finalizeSignIn()}
+                disabled={busy}
+              >
+                {busy ? (
+                  <ActivityIndicator color="#1e2235" />
+                ) : (
+                  <Text style={styles.btnText}>Continue to app</Text>
+                )}
+              </Pressable>
             ) : null}
 
             <Pressable
