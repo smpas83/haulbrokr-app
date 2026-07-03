@@ -454,7 +454,7 @@ export default function SignInScreen() {
               ? "Welcome back — sign in with your username or email and password"
               : "Create your account with a username, email, and password"
             : verifyReason === "trust"
-              ? `Verify this device — enter the code sent to\n${verifyEmail}`
+              ? `Verify this device once — enter the code sent to\n${verifyEmail}`
               : `We sent a 6-digit code to\n${verifyEmail}`}
         </Text>
 
@@ -627,7 +627,7 @@ export default function SignInScreen() {
               <Feather name="mail" size={14} color="#e9a600" />
               <Text style={styles.codeHintText}>
                 {verifyReason === "trust"
-                  ? "Check your inbox for the security verification code"
+                  ? "One-time check for new devices — you won't need this again on this phone"
                   : "Verify your email to finish creating your account"}
               </Text>
             </View>

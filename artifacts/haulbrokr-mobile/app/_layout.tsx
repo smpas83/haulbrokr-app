@@ -7,6 +7,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { Feather } from "@expo/vector-icons";
 import { ClerkProvider, useAuth } from "@clerk/expo";
+import { resourceCache } from "@clerk/expo/resource-cache";
 import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -144,7 +145,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <ClerkProvider
+          publishableKey={publishableKey}
+          tokenCache={tokenCache}
+          __experimental_resourceCache={resourceCache}
+        >
           <QueryClientProvider client={queryClient}>
             <ClerkAuthProvider>
               <ClerkSessionStorageSync />

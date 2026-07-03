@@ -11,6 +11,12 @@ export const CLERK_SIGNOUT_PENDING_KEY = "@haulbrokr/clerk_signout_pending";
 /** Set after a successful sign-in; absent means any persisted client JWT is stale. */
 export const CLERK_ACTIVE_SESSION_KEY = "@haulbrokr/clerk_active_session";
 
+/**
+ * Set when this install has a valid Clerk client identity (signed in, or signed out cleanly).
+ * Used to preserve the client JWT across sign-out so Client Trust does not re-prompt every login.
+ */
+export const CLERK_TRUSTED_CLIENT_KEY = "@haulbrokr/clerk_trusted_client";
+
 const secureStoreOpts: SecureStore.SecureStoreOptions = {
   keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
 };
@@ -47,7 +53,7 @@ export const tokenCache = clerkTokenCache
     }
   : undefined;
 
-/** Remove the persisted client JWT. Required before sign-out completes on native. */
+/** Remove the persisted client JWT. Only for full reset or orphaned stale JWT recovery. */
 export async function clearClerkClientJwt() {
   await deleteToken(CLERK_CLIENT_JWT_KEY);
 }
@@ -61,18 +67,33 @@ export async function clearClerkSignOutPending() {
 }
 
 export async function markClerkActiveSession() {
-  await AsyncStorage.setItem(CLERK_ACTIVE_SESSION_KEY, "1");
+  await AsyncStorage.multiSet([
+    [CLERK_ACTIVE_SESSION_KEY, "1"],
+    [CLERK_TRUSTED_CLIENT_KEY, "1"],
+  ]);
+}
+
+export async function markClerkTrustedClient() {
+  await AsyncStorage.setItem(CLERK_TRUSTED_CLIENT_KEY, "1");
 }
 
 export async function clearClerkActiveSession() {
   await AsyncStorage.removeItem(CLERK_ACTIVE_SESSION_KEY);
 }
 
+export async function clearClerkTrustedClient() {
+  await AsyncStorage.removeItem(CLERK_TRUSTED_CLIENT_KEY);
+}
+
 /** Wipe all Clerk local auth state (SecureStore + AsyncStorage markers). */
 export async function resetAllClerkLocalState() {
   await Promise.all([
     clearClerkClientJwt(),
-    AsyncStorage.multiRemove([CLERK_SIGNOUT_PENDING_KEY, CLERK_ACTIVE_SESSION_KEY]),
+    AsyncStorage.multiRemove([
+      CLERK_SIGNOUT_PENDING_KEY,
+      CLERK_ACTIVE_SESSION_KEY,
+      CLERK_TRUSTED_CLIENT_KEY,
+    ]),
   ]);
 }
 
@@ -86,8 +107,9 @@ function isBenignSignOutError(err: unknown) {
 }
 
 /**
- * Sign out via Clerk, then clear persisted client JWT.
- * JWT must be cleared after signOut (not before) so Clerk can finish cleanly.
+ * Sign out via Clerk, then clear session markers only.
+ * Keep the client JWT so Clerk still recognizes this device (Client Trust).
+ * JWT is only wiped on interrupted sign-out or orphaned stale JWT recovery.
  */
 export async function signOutAndClearLocalState(signOut: () => Promise<void>) {
   await markClerkSignOutPending();
@@ -99,30 +121,33 @@ export async function signOutAndClearLocalState(signOut: () => Promise<void>) {
       throw err;
     }
   }
-  await clearClerkClientJwt();
   await clearClerkActiveSession();
+  await markClerkTrustedClient();
   await clearClerkSignOutPending();
 }
 
 /**
- * Before Clerk mounts: remove orphaned client JWT (persisted JWT without an
- * active session marker). This is the root cause of isLoaded staying false.
+ * Before Clerk mounts: remove orphaned client JWT (stale session reference without
+ * markers). Preserves client JWT after a clean sign-out so Client Trust won't
+ * re-prompt on every password login.
  */
 export async function recoverStaleClientJwtOnStartup() {
-  const [pendingSignOut, hasActiveSession, clientJwt] = await Promise.all([
+  const [pendingSignOut, hasActiveSession, hasTrustedClient, clientJwt] = await Promise.all([
     AsyncStorage.getItem(CLERK_SIGNOUT_PENDING_KEY),
     AsyncStorage.getItem(CLERK_ACTIVE_SESSION_KEY),
+    AsyncStorage.getItem(CLERK_TRUSTED_CLIENT_KEY),
     readClientJwt(),
   ]);
 
-  const orphanedJwt = !!clientJwt && hasActiveSession !== "1";
-  const shouldClear = pendingSignOut === "1" || orphanedJwt;
-
-  if (!shouldClear) {
+  if (pendingSignOut === "1") {
+    await resetAllClerkLocalState();
     return;
   }
 
-  await resetAllClerkLocalState();
+  const orphanedJwt = !!clientJwt && hasActiveSession !== "1" && hasTrustedClient !== "1";
+  if (orphanedJwt) {
+    await resetAllClerkLocalState();
+  }
 }
 
 /** After Clerk loads for a signed-in user, persist the session marker. */
