@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:integration": "RUN_DB_TESTS=true vitest run",
     "seed-staff": "tsx scripts/seed-staff-users.ts",
+    "seed-marketplace": "tsx scripts/seed-marketplace.ts",
+    "seed-dump-sites": "tsx src/seed/dump-sites.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

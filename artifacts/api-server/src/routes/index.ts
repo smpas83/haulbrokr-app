@@ -23,6 +23,7 @@ import messagesRouter from "./messages";
 import staffAuthRouter from "./staff-auth";
 import adminRouter from "./admin";
 import ratingsRouter from "./ratings";
+import mapRouter from "./map";
 
 const router: IRouter = Router();
 
@@ -50,5 +51,6 @@ router.use(messagesRouter);
 router.use(staffAuthRouter);
 router.use(adminRouter);
 router.use(ratingsRouter);
+router.use(mapRouter);
 
 export default router;

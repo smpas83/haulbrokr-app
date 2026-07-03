@@ -345,6 +345,67 @@ export function useLiveJobs() {
   });
 }
 
+export type MarketplaceMapData = {
+  demoMode: boolean;
+  generatedAt: string;
+  center: { latitude: number; longitude: number };
+  loads: Array<{
+    id: string;
+    kind: "request" | "job";
+    status: string;
+    projectName: string;
+    material: string;
+    pickupAddress: string;
+    deliveryAddress: string;
+    budgetPerHour: number;
+    trucksNeeded: number;
+    bidsCount: number;
+    latitude: number;
+    longitude: number;
+    scheduledDate: string;
+  }>;
+  trucks: Array<{
+    id: number;
+    label: string;
+    truckType: string;
+    status: "available" | "assigned" | "en_route" | "offline";
+    latitude: number;
+    longitude: number;
+    ownerCompany: string;
+    headingDegrees: number;
+    speedMph: number;
+  }>;
+  heatZones: Array<{
+    latitude: number;
+    longitude: number;
+    radius: number;
+    intensity: number;
+  }>;
+  stats: {
+    openLoads: number;
+    activeJobs: number;
+    availableTrucks: number;
+    providers: number;
+  };
+};
+
+/** Nationwide map payload — auto demo mode when production has no live data. */
+export function useMarketplaceMap(opts?: { lat?: number; lng?: number; radiusMiles?: number }) {
+  const { getToken, isSignedIn } = useAuth();
+  const qs = new URLSearchParams();
+  if (opts?.lat != null) qs.set("lat", String(opts.lat));
+  if (opts?.lng != null) qs.set("lng", String(opts.lng));
+  if (opts?.radiusMiles != null) qs.set("radiusMiles", String(opts.radiusMiles));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return useQuery<MarketplaceMapData>({
+    queryKey: ["map", "marketplace", opts ?? {}],
+    queryFn: () => apiFetch(getToken, "GET", `/map/marketplace${suffix}`),
+    enabled: !!isSignedIn,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
+
 // ── Load requests (customer-posted loads) ──────────────────────────────────
 export function useLiveRequests(opts?: { mine?: boolean; enabled?: boolean }) {
   const { getToken, isSignedIn } = useAuth();
