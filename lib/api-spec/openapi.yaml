@@ -1579,6 +1579,107 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/JobStatusUpdate"
+  /jobs/{id}/tracking:
+    get:
+      operationId: getJobTracking
+      tags: [live-ops]
+      summary: Live customer/dispatcher tracking state for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Live tracking state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveJobTracking"
+  /jobs/{id}/locations:
+    get:
+      operationId: listJobLocations
+      tags: [live-ops]
+      summary: Route history for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: ticketId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Route history locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VehicleLocation"
+  /jobs/{id}/geofences:
+    post:
+      operationId: createJobGeofence
+      tags: [live-ops]
+      summary: Configure a pickup or delivery geofence for a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobGeofenceInput"
+      responses:
+        "201":
+          description: Geofence created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobGeofence"
+  /drivers/me/availability:
+    patch:
+      operationId: updateMyDriverAvailability
+      tags: [live-ops]
+      summary: Set driver online/offline state and current ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverAvailabilityInput"
+      responses:
+        "200":
+          description: Driver availability state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverAvailability"
+  /fleet/live:
+    get:
+      operationId: getLiveFleet
+      tags: [live-ops]
+      summary: Dispatcher live fleet operations summary
+      responses:
+        "200":
+          description: Live fleet state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetLiveResponse"
   /jobs/{id}/approve-completion:
     post:
       operationId: approveJobCompletion
@@ -2071,6 +2172,31 @@ paths:
             application/json:
               schema:
                 type: object
+
+  /tickets/{id}/locations:
+    post:
+      operationId: createTicketLocations
+      tags: [live-ops]
+      summary: Ingest one or more live GPS pings for a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationIngestInput"
+      responses:
+        "201":
+          description: Locations stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationIngestResponse"
 
   /tickets/{id}/qr:
     post:
@@ -4209,6 +4335,209 @@ components:
           type: integer
         note:
           type: string
+
+    # ── Live Operations ──────────────────────────────────────────────────────
+    VehicleLocation:
+      type: object
+      required: [id, jobId, ticketId, driverProfileId, latitude, longitude, recordedAt, createdAt]
+      properties:
+        id: { type: integer }
+        jobId: { type: integer }
+        ticketId: { type: integer }
+        driverProfileId: { type: integer }
+        truckId:
+          type: ["integer", "null"]
+        latitude: { type: number }
+        longitude: { type: number }
+        heading:
+          type: ["number", "null"]
+        speedMph:
+          type: ["number", "null"]
+        accuracyMeters:
+          type: ["number", "null"]
+        recordedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    LocationPointInput:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude: { type: number }
+        longitude: { type: number }
+        heading: { type: number }
+        speedMph: { type: number }
+        accuracyMeters: { type: number }
+        recordedAt:
+          type: string
+          format: date-time
+
+    LocationIngestInput:
+      oneOf:
+        - $ref: "#/components/schemas/LocationPointInput"
+        - type: object
+          required: [locations]
+          properties:
+            locations:
+              type: array
+              minItems: 1
+              items:
+                $ref: "#/components/schemas/LocationPointInput"
+
+    LocationIngestResponse:
+      type: object
+      required: [locations, latestLocation, triggeredGeofences]
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/VehicleLocation"
+        latestLocation:
+          $ref: "#/components/schemas/VehicleLocation"
+        triggeredGeofences:
+          type: array
+          items:
+            type: string
+            enum: [pickup, delivery]
+
+    JobGeofence:
+      type: object
+      required: [id, jobId, kind, latitude, longitude, radiusMeters, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        jobId: { type: integer }
+        kind:
+          type: string
+          enum: [pickup, delivery]
+        latitude: { type: number }
+        longitude: { type: number }
+        radiusMeters: { type: integer }
+        label:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    JobGeofenceInput:
+      type: object
+      required: [kind, latitude, longitude]
+      properties:
+        kind:
+          type: string
+          enum: [pickup, delivery]
+        latitude: { type: number }
+        longitude: { type: number }
+        radiusMeters:
+          type: integer
+          minimum: 25
+          maximum: 5000
+        label:
+          type: string
+
+    LiveEta:
+      type: object
+      required: [distanceMeters, minutes, estimatedArrivalAt, source]
+      properties:
+        distanceMeters: { type: integer }
+        minutes: { type: integer }
+        estimatedArrivalAt:
+          type: string
+          format: date-time
+        source:
+          type: string
+
+    LiveJobTracking:
+      type: object
+      required: [jobId, status, pickupAddress, deliveryAddress, activeTickets, latestLocation, eta, routeProgress, geofences]
+      properties:
+        jobId: { type: integer }
+        status:
+          type: string
+        pickupAddress:
+          type: string
+        deliveryAddress:
+          type: string
+        activeTickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ticket"
+        latestLocation:
+          oneOf:
+            - $ref: "#/components/schemas/VehicleLocation"
+            - type: "null"
+        eta:
+          oneOf:
+            - $ref: "#/components/schemas/LiveEta"
+            - type: "null"
+        routeProgress:
+          type: ["number", "null"]
+        geofences:
+          type: array
+          items:
+            $ref: "#/components/schemas/JobGeofence"
+
+    DriverAvailabilityInput:
+      type: object
+      required: [isOnline]
+      properties:
+        isOnline: { type: boolean }
+        currentTicketId:
+          type: ["integer", "null"]
+
+    DriverAvailability:
+      type: object
+      required: [driverProfileId, isOnline, currentTicketId, lastLatitude, lastLongitude, lastSeenAt, updatedAt]
+      properties:
+        driverProfileId: { type: integer }
+        isOnline: { type: boolean }
+        currentTicketId:
+          type: ["integer", "null"]
+        lastLatitude:
+          type: ["number", "null"]
+        lastLongitude:
+          type: ["number", "null"]
+        lastSeenAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    FleetLiveTruck:
+      type: object
+      required: [truck, state, driver, activeTrip, latestLocation]
+      properties:
+        truck:
+          $ref: "#/components/schemas/Truck"
+        state:
+          type: string
+          enum: [available, unavailable, on_trip]
+        driver:
+          type: ["object", "null"]
+        activeTrip:
+          type: ["object", "null"]
+        latestLocation:
+          oneOf:
+            - $ref: "#/components/schemas/VehicleLocation"
+            - type: "null"
+
+    FleetLiveResponse:
+      type: object
+      required: [trucks, updatedAt]
+      properties:
+        trucks:
+          type: array
+          items:
+            $ref: "#/components/schemas/FleetLiveTruck"
+        updatedAt:
+          type: string
+          format: date-time
 
     FlagCompletionInput:
       type: object

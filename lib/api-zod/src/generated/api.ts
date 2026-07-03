@@ -2180,6 +2180,187 @@ export const CreateJobStatusUpdateBody = zod.object({
 
 
 /**
+ * @summary Live customer/dispatcher tracking state for a job
+ */
+export const GetJobTrackingParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetJobTrackingResponse = zod.object({
+  "jobId": zod.number(),
+  "status": zod.string(),
+  "pickupAddress": zod.string(),
+  "deliveryAddress": zod.string(),
+  "activeTickets": zod.array(zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish(),
+  "loadNumber": zod.number(),
+  "status": zod.enum(['pending', 'in_progress', 'completed', 'verified']),
+  "clockedInAt": zod.coerce.date().nullish(),
+  "clockedOutAt": zod.coerce.date().nullish(),
+  "weightTons": zod.number().nullish(),
+  "notes": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "verifiedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})),
+  "latestLocation": zod.union([zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "ticketId": zod.number(),
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish(),
+  "latitude": zod.number(),
+  "longitude": zod.number(),
+  "heading": zod.number().nullish(),
+  "speedMph": zod.number().nullish(),
+  "accuracyMeters": zod.number().nullish(),
+  "recordedAt": zod.coerce.date(),
+  "createdAt": zod.coerce.date()
+}),zod.null()]),
+  "eta": zod.union([zod.object({
+  "distanceMeters": zod.number(),
+  "minutes": zod.number(),
+  "estimatedArrivalAt": zod.coerce.date(),
+  "source": zod.string()
+}),zod.null()]),
+  "routeProgress": zod.number().nullable(),
+  "geofences": zod.array(zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "kind": zod.enum(['pickup', 'delivery']),
+  "latitude": zod.number(),
+  "longitude": zod.number(),
+  "radiusMeters": zod.number(),
+  "label": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Route history for a job
+ */
+export const ListJobLocationsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListJobLocationsQueryParams = zod.object({
+  "since": zod.date().optional(),
+  "ticketId": zod.coerce.number().optional()
+})
+
+export const ListJobLocationsResponseItem = zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "ticketId": zod.number(),
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish(),
+  "latitude": zod.number(),
+  "longitude": zod.number(),
+  "heading": zod.number().nullish(),
+  "speedMph": zod.number().nullish(),
+  "accuracyMeters": zod.number().nullish(),
+  "recordedAt": zod.coerce.date(),
+  "createdAt": zod.coerce.date()
+})
+export const ListJobLocationsResponse = zod.array(ListJobLocationsResponseItem)
+
+
+/**
+ * @summary Configure a pickup or delivery geofence for a job
+ */
+export const CreateJobGeofenceParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const createJobGeofenceBodyRadiusMetersMin = 25;
+export const createJobGeofenceBodyRadiusMetersMax = 5000;
+
+
+
+export const CreateJobGeofenceBody = zod.object({
+  "kind": zod.enum(['pickup', 'delivery']),
+  "latitude": zod.number(),
+  "longitude": zod.number(),
+  "radiusMeters": zod.number().min(createJobGeofenceBodyRadiusMetersMin).max(createJobGeofenceBodyRadiusMetersMax).optional(),
+  "label": zod.string().optional()
+})
+
+
+/**
+ * @summary Set driver online/offline state and current ticket
+ */
+export const UpdateMyDriverAvailabilityBody = zod.object({
+  "isOnline": zod.boolean(),
+  "currentTicketId": zod.number().nullish()
+})
+
+export const UpdateMyDriverAvailabilityResponse = zod.object({
+  "driverProfileId": zod.number(),
+  "isOnline": zod.boolean(),
+  "currentTicketId": zod.number().nullable(),
+  "lastLatitude": zod.number().nullable(),
+  "lastLongitude": zod.number().nullable(),
+  "lastSeenAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Dispatcher live fleet operations summary
+ */
+export const GetLiveFleetResponse = zod.object({
+  "trucks": zod.array(zod.object({
+  "truck": zod.object({
+  "id": zod.number(),
+  "ownerId": zod.number(),
+  "ownerCompany": zod.string(),
+  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
+  "capacityTons": zod.number(),
+  "ratePerHour": zod.number(),
+  "licensePlate": zod.string().nullish(),
+  "year": zod.number().nullish(),
+  "make": zod.string().nullish(),
+  "model": zod.string().nullish(),
+  "truckNumber": zod.string().nullish(),
+  "vin": zod.string().nullish(),
+  "coiStatus": zod.enum(['none', 'pending', 'active', 'expired']).optional(),
+  "assignedDriverId": zod.number().nullish(),
+  "isAvailable": zod.boolean(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}),
+  "state": zod.enum(['available', 'unavailable', 'on_trip']),
+  "driver": zod.object({
+
+}).passthrough().nullable(),
+  "activeTrip": zod.object({
+
+}).passthrough().nullable(),
+  "latestLocation": zod.union([zod.object({
+  "id": zod.number(),
+  "jobId": zod.number(),
+  "ticketId": zod.number(),
+  "driverProfileId": zod.number(),
+  "truckId": zod.number().nullish(),
+  "latitude": zod.number(),
+  "longitude": zod.number(),
+  "heading": zod.number().nullish(),
+  "speedMph": zod.number().nullish(),
+  "accuracyMeters": zod.number().nullish(),
+  "recordedAt": zod.coerce.date(),
+  "createdAt": zod.coerce.date()
+}),zod.null()])
+})),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Foreman/customer approves a completed job
  */
 export const ApproveJobCompletionParams = zod.object({
@@ -2546,6 +2727,35 @@ export const ClockOutTicketParams = zod.object({
 export const ClockOutTicketResponse = zod.object({
 
 }).passthrough()
+
+
+/**
+ * @summary Ingest one or more live GPS pings for a ticket
+ */
+export const CreateTicketLocationsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const CreateTicketLocationsBody = zod.union([zod.object({
+  "latitude": zod.number(),
+  "longitude": zod.number(),
+  "heading": zod.number().optional(),
+  "speedMph": zod.number().optional(),
+  "accuracyMeters": zod.number().optional(),
+  "recordedAt": zod.coerce.date().optional()
+}),zod.object({
+  "locations": zod.array(zod.object({
+  "latitude": zod.number(),
+  "longitude": zod.number(),
+  "heading": zod.number().optional(),
+  "speedMph": zod.number().optional(),
+  "accuracyMeters": zod.number().optional(),
+  "recordedAt": zod.coerce.date().optional()
+})).min(1)
+})])
 
 
 /**
