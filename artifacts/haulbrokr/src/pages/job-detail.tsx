@@ -73,7 +73,7 @@ function PhotoFileInput({
           id={id}
           type="file"
           accept="image/*"
-          className="rounded-none"
+          className="rounded-xl"
           disabled={disabled}
           onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
         />
@@ -137,14 +137,14 @@ function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean
           <Camera className="h-5 w-5 text-muted-foreground" /> Proof of Delivery &amp; Site Notes
         </h3>
         {canUpload && (
-          <Button size="sm" variant="outline" className="rounded-none border-2 font-bold text-xs" onClick={() => setShowForm(s => !s)}>
+          <Button size="sm" variant="outline" className="rounded-xl border-2 font-bold text-xs" onClick={() => setShowForm(s => !s)}>
             <Plus className="h-3 w-3 mr-1" />{showForm ? "Cancel" : "Add Evidence"}
           </Button>
         )}
       </div>
 
       {showForm && canUpload && (
-        <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
+        <div className="bg-muted/30 border border-border/60 p-4 space-y-3">
           <PhotoFileInput
             id={`evidence-photo-${jobId}`}
             label="Delivery Photo"
@@ -154,13 +154,13 @@ function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean
           />
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Photo Caption</Label>
-            <Input className="rounded-none mt-1" value={form.photoCaption} onChange={e => setForm(f => ({ ...f, photoCaption: e.target.value }))} placeholder="Load dumped at designated zone" />
+            <Input className="rounded-xl mt-1" value={form.photoCaption} onChange={e => setForm(f => ({ ...f, photoCaption: e.target.value }))} placeholder="Load dumped at designated zone" />
           </div>
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Site Notes (visible to customer)</Label>
-            <Input className="rounded-none mt-1" value={form.siteNotes} onChange={e => setForm(f => ({ ...f, siteNotes: e.target.value }))} placeholder="Gate code is 1234. Foreman on site." />
+            <Input className="rounded-xl mt-1" value={form.siteNotes} onChange={e => setForm(f => ({ ...f, siteNotes: e.target.value }))} placeholder="Gate code is 1234. Foreman on site." />
           </div>
-          <Button size="sm" className="rounded-none font-bold w-full" disabled={submit.isPending || !photoFile} onClick={() => submit.mutate()}>
+          <Button size="sm" className="rounded-xl font-bold w-full" disabled={submit.isPending || !photoFile} onClick={() => submit.mutate()}>
             {submit.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null} Submit Evidence
           </Button>
         </div>
@@ -169,7 +169,7 @@ function EvidencePanel({ jobId, canUpload }: { jobId: number; canUpload: boolean
       {isLoading ? (
         <div className="space-y-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div>
       ) : (evidence as any[]).length === 0 ? (
-        <div className="border-2 border-dashed border-border p-8 text-center">
+        <div className="border border-dashed border-border/60 p-8 text-center">
           <Camera className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
           <p className="text-sm text-muted-foreground">No delivery photos or site notes yet</p>
           {canUpload && <p className="text-xs text-muted-foreground mt-1">Add proof of delivery once you've completed the drop-off</p>}
@@ -355,7 +355,7 @@ function ChangePaymentMethod() {
   };
 
   return (
-    <div className="border-2 border-border bg-muted/20 p-4 space-y-3">
+    <div className="border border-border/60 bg-muted/20 p-4 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -364,7 +364,7 @@ function ChangePaymentMethod() {
           <p className="text-sm font-medium truncate">{isLoading ? "Loading…" : describePaymentMethod(hasMethod ? pm : null)}</p>
         </div>
         {!editing && (
-          <Button size="sm" variant="outline" className="rounded-none border-2 font-bold text-xs flex-shrink-0" onClick={openEditor}>
+          <Button size="sm" variant="outline" className="rounded-xl border-2 font-bold text-xs flex-shrink-0" onClick={openEditor}>
             {hasMethod ? "Use a different card" : "Add payment method"}
           </Button>
         )}
@@ -381,8 +381,8 @@ function ChangePaymentMethod() {
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment type</Label>
             <Select value={form.methodType} onValueChange={(v) => setForm(f => ({ ...f, methodType: v }))}>
-              <SelectTrigger className="rounded-none border-2 mt-1"><SelectValue /></SelectTrigger>
-              <SelectContent className="rounded-none border-2">
+              <SelectTrigger className="rounded-xl border-2 mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent className="rounded-xl border-2">
                 {Object.entries(PM_METHOD_LABEL).map(([v, label]) => (
                   <SelectItem key={v} value={v}>{label}</SelectItem>
                 ))}
@@ -394,7 +394,7 @@ function ChangePaymentMethod() {
             <div className="space-y-3">
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Cardholder name</Label>
-                <Input className="rounded-none mt-1" value={form.cardholderName} onChange={set("cardholderName")} placeholder="Jane Doe" />
+                <Input className="rounded-xl mt-1" value={form.cardholderName} onChange={set("cardholderName")} placeholder="Jane Doe" />
               </div>
               <div>
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Card</Label>
@@ -432,10 +432,10 @@ function ChangePaymentMethod() {
 
           {form.methodType.startsWith("net_") && (
             <div className="flex gap-2">
-              <Button size="sm" className="rounded-none font-bold" disabled={isPending} onClick={save}>
+              <Button size="sm" className="rounded-xl font-bold" disabled={isPending} onClick={save}>
                 {isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null} Save payment method
               </Button>
-              <Button size="sm" variant="ghost" className="rounded-none" disabled={isPending} onClick={() => setEditing(false)}>Cancel</Button>
+              <Button size="sm" variant="ghost" className="rounded-xl" disabled={isPending} onClick={() => setEditing(false)}>Cancel</Button>
             </div>
           )}
         </div>
@@ -488,7 +488,7 @@ function ConfirmCardPayment({ jobId }: { jobId: number }) {
           <AlertCircle className="h-4 w-4 flex-shrink-0" /> {error}
         </p>
       )}
-      <Button className="rounded-none font-bold w-full" disabled={working} onClick={handleConfirm}>
+      <Button className="rounded-xl font-bold w-full" disabled={working} onClick={handleConfirm}>
         {working ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
         Confirm Payment
       </Button>
@@ -569,12 +569,12 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
         <h3 className="font-bold text-lg flex items-center gap-2">
           <Receipt className="h-5 w-5 text-muted-foreground" /> Payment &amp; Broker Fee
         </h3>
-        <Badge className={`rounded-none border-2 font-bold uppercase text-xs px-3 py-1 ${paymentBadgeClass(status)}`}>
+        <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 ${paymentBadgeClass(status)}`}>
           {PAYMENT_LABEL[status] ?? status}
         </Badge>
       </div>
 
-      <div className="border-2 border-border divide-y divide-border">
+      <div className="border border-border/60 divide-y divide-border">
         <div className="flex items-center justify-between p-4">
           <div>
             <p className="text-sm font-medium">Work value (provider rate × hours)</p>
@@ -632,13 +632,13 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
 
       {/* Customer actions */}
       {isCustomer && showCharge && (
-        <Button className="rounded-none font-bold w-full" disabled={pending} onClick={() => charge.mutate({ id: job.id })}>
+        <Button className="rounded-xl font-bold w-full" disabled={pending} onClick={() => charge.mutate({ id: job.id })}>
           {charge.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DollarSign className="mr-2 h-4 w-4" />}
           {status === "failed" ? `Retry Payment ${fmtMoney(job.customerTotalAmount)}` : `Pay ${fmtMoney(job.customerTotalAmount)}`}
         </Button>
       )}
       {isCustomer && showRelease && (
-        <Button className="rounded-none font-bold w-full" disabled={pending} onClick={() => release.mutate({ id: job.id })}>
+        <Button className="rounded-xl font-bold w-full" disabled={pending} onClick={() => release.mutate({ id: job.id })}>
           {release.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
           {failedWithInvoice ? "Retry Payout to Provider" : status === "invoiced" ? "Settle Invoice & Release Payout" : "Release Payout to Provider"}
         </Button>
@@ -655,7 +655,7 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
           </div>
           <Button
             variant="outline"
-            className="rounded-none font-bold w-full"
+            className="rounded-xl font-bold w-full"
             disabled={pending || checkoutSession.isPending || verifyCheckout.isPending}
             onClick={() => checkoutSession.mutate({ id: job.id, data: { returnTo: window.location.origin + window.location.pathname } })}
           >
@@ -714,7 +714,7 @@ function HaulTicketsPanel({ jobId }: { jobId: number }) {
           <div key={t.id} className="bg-muted/20 border border-border p-4 space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <span className="font-bold text-sm">Load #{t.loadNumber}</span>
-              <Badge variant="outline" className="rounded-none text-xs uppercase">{t.status.replace("_", " ")}</Badge>
+              <Badge variant="outline" className="rounded-xl text-xs uppercase">{t.status.replace("_", " ")}</Badge>
             </div>
             {t.weightTons != null && <p className="text-sm">Weight: {t.weightTons} tons</p>}
             {t.notes && <p className="text-sm text-muted-foreground">{t.notes}</p>}
@@ -846,19 +846,19 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
       </h3>
       <div className="flex flex-wrap gap-3">
         {!myTicket.clockedInAt && (
-          <Button className="rounded-none font-bold" onClick={() => checkIn.mutate()} disabled={checkIn.isPending}>
+          <Button className="rounded-xl font-bold" onClick={() => checkIn.mutate()} disabled={checkIn.isPending}>
             {checkIn.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
             Check In
           </Button>
         )}
         {(job.status === "accepted" || job.status === "active") && (
-          <Button className="rounded-none font-bold bg-purple-600 hover:bg-purple-700 text-white" onClick={handleStart} disabled={updateJob.isPending}>
+          <Button className="rounded-xl font-bold bg-purple-600 hover:bg-purple-700 text-white" onClick={handleStart} disabled={updateJob.isPending}>
             {updateJob.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Flag className="mr-2 h-4 w-4" />}
             Start Work
           </Button>
         )}
         {job.status === "in_progress" && (
-          <Button className="rounded-none font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleComplete} disabled={updateJob.isPending}>
+          <Button className="rounded-xl font-bold bg-green-600 hover:bg-green-700 text-white" onClick={handleComplete} disabled={updateJob.isPending}>
             {updateJob.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
             Complete Job
           </Button>
@@ -866,9 +866,9 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
+        <div className="bg-muted/30 border border-border/60 p-4 space-y-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Upload Haul Ticket</p>
-          <Input className="rounded-none" placeholder="Weight (tons)" value={ticketForm.weightTons} onChange={(e) => setTicketForm((f) => ({ ...f, weightTons: e.target.value }))} />
+          <Input className="rounded-xl" placeholder="Weight (tons)" value={ticketForm.weightTons} onChange={(e) => setTicketForm((f) => ({ ...f, weightTons: e.target.value }))} />
           <PhotoFileInput
             id={`ticket-photo-${job.id}`}
             label="Ticket Photo"
@@ -876,12 +876,12 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
             onFileChange={setTicketFile}
             disabled={uploadTicket.isPending}
           />
-          <Input className="rounded-none" placeholder="Notes" value={ticketForm.notes} onChange={(e) => setTicketForm((f) => ({ ...f, notes: e.target.value }))} />
-          <Button size="sm" className="rounded-none font-bold w-full" disabled={uploadTicket.isPending || !ticketFile} onClick={() => uploadTicket.mutate()}>
+          <Input className="rounded-xl" placeholder="Notes" value={ticketForm.notes} onChange={(e) => setTicketForm((f) => ({ ...f, notes: e.target.value }))} />
+          <Button size="sm" className="rounded-xl font-bold w-full" disabled={uploadTicket.isPending || !ticketFile} onClick={() => uploadTicket.mutate()}>
             {uploadTicket.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null} Submit Ticket
           </Button>
         </div>
-        <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
+        <div className="bg-muted/30 border border-border/60 p-4 space-y-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Upload Job Photo</p>
           <PhotoFileInput
             id={`job-photo-${job.id}`}
@@ -890,8 +890,8 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
             onFileChange={setPhotoFile}
             disabled={uploadPhoto.isPending}
           />
-          <Input className="rounded-none" placeholder="Caption" value={photoForm.photoCaption} onChange={(e) => setPhotoForm((f) => ({ ...f, photoCaption: e.target.value }))} />
-          <Button size="sm" className="rounded-none font-bold w-full" disabled={uploadPhoto.isPending || !photoFile} onClick={() => uploadPhoto.mutate()}>
+          <Input className="rounded-xl" placeholder="Caption" value={photoForm.photoCaption} onChange={(e) => setPhotoForm((f) => ({ ...f, photoCaption: e.target.value }))} />
+          <Button size="sm" className="rounded-xl font-bold w-full" disabled={uploadPhoto.isPending || !photoFile} onClick={() => uploadPhoto.mutate()}>
             {uploadPhoto.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null} Submit Photo
           </Button>
         </div>
@@ -1003,10 +1003,10 @@ function AssignDriverPanel({ job }: { job: Job }) {
             Driver <span className="text-destructive">*</span>
           </Label>
           <Select value={driverId} onValueChange={setDriverId}>
-            <SelectTrigger className="rounded-none border-2 mt-1">
+            <SelectTrigger className="rounded-xl border-2 mt-1">
               <SelectValue placeholder={drivers.length === 0 ? "No drivers available" : "Select driver..."} />
             </SelectTrigger>
-            <SelectContent className="rounded-none border-2">
+            <SelectContent className="rounded-xl border-2">
               {drivers.map(d => (
                 <SelectItem key={d.id} value={String(d.id)}>{d.contactName || d.companyName || `Driver #${d.id}`}</SelectItem>
               ))}
@@ -1016,10 +1016,10 @@ function AssignDriverPanel({ job }: { job: Job }) {
         <div>
           <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Truck (optional)</Label>
           <Select value={truckId} onValueChange={setTruckId}>
-            <SelectTrigger className="rounded-none border-2 mt-1">
+            <SelectTrigger className="rounded-xl border-2 mt-1">
               <SelectValue placeholder="Select truck..." />
             </SelectTrigger>
-            <SelectContent className="rounded-none border-2">
+            <SelectContent className="rounded-xl border-2">
               {(trucks ?? []).map(t => (
                 <SelectItem key={t.id} value={String(t.id)}>
                   {t.truckNumber ? `#${t.truckNumber} — ` : ""}{t.truckType.replace("_", " ")} ({t.capacityTons}t)
@@ -1029,7 +1029,7 @@ function AssignDriverPanel({ job }: { job: Job }) {
           </Select>
         </div>
       </div>
-      <Button className="rounded-none font-bold" onClick={handleAssign} disabled={!driverId || assign.isPending}>
+      <Button className="rounded-xl font-bold" onClick={handleAssign} disabled={!driverId || assign.isPending}>
         {assign.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <UserCheck className="h-4 w-4 mr-2" />}
         Assign & Create Load Ticket
       </Button>
@@ -1070,7 +1070,7 @@ function CompletionReviewPanel({ job }: { job: Job }) {
         <h3 className="font-bold text-lg flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-muted-foreground" /> Completion Review
         </h3>
-        <Badge className={`rounded-none border-2 font-bold uppercase text-xs px-3 py-1 ${
+        <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 ${
           approval === "approved" ? "bg-green-100 text-green-800 border-green-300"
           : approval === "flagged" ? "bg-red-100 text-red-800 border-red-300"
           : "bg-amber-100 text-amber-800 border-amber-300"
@@ -1100,30 +1100,30 @@ function CompletionReviewPanel({ job }: { job: Job }) {
       {approval !== "approved" && (
         <div className="space-y-3">
           {showFlag ? (
-            <div className="bg-muted/30 border-2 border-border p-4 space-y-3">
+            <div className="bg-muted/30 border border-border/60 p-4 space-y-3">
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Reason for flag</Label>
               <Textarea
-                className="rounded-none border-2"
+                className="rounded-xl border-2"
                 value={reason}
                 onChange={e => setReason(e.target.value)}
                 placeholder="Describe what's wrong (e.g. incomplete haul, wrong material, damage)..."
               />
               <div className="flex gap-2">
                 <Button
-                  className="rounded-none font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className="rounded-xl font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   disabled={!reason.trim() || flag.isPending}
                   onClick={() => flag.mutate({ id: job.id, data: { reason: reason.trim() } })}
                 >
                   {flag.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Flag className="h-4 w-4 mr-2" />}
                   Submit Flag
                 </Button>
-                <Button variant="ghost" className="rounded-none" onClick={() => { setShowFlag(false); setReason(""); }}>Cancel</Button>
+                <Button variant="ghost" className="rounded-xl" onClick={() => { setShowFlag(false); setReason(""); }}>Cancel</Button>
               </div>
             </div>
           ) : (
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
-                className="rounded-none font-bold bg-green-600 hover:bg-green-700 text-white flex-1"
+                className="rounded-xl font-bold bg-green-600 hover:bg-green-700 text-white flex-1"
                 disabled={approve.isPending}
                 onClick={() => approve.mutate({ id: job.id })}
               >
@@ -1132,7 +1132,7 @@ function CompletionReviewPanel({ job }: { job: Job }) {
               </Button>
               <Button
                 variant="outline"
-                className="rounded-none border-2 font-bold text-destructive hover:bg-destructive/10 hover:border-destructive flex-1"
+                className="rounded-xl border-2 font-bold text-destructive hover:bg-destructive/10 hover:border-destructive flex-1"
                 onClick={() => setShowFlag(true)}
               >
                 <Flag className="h-4 w-4 mr-2" /> Flag an Issue
@@ -1248,21 +1248,21 @@ export default function JobDetailPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-5xl mx-auto space-y-6 page-enter pb-12">
       <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/jobs")}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Jobs
       </Button>
 
-      <div className="bg-card border-2 border-border shadow-sm overflow-hidden">
+      <div className="bg-card border border-border/60 shadow-sm overflow-hidden">
         {/* Header */}
         <div className="bg-secondary text-secondary-foreground p-6 md:p-8 flex flex-col md:flex-row justify-between items-start gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-black tracking-tight uppercase">
+              <h1 className="text-3xl font-bold tracking-tight uppercase">
                 JOB-{job.id.toString().padStart(4, '0')}
               </h1>
-              <Badge className={`rounded-none border-2 font-bold uppercase text-xs px-3 py-1 ${getStatusColor(job.status)}`}>
+              <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 ${getStatusColor(job.status)}`}>
                 {job.status.replace('_', ' ')}
               </Badge>
             </div>
@@ -1290,14 +1290,14 @@ export default function JobDetailPage() {
                     variant="outline"
                     onClick={handleDeclineAward}
                     disabled={declineJob.isPending || acceptJob.isPending}
-                    className="font-bold rounded-none border-2"
+                    className="font-bold rounded-xl border-2"
                   >
                     Decline Award
                   </Button>
                   <Button
                     onClick={handleAcceptAward}
                     disabled={declineJob.isPending || acceptJob.isPending}
-                    className="font-bold rounded-none bg-green-600 hover:bg-green-700 text-white"
+                    className="font-bold rounded-xl bg-green-600 hover:bg-green-700 text-white"
                   >
                     {acceptJob.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
                     Accept Job
@@ -1308,7 +1308,7 @@ export default function JobDetailPage() {
                 <Button 
                   onClick={() => handleUpdateStatus("in_progress")}
                   disabled={updateJob.isPending}
-                  className="font-bold rounded-none bg-purple-600 hover:bg-purple-700 text-white"
+                  className="font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   {updateJob.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Flag className="mr-2 h-4 w-4" />}
                   Start Job
@@ -1317,12 +1317,12 @@ export default function JobDetailPage() {
               {job.status === "in_progress" && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button className="font-bold rounded-none bg-green-600 hover:bg-green-700 text-white">
+                    <Button className="font-bold rounded-xl bg-green-600 hover:bg-green-700 text-white">
                       <CheckCircle2 className="mr-2 h-4 w-4" />
                       Mark Completed
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="rounded-none border-2">
+                  <AlertDialogContent className="rounded-xl border-2">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Complete this job?</AlertDialogTitle>
                       <AlertDialogDescription>
@@ -1330,9 +1330,9 @@ export default function JobDetailPage() {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="rounded-none border-2">Cancel</AlertDialogCancel>
+                      <AlertDialogCancel className="rounded-xl border-2">Cancel</AlertDialogCancel>
                       <AlertDialogAction 
-                        className="rounded-none bg-green-600 hover:bg-green-700"
+                        className="rounded-xl bg-green-600 hover:bg-green-700"
                         onClick={() => handleUpdateStatus("completed")}
                       >
                         Confirm Completion
@@ -1426,7 +1426,7 @@ export default function JobDetailPage() {
                 <div className="absolute left-[9px] top-2 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-background"></div>
                 
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Pickup</p>
-                <div className="bg-background border-2 border-border p-4 shadow-sm">
+                <div className="bg-background border border-border/60 p-4 shadow-sm">
                   <p className="font-medium whitespace-pre-line">{job.pickupAddress}</p>
                 </div>
               </div>
@@ -1435,7 +1435,7 @@ export default function JobDetailPage() {
                 <div className="absolute left-[9px] top-2 w-2.5 h-2.5 rounded-full border-2 border-primary bg-background ring-4 ring-background"></div>
                 
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Delivery</p>
-                <div className="bg-background border-2 border-border p-4 shadow-sm">
+                <div className="bg-background border border-border/60 p-4 shadow-sm">
                   <p className="font-medium whitespace-pre-line">{job.deliveryAddress}</p>
                 </div>
               </div>

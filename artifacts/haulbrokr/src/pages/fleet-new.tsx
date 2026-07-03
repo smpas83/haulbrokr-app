@@ -124,14 +124,14 @@ export default function NewTruckPage() {
   if (isEdit && loadingTruck) {
     return (
       <div className="max-w-3xl mx-auto space-y-6 pb-12">
-        <Skeleton className="h-10 w-48 rounded-none" />
-        <Skeleton className="h-96 w-full rounded-none" />
+        <Skeleton className="h-10 w-48 rounded-xl" />
+        <Skeleton className="h-96 w-full rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-3xl mx-auto space-y-6 page-enter pb-12">
       <div>
         <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/fleet")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -143,7 +143,7 @@ export default function NewTruckPage() {
         </h1>
       </div>
 
-      <div className="bg-card border-2 border-border shadow-sm p-6 md:p-8">
+      <div className="bg-card border border-border/60 shadow-sm p-6 md:p-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             
@@ -158,11 +158,11 @@ export default function NewTruckPage() {
                       <FormLabel>Truck Type <span className="text-destructive">*</span></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className="h-12 border-2 rounded-none focus:ring-primary">
+                          <SelectTrigger className="h-12 border-2 rounded-xl focus:ring-primary">
                             <SelectValue placeholder="Select type" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="border-2 rounded-none">
+                        <SelectContent className="border-2 rounded-xl">
                           {Object.values(TruckInputTruckType).map(type => (
                             <SelectItem key={type} value={type} className="capitalize font-medium">
                               {type.replace('_', ' ')} Dump
@@ -182,7 +182,7 @@ export default function NewTruckPage() {
                     <FormItem>
                       <FormLabel>Capacity (Tons) <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="20" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary font-mono text-lg" />
+                        <Input type="number" placeholder="20" {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary font-mono text-lg" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -198,7 +198,7 @@ export default function NewTruckPage() {
                       <FormControl>
                         <div className="relative">
                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</span>
-                          <Input type="number" placeholder="110" {...field} className="h-12 pl-8 border-2 rounded-none focus-visible:ring-primary font-mono text-lg" />
+                          <Input type="number" placeholder="110" {...field} className="h-12 pl-8 border-2 rounded-xl focus-visible:ring-primary font-mono text-lg" />
                         </div>
                       </FormControl>
                       <FormDescription>Your baseline rate. You can adjust this per bid.</FormDescription>
@@ -219,7 +219,7 @@ export default function NewTruckPage() {
                     <FormItem>
                       <FormLabel>Truck / Unit Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 27" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary font-mono" />
+                        <Input placeholder="e.g. 27" {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary font-mono" />
                       </FormControl>
                       <FormDescription>Your internal fleet ID.</FormDescription>
                       <FormMessage />
@@ -234,7 +234,7 @@ export default function NewTruckPage() {
                     <FormItem>
                       <FormLabel>VIN</FormLabel>
                       <FormControl>
-                        <Input placeholder="1HGCM82633A..." {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary uppercase font-mono" />
+                        <Input placeholder="1HGCM82633A..." {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary uppercase font-mono" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -249,11 +249,11 @@ export default function NewTruckPage() {
                       <FormLabel>Insurance (COI) Status</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className="h-12 border-2 rounded-none focus:ring-primary">
+                          <SelectTrigger className="h-12 border-2 rounded-xl focus:ring-primary">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="border-2 rounded-none">
+                        <SelectContent className="border-2 rounded-xl">
                           {Object.values(TruckInputCoiStatus).map(s => (
                             <SelectItem key={s} value={s} className="font-medium">
                               {COI_LABELS[s] ?? s}
@@ -278,7 +278,7 @@ export default function NewTruckPage() {
                     <FormItem>
                       <FormLabel>Make</FormLabel>
                       <FormControl>
-                        <Input placeholder="Kenworth, Peterbilt..." {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                        <Input placeholder="Kenworth, Peterbilt..." {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -292,7 +292,7 @@ export default function NewTruckPage() {
                     <FormItem>
                       <FormLabel>Model</FormLabel>
                       <FormControl>
-                        <Input placeholder="T880..." {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                        <Input placeholder="T880..." {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -306,7 +306,7 @@ export default function NewTruckPage() {
                     <FormItem>
                       <FormLabel>Year</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="2020" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                        <Input type="number" placeholder="2020" {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -320,7 +320,7 @@ export default function NewTruckPage() {
                     <FormItem className="md:col-span-1">
                       <FormLabel>License Plate</FormLabel>
                       <FormControl>
-                        <Input placeholder="ABC-1234" {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary uppercase font-mono" />
+                        <Input placeholder="ABC-1234" {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary uppercase font-mono" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -334,7 +334,7 @@ export default function NewTruckPage() {
                     <FormItem className="md:col-span-2">
                       <FormLabel>Internal Notes</FormLabel>
                       <FormControl>
-                        <Input placeholder="Driver name, specific equipment..." {...field} className="h-12 border-2 rounded-none focus-visible:ring-primary" />
+                        <Input placeholder="Driver name, specific equipment..." {...field} className="h-12 border-2 rounded-xl focus-visible:ring-primary" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -347,7 +347,7 @@ export default function NewTruckPage() {
               control={form.control}
               name="isAvailable"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-none border-2 p-4 bg-muted/20">
+                <FormItem className="flex flex-row items-center justify-between rounded-xl border-2 p-4 bg-muted/20">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base font-bold">Currently Available for Dispatch</FormLabel>
                     <FormDescription>
@@ -368,14 +368,14 @@ export default function NewTruckPage() {
               <Button 
                 type="button" 
                 variant="outline" 
-                className="h-12 px-6 font-bold rounded-none border-2"
+                className="h-12 px-6 font-bold rounded-xl border-2"
                 onClick={() => setLocation("/fleet")}
               >
                 Cancel
               </Button>
               <Button 
                 type="submit" 
-                className="h-12 px-8 font-bold rounded-none"
+                className="h-12 px-8 font-bold rounded-xl"
                 disabled={isPending}
                 data-testid="btn-submit-truck"
               >

@@ -28,15 +28,15 @@ const UNASSIGNED = "unassigned";
 function CoiBadge({ status }: { status?: string | null }) {
   const s = status ?? "none";
   if (s === "active") {
-    return <Badge className="rounded-none bg-green-600 text-white font-bold uppercase text-[10px]"><ShieldCheck className="h-3 w-3 mr-1" /> COI Active</Badge>;
+    return <Badge className="rounded-xl bg-green-600 text-white font-bold uppercase text-[10px]"><ShieldCheck className="h-3 w-3 mr-1" /> COI Active</Badge>;
   }
   if (s === "expired") {
-    return <Badge className="rounded-none bg-destructive text-destructive-foreground font-bold uppercase text-[10px]"><ShieldAlert className="h-3 w-3 mr-1" /> COI Expired</Badge>;
+    return <Badge className="rounded-xl bg-destructive text-destructive-foreground font-bold uppercase text-[10px]"><ShieldAlert className="h-3 w-3 mr-1" /> COI Expired</Badge>;
   }
   if (s === "pending") {
-    return <Badge variant="secondary" className="rounded-none font-bold uppercase text-[10px]"><ShieldQuestion className="h-3 w-3 mr-1" /> COI Pending</Badge>;
+    return <Badge variant="secondary" className="rounded-xl font-bold uppercase text-[10px]"><ShieldQuestion className="h-3 w-3 mr-1" /> COI Pending</Badge>;
   }
-  return <Badge variant="outline" className="rounded-none font-bold uppercase text-[10px] text-muted-foreground"><ShieldQuestion className="h-3 w-3 mr-1" /> No COI</Badge>;
+  return <Badge variant="outline" className="rounded-xl font-bold uppercase text-[10px] text-muted-foreground"><ShieldQuestion className="h-3 w-3 mr-1" /> No COI</Badge>;
 }
 
 export default function FleetPage() {
@@ -89,14 +89,14 @@ export default function FleetPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
+    <div className="space-y-6 page-enter max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Fleet</h1>
           <p className="text-muted-foreground">Manage your dump trucks, compliance, and driver assignments.</p>
         </div>
         <Link href="/fleet/new">
-          <Button className="font-bold rounded-none" data-testid="btn-add-truck">
+          <Button className="font-bold rounded-xl" data-testid="btn-add-truck">
             <Plus className="mr-2 h-4 w-4" />
             Add Truck
           </Button>
@@ -105,17 +105,17 @@ export default function FleetPage() {
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-48 w-full rounded-none" />)}
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
         </div>
       ) : trucks && trucks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {trucks.map(truck => (
-            <div key={truck.id} className="bg-card border-2 border-border p-5 flex flex-col hover:border-primary/50 transition-colors">
+            <div key={truck.id} className="bg-card border border-border/60 p-5 flex flex-col hover:border-primary/50 transition-colors">
               <div className="flex justify-between items-start mb-4">
                 <div className="bg-muted p-3 rounded-sm">
                   <Truck className="h-8 w-8 text-primary" />
                 </div>
-                <Badge variant={truck.isAvailable ? "default" : "secondary"} className="rounded-none font-bold uppercase text-[10px]">
+                <Badge variant={truck.isAvailable ? "default" : "secondary"} className="rounded-xl font-bold uppercase text-[10px]">
                   {truck.isAvailable ? "Available" : "In Use / Offline"}
                 </Badge>
               </div>
@@ -166,10 +166,10 @@ export default function FleetPage() {
                   onValueChange={(v) => handleAssignDriver(truck.id, v)}
                   disabled={updateTruck.isPending}
                 >
-                  <SelectTrigger className="rounded-none border-2 h-10 text-sm">
+                  <SelectTrigger className="rounded-xl border-2 h-10 text-sm">
                     <SelectValue placeholder="Unassigned" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-2">
+                  <SelectContent className="rounded-xl border-2">
                     <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
                     {drivers.map(d => (
                       <SelectItem key={d.id} value={String(d.id)}>{d.contactName || d.companyName || `Driver #${d.id}`}</SelectItem>
@@ -185,14 +185,14 @@ export default function FleetPage() {
 
               <div className="flex gap-2 mt-auto">
                 <Link href={`/fleet/${truck.id}/edit`} className="flex-1">
-                  <Button variant="outline" className="w-full rounded-none border-2 font-semibold">Edit</Button>
+                  <Button variant="outline" className="w-full rounded-xl border-2 font-semibold">Edit</Button>
                 </Link>
                 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" className="rounded-none border-2 text-destructive hover:bg-destructive/10 hover:border-destructive">Remove</Button>
+                    <Button variant="outline" className="rounded-xl border-2 text-destructive hover:bg-destructive/10 hover:border-destructive">Remove</Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="rounded-none border-2">
+                  <AlertDialogContent className="rounded-xl border-2">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Remove truck from fleet?</AlertDialogTitle>
                       <AlertDialogDescription>
@@ -200,9 +200,9 @@ export default function FleetPage() {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="rounded-none border-2">Cancel</AlertDialogCancel>
+                      <AlertDialogCancel className="rounded-xl border-2">Cancel</AlertDialogCancel>
                       <AlertDialogAction 
-                        className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         onClick={() => handleDelete(truck.id)}
                       >
                         Yes, Remove
@@ -215,14 +215,14 @@ export default function FleetPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-card border-2 border-dashed border-border p-12 text-center">
+        <div className="bg-card border border-dashed border-border/60 p-12 text-center">
           <Truck className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
           <h3 className="text-xl font-bold mb-2">Your fleet is empty</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Add your dump trucks to start bidding on jobs. Accurate truck profiles help customers choose your bids.
           </p>
           <Link href="/fleet/new">
-            <Button size="lg" className="font-bold rounded-none h-12 px-8">Add Your First Truck</Button>
+            <Button size="lg" className="font-bold rounded-xl h-12 px-8">Add Your First Truck</Button>
           </Link>
         </div>
       )}

@@ -73,12 +73,12 @@ function ReviewActions({
             placeholder="Reason for rejection (shared with the applicant)â¦"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="rounded-none border-2 min-h-[72px]"
+            className="rounded-xl border-2 min-h-[72px]"
           />
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className="rounded-none border-2 text-destructive hover:bg-destructive/10"
+              className="rounded-xl border-2 text-destructive hover:bg-destructive/10"
               disabled={isPending || !note.trim()}
               onClick={() => onSubmit("reject", note.trim())}
             >
@@ -87,7 +87,7 @@ function ReviewActions({
             </Button>
             <Button
               variant="ghost"
-              className="rounded-none"
+              className="rounded-xl"
               disabled={isPending}
               onClick={() => { setRejecting(false); setNote(""); }}
             >
@@ -98,7 +98,7 @@ function ReviewActions({
       ) : (
         <div className="flex gap-2">
           <Button
-            className="rounded-none"
+            className="rounded-xl"
             disabled={isPending || approveDisabled}
             onClick={() => onSubmit("approve")}
           >
@@ -107,7 +107,7 @@ function ReviewActions({
           </Button>
           <Button
             variant="outline"
-            className="rounded-none border-2 text-destructive hover:bg-destructive/10"
+            className="rounded-xl border-2 text-destructive hover:bg-destructive/10"
             disabled={isPending || rejectDisabled}
             onClick={() => setRejecting(true)}
           >
@@ -121,15 +121,15 @@ function ReviewActions({
 
 function ReviewBadge({ status }: { status: string }) {
   if (status === "verified" || status === "approved") {
-    return <Badge className="bg-green-500 hover:bg-green-600 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1" /> {status === "verified" ? "Verified" : "Approved"}</Badge>;
+    return <Badge className="bg-green-500 hover:bg-green-600 rounded-xl"><CheckCircle2 className="w-3 h-3 mr-1" /> {status === "verified" ? "Verified" : "Approved"}</Badge>;
   }
   if (status === "pending") {
-    return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none"><Clock className="w-3 h-3 mr-1" /> Pending Review</Badge>;
+    return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl"><Clock className="w-3 h-3 mr-1" /> Pending Review</Badge>;
   }
   if (status === "rejected") {
-    return <Badge variant="destructive" className="rounded-none"><AlertCircle className="w-3 h-3 mr-1" /> Rejected</Badge>;
+    return <Badge variant="destructive" className="rounded-xl"><AlertCircle className="w-3 h-3 mr-1" /> Rejected</Badge>;
   }
-  return <Badge variant="secondary" className="rounded-none text-muted-foreground">{status.replace(/_/g, " ")}</Badge>;
+  return <Badge variant="secondary" className="rounded-xl text-muted-foreground">{status.replace(/_/g, " ")}</Badge>;
 }
 
 function Field({ label, value }: { label: string; value?: ReactNode }) {
@@ -277,7 +277,7 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
   const otherUploads = item.uploadedDocuments.filter((d) => !GROUPED_UPLOAD_DOC_TYPES.has(d.docType));
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -291,12 +291,12 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
         </div>
         <div className="flex flex-col items-end gap-2">
           {item.canBid ? (
-            <Badge className="bg-green-500 hover:bg-green-600 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1" /> Can bid</Badge>
+            <Badge className="bg-green-500 hover:bg-green-600 rounded-xl"><CheckCircle2 className="w-3 h-3 mr-1" /> Can bid</Badge>
           ) : (
-            <Badge variant="secondary" className="rounded-none">Not eligible to bid</Badge>
+            <Badge variant="secondary" className="rounded-xl">Not eligible to bid</Badge>
           )}
           {item.hasPendingReview && (
-            <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none"><Clock className="w-3 h-3 mr-1" /> Review needed</Badge>
+            <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl"><Clock className="w-3 h-3 mr-1" /> Review needed</Badge>
           )}
         </div>
       </CardHeader>
@@ -433,7 +433,7 @@ function CreditCard_({ item }: { item: AdminCreditApplicationItem }) {
   }
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -512,7 +512,7 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
   }
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -523,11 +523,11 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
           </CardDescription>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none">
+          <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl">
             <Clock className="w-3 h-3 mr-1" /> Stuck
           </Badge>
           {item.payoutAlertSentAt != null && (
-            <Badge className="bg-red-600 hover:bg-red-700 text-white rounded-none">
+            <Badge className="bg-red-600 hover:bg-red-700 text-white rounded-xl">
               <ShieldAlert className="w-3 h-3 mr-1" /> Alerted
             </Badge>
           )}
@@ -559,13 +559,13 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
             retries the transfer; the customer is never re-charged.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button className="rounded-none" disabled={retry.isPending} onClick={release}>
+            <Button className="rounded-xl" disabled={retry.isPending} onClick={release}>
               {retry.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Banknote className="w-4 h-4 mr-1" />}
               Release Payout
             </Button>
             <Button
               variant="outline"
-              className="rounded-none"
+              className="rounded-xl"
               disabled={reset.isPending}
               onClick={acknowledge}
               title="Clear the failure count and alert after resolving the underlying issue"
@@ -625,7 +625,7 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
   }
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardContent className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-6">
         <div>
           <div className="font-semibold flex items-center gap-2">
@@ -643,7 +643,7 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
                 key={role}
                 size="sm"
                 variant={member.staffRole === role ? "default" : "outline"}
-                className="rounded-none border-2"
+                className="rounded-xl border-2"
                 disabled={update.isPending}
                 onClick={() => setRole(role)}
               >
@@ -653,7 +653,7 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
             <Button
               size="sm"
               variant="ghost"
-              className="rounded-none text-destructive hover:bg-destructive/10"
+              className="rounded-xl text-destructive hover:bg-destructive/10"
               disabled={update.isPending}
               onClick={() => setRole(null)}
               title="Remove staff access"
@@ -662,7 +662,7 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
             </Button>
           </div>
         ) : (
-          <Badge variant="secondary" className="rounded-none border-2 text-sm">
+          <Badge variant="secondary" className="rounded-xl border-2 text-sm">
             {roleLabel(member.staffRole)}
           </Badge>
         )}
@@ -706,7 +706,7 @@ function AddStaffPanel() {
 
   const results = search.data ?? [];
   return (
-    <Card className="rounded-none border-2 border-dashed">
+    <Card className="rounded-xl border-2 border-dashed">
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2"><UserPlus className="w-4 h-4 text-primary" /> Add a staff member</CardTitle>
         <CardDescription>Search any registered user by name, company, or email, then assign them a staff role.</CardDescription>
@@ -717,7 +717,7 @@ function AddStaffPanel() {
           value={term}
           onChange={(e) => setTerm(e.target.value)}
           placeholder={"Search by name, company, or email\u2026"}
-          className="w-full border-2 rounded-none bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full border-2 rounded-xl bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         {term.trim().length < 2 ? (
           <p className="text-xs text-muted-foreground">Type at least 2 characters to search.</p>
@@ -738,7 +738,7 @@ function AddStaffPanel() {
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {STAFF_ROLE_OPTIONS.map((role) => (
-                    <Button key={role} size="sm" variant={m.staffRole === role ? "default" : "outline"} className="rounded-none border-2" disabled={update.isPending} onClick={() => assign(m, role)}>
+                    <Button key={role} size="sm" variant={m.staffRole === role ? "default" : "outline"} className="rounded-xl border-2" disabled={update.isPending} onClick={() => assign(m, role)}>
                       {STAFF_ROLE_LABELS[role]}
                     </Button>
                   ))}
@@ -797,17 +797,17 @@ const BIN_NEXT_ACTION: Record<
 function BinStatusBadge({ displayStatus }: { displayStatus: string }) {
   switch (displayStatus) {
     case "pending":
-      return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-none"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+      return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
     case "confirmed":
-      return <Badge className="bg-blue-500 hover:bg-blue-600 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1" /> Confirmed</Badge>;
+      return <Badge className="bg-blue-500 hover:bg-blue-600 rounded-xl"><CheckCircle2 className="w-3 h-3 mr-1" /> Confirmed</Badge>;
     case "active":
-      return <Badge className="bg-green-500 hover:bg-green-600 rounded-none"><Truck className="w-3 h-3 mr-1" /> Delivered</Badge>;
+      return <Badge className="bg-green-500 hover:bg-green-600 rounded-xl"><Truck className="w-3 h-3 mr-1" /> Delivered</Badge>;
     case "completed":
-      return <Badge variant="secondary" className="rounded-none"><PackageCheck className="w-3 h-3 mr-1" /> Picked Up</Badge>;
+      return <Badge variant="secondary" className="rounded-xl"><PackageCheck className="w-3 h-3 mr-1" /> Picked Up</Badge>;
     case "cancelled":
-      return <Badge variant="destructive" className="rounded-none"><X className="w-3 h-3 mr-1" /> Cancelled</Badge>;
+      return <Badge variant="destructive" className="rounded-xl"><X className="w-3 h-3 mr-1" /> Cancelled</Badge>;
     default:
-      return <Badge variant="secondary" className="rounded-none">{displayStatus.replace(/_/g, " ")}</Badge>;
+      return <Badge variant="secondary" className="rounded-xl">{displayStatus.replace(/_/g, " ")}</Badge>;
   }
 }
 
@@ -840,7 +840,7 @@ function BinOrderCard({ order }: { order: BinOrder }) {
   }
 
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -874,7 +874,7 @@ function BinOrderCard({ order }: { order: BinOrder }) {
         </div>
         <div className="pt-2 border-t">
           {next ? (
-            <Button className="rounded-none" disabled={advance.isPending} onClick={move}>
+            <Button className="rounded-xl" disabled={advance.isPending} onClick={move}>
               {advance.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ArrowRight className="w-4 h-4 mr-1" />}
               {next.label}
             </Button>
@@ -934,7 +934,7 @@ function StatCard({
   accent?: boolean;
 }) {
   return (
-    <Card className="rounded-none border-2">
+    <Card className="rounded-xl border-2">
       <CardContent className="pt-6">
         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {icon} {label}
@@ -959,16 +959,16 @@ function ReviewQueueTile({
     <button
       type="button"
       onClick={onClick}
-      className="text-left border-2 rounded-none p-4 transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary"
+      className="text-left border-2 rounded-xl p-4 transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm font-medium">
           {icon} {label}
         </div>
         {count > 0 ? (
-          <Badge className="bg-amber-500 text-amber-950 rounded-none">{count}</Badge>
+          <Badge className="bg-amber-500 text-amber-950 rounded-xl">{count}</Badge>
         ) : (
-          <Badge variant="secondary" className="rounded-none text-muted-foreground">0</Badge>
+          <Badge variant="secondary" className="rounded-xl text-muted-foreground">0</Badge>
         )}
       </div>
       <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
@@ -1139,14 +1139,14 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <div className="max-w-2xl mx-auto py-12 space-y-4">
-        <Alert variant="destructive" className="rounded-none border-2">
+        <Alert variant="destructive" className="rounded-xl border-2">
           <ShieldAlert className="h-4 w-4" />
           <AlertTitle>Access restricted</AlertTitle>
           <AlertDescription>
             This area is for HaulBrokr staff only. Sign in with your staff credentials or use a Clerk account with an assigned staff role.
           </AlertDescription>
         </Alert>
-        <Button className="rounded-none" onClick={() => window.location.assign("/admin/login")}>
+        <Button className="rounded-xl" onClick={() => window.location.assign("/admin/login")}>
           <Lock className="h-4 w-4 mr-2" /> Staff login
         </Button>
       </div>
@@ -1189,7 +1189,7 @@ export default function AdminPage() {
         {(access as { authMethod?: string | null }).authMethod === "staff" && (
           <Button
             variant="outline"
-            className="rounded-none border-2 shrink-0"
+            className="rounded-xl border-2 shrink-0"
             onClick={async () => {
               await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
               window.location.assign("/admin/login");
@@ -1201,46 +1201,46 @@ export default function AdminPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setTab}>
-        <TabsList className="rounded-none">
+        <TabsList className="rounded-xl">
           {canOverview && (
-            <TabsTrigger value="overview" className="rounded-none gap-2">
+            <TabsTrigger value="overview" className="rounded-xl gap-2">
               <LayoutDashboard className="w-4 h-4" /> Overview
             </TabsTrigger>
           )}
           {canCompliance && (
-            <TabsTrigger value="compliance" className="rounded-none gap-2">
+            <TabsTrigger value="compliance" className="rounded-xl gap-2">
               <Truck className="w-4 h-4" /> Carriers
               {pendingCompliance > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-none ml-1">{pendingCompliance}</Badge>
+                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">{pendingCompliance}</Badge>
               )}
             </TabsTrigger>
           )}
           {canCredit && (
-            <TabsTrigger value="credit" className="rounded-none gap-2">
+            <TabsTrigger value="credit" className="rounded-xl gap-2">
               <CreditCard className="w-4 h-4" /> Credit
               {pendingCredit > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-none ml-1">{pendingCredit}</Badge>
+                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">{pendingCredit}</Badge>
               )}
             </TabsTrigger>
           )}
           {canPayouts && (
-            <TabsTrigger value="payouts" className="rounded-none gap-2">
+            <TabsTrigger value="payouts" className="rounded-xl gap-2">
               <Banknote className="w-4 h-4" /> Payouts
               {payoutItems.length > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-none ml-1">{payoutItems.length}</Badge>
+                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">{payoutItems.length}</Badge>
               )}
             </TabsTrigger>
           )}
           {canBins && (
-            <TabsTrigger value="bins" className="rounded-none gap-2">
+            <TabsTrigger value="bins" className="rounded-xl gap-2">
               <Package className="w-4 h-4" /> Bin Orders
               {openBins > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-none ml-1">{openBins}</Badge>
+                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">{openBins}</Badge>
               )}
             </TabsTrigger>
           )}
           {canViewStaff && (
-            <TabsTrigger value="staff" className="rounded-none gap-2">
+            <TabsTrigger value="staff" className="rounded-xl gap-2">
               {canManageStaff ? <Users className="w-4 h-4" /> : <Lock className="w-4 h-4" />} Team
             </TabsTrigger>
           )}
