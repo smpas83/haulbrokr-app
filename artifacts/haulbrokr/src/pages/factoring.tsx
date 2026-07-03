@@ -65,13 +65,13 @@ export default function FactoringPage() {
   const pendingCount = requests.filter((r: any) => r.status === "pending").length;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-5xl mx-auto space-y-6 page-enter pb-12">
       <div>
         <h1 className="text-3xl font-black uppercase tracking-tight">Invoice Factoring</h1>
         <p className="text-muted-foreground mt-1">Get paid same-day on completed jobs — no waiting for net-30 invoices</p>
       </div>
 
-      <Alert className="rounded-none border-2 border-primary/30 bg-primary/5">
+      <Alert className="rounded-xl border-2 border-primary/30 bg-primary/5">
         <Zap className="h-4 w-4" />
         <AlertTitle className="font-bold">How it works</AlertTitle>
         <AlertDescription className="text-sm space-y-1 mt-1">
@@ -82,15 +82,15 @@ export default function FactoringPage() {
       </Alert>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-card border-2 border-border p-4 text-center">
+        <div className="bg-card border border-border/60 p-4 text-center">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Total Advanced</p>
           <p className="text-3xl font-black text-primary">${totalAdvanced.toLocaleString()}</p>
         </div>
-        <div className="bg-card border-2 border-border p-4 text-center">
+        <div className="bg-card border border-border/60 p-4 text-center">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Requests</p>
           <p className="text-3xl font-black">{requests.length}</p>
         </div>
-        <div className="bg-card border-2 border-border p-4 text-center">
+        <div className="bg-card border border-border/60 p-4 text-center">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Pending</p>
           <p className="text-3xl font-black text-amber-600">{pendingCount}</p>
         </div>
@@ -104,14 +104,14 @@ export default function FactoringPage() {
               const invoiceAmt = job.totalAmount || job.ratePerHour * 8;
               const net = invoiceAmt * 0.97;
               return (
-                <div key={job.id} className="flex items-center justify-between bg-card border-2 border-border p-4 hover:border-primary/40 transition-colors">
+                <div key={job.id} className="flex items-center justify-between bg-card border border-border/60 p-4 hover:border-primary/40 transition-colors">
                   <div>
                     <p className="font-bold">JOB-{String(job.id).padStart(4, "0")} — {job.materialType} Haul</p>
                     <p className="text-sm text-muted-foreground mt-0.5">Invoice: <strong>${invoiceAmt.toLocaleString()}</strong> → You receive <strong className="text-green-600">${net.toFixed(2)}</strong> today (3% fee)</p>
                   </div>
                   <Button
                     size="sm"
-                    className="rounded-none font-bold ml-4"
+                    className="rounded-xl font-bold ml-4"
                     disabled={requestFunding.isPending}
                     onClick={() => requestFunding.mutate(job.id)}
                   >
@@ -130,7 +130,7 @@ export default function FactoringPage() {
         {isLoading ? (
           <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-16" />)}</div>
         ) : requests.length === 0 ? (
-          <div className="border-2 border-dashed border-border p-10 text-center">
+          <div className="border border-dashed border-border/60 p-10 text-center">
             <DollarSign className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
             <p className="font-bold">No factoring requests yet</p>
             <p className="text-sm text-muted-foreground mt-1">Complete a job and request same-day funding above</p>
@@ -140,7 +140,7 @@ export default function FactoringPage() {
             {requests.map((r: any) => {
               const Icon = STATUS_ICON[r.status] ?? Clock;
               return (
-                <div key={r.id} className="flex items-center justify-between bg-card border-2 border-border p-4">
+                <div key={r.id} className="flex items-center justify-between bg-card border border-border/60 p-4">
                   <div className="flex items-center gap-3">
                     <Icon className="h-5 w-5 text-muted-foreground" />
                     <div>
@@ -148,7 +148,7 @@ export default function FactoringPage() {
                       <p className="text-sm text-muted-foreground">Advanced ${r.netAmount.toFixed(2)} (fee: ${r.feeAmount.toFixed(2)}) · {format(new Date(r.requestedAt), "MMM d, yyyy")}</p>
                     </div>
                   </div>
-                  <Badge className={`rounded-none border font-bold uppercase text-xs px-3 ${STATUS_COLORS[r.status]}`}>{r.status}</Badge>
+                  <Badge className={`rounded-xl border font-bold uppercase text-xs px-3 ${STATUS_COLORS[r.status]}`}>{r.status}</Badge>
                 </div>
               );
             })}

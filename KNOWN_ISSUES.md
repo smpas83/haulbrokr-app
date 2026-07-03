@@ -12,21 +12,24 @@
 
 ## High-priority issues
 
-1. **Mobile realtime GPS tracking is not implemented as a live location workflow.**
-   - Evidence: the mobile map tab is hidden for launch and tracking uses simulated/display data rather than driver device location.
-   - Impact: customer ETA and fleet tracking should be treated as staging-only/demo until live location infrastructure is completed.
+1. **Live production E2E with Clerk/Stripe credentials must be run manually.**
+   - Use `pnpm run verify:staging-e2e` for infrastructure checks.
+   - Complete `POST_LAUNCH_CHECKLIST.md` with staging accounts.
 
-2. **Mobile push notifications are not implemented.**
-   - Evidence: mobile notifications are in-app activity polling, not OS push token registration or `expo-notifications`.
-   - Impact: drivers may miss dispatches unless they are actively using the app.
+2. **Push notification delivery requires Expo push credentials and device_tokens table migration.**
+   - API: `POST /notifications/register` stores tokens.
+   - Run `pnpm --filter @workspace/db run push` before production deploy.
 
-3. **Offline recovery is limited to demo/local state paths.**
-   - Evidence: no durable offline mutation queue or sync replay is wired for driver job events, tickets, or uploads.
-   - Impact: field operations can lose work when connectivity drops during upload or status mutation.
+3. **QuickBooks integration remains simulated** — UI labels updated; do not market as live sync.
 
-4. **QuickBooks integration is simulated.**
-   - Evidence: API/spec labels identify QuickBooks connect and sync as simulated.
-   - Impact: accounting sync should not be marketed as a live production integration.
+## Resolved in staging-e2e branch
+
+- Global API rate limiting (120 req/min per IP/profile)
+- Live GPS tracking via `POST /jobs/:id/location` and `GET /jobs/:id/tracking`
+- Digital Twin dispatch page at `/dispatch` with `GET /dispatch/overview`
+- Functional AI Copilot at `/copilot/chat` and `/copilot/insights`
+- Web invoice PDF download and job rating UI
+- Mobile driver location ping hook
 
 ## Medium-priority issues
 

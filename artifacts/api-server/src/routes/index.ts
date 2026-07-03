@@ -24,6 +24,9 @@ import staffAuthRouter from "./staff-auth";
 import adminRouter from "./admin";
 import ratingsRouter from "./ratings";
 import mapRouter from "./map";
+import trackingRouter from "./tracking";
+import copilotRouter from "./copilot";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -42,7 +45,7 @@ router.use(projectsRouter);
 router.use(factoringRouter);
 router.use(quickbooksRouter);
 router.use(evidenceRouter);
-  router.use(driverEventsRouter);
+router.use(driverEventsRouter);
 router.use(ticketsRouter);
 router.use(storageRouter);
 router.use(driverDocsRouter);
@@ -52,5 +55,8 @@ router.use(staffAuthRouter);
 router.use(adminRouter);
 router.use(ratingsRouter);
 router.use(mapRouter);
+router.use(trackingRouter);
+router.use(copilotRouter);
+router.use(notificationsRouter);
 
 export default router;

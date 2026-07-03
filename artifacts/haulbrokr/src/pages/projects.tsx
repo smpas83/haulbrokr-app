@@ -59,20 +59,20 @@ function NewProjectDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="font-bold rounded-none"><Plus className="mr-2 h-4 w-4" />New Project</Button>
+        <Button className="font-bold rounded-xl"><Plus className="mr-2 h-4 w-4" />New Project</Button>
       </DialogTrigger>
-      <DialogContent className="rounded-none border-2 max-w-lg">
+      <DialogContent className="rounded-xl border-2 max-w-lg">
         <DialogHeader><DialogTitle>Create New Project</DialogTitle></DialogHeader>
         <div className="space-y-4 mt-2">
-          <div><Label>Project Name *</Label><Input className="rounded-none mt-1" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Downtown Office Build-Out" /></div>
-          <div><Label>Site Address</Label><Input className="rounded-none mt-1" value={form.siteAddress} onChange={e => setForm(f => ({ ...f, siteAddress: e.target.value }))} placeholder="123 Main St, Houston TX" /></div>
-          <div><Label>Description</Label><Input className="rounded-none mt-1" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description..." /></div>
-          <div><Label>Total Budget ($)</Label><Input className="rounded-none mt-1" type="number" value={form.totalBudget} onChange={e => setForm(f => ({ ...f, totalBudget: e.target.value }))} placeholder="50000" /></div>
+          <div><Label>Project Name *</Label><Input className="rounded-xl mt-1" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Downtown Office Build-Out" /></div>
+          <div><Label>Site Address</Label><Input className="rounded-xl mt-1" value={form.siteAddress} onChange={e => setForm(f => ({ ...f, siteAddress: e.target.value }))} placeholder="123 Main St, Houston TX" /></div>
+          <div><Label>Description</Label><Input className="rounded-xl mt-1" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description..." /></div>
+          <div><Label>Total Budget ($)</Label><Input className="rounded-xl mt-1" type="number" value={form.totalBudget} onChange={e => setForm(f => ({ ...f, totalBudget: e.target.value }))} placeholder="50000" /></div>
           <div className="grid grid-cols-2 gap-4">
-            <div><Label>Start Date</Label><Input className="rounded-none mt-1" type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} /></div>
-            <div><Label>End Date</Label><Input className="rounded-none mt-1" type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} /></div>
+            <div><Label>Start Date</Label><Input className="rounded-xl mt-1" type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} /></div>
+            <div><Label>End Date</Label><Input className="rounded-xl mt-1" type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} /></div>
           </div>
-          <Button className="w-full rounded-none font-bold" disabled={!form.name || create.isPending} onClick={() => create.mutate()}>
+          <Button className="w-full rounded-xl font-bold" disabled={!form.name || create.isPending} onClick={() => create.mutate()}>
             {create.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Create Project
           </Button>
         </div>
@@ -109,7 +109,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
+    <div className="max-w-6xl mx-auto space-y-6 page-enter">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black uppercase tracking-tight">Projects</h1>
@@ -123,7 +123,7 @@ export default function ProjectsPage() {
           {[1,2,3].map(i => <Skeleton key={i} className="h-48" />)}
         </div>
       ) : projects.length === 0 ? (
-        <div className="border-2 border-dashed border-border p-16 text-center">
+        <div className="border border-dashed border-border/60 p-16 text-center">
           <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="font-bold text-lg">No projects yet</h3>
           <p className="text-muted-foreground mb-6">Create a project to group your haul requests and track spend</p>
@@ -132,11 +132,11 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map((p: any) => (
-            <div key={p.id} className="bg-card border-2 border-border hover:border-primary/40 transition-colors group">
+            <div key={p.id} className="bg-card border border-border/60 hover:border-primary/40 transition-colors group">
               <div className="bg-secondary text-secondary-foreground p-4 flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge className={`rounded-none border text-xs font-bold uppercase ${STATUS_COLORS[p.status]}`}>{p.status.replace("_"," ")}</Badge>
+                    <Badge className={`rounded-xl border text-xs font-bold uppercase ${STATUS_COLORS[p.status]}`}>{p.status.replace("_"," ")}</Badge>
                   </div>
                   <h3 className="font-bold text-lg leading-tight truncate">{p.name}</h3>
                   {p.siteAddress && <p className="text-xs text-secondary-foreground/60 mt-1 truncate">{p.siteAddress}</p>}
@@ -162,7 +162,7 @@ export default function ProjectsPage() {
                 </div>
 
                 <Link href={`/projects/${p.id}`}>
-                  <Button variant="outline" className="w-full rounded-none border-2 font-bold text-xs uppercase tracking-wider mt-2 group-hover:border-primary/40">
+                  <Button variant="outline" className="w-full rounded-xl border-2 font-bold text-xs uppercase tracking-wider mt-2 group-hover:border-primary/40">
                     <Layers className="mr-2 h-3 w-3" /> View Project
                   </Button>
                 </Link>
@@ -174,15 +174,15 @@ export default function ProjectsPage() {
 
       {projects.length > 0 && (
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-card border-2 border-border p-4 text-center">
+          <div className="bg-card border border-border/60 p-4 text-center">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Active Projects</p>
             <p className="text-3xl font-black">{projects.filter((p: any) => p.status === "active").length}</p>
           </div>
-          <div className="bg-card border-2 border-border p-4 text-center">
+          <div className="bg-card border border-border/60 p-4 text-center">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Total Budget</p>
             <p className="text-3xl font-black">${projects.reduce((s: number, p: any) => s + (p.totalBudget || 0), 0).toLocaleString()}</p>
           </div>
-          <div className="bg-card border-2 border-border p-4 text-center">
+          <div className="bg-card border border-border/60 p-4 text-center">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Total Spent</p>
             <p className="text-3xl font-black">${projects.reduce((s: number, p: any) => s + (p.spentAmount || 0), 0).toLocaleString()}</p>
           </div>

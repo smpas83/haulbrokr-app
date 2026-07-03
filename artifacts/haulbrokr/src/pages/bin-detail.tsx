@@ -134,7 +134,7 @@ export default function BinDetailPage() {
             This order may have been removed, or the link is invalid.
           </p>
         </div>
-        <Button className="rounded-none font-bold h-10" onClick={() => setLocation("/bins")}>
+        <Button className="rounded-xl font-bold h-10" onClick={() => setLocation("/bins")}>
           Back to Bin Rental
         </Button>
       </div>
@@ -149,7 +149,7 @@ export default function BinDetailPage() {
     : order.binSize;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-3xl mx-auto space-y-6 page-enter pb-12">
       {/* Back */}
       <Link href="/bins" className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" />
@@ -157,18 +157,18 @@ export default function BinDetailPage() {
       </Link>
 
       {/* Header card */}
-      <div className="bg-card border-2 border-border p-6">
+      <div className="bg-card border border-border/60 p-6">
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <div className="space-y-2 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
               <Trash2 className="h-7 w-7 text-primary flex-shrink-0" />
-              <h1 className="text-2xl font-black tracking-tight">{sizeLabel}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{sizeLabel}</h1>
               <span className="text-muted-foreground text-sm">× {order.quantity}</span>
             </div>
             <Badge
               variant="outline"
               className={cn(
-                "rounded-none border text-[10px] uppercase tracking-wider font-bold",
+                "rounded-xl border text-[10px] uppercase tracking-wider font-bold",
                 STATUS_STYLE[order.status] || "",
               )}
             >
@@ -190,7 +190,7 @@ export default function BinDetailPage() {
       </div>
 
       {/* Status timeline */}
-      <div className="bg-card border-2 border-border p-6">
+      <div className="bg-card border border-border/60 p-6">
         <h2 className="text-sm font-black uppercase tracking-wider text-muted-foreground mb-5">
           Status Timeline
         </h2>
@@ -254,7 +254,7 @@ export default function BinDetailPage() {
       </div>
 
       {/* Order details */}
-      <div className="bg-card border-2 border-border p-6 space-y-4">
+      <div className="bg-card border border-border/60 p-6 space-y-4">
         <h2 className="text-sm font-black uppercase tracking-wider text-muted-foreground">
           Order Details
         </h2>
@@ -302,7 +302,7 @@ export default function BinDetailPage() {
               </div>
               <Button
                 variant="outline"
-                className="rounded-none border-2 border-destructive/50 text-destructive hover:bg-destructive/10 font-bold h-10 flex-shrink-0"
+                className="rounded-xl border-2 border-destructive/50 text-destructive hover:bg-destructive/10 font-bold h-10 flex-shrink-0"
                 onClick={() => setConfirmCancel(true)}
               >
                 <X className="h-4 w-4 mr-1.5" />
@@ -317,14 +317,14 @@ export default function BinDetailPage() {
               <div className="flex gap-3 flex-shrink-0">
                 <Button
                   variant="outline"
-                  className="rounded-none border-2 font-bold h-10"
+                  className="rounded-xl border-2 font-bold h-10"
                   onClick={() => setConfirmCancel(false)}
                   disabled={cancelOrder.isPending}
                 >
                   Keep Order
                 </Button>
                 <Button
-                  className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold h-10"
+                  className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold h-10"
                   onClick={() => cancelOrder.mutate()}
                   disabled={cancelOrder.isPending}
                 >

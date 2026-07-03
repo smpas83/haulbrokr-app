@@ -32,18 +32,18 @@ async function rawFetch(path: string, options?: RequestInit) {
 
 function roleBadge(member: OrgMember) {
   if (member.orgRole === "owner") {
-    return <Badge className="rounded-none bg-primary text-primary-foreground font-bold uppercase text-[10px]"><Crown className="h-3 w-3 mr-1" /> Owner</Badge>;
+    return <Badge className="rounded-xl bg-primary text-primary-foreground font-bold uppercase text-[10px]"><Crown className="h-3 w-3 mr-1" /> Owner</Badge>;
   }
   if (member.orgRole === "admin") {
-    return <Badge className="rounded-none bg-secondary text-secondary-foreground font-bold uppercase text-[10px]"><ShieldCheck className="h-3 w-3 mr-1" /> Admin</Badge>;
+    return <Badge className="rounded-xl bg-secondary text-secondary-foreground font-bold uppercase text-[10px]"><ShieldCheck className="h-3 w-3 mr-1" /> Admin</Badge>;
   }
-  return <Badge variant="secondary" className="rounded-none font-bold uppercase text-[10px] text-muted-foreground">Member</Badge>;
+  return <Badge variant="secondary" className="rounded-xl font-bold uppercase text-[10px] text-muted-foreground">Member</Badge>;
 }
 
 function workerBadge(role: string) {
-  if (role === "driver") return <Badge variant="outline" className="rounded-none text-[10px] uppercase"><Truck className="h-3 w-3 mr-1" /> Driver</Badge>;
-  if (role === "supervisor") return <Badge variant="outline" className="rounded-none text-[10px] uppercase"><HardHat className="h-3 w-3 mr-1" /> Foreman</Badge>;
-  return <Badge variant="outline" className="rounded-none text-[10px] uppercase capitalize">{role}</Badge>;
+  if (role === "driver") return <Badge variant="outline" className="rounded-xl text-[10px] uppercase"><Truck className="h-3 w-3 mr-1" /> Driver</Badge>;
+  if (role === "supervisor") return <Badge variant="outline" className="rounded-xl text-[10px] uppercase"><HardHat className="h-3 w-3 mr-1" /> Foreman</Badge>;
+  return <Badge variant="outline" className="rounded-xl text-[10px] uppercase capitalize">{role}</Badge>;
 }
 
 function InviteCodePanel({ canManage }: { canManage: boolean }) {
@@ -78,11 +78,11 @@ function InviteCodePanel({ canManage }: { canManage: boolean }) {
     }
   };
 
-  if (isLoading) return <Skeleton className="h-40 w-full rounded-none" />;
+  if (isLoading) return <Skeleton className="h-40 w-full rounded-xl" />;
   if (!org) return null;
 
   return (
-    <div className="bg-card border-2 border-border p-6 space-y-4">
+    <div className="bg-card border border-border/60 p-6 space-y-4">
       <div className="flex items-center gap-2">
         <Building2 className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-bold tracking-tight">{org.name || "Your Company"}</h2>
@@ -91,16 +91,16 @@ function InviteCodePanel({ canManage }: { canManage: boolean }) {
         Share this code with employees so they can join your company. Drivers join the fleet; foremen supervise job sites.
       </p>
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-        <div className="flex-1 bg-muted/40 border-2 border-border px-4 py-3 font-mono text-2xl font-black tracking-[0.3em] text-center select-all">
+        <div className="flex-1 bg-muted/40 border border-border/60 px-4 py-3 font-mono text-2xl font-black tracking-[0.3em] text-center select-all">
           {org.inviteCode || "——————"}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="rounded-none border-2 font-bold" onClick={handleCopy}>
+          <Button variant="outline" className="rounded-xl border-2 font-bold" onClick={handleCopy}>
             {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
             Copy
           </Button>
           {canManage && (
-            <Button variant="outline" className="rounded-none border-2 font-bold" onClick={handleRotate} disabled={rotating}>
+            <Button variant="outline" className="rounded-xl border-2 font-bold" onClick={handleRotate} disabled={rotating}>
               {rotating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Rotate
             </Button>
@@ -117,18 +117,18 @@ function ComplianceStatusPanel() {
     queryFn: () => rawFetch("/api/organizations/compliance-status"),
   });
 
-  if (isLoading) return <Skeleton className="h-40 w-full rounded-none" />;
+  if (isLoading) return <Skeleton className="h-40 w-full rounded-xl" />;
   if (!data) return null;
 
   const badge = (status: string) => {
-    if (status === "verified") return <Badge className="rounded-none bg-green-500 hover:bg-green-600">Verified</Badge>;
-    if (status === "pending") return <Badge className="rounded-none bg-amber-500 text-amber-950">Pending</Badge>;
-    if (status === "rejected") return <Badge variant="destructive" className="rounded-none">Rejected</Badge>;
-    return <Badge variant="secondary" className="rounded-none">Not submitted</Badge>;
+    if (status === "verified") return <Badge className="rounded-xl bg-green-500 hover:bg-green-600">Verified</Badge>;
+    if (status === "pending") return <Badge className="rounded-xl bg-amber-500 text-amber-950">Pending</Badge>;
+    if (status === "rejected") return <Badge variant="destructive" className="rounded-xl">Rejected</Badge>;
+    return <Badge variant="secondary" className="rounded-xl">Not submitted</Badge>;
   };
 
   return (
-    <div className="bg-card border-2 border-border">
+    <div className="bg-card border border-border/60">
       <div className="p-5 border-b-2 border-border">
         <h2 className="font-bold tracking-tight flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-muted-foreground" /> Carrier Compliance
@@ -207,7 +207,7 @@ export default function CompanyPage() {
 
   if (profile.role === "driver") {
     return (
-      <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
+      <div className="max-w-5xl mx-auto space-y-6 page-enter">
         <div>
           <h1 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
             <Building2 className="h-8 w-8 text-primary" /> Company
@@ -232,7 +232,7 @@ export default function CompanyPage() {
   const members = membersResp?.members ?? [];
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
+    <div className="max-w-5xl mx-auto space-y-6 page-enter">
       <div>
         <h1 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
           <Building2 className="h-8 w-8 text-primary" /> Company
@@ -244,17 +244,17 @@ export default function CompanyPage() {
 
       <InviteCodePanel canManage={isOwner} />
 
-      <div className="bg-card border-2 border-border">
+      <div className="bg-card border border-border/60">
         <div className="p-5 border-b-2 border-border flex items-center justify-between">
           <h2 className="font-bold tracking-tight flex items-center gap-2">
             <Users className="h-5 w-5 text-muted-foreground" /> Team Members
           </h2>
-          <Badge variant="outline" className="rounded-none font-bold">{members.length}</Badge>
+          <Badge variant="outline" className="rounded-xl font-bold">{members.length}</Badge>
         </div>
 
         {membersLoading ? (
           <div className="p-5 space-y-3">
-            {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-none" />)}
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
           </div>
         ) : members.length === 0 ? (
           <div className="p-12 text-center">
@@ -288,8 +288,8 @@ export default function CompanyPage() {
                         onValueChange={(v) => updateRole.mutate({ id: m.id, data: { orgRole: v as any } })}
                         disabled={updateRole.isPending}
                       >
-                        <SelectTrigger className="rounded-none border-2 w-32 h-9 text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent className="rounded-none border-2">
+                        <SelectTrigger className="rounded-xl border-2 w-32 h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent className="rounded-xl border-2">
                           <SelectItem value={UpdateMemberRoleInputOrgRole.admin}>Admin</SelectItem>
                           <SelectItem value={UpdateMemberRoleInputOrgRole.member}>Member</SelectItem>
                         </SelectContent>
@@ -303,11 +303,11 @@ export default function CompanyPage() {
                     {canEdit && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="icon" className="rounded-none border-2 text-destructive hover:bg-destructive/10 hover:border-destructive h-9 w-9">
+                          <Button variant="outline" size="icon" className="rounded-xl border-2 text-destructive hover:bg-destructive/10 hover:border-destructive h-9 w-9">
                             <UserMinus className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="rounded-none border-2">
+                        <AlertDialogContent className="rounded-xl border-2">
                           <AlertDialogHeader>
                             <AlertDialogTitle>Remove {m.contactName || m.companyName}?</AlertDialogTitle>
                             <AlertDialogDescription>
@@ -315,9 +315,9 @@ export default function CompanyPage() {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="rounded-none border-2">Cancel</AlertDialogCancel>
+                            <AlertDialogCancel className="rounded-xl border-2">Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               onClick={() => removeMember.mutate({ id: m.id })}
                             >
                               Remove Member

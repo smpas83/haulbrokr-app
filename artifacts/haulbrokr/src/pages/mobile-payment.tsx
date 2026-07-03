@@ -46,7 +46,7 @@ export default function MobilePaymentPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md border-2 border-border bg-card p-6 space-y-4">
+      <div className="w-full max-w-md border border-border/60 bg-card p-6 space-y-4">
         <div className="flex items-center gap-2">
           <CheckCircle className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">Add Payment Card</h1>

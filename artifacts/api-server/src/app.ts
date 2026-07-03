@@ -13,6 +13,7 @@ import router from "./routes";
 import healthRouter from "./routes/health";
 import automationRouter from "./routes/automation";
 import stripeWebhooksRouter from "./routes/stripe-webhooks";
+import { globalRateLimit } from "./middlewares/rateLimit";
 import { errorHandler } from "./middlewares/errorHandler";
 import { logger } from "./lib/logger";
 
@@ -121,6 +122,7 @@ app.use(
   })),
 );
 
+app.use("/api", globalRateLimit);
 app.use("/api", router);
 
 app.use(errorHandler);

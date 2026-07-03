@@ -52,7 +52,7 @@ function ForemanAssignments({ projectId }: { projectId: number }) {
   };
 
   return (
-    <div className="bg-muted/30 p-6 border-2 border-border space-y-4">
+    <div className="bg-muted/30 p-6 border border-border/60 space-y-4">
       <div className="flex items-center gap-2">
         <HardHat className="h-5 w-5 text-primary" />
         <h3 className="font-bold uppercase tracking-wider text-sm">Site Foremen</h3>
@@ -62,11 +62,11 @@ function ForemanAssignments({ projectId }: { projectId: number }) {
       </p>
 
       {isLoading ? (
-        <Skeleton className="h-12 w-full rounded-none" />
+        <Skeleton className="h-12 w-full rounded-xl" />
       ) : assigned.length > 0 ? (
         <div className="space-y-2">
           {assigned.map(a => (
-            <div key={a.id} className="flex items-center justify-between bg-card p-3 border-2 border-border">
+            <div key={a.id} className="flex items-center justify-between bg-card p-3 border border-border/60">
               <div className="flex items-center gap-3">
                 <HardHat className="h-4 w-4 text-muted-foreground" />
                 <span className="font-bold text-sm">{a.supervisorName || `Foreman #${a.supervisorProfileId}`}</span>
@@ -74,7 +74,7 @@ function ForemanAssignments({ projectId }: { projectId: number }) {
               <Button
                 size="icon"
                 variant="ghost"
-                className="rounded-none h-8 w-8 text-destructive hover:bg-destructive/10"
+                className="rounded-xl h-8 w-8 text-destructive hover:bg-destructive/10"
                 disabled={remove.isPending}
                 onClick={() => remove.mutate({ id: projectId, profileId: a.supervisorProfileId })}
               >
@@ -89,16 +89,16 @@ function ForemanAssignments({ projectId }: { projectId: number }) {
 
       <div className="flex flex-col sm:flex-row gap-2 pt-2">
         <Select value={selected} onValueChange={setSelected} disabled={available.length === 0}>
-          <SelectTrigger className="rounded-none border-2 flex-1">
+          <SelectTrigger className="rounded-xl border-2 flex-1">
             <SelectValue placeholder={available.length === 0 ? "No available foremen" : "Select a foreman..."} />
           </SelectTrigger>
-          <SelectContent className="rounded-none border-2">
+          <SelectContent className="rounded-xl border-2">
             {available.map(s => (
               <SelectItem key={s.id} value={String(s.id)}>{s.contactName || s.companyName || `Foreman #${s.id}`}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Button className="rounded-none font-bold" onClick={handleAssign} disabled={!selected || create.isPending}>
+        <Button className="rounded-xl font-bold" onClick={handleAssign} disabled={!selected || create.isPending}>
           {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserPlus className="h-4 w-4 mr-2" /> Assign</>}
         </Button>
       </div>
@@ -124,7 +124,7 @@ function BudgetProgress({ spent, total }: { spent: number; total: number | null 
   const remaining = total - spent;
   const color = pct > 90 ? "bg-red-500" : pct > 70 ? "bg-amber-500" : "bg-green-500";
   return (
-    <div className="bg-muted/30 p-6 border-2 border-border space-y-4">
+    <div className="bg-muted/30 p-6 border border-border/60 space-y-4">
       <h3 className="font-bold uppercase tracking-wider text-sm">Budget Tracker</h3>
       <div className="grid grid-cols-3 gap-4 text-center">
         <div><p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Budget</p><p className="text-2xl font-black">${total.toLocaleString()}</p></div>
@@ -184,41 +184,41 @@ export default function ProjectDetailPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-5xl mx-auto space-y-6 page-enter pb-12">
       <Button variant="ghost" className="-ml-4" onClick={() => setLocation("/projects")}>
         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects
       </Button>
 
-      <div className="bg-card border-2 border-border overflow-hidden">
+      <div className="bg-card border border-border/60 overflow-hidden">
         <div className="bg-secondary text-secondary-foreground p-6 md:p-8 flex flex-col md:flex-row justify-between items-start gap-4">
           <div>
             {editing ? (
-              <Input className="rounded-none text-2xl font-bold bg-white/10 border-white/20 text-white placeholder:text-white/50 mb-2" value={editForm.name} onChange={e => setEditForm((f: any) => ({ ...f, name: e.target.value }))} />
+              <Input className="rounded-xl text-2xl font-bold bg-white/10 border-white/20 text-white placeholder:text-white/50 mb-2" value={editForm.name} onChange={e => setEditForm((f: any) => ({ ...f, name: e.target.value }))} />
             ) : (
-              <h1 className="text-3xl font-black tracking-tight">{project.name}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
             )}
             {project.siteAddress && <p className="flex items-center gap-2 text-secondary-foreground/70 mt-1"><MapPin className="h-4 w-4" />{project.siteAddress}</p>}
           </div>
           <div className="flex items-center gap-3">
             {editing ? (
               <Select value={editForm.status} onValueChange={(v) => setEditForm((f: any) => ({ ...f, status: v }))}>
-                <SelectTrigger className="rounded-none bg-white/10 border-white/20 text-white w-36"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="rounded-xl bg-white/10 border-white/20 text-white w-36"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {["active","on_hold","completed","cancelled"].map(s => <SelectItem key={s} value={s}>{s.replace("_"," ")}</SelectItem>)}
                 </SelectContent>
               </Select>
             ) : (
-              <Badge className={`rounded-none border-2 font-bold uppercase text-xs px-3 py-1 ${STATUS_COLORS[project.status]}`}>{project.status.replace("_"," ")}</Badge>
+              <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 ${STATUS_COLORS[project.status]}`}>{project.status.replace("_"," ")}</Badge>
             )}
             {editing ? (
               <div className="flex gap-2">
-                <Button size="sm" className="rounded-none" disabled={update.isPending} onClick={() => update.mutate(editForm)}>
+                <Button size="sm" className="rounded-xl" disabled={update.isPending} onClick={() => update.mutate(editForm)}>
                   {update.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
                 </Button>
-                <Button size="sm" variant="ghost" className="rounded-none text-white hover:bg-white/10" onClick={() => setEditing(false)}>Cancel</Button>
+                <Button size="sm" variant="ghost" className="rounded-xl text-white hover:bg-white/10" onClick={() => setEditing(false)}>Cancel</Button>
               </div>
             ) : (
-              <Button size="sm" variant="ghost" className="rounded-none text-white hover:bg-white/10" onClick={startEditing}>Edit</Button>
+              <Button size="sm" variant="ghost" className="rounded-xl text-white hover:bg-white/10" onClick={startEditing}>Edit</Button>
             )}
           </div>
         </div>
@@ -229,19 +229,19 @@ export default function ProjectDetailPage() {
           <ForemanAssignments projectId={id} />
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-muted/30 p-4 border-2 border-border text-center">
+            <div className="bg-muted/30 p-4 border border-border/60 text-center">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Total Requests</p>
               <p className="text-2xl font-black">{project.requests?.length ?? 0}</p>
             </div>
-            <div className="bg-muted/30 p-4 border-2 border-border text-center">
+            <div className="bg-muted/30 p-4 border border-border/60 text-center">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Total Jobs</p>
               <p className="text-2xl font-black">{project.jobCount ?? 0}</p>
             </div>
-            <div className="bg-muted/30 p-4 border-2 border-border text-center">
+            <div className="bg-muted/30 p-4 border border-border/60 text-center">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Completed Jobs</p>
               <p className="text-2xl font-black text-green-600">{project.completedJobs ?? 0}</p>
             </div>
-            <div className="bg-muted/30 p-4 border-2 border-border text-center">
+            <div className="bg-muted/30 p-4 border border-border/60 text-center">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Budget Used</p>
               <p className="text-2xl font-black">{project.totalBudget ? `${((project.spentAmount / project.totalBudget) * 100).toFixed(0)}%` : "—"}</p>
             </div>
@@ -264,7 +264,7 @@ export default function ProjectDetailPage() {
                       <Truck className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium text-sm capitalize">{r.materialType} — {r.quantityTons} tons</span>
                     </div>
-                    <Badge variant="outline" className="rounded-none text-xs">{r.status}</Badge>
+                    <Badge variant="outline" className="rounded-xl text-xs">{r.status}</Badge>
                   </div>
                 ))}
               </div>
