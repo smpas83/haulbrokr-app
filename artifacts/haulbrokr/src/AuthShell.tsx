@@ -3,8 +3,8 @@ import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 
+import { AppLoader, OfflineBanner } from "@/components/shared";
 import { Layout } from "./components/layout";
 import { Toaster } from "@/components/ui/toaster";
 import { useGetMyProfile } from "@workspace/api-client-react";
@@ -92,14 +92,6 @@ const clerkAppearance = {
   },
 };
 
-function AppLoader() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
-}
-
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
   const qc = useQueryClient();
@@ -149,6 +141,7 @@ function AuthShellRoutes() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
+        <OfflineBanner />
         <Suspense fallback={<AppLoader />}>
           <Switch>
             <Route path="/sign-in/*?" component={SignInPage} />
