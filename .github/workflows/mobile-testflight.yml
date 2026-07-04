@@ -36,18 +36,22 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: ${{ github.workspace }}
 
-      - name: Typecheck mobile
+      - name: Typecheck workspace
         run: pnpm run typecheck
+        working-directory: ${{ github.workspace }}
 
       - name: Test mobile
         run: pnpm test
+        working-directory: artifacts/haulbrokr-mobile
 
       - name: Build iOS (production)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: pnpm exec eas build --platform ios --profile production --non-interactive
+        working-directory: artifacts/haulbrokr-mobile
 
       - name: Submit to TestFlight
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: pnpm exec eas submit --platform ios --profile production --latest --non-interactive
+        working-directory: artifacts/haulbrokr-mobile
