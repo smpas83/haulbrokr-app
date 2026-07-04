@@ -289,6 +289,68 @@
   .page-enter {
     animation: pageEnter 0.35s ease-out forwards;
   }
+
+  .section-fade {
+    animation: sectionFade 0.4s ease-out forwards;
+    opacity: 0;
+  }
+
+  .card-fade {
+    animation: cardFade 0.35s ease-out forwards;
+    opacity: 0;
+  }
+
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .map-loading-shimmer {
+    background: linear-gradient(
+      135deg,
+      hsl(240 5% 8%) 0%,
+      hsl(240 5% 12%) 50%,
+      hsl(240 5% 8%) 100%
+    );
+    background-size: 200% 200%;
+    animation: mapShimmer 2s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-pulse-subtle,
+  .animate-truck-move,
+  .animate-pin-pulse,
+  .page-enter,
+  .section-fade,
+  .card-fade,
+  .shimmer::after,
+  .map-loading-shimmer,
+  .hover-elevate {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .hover-elevate:hover {
+    transform: none;
+    box-shadow: var(--surface-shadow);
+  }
 }
 
 @keyframes fadeIn {
@@ -319,6 +381,21 @@
 @keyframes pageEnter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sectionFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardFade {
+  from { opacity: 0; transform: translateY(4px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes mapShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 @keyframes shimmer {
