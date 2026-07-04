@@ -43,6 +43,20 @@ vi.mock("../middlewares/requireAuth", () => ({
   getRequestProfile: () => h.profile,
 }));
 
+vi.mock("../lib/operationsInsights", () => ({
+  buildOperationsCenter: vi.fn(async () => ({
+    morningBrief: "Good morning, Acme.",
+    todayRevenue: 500,
+    todayJobs: 1,
+    insights: [],
+    analytics: {
+      revenueForecast7d: 3500,
+      fleetUtilization: 50,
+      weeklyEvents: [{ label: "Mon", count: 2 }],
+    },
+  })),
+}));
+
 import copilotRouter from "./copilot";
 
 function makeApp(): Express {
@@ -62,6 +76,7 @@ describe("AI Copilot", () => {
     expect(res.status).toBe(200);
     expect(res.body.suggestions).toBeInstanceOf(Array);
     expect(res.body.summary.openLoads).toBe(1);
+    expect(res.body.summary.morningBrief).toBeDefined();
   });
 
   it("answers chat about open loads", async () => {
