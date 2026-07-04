@@ -95,18 +95,21 @@ export default function MapScreen() {
   const { profile, isOnline, setIsOnline,
           userLocation, setUserLocation, searchRadius, setSearchRadius } = useApp();
   const isProvider = profile.role === "provider";
+  const isDriver = profile.role === "driver";
+  const isCustomer = profile.role === "customer";
+  const isFleetSide = isProvider || isDriver;
 
   const { data: liveJobsRaw, refetch: refetchJobs, isFetching: fetchingJobs } = useLiveJobs();
   const {
     data: liveRequestsRaw,
     refetch: refetchRequests,
     isFetching: fetchingRequests,
-  } = useLiveRequests({ mine: true, enabled: !isProvider });
+  } = useLiveRequests({ mine: true, enabled: isCustomer });
   const {
     data: liveOpenRequestsRaw,
     refetch: refetchOpenRequests,
     isFetching: fetchingOpenRequests,
-  } = useLiveRequests({ mine: false, enabled: isProvider });
+  } = useLiveRequests({ mine: false, enabled: isFleetSide });
 
   const { data: marketplace, refetch: refetchMarketplace, isFetching: fetchingMarketplace } = useMarketplaceMap();
   const {
@@ -126,7 +129,7 @@ export default function MapScreen() {
     const fromJobs = Array.isArray(liveJobsRaw)
       ? (liveJobsRaw as LiveJob[]).map(liveJobToViewJob)
       : [];
-    if (isProvider) {
+    if (isFleetSide) {
       const fromOpenRequests = Array.isArray(liveOpenRequestsRaw)
         ? (liveOpenRequestsRaw as LiveRequest[])
             .filter((r) => OPEN_STATUSES.has(r.status))
@@ -140,7 +143,7 @@ export default function MapScreen() {
           .map(liveRequestToViewJob)
       : [];
     return [...fromRequests, ...fromJobs];
-  }, [marketplace, liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider]);
+  }, [marketplace, liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isFleetSide]);
 
   const trucks = marketplace?.trucks ?? [];
   const heatZones = marketplace?.heatZones?.length

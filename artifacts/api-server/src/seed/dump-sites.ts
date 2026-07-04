@@ -305,25 +305,30 @@ const sites = [
   { name: "Rock Springs Landfill", address: "100 Landfill Rd", city: "Rock Springs", state: "WY", zip: "82901", type: "landfill" as const },
 ];
 
-async function seed() {
+export async function seedDumpSites(): Promise<void> {
   console.log(`Seeding ${sites.length} dump sites...`);
-  
-  // Clear existing sites
+
   await db.execute(sql`TRUNCATE TABLE dump_sites RESTART IDENTITY CASCADE`);
 
-  // Insert in batches of 50
   const batchSize = 50;
   for (let i = 0; i < sites.length; i += batchSize) {
     const batch = sites.slice(i, i + batchSize);
     await db.insert(dumpSitesTable).values(batch);
     console.log(`  Inserted batch ${Math.floor(i / batchSize) + 1} (${batch.length} sites)`);
   }
-  
+
   console.log("Done seeding dump sites.");
+}
+
+async function seed() {
+  await seedDumpSites();
   process.exit(0);
 }
 
-seed().catch((err) => {
-  console.error("Seed failed:", err);
-  process.exit(1);
-});
+const isCliEntry = process.argv[1]?.includes("dump-sites");
+if (isCliEntry) {
+  seed().catch((err) => {
+    console.error("Seed failed:", err);
+    process.exit(1);
+  });
+}

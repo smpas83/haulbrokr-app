@@ -56,6 +56,9 @@ fi
 echo "==> Seeding staff admin users"
 NODE_ENV=production pnpm --filter @workspace/api-server run seed-staff
 
+echo "==> Seeding demo load board (open requests + active jobs for QA)"
+SEED_DEMO_LOADS_FORCE=1 NODE_ENV=production pnpm --filter @workspace/api-server run seed-demo-loads
+
 echo ""
 echo "Done. Database is ready for Render deploy."
 echo "Staff login: https://haulbrokr.com/admin/login (after Vercel is live)"

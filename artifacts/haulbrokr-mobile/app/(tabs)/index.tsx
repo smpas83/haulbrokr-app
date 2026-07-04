@@ -48,14 +48,23 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { profile, isOnline, setIsOnline } = useApp();
   const isProvider = profile.role === "provider";
+  const isDriver = profile.role === "driver";
+  const isCustomer = profile.role === "customer";
+  const isFleetSide = isProvider || isDriver;
 
   const { data: liveStats, isFetching: fetchingStats, refetch: refetchStats, dataUpdatedAt: statsUpdatedAt } = useLiveDashboard();
   const { data: liveActivityRaw, isFetching: fetchingActivity, refetch: refetchActivity, dataUpdatedAt: activityUpdatedAt } = useLiveActivity();
   const { data: liveJobsRaw, isFetching: fetchingJobs, refetch: refetchJobs, dataUpdatedAt: jobsUpdatedAt } = useLiveJobs();
   const { data: liveRequestsRaw, isFetching: fetchingRequests, refetch: refetchRequests, dataUpdatedAt: requestsUpdatedAt } = useLiveRequests({
     mine: true,
-    enabled: !isProvider,
+    enabled: isCustomer,
   });
+  const {
+    data: liveOpenRequestsRaw,
+    isFetching: fetchingOpenRequests,
+    refetch: refetchOpenRequests,
+    dataUpdatedAt: openRequestsUpdatedAt,
+  } = useLiveRequests({ mine: false, enabled: isFleetSide });
   const { data: payoutStatusData, isFetching: fetchingPayout, refetch: refetchPayout } = usePayoutStatus();
   const payoutsNeedSetup = isProvider && payoutStatusData != null && !payoutStatusData.payoutsEnabled;
   const { data: walletData, refetch: refetchWallet } = useWallet({ enabled: isProvider });
@@ -82,14 +91,21 @@ export default function HomeScreen() {
     const fromJobs = Array.isArray(liveJobsRaw)
       ? (liveJobsRaw as LiveJob[]).map(liveJobToViewJob)
       : [];
-    const fromRequests =
-      !isProvider && Array.isArray(liveRequestsRaw)
-        ? (liveRequestsRaw as LiveRequest[])
-            .filter((r) => r.status === "open" || r.status === "bidding")
+    if (isFleetSide) {
+      const fromOpenRequests = Array.isArray(liveOpenRequestsRaw)
+        ? (liveOpenRequestsRaw as LiveRequest[])
+            .filter((r) => r.status === "open" || r.status === "bidding" || r.status === "bid_received")
             .map(liveRequestToViewJob)
         : [];
+      return [...fromOpenRequests, ...fromJobs];
+    }
+    const fromRequests = Array.isArray(liveRequestsRaw)
+      ? (liveRequestsRaw as LiveRequest[])
+          .filter((r) => r.status === "open" || r.status === "bidding" || r.status === "bid_received")
+          .map(liveRequestToViewJob)
+      : [];
     return [...fromRequests, ...fromJobs];
-  }, [liveJobsRaw, liveRequestsRaw, isProvider]);
+  }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isFleetSide]);
 
   const [showAllActivity, setShowAllActivity] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -101,13 +117,14 @@ export default function HomeScreen() {
         refetchActivity(),
         refetchJobs(),
         refetchRequests(),
+        refetchOpenRequests(),
         refetchPayout(),
         isProvider ? refetchWallet() : Promise.resolve(),
       ]);
     } finally {
       setRefreshing(false);
     }
-  }, [refetchStats, refetchActivity, refetchJobs, refetchRequests, refetchPayout, refetchWallet, isProvider]);
+  }, [refetchStats, refetchActivity, refetchJobs, refetchRequests, refetchOpenRequests, refetchPayout, refetchWallet, isProvider]);
 
   const firstName = profile.name.split(" ")[0];
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -122,14 +139,14 @@ export default function HomeScreen() {
   // already-rendered dashboard, but stay quiet during a manual pull-to-refresh.
   const isUpdating = isRefreshingPillVisible({
     isFetching:
-      fetchingStats || fetchingActivity || fetchingJobs || fetchingRequests || fetchingPayout,
+      fetchingStats || fetchingActivity || fetchingJobs || fetchingRequests || fetchingOpenRequests || fetchingPayout,
     refreshing,
   });
 
   // Freshness of the dashboard: the most recent successful refetch across the
   // live queries feeding this screen.
   const lastUpdated =
-    Math.max(statsUpdatedAt, activityUpdatedAt, jobsUpdatedAt, requestsUpdatedAt) || undefined;
+    Math.max(statsUpdatedAt, activityUpdatedAt, jobsUpdatedAt, requestsUpdatedAt, openRequestsUpdatedAt) || undefined;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -258,6 +275,13 @@ export default function HomeScreen() {
             <QuickAction icon="dollar-sign" label="Wallet" onPress={() => router.push("/wallet")} colors={colors} />
             <QuickAction icon="file-text" label="Compliance" onPress={() => router.push("/(tabs)/account")} colors={colors} />
           </>
+        ) : isDriver ? (
+          <>
+            <QuickAction icon="briefcase" label="Load Board" onPress={() => router.push("/(tabs)/jobs")} colors={colors} highlight />
+            <QuickAction icon="truck" label="My Loads" onPress={() => router.push("/driver-jobs")} colors={colors} />
+            <QuickAction icon="map" label="Map" onPress={() => router.push("/(tabs)/map")} colors={colors} />
+            <QuickAction icon="navigation" label="Dump Sites" onPress={() => router.push("/dump-sites")} colors={colors} />
+          </>
         ) : (
           <>
             <QuickAction icon="plus-circle" label="Post a Load" onPress={() => router.push("/(tabs)/jobs")} colors={colors} />
@@ -309,7 +333,7 @@ export default function HomeScreen() {
       {/* Latest Loads */}
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionLabel, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold" }]}>
-          {isProvider ? "LATEST LOADS" : "MY RECENT REQUESTS"}
+          {isFleetSide ? "LATEST LOADS" : "MY RECENT REQUESTS"}
         </Text>
         <Pressable onPress={() => router.push("/(tabs)/jobs")}>
           <Text style={[styles.seeAll, { color: colors.primary, fontFamily: "Inter_600SemiBold" }]}>See all</Text>

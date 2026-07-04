@@ -26,6 +26,9 @@ fi
 echo "==> Pushing database schema"
 pnpm --filter @workspace/db run push
 
+echo "==> Optional: seed demo loads for Load Board QA"
+echo "    pnpm --filter @workspace/api-server run seed-demo-loads"
+
 echo "==> Optional: seed staff admin logins (CEO, CFO, IT, etc.)"
 echo "    STAFF_DEFAULT_PASSWORD='your-password' pnpm --filter @workspace/api-server run seed-staff"
 

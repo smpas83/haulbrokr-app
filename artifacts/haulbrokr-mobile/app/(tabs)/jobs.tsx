@@ -69,19 +69,22 @@ export default function JobsScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
   const isProvider = profile.role === "provider";
+  const isDriver = profile.role === "driver";
+  const isCustomer = profile.role === "customer";
+  const isFleetSide = isProvider || isDriver;
   const { data: liveJobsRaw, isLoading, isError, isFetching, refetch, dataUpdatedAt: jobsUpdatedAt } = useLiveJobs();
   const {
     data: liveRequestsRaw,
     isFetching: isFetchingRequests,
     refetch: refetchRequests,
     dataUpdatedAt: requestsUpdatedAt,
-  } = useLiveRequests({ mine: true, enabled: !isProvider });
+  } = useLiveRequests({ mine: true, enabled: isCustomer });
   const {
     data: liveOpenRequestsRaw,
     isFetching: isFetchingOpenRequests,
     refetch: refetchOpenRequests,
     dataUpdatedAt: openRequestsUpdatedAt,
-  } = useLiveRequests({ mine: false, enabled: isProvider });
+  } = useLiveRequests({ mine: false, enabled: isFleetSide });
   const createRequest = useCreateRequest();
   const { data: marketplace, refetch: refetchMarketplace } = useMarketplaceMap();
 
@@ -89,7 +92,7 @@ export default function JobsScreen() {
     const fromJobs = Array.isArray(liveJobsRaw)
       ? (liveJobsRaw as LiveJob[]).map(liveJobToViewJob)
       : [];
-    if (isProvider) {
+    if (isFleetSide) {
       const fromOpenRequests = Array.isArray(liveOpenRequestsRaw)
         ? (liveOpenRequestsRaw as LiveRequest[])
             .filter((r) => r.status === "open" || r.status === "bidding" || r.status === "bid_received")
@@ -106,7 +109,7 @@ export default function JobsScreen() {
         : [];
     const combined = [...fromRequests, ...fromJobs];
     return combined;
-  }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider]);
+  }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isFleetSide]);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -181,14 +184,14 @@ export default function JobsScreen() {
             <Text
               style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}
             >
-              {isProvider ? "Load Board" : "My Requests"}
+              {isFleetSide ? "Load Board" : "My Requests"}
             </Text>
             <Text style={[styles.subtitle, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
               {filtered.length} {filter === "all" ? "total" : filter.replace("_", " ")} loads
             </Text>
             <LastUpdated timestamp={lastUpdated} style={{ marginTop: 2 }} />
           </View>
-          {!isProvider && (
+          {!isFleetSide && (
             <Pressable
               onPress={handlePost}
               style={[styles.postBtn, { backgroundColor: colors.primary }]}
@@ -280,7 +283,7 @@ export default function JobsScreen() {
               <JobCard
                 job={item}
                 isLive
-                showBidButton={isProvider}
+                showBidButton={isFleetSide && isProvider}
                 onBid={handleQuickBid}
               />
             </Pressable>
@@ -303,17 +306,19 @@ export default function JobsScreen() {
             <EmptyState
               icon="briefcase"
               title={
-                search ? "No results found" : isProvider ? "No active loads" : "No jobs yet"
+                search ? "No results found" : isFleetSide ? "No active loads" : "No jobs yet"
               }
               description={
                 search
                   ? "Try a different search term or clear filters"
-                  : isProvider
-                  ? "Open loads appear here. Tap a load to place your bid."
+                  : isFleetSide
+                  ? isDriver
+                    ? "Open loads appear here once customers post hauling requests in your area."
+                    : "Open loads appear here. Tap a load to place your bid."
                   : "Jobs appear here once you hire a provider. Post a load to get started."
               }
-              actionLabel={!isProvider && !search ? "Post a Load" : undefined}
-              onAction={!isProvider && !search ? handlePost : undefined}
+              actionLabel={isCustomer && !search ? "Post a Load" : undefined}
+              onAction={isCustomer && !search ? handlePost : undefined}
             />
           )
         }
