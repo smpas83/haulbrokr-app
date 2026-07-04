@@ -80,6 +80,20 @@ export default function DriverJobsScreen() {
           <View style={styles.centerBox}>
             <ActivityIndicator color={colors.primary} />
           </View>
+        ) : jobsQuery.isError ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="alert-circle" size={32} color={colors.destructive} />
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Failed to load jobs</Text>
+            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
+              Check your connection and try again.
+            </Text>
+            <Pressable
+              onPress={() => jobsQuery.refetch()}
+              style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+            >
+              <Text style={{ color: colors.primaryForeground, fontFamily: "Inter_600SemiBold" }}>Try Again</Text>
+            </Pressable>
+          </View>
         ) : activeJobs.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="truck" size={32} color={colors.mutedForeground} />
@@ -353,6 +367,7 @@ const styles = StyleSheet.create({
   emptyCard: { borderWidth: 1, borderRadius: 12, padding: 28, alignItems: "center", gap: 10 },
   emptyTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
   emptyBody: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19 },
+  retryBtn: { marginTop: 8, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10, minHeight: 44, alignItems: "center", justifyContent: "center" },
   card: { borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 12 },
   cardHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
   cardIcon: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },

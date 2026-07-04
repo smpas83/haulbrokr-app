@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeader, StatusChip, EmptyState } from "@/components/design";
+import { PageHeader, StatusChip, EmptyState, QueryErrorState } from "@/components/design";
 
 const MATERIAL_LABELS: Record<string, string> = {
   dirt: "Dirt",
@@ -31,7 +31,7 @@ export default function RequestsPage() {
 
   const isCustomer = profile?.role === "customer";
 
-  const { data: requests, isLoading } = useListRequests();
+  const { data: requests, isLoading, isError, refetch } = useListRequests();
 
   const filtered = useMemo(() => {
     if (!requests) return [];
@@ -129,6 +129,11 @@ export default function RequestsPage() {
             <Skeleton key={i} className="h-36 w-full rounded-xl" />
           ))}
         </div>
+      ) : isError ? (
+        <QueryErrorState
+          title="Failed to load requests"
+          onRetry={() => refetch()}
+        />
       ) : filtered.length > 0 ? (
         <div className="space-y-3">
           {filtered.map(request => (

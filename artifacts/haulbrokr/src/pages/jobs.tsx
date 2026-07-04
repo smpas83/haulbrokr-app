@@ -5,12 +5,12 @@ import { useListJobs, useGetMyProfile } from "@workspace/api-client-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeader, StatusChip, EmptyState, DataCard, SectionFade } from "@/components/design";
+import { PageHeader, StatusChip, EmptyState, DataCard, SectionFade, QueryErrorState } from "@/components/design";
 import { cn } from "@/lib/utils";
 
 export default function JobsPage() {
   const { data: profile } = useGetMyProfile();
-  const { data: jobs, isLoading } = useListJobs();
+  const { data: jobs, isLoading, isError, refetch } = useListJobs();
   
   const isCustomer = profile?.role === "customer";
 
@@ -25,6 +25,11 @@ export default function JobsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-44 w-full rounded-xl shimmer" />)}
         </div>
+      ) : isError ? (
+        <QueryErrorState
+          title="Failed to load jobs"
+          onRetry={() => refetch()}
+        />
       ) : jobs && jobs.length > 0 ? (
         <SectionFade>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

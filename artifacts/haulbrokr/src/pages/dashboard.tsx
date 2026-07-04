@@ -20,7 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PageHeader, KpiCard } from "@/components/design";
+import { PageHeader, KpiCard, QueryErrorState } from "@/components/design";
 import { CHART_COLORS } from "@/lib/design-tokens";
 
 const CustomBarTooltip = ({ active, payload, label }: any) => {
@@ -49,8 +49,8 @@ const CustomPieTooltip = ({ active, payload }: any) => {
 
 export default function DashboardPage() {
   const { data: profile } = useGetMyProfile();
-  const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
-  const { data: activities, isLoading: activityLoading } = useGetDashboardActivity();
+  const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useGetDashboardStats();
+  const { data: activities, isLoading: activityLoading, isError: activityError, refetch: refetchActivity } = useGetDashboardActivity();
   const { data: accountStatus } = useGetAccountStatus();
 
   const isCustomer = profile?.role === "customer";
@@ -153,6 +153,16 @@ export default function DashboardPage() {
             </Link>
           </AlertDescription>
         </Alert>
+      )}
+
+      {(statsError || activityError) && (
+        <QueryErrorState
+          title="Failed to load dashboard data"
+          onRetry={() => {
+            if (statsError) refetchStats();
+            if (activityError) refetchActivity();
+          }}
+        />
       )}
 
       {statsLoading ? (

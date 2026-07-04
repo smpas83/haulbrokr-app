@@ -529,6 +529,7 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="/support" className="hover:text-foreground transition-colors">Support</a></li>
                 <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a></li>
+                <li><a href="/terms" className="hover:text-foreground transition-colors">Terms</a></li>
                 <li><a href="mailto:info@haulbrokr.com" className="hover:text-foreground transition-colors">Contact</a></li>
               </ul>
             </div>

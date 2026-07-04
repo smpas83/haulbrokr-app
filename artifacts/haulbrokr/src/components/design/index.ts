@@ -10,3 +10,4 @@ export { KpiSkeletonGrid, TableSkeleton } from "./loading-skeleton";
 export { PageLoader } from "./page-loader";
 export { SectionFade } from "./section-fade";
 export { DataCard } from "./data-card";
+export { QueryErrorState } from "./query-error-state";

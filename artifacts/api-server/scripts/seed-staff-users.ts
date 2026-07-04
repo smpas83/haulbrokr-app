@@ -136,7 +136,7 @@ async function main(): Promise<void> {
   if (process.env.STAFF_DEFAULT_PASSWORD) {
     console.log("Password: (value of STAFF_DEFAULT_PASSWORD in your .env)");
   } else {
-    console.log("Password: HaulBrokr-Staff-2026!");
+    console.log("Password: Set STAFF_DEFAULT_PASSWORD in your .env before running this script.");
   }
 }
 

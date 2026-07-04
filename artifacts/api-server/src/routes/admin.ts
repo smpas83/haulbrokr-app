@@ -35,6 +35,7 @@ import {
   profileSummary,
   syncDotCdlUploadedDocs,
 } from "../lib/adminComplianceBundle";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -64,7 +65,7 @@ async function notifyApplicationReviewed(
       relatedId: null,
     });
   } catch (err) {
-    console.error("Failed to record application review notification", err);
+    logger.error({ err, profileId, kind }, "Failed to record application review notification");
   }
 
   // Best-effort email  never block the admin review action.
@@ -90,7 +91,7 @@ async function notifyApplicationReviewed(
       text: body,
     });
   } catch (err) {
-    console.error("Failed to send application review email", err);
+    logger.error({ err, profileId, kind }, "Failed to send application review email");
   }
 }
 

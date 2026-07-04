@@ -4,6 +4,7 @@ import { requirePermission } from "../middlewares/requireAdmin";
 import { db } from "@workspace/db";
 import { binOrders, profilesTable, activityTable } from "@workspace/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -351,7 +352,7 @@ async function notifyBinOrderStatusChanged(
       relatedBinOrderId: order.id,
     });
   } catch (err) {
-    console.error("Failed to record bin order status notification", err);
+    logger.error({ err, orderId: order.id, status }, "Failed to record bin order status notification");
   }
 }
 

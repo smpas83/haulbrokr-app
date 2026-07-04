@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { PageHeader, EmptyState, DataCard, SectionFade } from "@/components/design";
+import { PageHeader, EmptyState, DataCard, SectionFade, QueryErrorState } from "@/components/design";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -44,7 +44,7 @@ function CoiBadge({ status }: { status?: string | null }) {
 export default function FleetPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: trucks, isLoading } = useListTrucks();
+  const { data: trucks, isLoading, isError, refetch } = useListTrucks();
   const { data: membersResp } = useListOrgMembers();
   const deleteTruck = useDeleteTruck();
   const updateTruck = useUpdateTruck();
@@ -109,6 +109,11 @@ export default function FleetPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
         </div>
+      ) : isError ? (
+        <QueryErrorState
+          title="Failed to load fleet"
+          onRetry={() => refetch()}
+        />
       ) : trucks && trucks.length > 0 ? (
         <SectionFade>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
