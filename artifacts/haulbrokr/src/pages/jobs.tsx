@@ -5,11 +5,12 @@ import { useListJobs, useGetMyProfile } from "@workspace/api-client-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeader, StatusChip, EmptyState } from "@/components/design";
+import { PageHeader, StatusChip, EmptyState, DataCard, SectionFade, QueryErrorState } from "@/components/design";
+import { cn } from "@/lib/utils";
 
 export default function JobsPage() {
   const { data: profile } = useGetMyProfile();
-  const { data: jobs, isLoading } = useListJobs();
+  const { data: jobs, isLoading, isError, refetch } = useListJobs();
   
   const isCustomer = profile?.role === "customer";
 
@@ -22,12 +23,18 @@ export default function JobsPage() {
 
       {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-44 w-full rounded-xl" />)}
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-44 w-full rounded-xl shimmer" />)}
         </div>
+      ) : isError ? (
+        <QueryErrorState
+          title="Failed to load jobs"
+          onRetry={() => refetch()}
+        />
       ) : jobs && jobs.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {jobs.map(job => (
-            <div key={job.id} className="rounded-xl border border-border/60 bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-black/10 transition-all flex flex-col">
+        <SectionFade>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {jobs.map((job, i) => (
+              <DataCard key={job.id} className={cn("flex flex-col card-fade", `stagger-${(i % 4) + 1}`)}>
               <div className="p-5 border-b border-border/40 flex justify-between items-start">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -77,9 +84,10 @@ export default function JobsPage() {
                   </Button>
                 </Link>
               </div>
-            </div>
+            </DataCard>
           ))}
         </div>
+        </SectionFade>
       ) : (
         <EmptyState
           icon={Briefcase}

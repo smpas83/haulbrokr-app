@@ -52,6 +52,8 @@ const knownSpaRoutes = new Set([
   "/requests",
   "/fleet",
   "/jobs",
+  "/map",
+  "/dispatch",
   "/account",
   "/company",
   "/bins",
@@ -60,6 +62,7 @@ const knownSpaRoutes = new Set([
   "/integrations",
   "/mobile-payment",
   "/admin",
+  "/admin/login",
 ]);
 
 const knownSpaPrefixes = [
@@ -70,6 +73,8 @@ const knownSpaPrefixes = [
   "/requests/",
   "/fleet/",
   "/jobs/",
+  "/map/",
+  "/dispatch/",
   "/account/",
   "/company/",
   "/bins/",
@@ -99,6 +104,10 @@ function publicRoutesDevMiddleware(): Plugin {
         }
         if (stripped === "/privacy" || stripped === "/privacy/") {
           req.url = "/privacy.html";
+          return next();
+        }
+        if (stripped === "/terms" || stripped === "/terms/") {
+          req.url = "/terms.html";
           return next();
         }
 
@@ -165,6 +174,7 @@ export default defineConfig(async ({ command }) => {
         main: path.resolve(import.meta.dirname, "index.html"),
         support: path.resolve(import.meta.dirname, "support.html"),
         privacy: path.resolve(import.meta.dirname, "privacy.html"),
+        terms: path.resolve(import.meta.dirname, "terms.html"),
         notFound: path.resolve(import.meta.dirname, "404.html"),
       },
       output: {

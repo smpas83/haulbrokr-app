@@ -56,6 +56,7 @@ import {
   DeclineJobParams,
   DeclineJobResponse,
 } from "@workspace/api-zod";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -103,7 +104,7 @@ async function notifyPaymentFailed(job: { id: number; customerId: number; materi
       relatedId: job.id,
     });
   } catch (err) {
-    console.error("Failed to record payment_failed notification", err);
+    logger.error({ err, jobId: job.id }, "Failed to record payment_failed notification");
   }
 }
 
@@ -123,7 +124,7 @@ async function notifyPaymentRequiresAction(job: { id: number; customerId: number
       relatedId: job.id,
     });
   } catch (err) {
-    console.error("Failed to record payment_requires_action notification", err);
+    logger.error({ err, jobId: job.id }, "Failed to record payment_requires_action notification");
   }
 }
 
@@ -147,7 +148,7 @@ async function notifyPayoutDelayed(
       relatedId: job.id,
     });
   } catch (err) {
-    console.error("Failed to record payout_delayed notification", err);
+    logger.error({ err, jobId: job.id }, "Failed to record payout_delayed notification");
   }
 }
 

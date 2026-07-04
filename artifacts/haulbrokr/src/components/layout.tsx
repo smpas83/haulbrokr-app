@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Truck, ClipboardList, Briefcase, LayoutDashboard,
-  LogOut, Loader2, Settings, Menu, Trash2,
+  LogOut, Settings, Menu, Trash2,
   FolderOpen, DollarSign, Plug, ShieldCheck, Building2, MapPin,
   Sparkles, Radio
 } from "lucide-react";
@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { DocumentGateBanner } from "@/components/documents";
 import { CopilotPanel } from "@/components/copilot-panel";
+import { PageLoader } from "@/components/design";
 
 interface NavItem {
   href: string;
@@ -116,14 +117,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { data: adminAccess } = useGetAdminAccess();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading mission control...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Loading mission control..." className="min-h-screen" />;
   }
 
   const isCustomer = profile?.role === "customer";
@@ -206,12 +200,12 @@ export function Layout({ children }: { children: ReactNode }) {
             {visibleNav.slice(0, 5).map((item) => {
               const active = location === item.href || location.startsWith(`${item.href}/`);
               return (
-                <Link key={item.href} href={item.href} className="flex-1">
+                <Link key={item.href} href={item.href} className="flex-1 relative">
                   <div className={cn(
-                    "flex flex-col items-center justify-center h-full gap-0.5 text-[10px] font-semibold transition-colors",
+                    "flex flex-col items-center justify-center h-full gap-0.5 text-[10px] font-semibold transition-colors min-h-[44px]",
                     active
                       ? "text-primary"
-                      : "text-sidebar-foreground/50"
+                      : "text-sidebar-foreground/50 active:text-sidebar-foreground/70"
                   )}>
                     <item.icon className={cn("h-5 w-5", active && "text-primary")} />
                     <span className="leading-none truncate max-w-[60px]">{item.label.split(" ")[0]}</span>

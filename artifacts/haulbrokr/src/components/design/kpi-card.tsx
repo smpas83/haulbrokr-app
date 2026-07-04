@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { memo, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
@@ -13,13 +13,13 @@ interface KpiCardProps {
   className?: string;
 }
 
-export function KpiCard({ title, value, icon: Icon, accent, sub, trend, className }: KpiCardProps) {
+export const KpiCard = memo(function KpiCard({ title, value, icon: Icon, accent, sub, trend, className }: KpiCardProps) {
   const isPositive = trend && trend.value >= 0;
 
   return (
     <Card
       className={cn(
-        "group transition-all duration-200 hover:shadow-lg hover:shadow-black/20 hover:border-primary/20",
+        "group transition-all duration-200 hover-elevate hover:border-primary/20",
         accent && "border-primary/20 bg-primary/5",
         className
       )}
@@ -74,4 +74,4 @@ export function KpiCard({ title, value, icon: Icon, accent, sub, trend, classNam
       </CardContent>
     </Card>
   );
-}
+});

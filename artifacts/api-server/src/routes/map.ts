@@ -18,6 +18,7 @@ import {
   buildDemoHeatZones,
 } from "../lib/demoMarketplace";
 import { geocodeAddressCached } from "../lib/geocodeCache";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -222,7 +223,7 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
 
     res.json(payload);
   } catch (err) {
-    console.error("[map/marketplace]", err);
+    logger.error({ err }, "[map/marketplace] failed, falling back to demo");
     res.json(buildDemoMarketplace());
   }
 }

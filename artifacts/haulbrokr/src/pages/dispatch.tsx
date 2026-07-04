@@ -2,10 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Radio, Truck, MapPin, RefreshCw } from "lucide-react";
 import { apiFetch } from "@/lib/apiFetch";
-import { PageHeader } from "@/components/design";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { StatusChip } from "@/components/design";
+import { PageHeader, KpiSkeletonGrid, SectionFade, DataCard, EmptyState, StatusChip } from "@/components/design";
 
 interface DispatchJob {
   id: number;
@@ -64,29 +62,30 @@ export default function DispatchPage() {
       )}
 
       {loading && !data ? (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
-        </div>
+        <KpiSkeletonGrid count={3} />
       ) : data ? (
         <>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="surface-panel rounded-xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Jobs</p>
-              <p className="text-3xl font-bold stat-number mt-1">{data.activeJobs}</p>
+          <SectionFade>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="surface-panel rounded-xl p-5 card-fade stagger-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Jobs</p>
+                <p className="text-3xl font-bold stat-number mt-1">{data.activeJobs}</p>
+              </div>
+              <div className="surface-panel rounded-xl p-5 card-fade stagger-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fleet Available</p>
+                <p className="text-3xl font-bold stat-number mt-1">{data.fleet.filter((t) => t.isAvailable).length}</p>
+              </div>
+              <div className="surface-panel rounded-xl p-5 card-fade stagger-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">GPS Live</p>
+                <p className="text-3xl font-bold stat-number mt-1 text-success">
+                  {data.jobs.filter((j) => j.position).length}
+                </p>
+              </div>
             </div>
-            <div className="surface-panel rounded-xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fleet Available</p>
-              <p className="text-3xl font-bold stat-number mt-1">{data.fleet.filter((t) => t.isAvailable).length}</p>
-            </div>
-            <div className="surface-panel rounded-xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">GPS Live</p>
-              <p className="text-3xl font-bold stat-number mt-1 text-emerald-400">
-                {data.jobs.filter((j) => j.position).length}
-              </p>
-            </div>
-          </div>
+          </SectionFade>
 
-          <div className="surface-panel rounded-xl p-6 min-h-[320px] relative overflow-hidden">
+          <SectionFade delay={50}>
+            <div className="surface-panel rounded-xl p-6 min-h-[320px] relative overflow-hidden">
             <div className="absolute inset-0 opacity-20">
               {data.jobs.filter((j) => j.position).map((j) => (
                 <div
@@ -109,16 +108,23 @@ export default function DispatchPage() {
                 Updated {new Date(data.updatedAt).toLocaleTimeString()}.
               </p>
             </div>
-          </div>
+            </div>
+          </SectionFade>
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold">Active Dispatches</h2>
-            {data.jobs.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No active jobs. Browse the Load Board to find work.</p>
-            ) : (
-              data.jobs.map((job) => (
-                <Link key={job.id} href={`/jobs/${job.id}`}>
-                  <div className="rounded-xl border border-border/60 bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer">
+          <SectionFade delay={100}>
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">Active Dispatches</h2>
+              {data.jobs.length === 0 ? (
+                <EmptyState
+                  icon={Radio}
+                  title="No active dispatches"
+                  description="Browse the Load Board to find work and start dispatching."
+                  action={{ label: "View Load Board", href: "/requests" }}
+                />
+              ) : (
+                data.jobs.map((job) => (
+                  <Link key={job.id} href={`/jobs/${job.id}`}>
+                    <DataCard className="p-4 cursor-pointer">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -145,26 +151,29 @@ export default function DispatchPage() {
                         )}
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))
-            )}
-          </div>
+                    </DataCard>
+                  </Link>
+                ))
+              )}
+            </div>
+          </SectionFade>
 
           {data.fleet.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold flex items-center gap-2"><Truck className="h-5 w-5" /> Fleet</h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {data.fleet.map((t) => (
-                  <div key={t.id} className="rounded-xl border border-border/60 p-4">
+            <SectionFade delay={150}>
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold flex items-center gap-2"><Truck className="h-5 w-5" /> Fleet</h2>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {data.fleet.map((t) => (
+                    <DataCard key={t.id} className="p-4" interactive={false}>
                     <p className="font-semibold capitalize">{t.truckType.replace(/_/g, " ")}</p>
                     <p className={`text-sm mt-1 ${t.isAvailable ? "text-emerald-400" : "text-muted-foreground"}`}>
                       {t.isAvailable ? "Available" : "On job"}
                     </p>
-                  </div>
-                ))}
+                    </DataCard>
+                  ))}
+                </div>
               </div>
-            </div>
+            </SectionFade>
           )}
         </>
       ) : null}

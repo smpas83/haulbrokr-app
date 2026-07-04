@@ -115,6 +115,7 @@ const routes: Array<{ component: string; outputFile: string; route: string }> = 
   { component: "landing", outputFile: "index.html", route: "/" },
   { component: "support", outputFile: "support.html", route: "/support" },
   { component: "privacy", outputFile: "privacy.html", route: "/privacy" },
+  { component: "terms", outputFile: "terms.html", route: "/terms" },
   { component: "not-found", outputFile: "404.html", route: "/404" },
 ];
 

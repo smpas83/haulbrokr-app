@@ -3,10 +3,11 @@ import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 
 import { Layout } from "./components/layout";
 import { Toaster } from "@/components/ui/toaster";
+import { PageLoader } from "@/components/design";
+import { Button } from "@/components/ui/button";
 import { useGetMyProfile } from "@workspace/api-client-react";
 import { SignInPage, SignUpPage } from "./pages/auth";
 import LandingPage from "./pages/landing";
@@ -62,7 +63,7 @@ const clerkAppearance = {
     colorInput: "hsl(240 4% 12%)",
     colorInputForeground: "hsl(0 0% 96%)",
     colorNeutral: "hsl(240 4% 16%)",
-    fontFamily: '"Inter", ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif',
     borderRadius: "0.5rem",
   },
   elements: {
@@ -95,11 +96,7 @@ const clerkAppearance = {
 };
 
 function AppLoader() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
+  return <PageLoader message="Loading HaulBrokr..." className="min-h-screen" />;
 }
 
 function ClerkQueryClientCacheInvalidator() {
@@ -118,21 +115,34 @@ function ClerkQueryClientCacheInvalidator() {
 }
 
 function RequireProfile({ children }: { children: React.ReactNode }) {
-  const { data: profile, isLoading, error } = useGetMyProfile();
+  const { data: profile, isLoading, error, refetch, isRefetching } = useGetMyProfile();
 
   if (isLoading) {
     return <AppLoader />;
   }
 
-  if (error && (error as any).status === 404) {
-    return <Redirect to="/onboarding" />;
+  if (error) {
+    if ((error as any).status === 404) {
+      return <Redirect to="/onboarding" />;
+    }
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-8 bg-background">
+        <p className="text-destructive font-semibold">Unable to load your profile</p>
+        <p className="text-sm text-muted-foreground text-center max-w-sm">
+          Check your connection and try again. If the problem persists, sign out and sign back in.
+        </p>
+        <Button onClick={() => refetch()} disabled={isRefetching}>
+          {isRefetching ? "Retrying..." : "Try Again"}
+        </Button>
+      </div>
+    );
   }
 
   if (profile) {
     return <Layout>{children}</Layout>;
   }
 
-  return null;
+  return <Redirect to="/onboarding" />;
 }
 
 function AuthShellRoutes() {
