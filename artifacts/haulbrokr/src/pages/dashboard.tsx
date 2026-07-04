@@ -195,7 +195,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-full lg:col-span-4">
           <CardHeader className="pb-2">
-            <CardTitle>Activity — Last 7 Days</CardTitle>
+            <CardTitle>Executive Analytics — Last 7 Days</CardTitle>
             <CardDescription>Platform events recorded on your account</CardDescription>
           </CardHeader>
           <CardContent>

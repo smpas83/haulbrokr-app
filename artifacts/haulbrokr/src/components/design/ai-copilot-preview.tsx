@@ -110,6 +110,8 @@ export function AiCopilotPreview({ className }: { className?: string }) {
         <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5">
           <Truck className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
+            id="copilot-preview-input"
+            name="copilot-preview-input"
             type="text"
             placeholder="Ask anything about your fleet..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"

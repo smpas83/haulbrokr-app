@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 export default function NotFound() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+      <div className="surface-panel rounded-2xl w-full max-w-md">
+      <Card className="w-full border-0 shadow-none bg-transparent">
         <CardContent className="pt-8 pb-8 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 mx-auto mb-6">
             <AlertCircle className="h-8 w-8 text-destructive" />
@@ -24,6 +25,7 @@ export default function NotFound() {
           </Button>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
