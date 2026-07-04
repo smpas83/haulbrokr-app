@@ -133,7 +133,7 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
             Try again
           </Button>
           {onCancel && (
-            <Button type="button" variant="outline" className="rounded-none border-2 font-bold" onClick={onCancel}>
+            <Button type="button" variant="outline" className="rounded-xl border font-bold" onClick={onCancel}>
               Cancel
             </Button>
           )}
@@ -169,7 +169,7 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
           {saveLabel ?? "Connect bank account"}
         </Button>
         {onCancel && (
-          <Button type="button" variant="outline" className="rounded-none border-2 font-bold" onClick={onCancel} disabled={busy}>
+          <Button type="button" variant="outline" className="rounded-xl border font-bold" onClick={onCancel} disabled={busy}>
             Cancel
           </Button>
         )}

@@ -143,7 +143,7 @@ export function AccountDocuments() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-none border-2 p-5">
+      <Card className="rounded-2xl border border-border/60 p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-11 h-11 border-2 ${allDone ? "border-green-600 text-green-700" : "border-primary text-primary"}`}>
@@ -178,7 +178,7 @@ export function AccountDocuments() {
           return (
             <Card
               key={spec.id}
-              className={`rounded-none border-2 p-4 transition-colors ${dragOver === spec.id ? "border-primary bg-primary/5" : rejected ? "border-red-300" : "hover:border-primary/40"}`}
+              className={`rounded-xl border p-4 transition-colors ${dragOver === spec.id ? "border-primary bg-primary/5" : rejected ? "border-destructive/40 bg-destructive/5" : "hover:border-primary/40"}`}
               onDragOver={(e) => { e.preventDefault(); setDragOver(spec.id); }}
               onDragLeave={() => setDragOver((d) => (d === spec.id ? null : d))}
               onDrop={(e) => onDrop(e, spec.id)}

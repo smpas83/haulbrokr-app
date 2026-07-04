@@ -131,6 +131,9 @@
   --button-outline: hsl(240 4% 20%);
   --surface-border: hsl(240 4% 14%);
   --surface-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 32px -12px rgba(0, 0, 0, 0.65);
+  --surface-shadow-lg: 0 4px 24px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px hsl(240 4% 14%);
+  --badge-outline: hsl(240 4% 20%);
+  --map-chrome: hsl(240 5% 7%);
 }
 
 .dark {
@@ -289,6 +292,28 @@
   .page-enter {
     animation: pageEnter 0.35s ease-out forwards;
   }
+
+  .map-chrome {
+    background: var(--map-chrome);
+    border: 1px solid var(--surface-border);
+    box-shadow: var(--surface-shadow-lg);
+  }
+
+  .command-pulse {
+    animation: commandPulse 2.5s ease-in-out infinite;
+  }
+
+  .metric-glow {
+    text-shadow: 0 0 40px hsl(217 91% 60% / 0.15);
+  }
+
+  .nav-active-indicator {
+    box-shadow: 0 0 12px hsl(217 91% 60% / 0.4);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
 }
 
 @keyframes fadeIn {
@@ -323,6 +348,11 @@
 
 @keyframes shimmer {
   100% { transform: translateX(100%); }
+}
+
+@keyframes commandPulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(217 91% 60% / 0); }
+  50% { box-shadow: 0 0 0 4px hsl(217 91% 60% / 0.12); }
 }
 
 /* Scrollbar styling */

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { apiFetch } from "@/lib/apiFetch";
+import { getStatusColor } from "@/lib/design-tokens";
 
 function QuickBooksCard() {
   const { toast } = useToast();
@@ -58,7 +59,7 @@ function QuickBooksCard() {
           </div>
         </div>
         {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-          <Badge className={`rounded-xl border-2 font-bold text-xs ${isConnected ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-700 border-gray-200"}`}>
+          <Badge className={`rounded-xl border font-bold text-xs ${getStatusColor(isConnected ? "connected" : "disconnected")}`}>
             {isConnected ? <><CheckCircle2 className="h-3 w-3 mr-1" />Connected</> : "Not Connected"}
           </Badge>
         )}

@@ -33,7 +33,7 @@ function AuthShell({ children, title, subtitle }: { children: ReactNode; title: 
       <a href="#auth-form" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground">
         Skip to sign in form
       </a>
-      <aside className="hidden lg:flex flex-col justify-between p-12 border-r border-border/60 bg-card/30">
+      <aside className="hidden lg:flex flex-col justify-between p-12 border-r border-border/60 industrial-panel">
         <div>
           <picture>
             <source type="image/webp" srcSet={logoWebp} />

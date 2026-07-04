@@ -16,14 +16,16 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: colors.sidebar ?? colors.background,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           elevation: 0,
-          height: 58,
-          paddingBottom: 6,
+          height: colors.spacing?.tabBarHeight ?? 62,
+          paddingBottom: 8,
+          paddingTop: 4,
         },
-        tabBarLabelStyle: { fontFamily: "Inter_500Medium", fontSize: 10 },
+        tabBarLabelStyle: { fontFamily: "Inter_600SemiBold", fontSize: 10, letterSpacing: 0.2 },
+        tabBarItemStyle: { minHeight: 44 },
       }}
     >
       <Tabs.Screen
@@ -34,7 +36,7 @@ export default function TabLayout() {
             <View style={{ position: "relative" }}>
               <Feather name="home" size={22} color={color} />
               {isProvider && (
-                <View style={[styles.onlineDot, { backgroundColor: isOnline ? "#16a34a" : "#6b7280" }]} />
+                <View style={[styles.onlineDot, { backgroundColor: isOnline ? "#10B981" : colors.mutedForeground, borderColor: colors.background }]} />
               )}
             </View>
           ),
@@ -71,6 +73,6 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   onlineDot: {
     position: "absolute", top: -2, right: -4,
-    width: 8, height: 8, borderRadius: 4, borderWidth: 1.5, borderColor: "#0f172a",
+    width: 8, height: 8, borderRadius: 4, borderWidth: 1.5,
   },
 });

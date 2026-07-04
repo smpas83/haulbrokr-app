@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getStatusColor } from "@/lib/design-tokens";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -78,14 +79,6 @@ const PROVIDERS = [
   { id: "casella", label: "Casella Waste", desc: "Northeast & Mid-Atlantic" },
   { id: "advanced", label: "Advanced Disposal", desc: "Southeast US" },
 ];
-
-const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-  delivered: "bg-green-100 text-green-800 border-green-200",
-  picked_up: "bg-gray-100 text-gray-700 border-gray-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
-};
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Pending Confirmation",
@@ -669,7 +662,7 @@ function OrderCard({ order, onCancel, cancelling, past, highlighted, cardRef }: 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-black group-hover:text-primary transition-colors">{sizeLabels[order.binSize] ?? order.binSize}</span>
             <span className="text-muted-foreground text-sm">× {order.quantity}</span>
-            <Badge variant="outline" className={cn("rounded-xl border text-[10px] uppercase tracking-wider font-bold", STATUS_STYLE[order.status] || "")}>
+            <Badge variant="outline" className={cn("rounded-xl border text-[10px] uppercase tracking-wider font-bold", getStatusColor(order.status))}>
               {STATUS_LABEL[order.status] ?? order.status}
             </Badge>
           </div>

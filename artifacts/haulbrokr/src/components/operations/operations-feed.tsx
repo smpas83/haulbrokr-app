@@ -38,6 +38,7 @@ export function OperationsFeed() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       <PageHeader
+        eyebrow="Mission Control"
         title="Operations Center"
         description={
           loading ? "Loading your AI operations feed…" : (

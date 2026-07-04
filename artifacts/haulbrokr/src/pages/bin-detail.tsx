@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getStatusColor } from "@/lib/design-tokens";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -44,14 +45,6 @@ interface BinOrder {
   createdAt: string;
   updatedAt?: string;
 }
-
-const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-  delivered: "bg-green-100 text-green-800 border-green-200",
-  picked_up: "bg-gray-100 text-gray-700 border-gray-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
-};
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Pending Confirmation",
@@ -169,7 +162,7 @@ export default function BinDetailPage() {
               variant="outline"
               className={cn(
                 "rounded-xl border text-[10px] uppercase tracking-wider font-bold",
-                STATUS_STYLE[order.status] || "",
+                getStatusColor(order.status),
               )}
             >
               {STATUS_LABEL[order.status] ?? order.status}

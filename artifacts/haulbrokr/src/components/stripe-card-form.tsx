@@ -90,7 +90,7 @@ function CardCaptureForm({
           {saveLabel ?? "Save card"}
         </Button>
         {onCancel && (
-          <Button type="button" variant="outline" className="rounded-none border-2 font-bold" onClick={onCancel} disabled={busy}>
+          <Button type="button" variant="outline" className="rounded-xl border font-bold" onClick={onCancel} disabled={busy}>
             Cancel
           </Button>
         )}
@@ -144,7 +144,7 @@ export function StripeCardForm({ onSaved, onCancel, saving, saveLabel }: StripeC
             Try again
           </Button>
           {onCancel && (
-            <Button type="button" variant="outline" className="rounded-none border-2 font-bold" onClick={onCancel}>
+            <Button type="button" variant="outline" className="rounded-xl border font-bold" onClick={onCancel}>
               Cancel
             </Button>
           )}

@@ -1,4 +1,4 @@
-/** Premium Industrial Luxury design tokens — shared with mobile */
+/** Premium Industrial Luxury design tokens — shared with web app */
 const colors = {
   light: {
     text: "#0A0A0C",
@@ -22,6 +22,7 @@ const colors = {
     success: "#10B981",
     warning: "#F59E0B",
     info: "#22D3EE",
+    sidebar: "#FAFAFA",
   },
   dark: {
     text: "#F4F4F5",
@@ -41,12 +42,17 @@ const colors = {
     destructive: "#EF4444",
     destructiveForeground: "#F4F4F5",
     border: "#27272A",
-    input: "#27272A",
+    input: "#1E1E22",
     success: "#10B981",
     warning: "#F59E0B",
     info: "#22D3EE",
+    sidebar: "#0D0D0F",
   },
   radius: 16,
+  spacing: {
+    tabBarHeight: 62,
+    touchTarget: 48,
+  },
 };
 
 export default colors;

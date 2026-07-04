@@ -28,7 +28,7 @@ export const MATERIAL_ICON: Record<string, string> = {
   "Scrap Metal": "tool",
 };
 
-/** Fixed accent colors used throughout the app — Industrial Luxury palette */
+/** Fixed accent colors — Industrial Luxury palette (aligned with web design tokens) */
 export const ACCENT = {
   green: "#10B981",
   blue: "#3B82F6",
@@ -36,5 +36,6 @@ export const ACCENT = {
   amber: "#F59E0B",
   orange: "#FF6A00",
   red: "#EF4444",
-  gray: "#71717A",
+  gray: "#8B8B96",
+  charcoal: "#141416",
 } as const;

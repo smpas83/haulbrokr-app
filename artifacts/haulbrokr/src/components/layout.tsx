@@ -28,7 +28,7 @@ function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; on
       <div className={cn(
         "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 cursor-pointer",
         active
-          ? "bg-primary/15 text-primary border border-primary/20"
+          ? "bg-primary/15 text-primary border border-primary/20 nav-active-indicator"
           : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent"
       )}>
         <item.icon className={cn("h-4 w-4 flex-shrink-0", active && "text-primary")} />
@@ -120,9 +120,16 @@ export function Layout({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading mission control...</p>
+        <div className="flex flex-col items-center gap-5 animate-fade-in">
+          <div className="relative">
+            <div className="h-14 w-14 rounded-2xl surface-panel flex items-center justify-center command-pulse">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+            </div>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-foreground">Loading mission control</p>
+            <p className="text-xs text-muted-foreground mt-1">Syncing operations data…</p>
+          </div>
         </div>
       </div>
     );
@@ -207,7 +214,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => commandCenter.setOpen(true)}
-          className="hidden md:flex fixed bottom-6 right-6 z-30 items-center gap-2 rounded-xl border border-border/50 bg-sidebar px-4 py-2.5 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors shadow-lg"
+          className="hidden md:flex fixed bottom-6 right-6 z-30 items-center gap-2 rounded-xl border border-border/50 bg-sidebar px-4 py-2.5 text-xs font-medium text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all duration-200 shadow-lg hover:shadow-primary/10 command-pulse"
           aria-label="Open command center"
         >
           <span>⌘K Command Center</span>
