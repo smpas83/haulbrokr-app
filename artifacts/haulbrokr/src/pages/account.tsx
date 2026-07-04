@@ -1278,7 +1278,7 @@ function ComplianceTab() {
             </AlertDescription>
           </Alert>
         ) : (
-          <Alert className="rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+          <Alert className="rounded-xl bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
             <CheckCircle2 className="h-4 w-4" />
             <AlertTitle>Ready to Go</AlertTitle>
             <AlertDescription>Your account is fully verified and ready.</AlertDescription>
