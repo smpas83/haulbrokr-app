@@ -87,17 +87,17 @@ export default function PrivacyPage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="py-16 md:py-24 px-4 bg-secondary text-secondary-foreground relative overflow-hidden">
-          <div className="absolute inset-0" style={{background: "linear-gradient(135deg, hsl(217 33% 12%) 0%, hsl(217 33% 22%) 50%, hsl(45 60% 15%) 100%)"}}></div>
+        <section className="py-16 md:py-24 px-4 bg-card border-b border-border relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
           <div className="container mx-auto max-w-5xl relative z-10">
             <p className="font-mono text-sm uppercase tracking-widest text-primary mb-4">Privacy Policy</p>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-white leading-[1.1]">
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-foreground leading-[1.1]">
               Your data, <span className="text-primary">handled with care.</span>
             </h1>
-            <p className="text-lg md:text-xl text-secondary-foreground/80 max-w-2xl">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
               This policy explains what information HaulBrokr collects, how we use it, and the choices you have.
             </p>
-            <p className="font-mono text-sm text-secondary-foreground/60 mt-6">Effective {EFFECTIVE_DATE}</p>
+            <p className="font-mono text-sm text-muted-foreground mt-6">Effective {EFFECTIVE_DATE}</p>
           </div>
         </section>
 

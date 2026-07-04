@@ -55,8 +55,9 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-6">
-      <Card className="w-full max-w-md rounded-xl border-2">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="surface-panel rounded-2xl w-full max-w-md p-1">
+      <Card className="w-full border-0 shadow-none bg-transparent">
         <CardHeader>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-primary" />
@@ -114,6 +115,7 @@ export default function AdminLoginPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

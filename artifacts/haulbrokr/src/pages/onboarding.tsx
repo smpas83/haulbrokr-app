@@ -164,16 +164,17 @@ export default function OnboardingPage() {
   const isDriver = selectedRole === "driver";
 
   return (
-    <div className="min-h-screen bg-secondary flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl border-0 shadow-2xl rounded-xl md:rounded-xl overflow-hidden">
-        <div className="h-2 bg-primary w-full"></div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="surface-panel rounded-2xl w-full max-w-2xl overflow-hidden">
+      <Card className="w-full border-0 shadow-none bg-transparent rounded-none">
+        <div className="h-1 bg-primary w-full" />
         <CardHeader className="space-y-1 pb-8 text-center pt-10">
-          <div className="mx-auto bg-primary/10 w-16 h-16 flex items-center justify-center rounded-full mb-4">
+          <div className="mx-auto bg-primary/10 w-16 h-16 flex items-center justify-center rounded-2xl mb-4">
             <Building2 className="w-8 h-8 text-primary" />
           </div>
           <CardTitle className="text-3xl font-bold tracking-tight">Complete your profile</CardTitle>
           <CardDescription className="text-base text-muted-foreground">
-            How will you be using HaulBrokr?
+            Select your role to configure mission control for your workflow.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -675,6 +676,7 @@ export default function OnboardingPage() {
           </Form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
