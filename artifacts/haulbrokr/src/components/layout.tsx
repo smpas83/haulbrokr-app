@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { DocumentGateBanner } from "@/components/documents";
 import { CopilotPanel } from "@/components/copilot-panel";
+import { CommandCenter, useCommandCenter } from "@/components/operations/command-center";
 
 interface NavItem {
   href: string;
@@ -107,11 +108,12 @@ function Sidebar({ navItems, profile, user, onSignOut, onCopilotOpen }: {
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user } = useUser();
   const { signOut } = useClerk();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
+  const commandCenter = useCommandCenter(() => setCopilotOpen(true), navigate);
   const { data: profile, isLoading } = useGetMyProfile();
   const { data: adminAccess } = useGetAdminAccess();
 
@@ -200,6 +202,16 @@ export function Layout({ children }: { children: ReactNode }) {
           {children}
         </div>
 
+        {/* Command Center trigger hint — desktop */}
+        <button
+          type="button"
+          onClick={() => commandCenter.setOpen(true)}
+          className="hidden md:flex fixed bottom-6 right-6 z-30 items-center gap-2 rounded-xl border border-border/50 bg-sidebar px-4 py-2.5 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors shadow-lg"
+          aria-label="Open command center"
+        >
+          <span>⌘K Command Center</span>
+        </button>
+
         {/* Mobile Bottom Tab Bar */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-sidebar border-t border-sidebar-border safe-area-bottom">
           <div className="flex items-stretch h-16">
@@ -224,6 +236,11 @@ export function Layout({ children }: { children: ReactNode }) {
         </nav>
       </main>
       <CopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
+      <CommandCenter
+        open={commandCenter.open}
+        onOpenChange={commandCenter.setOpen}
+        onCopilotOpen={() => { commandCenter.setOpen(false); setCopilotOpen(true); }}
+      />
     </div>
   );
 }
