@@ -2,26 +2,53 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 import { format, subDays, parseISO } from "date-fns";
 import {
-  ArrowRight, Activity, Plus, Truck, AlertCircle,
-  CircleCheck, CheckCircle2, TrendingUp,
-  ShieldAlert, ArrowUpRight, ClipboardList, Briefcase,
-  Cloud, Radio, Sparkles
+  ArrowRight,
+  Activity,
+  Plus,
+  Truck,
+  AlertCircle,
+  CircleCheck,
+  CheckCircle2,
+  TrendingUp,
+  ShieldAlert,
+  ArrowUpRight,
+  ClipboardList,
+  Briefcase,
+  Radio,
+  FileCheck,
 } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from "recharts";
 import {
-  useGetDashboardStats, useGetDashboardActivity,
-  useGetMyProfile, useGetAccountStatus
+  useGetDashboardStats,
+  useGetDashboardActivity,
+  useGetMyProfile,
+  useGetAccountStatus,
 } from "@workspace/api-client-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PageHeader, KpiCard } from "@/components/design";
+import { PageHeader, KpiCard, KpiSkeletonGrid } from "@/components/design";
 import { CHART_COLORS } from "@/lib/design-tokens";
+import { getRoleLabel } from "@/lib/role-labels";
 
 const CustomBarTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -50,7 +77,8 @@ const CustomPieTooltip = ({ active, payload }: any) => {
 export default function DashboardPage() {
   const { data: profile } = useGetMyProfile();
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
-  const { data: activities, isLoading: activityLoading } = useGetDashboardActivity();
+  const { data: activities, isLoading: activityLoading } =
+    useGetDashboardActivity();
   const { data: accountStatus } = useGetAccountStatus();
 
   const isCustomer = profile?.role === "customer";
@@ -58,53 +86,71 @@ export default function DashboardPage() {
 
   const canOperate = isCustomer
     ? accountStatus?.profileComplete
-    : (accountStatus?.w9Status === "verified" && accountStatus?.insuranceStatus === "verified");
+    : accountStatus?.w9Status === "verified" &&
+      accountStatus?.insuranceStatus === "verified";
 
   const barData = useMemo(() => {
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = subDays(new Date(), 6 - i);
-      return { label: format(d, "EEE"), date: format(d, "yyyy-MM-dd"), count: 0 };
+      return {
+        label: format(d, "EEE"),
+        date: format(d, "yyyy-MM-dd"),
+        count: 0,
+      };
     });
     activities?.forEach((a) => {
       try {
         const d = format(parseISO(a.createdAt), "yyyy-MM-dd");
-        const day = days.find(x => x.date === d);
+        const day = days.find((x) => x.date === d);
         if (day) day.count += 1;
       } catch {}
     });
-    return days.map(d => ({ name: d.label, events: d.count }));
+    return days.map((d) => ({ name: d.label, events: d.count }));
   }, [activities]);
 
   const pieData = useMemo(() => {
     if (!stats) return [];
     const data = [];
     if (isProvider) {
-      if (stats.activeJobs) data.push({ name: "Active", value: stats.activeJobs });
-      if (stats.pendingBids) data.push({ name: "Pending Bids", value: stats.pendingBids });
-      if (stats.completedJobs) data.push({ name: "Completed", value: stats.completedJobs });
+      if (stats.activeJobs)
+        data.push({ name: "Active", value: stats.activeJobs });
+      if (stats.pendingBids)
+        data.push({ name: "Pending Bids", value: stats.pendingBids });
+      if (stats.completedJobs)
+        data.push({ name: "Completed", value: stats.completedJobs });
     } else {
-      if (stats.openRequests) data.push({ name: "Open", value: stats.openRequests });
-      if (stats.activeJobs) data.push({ name: "Active", value: stats.activeJobs });
-      if (stats.completedJobs) data.push({ name: "Completed", value: stats.completedJobs });
+      if (stats.openRequests)
+        data.push({ name: "Open", value: stats.openRequests });
+      if (stats.activeJobs)
+        data.push({ name: "Active", value: stats.activeJobs });
+      if (stats.completedJobs)
+        data.push({ name: "Completed", value: stats.completedJobs });
     }
     return data;
   }, [stats, isCustomer, isProvider]);
 
-  const hasChartData = pieData.some(d => d.value > 0);
+  const hasChartData = pieData.some((d) => d.value > 0);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       <PageHeader
+        eyebrow={getRoleLabel(profile?.role)}
         title="Mission Control"
         description={
-          <>Welcome back, <span className="font-semibold text-foreground">{profile?.contactName || profile?.companyName}</span>. Here's your operations overview.</>
+          <>
+            Welcome back,{" "}
+            <span className="font-semibold text-foreground">
+              {profile?.contactName || profile?.companyName}
+            </span>
+            . Here&apos;s your operations overview.
+          </>
         }
         actions={
           <>
             {isCustomer && (
               <Link href="/requests/new">
                 <Button data-testid="button-new-request">
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                   Post Job Request
                 </Button>
               </Link>
@@ -112,7 +158,7 @@ export default function DashboardPage() {
             {isProvider && (
               <Link href="/requests">
                 <Button data-testid="button-browse-jobs">
-                  <Truck className="mr-2 h-4 w-4" />
+                  <Truck className="mr-2 h-4 w-4" aria-hidden="true" />
                   Browse Open Jobs
                 </Button>
               </Link>
@@ -121,19 +167,55 @@ export default function DashboardPage() {
         }
       />
 
-      {/* System status bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Operational pulse — real account data, no placeholder metrics */}
+      <div
+        className="grid grid-cols-2 md:grid-cols-4 gap-3"
+        role="region"
+        aria-label="Operational status"
+      >
         {[
-          { icon: Radio, label: "Fleet Status", value: "Online", color: "text-emerald-400" },
-          { icon: Cloud, label: "Weather", value: "Clear", color: "text-primary" },
-          { icon: Activity, label: "Utilization", value: stats?.activeJobs ? `${Math.min(100, (stats.activeJobs ?? 0) * 12)}%` : "—", color: "text-accent" },
-          { icon: Sparkles, label: "AI Insights", value: "3 new", color: "text-primary" },
+          {
+            icon: Radio,
+            label: "Active Jobs",
+            value: stats?.activeJobs ?? 0,
+            color:
+              (stats?.activeJobs ?? 0) > 0
+                ? "text-emerald-400"
+                : "text-muted-foreground",
+          },
+          {
+            icon: isProvider ? TrendingUp : AlertCircle,
+            label: isProvider ? "Pending Bids" : "Open Requests",
+            value: isProvider
+              ? (stats?.pendingBids ?? 0)
+              : (stats?.openRequests ?? 0),
+            color: "text-primary",
+          },
+          {
+            icon: CheckCircle2,
+            label: "Completed",
+            value: stats?.completedJobs ?? 0,
+            color: "text-accent",
+          },
+          {
+            icon: FileCheck,
+            label: "Compliance",
+            value: canOperate ? "Verified" : "Action needed",
+            color: canOperate ? "text-emerald-400" : "text-warning",
+          },
         ].map((item) => (
-          <div key={item.label} className="surface-panel rounded-xl px-4 py-3 flex items-center gap-3">
-            <item.icon className={`h-4 w-4 ${item.color}`} />
+          <div
+            key={item.label}
+            className="surface-panel rounded-xl px-4 py-3 flex items-center gap-3"
+          >
+            <item.icon className={`h-4 w-4 ${item.color}`} aria-hidden="true" />
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</p>
-              <p className={`text-sm font-semibold ${item.color}`}>{item.value}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {item.label}
+              </p>
+              <p className={`text-sm font-semibold stat-number ${item.color}`}>
+                {item.value}
+              </p>
             </div>
           </div>
         ))}
@@ -142,32 +224,45 @@ export default function DashboardPage() {
       {accountStatus && !canOperate && (
         <Alert className="border-warning/30 bg-warning/10 rounded-xl">
           <ShieldAlert className="h-4 w-4 text-warning" />
-          <AlertTitle className="text-warning font-semibold">Action Required</AlertTitle>
+          <AlertTitle className="text-warning font-semibold">
+            Action Required
+          </AlertTitle>
           <AlertDescription className="text-warning/80">
             {isProvider
               ? "Complete your W-9 and insurance verification to start bidding on jobs."
-              : "Complete your profile to post job requests."}
-            {" "}
+              : "Complete your profile to post job requests."}{" "}
             <Link href="/account">
-              <span className="underline font-semibold cursor-pointer">Go to Account →</span>
+              <span className="underline font-semibold cursor-pointer">
+                Go to Account →
+              </span>
             </Link>
           </AlertDescription>
         </Alert>
       )}
 
       {statsLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-[120px] w-full rounded-xl" />)}
-        </div>
+        <KpiSkeletonGrid count={4} />
       ) : stats ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {isCustomer && (
-            <KpiCard title="Open Requests" value={stats.openRequests ?? 0} icon={AlertCircle} />
+            <KpiCard
+              title="Open Requests"
+              value={stats.openRequests ?? 0}
+              icon={AlertCircle}
+            />
           )}
-          <KpiCard title="Active Jobs" value={stats.activeJobs ?? 0} icon={Activity} />
+          <KpiCard
+            title="Active Jobs"
+            value={stats.activeJobs ?? 0}
+            icon={Activity}
+          />
           {isProvider && (
             <>
-              <KpiCard title="Pending Bids" value={stats.pendingBids ?? 0} icon={TrendingUp} />
+              <KpiCard
+                title="Pending Bids"
+                value={stats.pendingBids ?? 0}
+                icon={TrendingUp}
+              />
               <KpiCard
                 title="Est. Revenue"
                 value={`$${(stats.totalRevenue ?? 0).toLocaleString()}`}
@@ -179,7 +274,11 @@ export default function DashboardPage() {
           )}
           {isCustomer && (
             <>
-              <KpiCard title="Completed Jobs" value={stats.completedJobs ?? 0} icon={CheckCircle2} />
+              <KpiCard
+                title="Completed Jobs"
+                value={stats.completedJobs ?? 0}
+                icon={CheckCircle2}
+              />
               <KpiCard
                 title="Total Spent"
                 value={`$${(stats.totalSpent ?? 0).toLocaleString()}`}
@@ -196,7 +295,9 @@ export default function DashboardPage() {
         <Card className="col-span-full lg:col-span-4">
           <CardHeader className="pb-2">
             <CardTitle>Executive Analytics — Last 7 Days</CardTitle>
-            <CardDescription>Platform events recorded on your account</CardDescription>
+            <CardDescription>
+              Platform events recorded on your account
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {activityLoading ? (
@@ -206,7 +307,11 @@ export default function DashboardPage() {
                 <BarChart data={barData} barCategoryGap="35%">
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: "hsl(240 4% 55%)", fontSize: 12, fontWeight: 500 }}
+                    tick={{
+                      fill: "hsl(240 4% 55%)",
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -217,8 +322,16 @@ export default function DashboardPage() {
                     tickLine={false}
                     width={24}
                   />
-                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "hsl(217 91% 60% / 0.08)" }} />
-                  <Bar dataKey="events" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Tooltip
+                    content={<CustomBarTooltip />}
+                    cursor={{ fill: "hsl(217 91% 60% / 0.08)" }}
+                  />
+                  <Bar
+                    dataKey="events"
+                    fill={CHART_COLORS[0]}
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={40}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -246,7 +359,10 @@ export default function DashboardPage() {
                     dataKey="value"
                   >
                     {pieData.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      <Cell
+                        key={i}
+                        fill={CHART_COLORS[i % CHART_COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomPieTooltip />} />
@@ -254,7 +370,9 @@ export default function DashboardPage() {
                     iconType="circle"
                     iconSize={8}
                     formatter={(value) => (
-                      <span className="text-xs font-medium text-muted-foreground capitalize">{value}</span>
+                      <span className="text-xs font-medium text-muted-foreground capitalize">
+                        {value}
+                      </span>
                     )}
                   />
                 </PieChart>
@@ -263,7 +381,9 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
                 <CircleCheck className="h-10 w-10 mb-3 opacity-20" />
                 <p className="text-sm">No job data yet</p>
-                <p className="text-xs mt-1">Post or bid on a job to see stats</p>
+                <p className="text-xs mt-1">
+                  Post or bid on a job to see stats
+                </p>
               </div>
             )}
           </CardContent>
@@ -279,13 +399,19 @@ export default function DashboardPage() {
           <CardContent>
             {activityLoading ? (
               <div className="space-y-4">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                ))}
               </div>
             ) : activities && activities.length > 0 ? (
               <div className="space-y-1">
                 {activities.slice(0, 8).map((activity) => {
-                  const isFailure = activity.type === "payment_failed" || activity.type === "application_rejected";
-                  const isActionNeeded = activity.type === "payment_requires_action" || activity.type === "payout_delayed";
+                  const isFailure =
+                    activity.type === "payment_failed" ||
+                    activity.type === "application_rejected";
+                  const isActionNeeded =
+                    activity.type === "payment_requires_action" ||
+                    activity.type === "payout_delayed";
                   const isApproved = activity.type === "application_approved";
                   const isBin = activity.type.startsWith("bin_");
                   const dotClass = isFailure
@@ -304,29 +430,43 @@ export default function DashboardPage() {
                       : isApproved
                         ? "text-emerald-400"
                         : "";
-                  const binHref = isBin && activity.relatedBinOrderId != null
-                    ? `/bins?order=${encodeURIComponent(activity.relatedBinOrderId)}`
-                    : null;
-                  const jobHref = (isFailure || isActionNeeded) && activity.relatedId != null
-                    ? `/jobs/${activity.relatedId}`
-                    : null;
+                  const binHref =
+                    isBin && activity.relatedBinOrderId != null
+                      ? `/bins?order=${encodeURIComponent(activity.relatedBinOrderId)}`
+                      : null;
+                  const jobHref =
+                    (isFailure || isActionNeeded) && activity.relatedId != null
+                      ? `/jobs/${activity.relatedId}`
+                      : null;
                   const href = binHref ?? jobHref;
                   const isLink = href != null;
                   const inner = (
                     <>
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
+                      <div
+                        className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`}
+                      />
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium leading-tight truncate ${textClass}`}>{activity.description}</p>
+                        <p
+                          className={`text-sm font-medium leading-tight truncate ${textClass}`}
+                        >
+                          {activity.description}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {format(new Date(activity.createdAt), "MMM d, h:mm a")}
+                          {format(
+                            new Date(activity.createdAt),
+                            "MMM d, h:mm a",
+                          )}
                         </p>
                       </div>
                       {isLink && (
-                        <ArrowUpRight className={`h-4 w-4 flex-shrink-0 ${isFailure ? "text-destructive" : isActionNeeded ? "text-warning" : "text-muted-foreground"}`} />
+                        <ArrowUpRight
+                          className={`h-4 w-4 flex-shrink-0 ${isFailure ? "text-destructive" : isActionNeeded ? "text-warning" : "text-muted-foreground"}`}
+                        />
                       )}
                     </>
                   );
-                  const className = "flex items-center gap-4 py-2.5 px-3 hover:bg-muted/30 transition-colors rounded-lg border-b border-border/30 last:border-0";
+                  const className =
+                    "flex items-center gap-4 py-2.5 px-3 hover:bg-muted/30 transition-colors rounded-lg border-b border-border/30 last:border-0";
                   return isLink ? (
                     <Link key={activity.id} href={href} className={className}>
                       {inner}
@@ -354,17 +494,45 @@ export default function DashboardPage() {
           <CardContent className="space-y-2">
             {isCustomer && (
               <>
-                <QuickAction href="/requests/new" icon={Plus} label="Post a new request" />
-                <QuickAction href="/requests" icon={ClipboardList} label="Review open bids" />
-                <QuickAction href="/jobs" icon={Briefcase} label="Track active jobs" />
+                <QuickAction
+                  href="/requests/new"
+                  icon={Plus}
+                  label="Post a new request"
+                />
+                <QuickAction
+                  href="/requests"
+                  icon={ClipboardList}
+                  label="Review open bids"
+                />
+                <QuickAction
+                  href="/jobs"
+                  icon={Briefcase}
+                  label="Track active jobs"
+                />
               </>
             )}
             {isProvider && (
               <>
-                <QuickAction href="/requests" icon={Truck} label="Find new jobs" />
-                <QuickAction href="/fleet/new" icon={Plus} label="Add a truck to fleet" />
-                <QuickAction href="/jobs" icon={Briefcase} label="Active jobs" />
-                <QuickAction href="/account" icon={ShieldAlert} label="Compliance status" />
+                <QuickAction
+                  href="/requests"
+                  icon={Truck}
+                  label="Find new jobs"
+                />
+                <QuickAction
+                  href="/fleet/new"
+                  icon={Plus}
+                  label="Add a truck to fleet"
+                />
+                <QuickAction
+                  href="/jobs"
+                  icon={Briefcase}
+                  label="Active jobs"
+                />
+                <QuickAction
+                  href="/account"
+                  icon={ShieldAlert}
+                  label="Compliance status"
+                />
               </>
             )}
           </CardContent>
@@ -374,7 +542,15 @@ export default function DashboardPage() {
   );
 }
 
-function QuickAction({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
+function QuickAction({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+}) {
   return (
     <Link href={href}>
       <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 hover:border-primary/30 cursor-pointer transition-all group hover:bg-primary/5">

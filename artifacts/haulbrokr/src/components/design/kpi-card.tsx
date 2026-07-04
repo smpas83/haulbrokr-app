@@ -13,7 +13,15 @@ interface KpiCardProps {
   className?: string;
 }
 
-export function KpiCard({ title, value, icon: Icon, accent, sub, trend, className }: KpiCardProps) {
+export function KpiCard({
+  title,
+  value,
+  icon: Icon,
+  accent,
+  sub,
+  trend,
+  className,
+}: KpiCardProps) {
   const isPositive = trend && trend.value >= 0;
 
   return (
@@ -21,14 +29,15 @@ export function KpiCard({ title, value, icon: Icon, accent, sub, trend, classNam
       className={cn(
         "group transition-all duration-200 hover:shadow-lg hover:shadow-black/20 hover:border-primary/20",
         accent && "border-primary/20 bg-primary/5",
-        className
+        className,
       )}
+      aria-label={`${title}: ${value}${sub ? `, ${sub}` : ""}`}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle
           className={cn(
             "text-xs font-semibold uppercase tracking-wider",
-            accent ? "text-primary" : "text-muted-foreground"
+            accent ? "text-primary" : "text-muted-foreground",
           )}
         >
           {title}
@@ -36,8 +45,11 @@ export function KpiCard({ title, value, icon: Icon, accent, sub, trend, classNam
         <div
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-            accent ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+            accent
+              ? "bg-primary/15 text-primary"
+              : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary",
           )}
+          aria-hidden="true"
         >
           <Icon className="h-4 w-4" />
         </div>
@@ -46,8 +58,9 @@ export function KpiCard({ title, value, icon: Icon, accent, sub, trend, classNam
         <div
           className={cn(
             "text-3xl font-bold stat-number tracking-tight",
-            accent ? "text-primary" : "text-foreground"
+            accent ? "text-primary" : "text-foreground",
           )}
+          aria-hidden="true"
         >
           {value}
         </div>
@@ -57,13 +70,13 @@ export function KpiCard({ title, value, icon: Icon, accent, sub, trend, classNam
               <span
                 className={cn(
                   "inline-flex items-center gap-0.5 text-xs font-medium",
-                  isPositive ? "text-emerald-400" : "text-red-400"
+                  isPositive ? "text-emerald-400" : "text-red-400",
                 )}
               >
                 {isPositive ? (
-                  <TrendingUp className="h-3 w-3" />
+                  <TrendingUp className="h-3 w-3" aria-hidden="true" />
                 ) : (
-                  <TrendingDown className="h-3 w-3" />
+                  <TrendingDown className="h-3 w-3" aria-hidden="true" />
                 )}
                 {Math.abs(trend.value)}%
               </span>

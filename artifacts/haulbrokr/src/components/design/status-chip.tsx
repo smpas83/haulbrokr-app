@@ -14,8 +14,9 @@ export function StatusChip({ status, className }: StatusChipProps) {
       className={cn(
         "inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold uppercase tracking-wide border",
         getStatusColor(status),
-        className
+        className,
       )}
+      aria-label={`Status: ${label}`}
     >
       {label}
     </span>

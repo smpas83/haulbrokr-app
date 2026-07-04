@@ -1,11 +1,42 @@
 import {
-  ArrowRight, CheckCircle2, ClipboardCheck, DollarSign, FileText,
-  HardHat, LayoutDashboard, MapPin, Navigation, Search, ShieldCheck,
-  Truck, Zap, Building2, Users, Sparkles, Globe, BarChart3, Clock, Star, Bot
+  ArrowRight,
+  CheckCircle2,
+  ClipboardCheck,
+  DollarSign,
+  FileText,
+  HardHat,
+  LayoutDashboard,
+  MapPin,
+  Navigation,
+  Search,
+  ShieldCheck,
+  Truck,
+  Zap,
+  Building2,
+  Users,
+  Sparkles,
+  Globe,
+  BarChart3,
+  Clock,
+  Star,
+  Bot,
+  Menu,
 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { SurfacePanel, AnimatedNationMap, AiCopilotPreview, FaqSection } from "@/components/design";
+import {
+  SurfacePanel,
+  AnimatedNationMap,
+  AiCopilotPreview,
+  FaqSection,
+} from "@/components/design";
 import logo from "@/assets/haulbrokr-logo.png";
 import logoWebp from "@/assets/haulbrokr-logo.webp";
 import heroTruck from "@/assets/hero-truck.png";
@@ -22,19 +53,59 @@ const LIVE_STATS = [
 ];
 
 const steps = [
-  { icon: FileText, title: "Post the job", desc: "Create a haul request with pickup, material, truck count, and schedule." },
-  { icon: Truck, title: "Match trucks", desc: "Available haulers see nearby work and respond faster." },
-  { icon: MapPin, title: "Track live", desc: "Follow check-in, route status, load progress, and completion." },
-  { icon: CheckCircle2, title: "Close clean", desc: "Capture proof, load tickets, photos, and billing records." },
+  {
+    icon: FileText,
+    title: "Post the job",
+    desc: "Create a haul request with pickup, material, truck count, and schedule.",
+  },
+  {
+    icon: Truck,
+    title: "Match trucks",
+    desc: "Available haulers see nearby work and respond faster.",
+  },
+  {
+    icon: MapPin,
+    title: "Track live",
+    desc: "Follow check-in, route status, load progress, and completion.",
+  },
+  {
+    icon: CheckCircle2,
+    title: "Close clean",
+    desc: "Capture proof, load tickets, photos, and billing records.",
+  },
 ];
 
 const features = [
-  { icon: Zap, title: "AI dispatch", desc: "Intelligent load matching and route optimization powered by machine learning." },
-  { icon: Navigation, title: "GPS visibility", desc: "Real-time fleet tracking with live ETAs and geofenced check-ins." },
-  { icon: ClipboardCheck, title: "Digital tickets", desc: "Load photos, timestamps, and signed proof — all organized automatically." },
-  { icon: ShieldCheck, title: "Verified network", desc: "Compliance workflows for haulers, fleets, insurance, and documents." },
-  { icon: LayoutDashboard, title: "Mission control", desc: "Manage requests, bids, active hauls, billing, and analytics in one view." },
-  { icon: DollarSign, title: "Payment ready", desc: "Instant invoicing, factoring, and Stripe-powered payment processing." },
+  {
+    icon: Zap,
+    title: "AI dispatch",
+    desc: "Intelligent load matching and route optimization powered by machine learning.",
+  },
+  {
+    icon: Navigation,
+    title: "GPS visibility",
+    desc: "Real-time fleet tracking with live ETAs and geofenced check-ins.",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Digital tickets",
+    desc: "Load photos, timestamps, and signed proof — all organized automatically.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Verified network",
+    desc: "Compliance workflows for haulers, fleets, insurance, and documents.",
+  },
+  {
+    icon: LayoutDashboard,
+    title: "Mission control",
+    desc: "Manage requests, bids, active hauls, billing, and analytics in one view.",
+  },
+  {
+    icon: DollarSign,
+    title: "Payment ready",
+    desc: "Instant invoicing, factoring, and Stripe-powered payment processing.",
+  },
 ];
 
 const segments = [
@@ -43,7 +114,12 @@ const segments = [
     title: "Contractors",
     subtitle: "Customer Portal",
     desc: "Request trucks, compare bids, track live hauls, and manage invoices from a luxury dashboard.",
-    features: ["Book hauls in seconds", "Live truck tracking", "Digital invoicing", "AI assistant"],
+    features: [
+      "Book hauls in seconds",
+      "Live truck tracking",
+      "Digital invoicing",
+      "AI assistant",
+    ],
     cta: "Start hauling",
   },
   {
@@ -51,7 +127,12 @@ const segments = [
     title: "Drivers",
     subtitle: "Driver App",
     desc: "One-handed mobile experience built for the cab. Huge buttons, GPS navigation, ticket upload.",
-    features: ["One-tap check-in", "Camera ticket upload", "Turn-by-turn nav", "Breakdown reporting"],
+    features: [
+      "One-tap check-in",
+      "Camera ticket upload",
+      "Turn-by-turn nav",
+      "Breakdown reporting",
+    ],
     cta: "Join as driver",
   },
   {
@@ -59,7 +140,12 @@ const segments = [
     title: "Fleet Owners",
     subtitle: "Vendor Portal",
     desc: "Fleet dashboard with drivers, equipment, revenue analytics, dispatch, and compliance.",
-    features: ["Fleet utilization", "Driver management", "Revenue analytics", "Maintenance tracking"],
+    features: [
+      "Fleet utilization",
+      "Driver management",
+      "Revenue analytics",
+      "Maintenance tracking",
+    ],
     cta: "Manage fleet",
   },
   {
@@ -67,15 +153,38 @@ const segments = [
     title: "Enterprise",
     subtitle: "Platform",
     desc: "Multi-site dispatch, API integrations, QuickBooks sync, and dedicated account management.",
-    features: ["Multi-project dispatch", "QuickBooks integration", "Custom workflows", "Dedicated support"],
+    features: [
+      "Multi-project dispatch",
+      "QuickBooks integration",
+      "Custom workflows",
+      "Dedicated support",
+    ],
     cta: "Contact sales",
   },
 ];
 
 const liveJobs = [
-  { job: "Rock and gravel load", location: "Houston, TX", eta: "12 min", price: "$850", status: "En route" },
-  { job: "Demo haul-off", location: "Denver, CO", eta: "28 min", price: "$1,270", status: "Loading" },
-  { job: "Asphalt transfer", location: "Chicago, IL", eta: "45 min", price: "$1,690", status: "Dispatched" },
+  {
+    job: "Rock and gravel load",
+    location: "Houston, TX",
+    eta: "12 min",
+    price: "$850",
+    status: "En route",
+  },
+  {
+    job: "Demo haul-off",
+    location: "Denver, CO",
+    eta: "28 min",
+    price: "$1,270",
+    status: "Loading",
+  },
+  {
+    job: "Asphalt transfer",
+    location: "Chicago, IL",
+    eta: "45 min",
+    price: "$1,690",
+    status: "Dispatched",
+  },
 ];
 
 const PRICING = [
@@ -84,7 +193,12 @@ const PRICING = [
     price: "Free",
     period: "to post loads",
     desc: "For contractors exploring the network.",
-    features: ["Post haul requests", "Compare bids", "Live tracking", "Digital tickets"],
+    features: [
+      "Post haul requests",
+      "Compare bids",
+      "Live tracking",
+      "Digital tickets",
+    ],
     cta: "Get started",
     highlighted: false,
   },
@@ -93,7 +207,12 @@ const PRICING = [
     price: "3%",
     period: "per completed load",
     desc: "For owner-operators and small fleets.",
-    features: ["Everything in Starter", "AI dispatch copilot", "Fleet dashboard", "Priority support"],
+    features: [
+      "Everything in Starter",
+      "AI dispatch copilot",
+      "Fleet dashboard",
+      "Priority support",
+    ],
     cta: "Join as vendor",
     highlighted: true,
   },
@@ -102,7 +221,12 @@ const PRICING = [
     price: "Custom",
     period: "volume pricing",
     desc: "For GCs and multi-site operations.",
-    features: ["Dedicated CSM", "API access", "Custom workflows", "SLA & compliance"],
+    features: [
+      "Dedicated CSM",
+      "API access",
+      "Custom workflows",
+      "SLA & compliance",
+    ],
     cta: "Contact sales",
     highlighted: false,
   },
@@ -110,19 +234,22 @@ const PRICING = [
 
 const TESTIMONIALS = [
   {
-    quote: "We cut dispatch time from 45 minutes to under five. HaulBrokr is the operating system our field teams actually use.",
+    quote:
+      "We cut dispatch time from 45 minutes to under five. HaulBrokr is the operating system our field teams actually use.",
     name: "Marcus Chen",
     role: "VP Operations",
     company: "Summit Earthworks",
   },
   {
-    quote: "Drivers love the app. One hand, big buttons, tickets upload in seconds. Compliance finally stays ahead of us.",
+    quote:
+      "Drivers love the app. One hand, big buttons, tickets upload in seconds. Compliance finally stays ahead of us.",
     name: "Diana Reyes",
     role: "Fleet Owner",
     company: "Reyes Hauling LLC",
   },
   {
-    quote: "Fortune 500 audit-ready documentation on every load. That's why we standardized on HaulBrokr nationally.",
+    quote:
+      "Fortune 500 audit-ready documentation on every load. That's why we standardized on HaulBrokr nationally.",
     name: "James Whitfield",
     role: "Procurement Director",
     company: "Meridian Construction",
@@ -132,47 +259,124 @@ const TESTIMONIALS = [
 const FAQ = [
   {
     question: "How does HaulBrokr pricing work?",
-    answer: "Customers post loads for free. Vendors pay a transparent platform fee on completed loads. Enterprise teams receive custom volume pricing with dedicated support.",
+    answer:
+      "Customers post loads for free. Vendors pay a transparent platform fee on completed loads. Enterprise teams receive custom volume pricing with dedicated support.",
   },
   {
     question: "Is HaulBrokr available nationwide?",
-    answer: "Yes. The marketplace covers all 50 states with live load boards, verified haulers, and GPS tracking on active jobs.",
+    answer:
+      "Yes. The marketplace covers all 50 states with live load boards, verified haulers, and GPS tracking on active jobs.",
   },
   {
     question: "How does AI dispatch work?",
-    answer: "The AI Copilot analyzes open loads, fleet location, and historical performance to recommend matches, route optimizations, and revenue opportunities — you stay in control of every dispatch decision.",
+    answer:
+      "The AI Copilot analyzes open loads, fleet location, and historical performance to recommend matches, route optimizations, and revenue opportunities — you stay in control of every dispatch decision.",
   },
   {
     question: "What compliance documents are supported?",
-    answer: "W-9, insurance COI, DOT authority, vehicle registration, and custom document gates. Staff review queues keep your network verified.",
+    answer:
+      "W-9, insurance COI, DOT authority, vehicle registration, and custom document gates. Staff review queues keep your network verified.",
   },
   {
     question: "Can drivers use the mobile app offline?",
-    answer: "Drivers can capture photos and complete check-ins with intermittent connectivity. Full sync resumes when the device reconnects.",
+    answer:
+      "Drivers can capture photos and complete check-ins with intermittent connectivity. Full sync resumes when the device reconnects.",
   },
 ];
 
 export default function LandingPage() {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const navLinks = [
+    { href: "#platform", label: "Platform" },
+    { href: "#ai", label: "AI" },
+    { href: "#pricing", label: "Pricing" },
+    { href: "#customers", label: "Customers" },
+    { href: "#faq", label: "FAQ" },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95">
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:h-[4.5rem]">
           <a href="/" aria-label="HaulBrokr home">
             <picture>
               <source type="image/webp" srcSet={logoWebp} />
-              <img src={logo} alt="HaulBrokr" className="h-8 w-auto sm:h-9" width="400" height="225" />
+              <img
+                src={logo}
+                alt="HaulBrokr"
+                className="h-8 w-auto sm:h-9"
+                width="400"
+                height="225"
+              />
             </picture>
           </a>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-            <a href="#platform" className="hover:text-foreground transition-colors">Platform</a>
-            <a href="#ai" className="hover:text-foreground transition-colors">AI</a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-            <a href="#customers" className="hover:text-foreground transition-colors">Customers</a>
-            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
+          <nav
+            className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground"
+            aria-label="Primary"
+          >
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" className="font-semibold text-muted-foreground hover:text-foreground">
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetTitle className="text-left font-bold">
+                  HaulBrokr
+                </SheetTitle>
+                <nav className="mt-8 flex flex-col gap-4" aria-label="Mobile">
+                  {navLinks.map((link) => (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      className="text-lg font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => setMobileNavOpen(false)}
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                  <div className="pt-4 border-t border-border flex flex-col gap-3">
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full font-semibold"
+                    >
+                      <a href="/sign-in">Log in</a>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="accent"
+                      className="w-full font-semibold"
+                    >
+                      <a href="/sign-up">Get Started</a>
+                    </Button>
+                  </div>
+                </nav>
+              </SheetContent>
+            </Sheet>
+            <Button
+              asChild
+              variant="ghost"
+              className="hidden sm:inline-flex font-semibold text-muted-foreground hover:text-foreground"
+            >
               <a href="/sign-in">Log in</a>
             </Button>
             <Button asChild variant="accent" className="font-semibold">
@@ -187,8 +391,19 @@ export default function LandingPage() {
         <section className="relative isolate overflow-hidden">
           <div className="absolute inset-0 -z-10">
             <picture>
-              <source type="image/webp" srcSet={`${heroTruckSmWebp} 768w, ${heroTruckWebp} 1408w`} sizes="100vw" />
-              <img src={heroTruck} alt="" className="h-full w-full object-cover opacity-20" fetchPriority="high" width="1408" height="768" />
+              <source
+                type="image/webp"
+                srcSet={`${heroTruckSmWebp} 768w, ${heroTruckWebp} 1408w`}
+                sizes="100vw"
+              />
+              <img
+                src={heroTruck}
+                alt=""
+                className="h-full w-full object-cover opacity-20"
+                fetchPriority="high"
+                width="1408"
+                height="768"
+              />
             </picture>
             <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
           </div>
@@ -206,14 +421,22 @@ export default function LandingPage() {
                   <span className="text-gradient-primary">Wait less.</span>
                 </h1>
                 <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-lg">
-                  The premium dump truck marketplace and AI dispatch platform. Real-time tracking, digital tickets, and intelligent fleet management.
+                  The premium dump truck marketplace and AI dispatch platform.
+                  Real-time tracking, digital tickets, and intelligent fleet
+                  management.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Button asChild size="xl" variant="accent">
-                    <a href="/sign-up"><Search className="mr-2 h-5 w-5" />Find Trucks</a>
+                    <a href="/sign-up">
+                      <Search className="mr-2 h-5 w-5" />
+                      Find Trucks
+                    </a>
                   </Button>
                   <Button asChild size="xl" variant="outline">
-                    <a href="/sign-up">Join the Network<ArrowRight className="ml-2 h-5 w-5" /></a>
+                    <a href="/sign-up">
+                      Join the Network
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </a>
                   </Button>
                 </div>
               </div>
@@ -231,11 +454,20 @@ export default function LandingPage() {
         <section className="border-y border-border/50 bg-card/30">
           <div className="container mx-auto grid grid-cols-2 gap-px bg-border/30 sm:grid-cols-4 px-4">
             {LIVE_STATS.map((stat) => (
-              <div key={stat.label} className="bg-background py-8 px-6 text-center">
-                <p className="text-3xl font-bold stat-number text-foreground">{stat.value}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
+              <div
+                key={stat.label}
+                className="bg-background py-8 px-6 text-center"
+              >
+                <p className="text-3xl font-bold stat-number text-foreground">
+                  {stat.value}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {stat.label}
+                </p>
                 {stat.change && (
-                  <p className="mt-1 text-xs font-medium text-emerald-400">{stat.change}</p>
+                  <p className="mt-1 text-xs font-medium text-emerald-400">
+                    {stat.change}
+                  </p>
                 )}
               </div>
             ))}
@@ -246,15 +478,24 @@ export default function LandingPage() {
         <section id="platform" className="py-20 sm:py-28">
           <div className="container mx-auto px-4">
             <div className="mx-auto mb-14 max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Real-time platform</p>
-              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Mission control for hauling</h2>
-              <p className="mt-4 text-muted-foreground text-lg">Live dispatch board and AI copilot working together to move your fleet faster.</p>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+                Real-time platform
+              </p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+                Mission control for hauling
+              </h2>
+              <p className="mt-4 text-muted-foreground text-lg">
+                Live dispatch board and AI copilot working together to move your
+                fleet faster.
+              </p>
             </div>
             <div className="grid gap-6 lg:grid-cols-2">
               <SurfacePanel elevated className="p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-accent">Live dispatch board</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-accent">
+                      Live dispatch board
+                    </p>
                     <h3 className="text-xl font-bold mt-1">Today's Work</h3>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-emerald-400">
@@ -264,15 +505,24 @@ export default function LandingPage() {
                 </div>
                 <div className="space-y-3">
                   {liveJobs.map((job) => (
-                    <div key={job.job} className="rounded-xl border border-border/50 bg-muted/20 p-4 hover:border-primary/30 transition-colors">
+                    <div
+                      key={job.job}
+                      className="rounded-xl border border-border/50 bg-muted/20 p-4 hover:border-primary/30 transition-colors"
+                    >
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="font-semibold">{job.job}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{job.location} · ETA {job.eta}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {job.location} · ETA {job.eta}
+                          </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-bold text-accent">{job.price}</p>
-                          <p className="text-xs text-emerald-400 font-medium">{job.status}</p>
+                          <p className="text-lg font-bold text-accent">
+                            {job.price}
+                          </p>
+                          <p className="text-xs text-emerald-400 font-medium">
+                            {job.status}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -288,18 +538,31 @@ export default function LandingPage() {
         <section className="border-y border-border/50 bg-card/20 py-20 sm:py-28">
           <div className="container mx-auto px-4">
             <div className="mx-auto mb-14 max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Simple by design</p>
-              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">From request to completed load</h2>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+                Simple by design
+              </p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+                From request to completed load
+              </h2>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {steps.map((step, i) => (
-                <div key={step.title} className="industrial-panel rounded-2xl p-6 hover-elevate">
+                <div
+                  key={step.title}
+                  className="industrial-panel rounded-2xl p-6 hover-elevate"
+                >
                   <div className="relative z-10 flex items-center justify-between">
                     <step.icon className="h-6 w-6 text-primary" />
-                    <span className="text-3xl font-bold text-muted-foreground/20">0{i + 1}</span>
+                    <span className="text-3xl font-bold text-muted-foreground/20">
+                      0{i + 1}
+                    </span>
                   </div>
-                  <h3 className="relative z-10 mt-5 text-lg font-semibold">{step.title}</h3>
-                  <p className="relative z-10 mt-2 text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                  <h3 className="relative z-10 mt-5 text-lg font-semibold">
+                    {step.title}
+                  </h3>
+                  <p className="relative z-10 mt-2 text-sm text-muted-foreground leading-relaxed">
+                    {step.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -310,17 +573,26 @@ export default function LandingPage() {
         <section className="py-20 sm:py-28">
           <div className="container mx-auto px-4">
             <div className="mb-14 max-w-2xl">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Built for heavy work</p>
-              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Industrial software for real jobsites</h2>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+                Built for heavy work
+              </p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+                Industrial software for real jobsites
+              </h2>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((f) => (
-                <div key={f.title} className="rounded-2xl border border-border/50 bg-card p-7 hover:border-primary/30 hover-elevate transition-all">
+                <div
+                  key={f.title}
+                  className="rounded-2xl border border-border/50 bg-card p-7 hover:border-primary/30 hover-elevate transition-all"
+                >
                   <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <f.icon className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-semibold">{f.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                    {f.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -331,14 +603,26 @@ export default function LandingPage() {
         <section className="border-y border-border/50 bg-card/20 py-20 sm:py-28">
           <div className="container mx-auto px-4">
             <div className="mx-auto mb-14 max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">One platform</p>
-              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Built for everyone moving material</h2>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+                One platform
+              </p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+                Built for everyone moving material
+              </h2>
             </div>
             <div className="grid gap-6 md:grid-cols-2">
               {segments.map((seg, i) => (
                 <div
                   key={seg.title}
-                  id={i === 0 ? "customers" : i === 1 ? "drivers" : i === 3 ? "enterprise" : undefined}
+                  id={
+                    i === 0
+                      ? "customers"
+                      : i === 1
+                        ? "drivers"
+                        : i === 3
+                          ? "enterprise"
+                          : undefined
+                  }
                   className="industrial-panel rounded-2xl p-8 hover-elevate"
                 >
                   <div className="relative z-10">
@@ -346,20 +630,30 @@ export default function LandingPage() {
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/15 text-accent">
                         <seg.icon className="h-6 w-6" />
                       </div>
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{seg.subtitle}</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {seg.subtitle}
+                      </span>
                     </div>
                     <h3 className="mt-5 text-2xl font-bold">{seg.title}</h3>
-                    <p className="mt-2 text-muted-foreground leading-relaxed">{seg.desc}</p>
+                    <p className="mt-2 text-muted-foreground leading-relaxed">
+                      {seg.desc}
+                    </p>
                     <ul className="mt-5 space-y-2">
                       {seg.features.map((feat) => (
-                        <li key={feat} className="flex items-center gap-2 text-sm">
+                        <li
+                          key={feat}
+                          className="flex items-center gap-2 text-sm"
+                        >
                           <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                           {feat}
                         </li>
                       ))}
                     </ul>
                     <Button asChild variant="outline" className="mt-6">
-                      <a href="/sign-up">{seg.cta}<ArrowRight className="ml-2 h-4 w-4" /></a>
+                      <a href="/sign-up">
+                        {seg.cta}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </a>
                     </Button>
                   </div>
                 </div>
@@ -373,13 +667,24 @@ export default function LandingPage() {
           <div className="container mx-auto px-4">
             <div className="grid gap-12 lg:grid-cols-2 items-center">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wider text-primary">Fleet intelligence</p>
-                <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">AI that understands hauling</h2>
+                <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+                  Fleet intelligence
+                </p>
+                <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+                  AI that understands hauling
+                </h2>
                 <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-                  Enterprise-grade copilot for dispatchers and fleet owners. Natural language commands, predictive insights, and actionable recommendations — without replacing your judgment.
+                  Enterprise-grade copilot for dispatchers and fleet owners.
+                  Natural language commands, predictive insights, and actionable
+                  recommendations — without replacing your judgment.
                 </p>
                 <ul className="mt-8 space-y-4">
-                  {["Match loads to idle trucks in seconds", "Forecast revenue and utilization", "Flag compliance and maintenance risks", "Voice-ready for the jobsite"].map((item) => (
+                  {[
+                    "Match loads to idle trucks in seconds",
+                    "Forecast revenue and utilization",
+                    "Flag compliance and maintenance risks",
+                    "Voice-ready for the jobsite",
+                  ].map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm">
                       <Bot className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                       <span>{item}</span>
@@ -393,12 +698,21 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing */}
-        <section id="pricing" className="py-20 sm:py-28 bg-card/20 border-y border-border/50">
+        <section
+          id="pricing"
+          className="py-20 sm:py-28 bg-card/20 border-y border-border/50"
+        >
           <div className="container mx-auto px-4">
             <div className="mx-auto mb-14 max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Transparent pricing</p>
-              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Built to scale with your fleet</h2>
-              <p className="mt-4 text-muted-foreground text-lg">No hidden fees. Pay when loads move.</p>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+                Transparent pricing
+              </p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+                Built to scale with your fleet
+              </h2>
+              <p className="mt-4 text-muted-foreground text-lg">
+                No hidden fees. Pay when loads move.
+              </p>
             </div>
             <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
               {PRICING.map((plan) => (
@@ -406,17 +720,26 @@ export default function LandingPage() {
                   key={plan.name}
                   className={cn(
                     "surface-panel rounded-2xl p-8 flex flex-col",
-                    plan.highlighted && "ring-2 ring-primary/40 border-primary/30",
+                    plan.highlighted &&
+                      "ring-2 ring-primary/40 border-primary/30",
                   )}
                 >
                   {plan.highlighted && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary mb-4">Most popular</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary mb-4">
+                      Most popular
+                    </span>
                   )}
                   <h3 className="text-xl font-bold">{plan.name}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{plan.desc}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {plan.desc}
+                  </p>
                   <div className="mt-6 mb-6">
-                    <span className="text-4xl font-bold stat-number">{plan.price}</span>
-                    <span className="text-sm text-muted-foreground ml-2">{plan.period}</span>
+                    <span className="text-4xl font-bold stat-number">
+                      {plan.price}
+                    </span>
+                    <span className="text-sm text-muted-foreground ml-2">
+                      {plan.period}
+                    </span>
                   </div>
                   <ul className="space-y-3 flex-1">
                     {plan.features.map((f) => (
@@ -426,7 +749,11 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button asChild variant={plan.highlighted ? "default" : "outline"} className="mt-8 w-full">
+                  <Button
+                    asChild
+                    variant={plan.highlighted ? "default" : "outline"}
+                    className="mt-8 w-full"
+                  >
                     <a href="/sign-up">{plan.cta}</a>
                   </Button>
                 </div>
@@ -439,21 +766,32 @@ export default function LandingPage() {
         <section className="py-20 sm:py-28">
           <div className="container mx-auto px-4">
             <div className="mx-auto mb-14 max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Trusted nationwide</p>
-              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Built for the field, loved in the boardroom</h2>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+                Trusted nationwide
+              </p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+                Built for the field, loved in the boardroom
+              </h2>
             </div>
             <div className="grid gap-6 md:grid-cols-3">
               {TESTIMONIALS.map((t) => (
-                <blockquote key={t.name} className="surface-panel rounded-2xl p-8 flex flex-col">
+                <blockquote
+                  key={t.name}
+                  className="surface-panel rounded-2xl p-8 flex flex-col"
+                >
                   <div className="flex gap-1 text-accent mb-4" aria-hidden>
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-current" />
                     ))}
                   </div>
-                  <p className="text-foreground leading-relaxed flex-1">&ldquo;{t.quote}&rdquo;</p>
+                  <p className="text-foreground leading-relaxed flex-1">
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
                   <footer className="mt-6 pt-6 border-t border-border/50">
                     <p className="font-semibold">{t.name}</p>
-                    <p className="text-sm text-muted-foreground">{t.role}, {t.company}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t.role}, {t.company}
+                    </p>
                   </footer>
                 </blockquote>
               ))}
@@ -462,11 +800,18 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="py-20 sm:py-28 border-t border-border/50 bg-card/20">
+        <section
+          id="faq"
+          className="py-20 sm:py-28 border-t border-border/50 bg-card/20"
+        >
           <div className="container mx-auto px-4 max-w-3xl">
             <div className="mb-12 text-center">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">FAQ</p>
-              <h2 className="mt-3 text-4xl font-bold tracking-tight">Questions from the jobsite</h2>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+                FAQ
+              </p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight">
+                Questions from the jobsite
+              </h2>
             </div>
             <FaqSection items={FAQ} />
           </div>
@@ -477,7 +822,14 @@ export default function LandingPage() {
           <div className="absolute inset-0">
             <picture>
               <source type="image/webp" srcSet={ctaTruckWebp} />
-              <img src={ctaTruck} alt="" className="h-full w-full object-cover opacity-15" loading="lazy" width="1408" height="768" />
+              <img
+                src={ctaTruck}
+                alt=""
+                className="h-full w-full object-cover opacity-15"
+                loading="lazy"
+                width="1408"
+                height="768"
+              />
             </picture>
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/70" />
           </div>
@@ -487,8 +839,13 @@ export default function LandingPage() {
                 <Sparkles className="h-3.5 w-3.5" />
                 Ready to move?
               </div>
-              <h2 className="text-4xl font-bold tracking-tight sm:text-6xl">Put trucks to work today</h2>
-              <p className="mt-4 text-lg text-muted-foreground">Join thousands of contractors and haulers already on the platform.</p>
+              <h2 className="text-4xl font-bold tracking-tight sm:text-6xl">
+                Put trucks to work today
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Join thousands of contractors and haulers already on the
+                platform.
+              </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                 <Button asChild size="xl" variant="accent">
                   <a href="/sign-up">Get Started Free</a>
@@ -509,39 +866,118 @@ export default function LandingPage() {
             <div className="md:col-span-1">
               <picture>
                 <source type="image/webp" srcSet={logoWebp} />
-                <img src={logo} alt="HaulBrokr" className="h-8 w-auto" width="400" height="225" />
+                <img
+                  src={logo}
+                  alt="HaulBrokr"
+                  className="h-8 w-auto"
+                  width="400"
+                  height="225"
+                />
               </picture>
               <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-                The premium dump truck marketplace and AI dispatch platform for North America.
+                The premium dump truck marketplace and AI dispatch platform for
+                North America.
               </p>
             </div>
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-4">Platform</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-4">
+                Platform
+              </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#platform" className="hover:text-foreground transition-colors">Load Board</a></li>
-                <li><a href="#platform" className="hover:text-foreground transition-colors">Fleet Tracking</a></li>
-                <li><a href="#platform" className="hover:text-foreground transition-colors">AI Dispatch</a></li>
-                <li><a href="#platform" className="hover:text-foreground transition-colors">Digital Tickets</a></li>
+                <li>
+                  <a
+                    href="#platform"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Load Board
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#platform"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Fleet Tracking
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#platform"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    AI Dispatch
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#platform"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Digital Tickets
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-4">Company</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-4">
+                Company
+              </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/support" className="hover:text-foreground transition-colors">Support</a></li>
-                <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a></li>
-                <li><a href="mailto:info@haulbrokr.com" className="hover:text-foreground transition-colors">Contact</a></li>
+                <li>
+                  <a
+                    href="/support"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Support
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/privacy"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Privacy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="mailto:info@haulbrokr.com"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-4">Get Started</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-4">
+                Get Started
+              </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/sign-up" className="hover:text-foreground transition-colors">Create Account</a></li>
-                <li><a href="/sign-in" className="hover:text-foreground transition-colors">Sign In</a></li>
+                <li>
+                  <a
+                    href="/sign-up"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Create Account
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/sign-in"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    Sign In
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} HaulBrokr Logistics. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} HaulBrokr Logistics. All rights
+              reserved.
+            </p>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <BarChart3 className="h-4 w-4" />
               <Users className="h-4 w-4" />

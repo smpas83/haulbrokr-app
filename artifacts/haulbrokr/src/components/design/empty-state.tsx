@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -11,29 +12,42 @@ interface EmptyStateProps {
   children?: ReactNode;
 }
 
-export function EmptyState({ icon: Icon, title, description, action, className, children }: EmptyStateProps) {
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+  className,
+  children,
+}: EmptyStateProps) {
   return (
     <div
       className={cn(
         "flex flex-col items-center justify-center py-16 px-8 text-center rounded-xl border border-dashed border-border/60 bg-card/50",
-        className
+        className,
       )}
+      role="status"
+      aria-label={title}
     >
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 mb-5">
+      <div
+        className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 mb-5"
+        aria-hidden="true"
+      >
         <Icon className="h-8 w-8 text-muted-foreground/60" />
       </div>
       <h3 className="text-xl font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-muted-foreground max-w-md mb-6 text-sm leading-relaxed">{description}</p>
+      <p className="text-muted-foreground max-w-md mb-6 text-sm leading-relaxed">
+        {description}
+      </p>
       {children}
-      {action && (
-        action.href ? (
+      {action &&
+        (action.href ? (
           <Button asChild>
-            <a href={action.href}>{action.label}</a>
+            <Link href={action.href}>{action.label}</Link>
           </Button>
         ) : (
           <Button onClick={action.onClick}>{action.label}</Button>
-        )
-      )}
+        ))}
     </div>
   );
 }
