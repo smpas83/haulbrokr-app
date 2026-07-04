@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, jobsTable, requestsTable, trucksTable, activityTable } from "@workspace/db";
 import { eq, desc, and, inArray } from "drizzle-orm";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
+import { buildOperationsCenter, type OperationInsight } from "../lib/operationsInsights";
 
 const router: IRouter = Router();
 
@@ -116,14 +117,41 @@ router.get("/copilot/insights", requireProfile, async (req, res): Promise<void> 
   const ctx = await buildContext(profile);
   const role = profile.role === "driver" ? "driver" : profile.role === "provider" ? "provider" : "customer";
 
+  const center = await buildOperationsCenter({
+    id: profile.id,
+    role: profile.role,
+    companyName: profile.companyName,
+    state: profile.state ?? null,
+  });
+
+  const contextSummaries = {
+    customer: center.todayJobs > 0
+      ? `${center.todayJobs} jobs today · $${center.todayRevenue.toLocaleString()} projected revenue`
+      : `${ctx.openRequests.length} open requests · ${ctx.activeJobs.length} active jobs`,
+    provider: `${ctx.trucksAvailable} trucks available · ${ctx.activeJobs.length} active jobs · ${center.analytics.fleetUtilization}% utilization`,
+    driver: ctx.activeJobs.length > 0
+      ? `Next focus: ${ctx.activeJobs[0]?.materialType ?? "active"} job #${ctx.activeJobs[0]?.id ?? ""}`
+      : "No active assignments — check Load Board for nearby loads",
+  };
+
   res.json({
     suggestions: SUGGESTIONS[role] ?? SUGGESTIONS.customer,
     summary: {
       openLoads: ctx.openRequests.length,
       activeJobs: ctx.activeJobs.length,
       trucksAvailable: ctx.trucksAvailable,
+      todayRevenue: center.todayRevenue,
+      fleetUtilization: center.analytics.fleetUtilization,
+      morningBrief: center.morningBrief,
+      contextSummary: contextSummaries[role] ?? contextSummaries.customer,
     },
+    insights: center.insights.slice(0, 6) as OperationInsight[],
     recentActivity: ctx.recentActivity,
+    analytics: {
+      revenueForecast7d: center.analytics.revenueForecast7d,
+      fleetUtilization: center.analytics.fleetUtilization,
+      weeklyEvents: center.analytics.weeklyEvents,
+    },
   });
 });
 
@@ -138,10 +166,40 @@ router.post("/copilot/chat", requireProfile, async (req, res): Promise<void> => 
   const ctx = await buildContext(profile);
   const reply = answerQuery(message, profile, ctx);
 
+  let chart: { type: string; data: { label: string; value: number }[] } | null = null;
+  const q = message.toLowerCase();
+  if (q.includes("utilization") || q.includes("fleet")) {
+    const center = await buildOperationsCenter({
+      id: profile.id,
+      role: profile.role,
+      companyName: profile.companyName,
+      state: profile.state ?? null,
+    });
+    chart = {
+      type: "bar",
+      data: center.analytics.weeklyEvents.map((d) => ({ label: d.label, value: d.count })),
+    };
+  } else if (q.includes("revenue") || q.includes("forecast")) {
+    const center = await buildOperationsCenter({
+      id: profile.id,
+      role: profile.role,
+      companyName: profile.companyName,
+      state: profile.state ?? null,
+    });
+    chart = {
+      type: "kpi",
+      data: [
+        { label: "Today", value: center.todayRevenue },
+        { label: "7d Forecast", value: center.analytics.revenueForecast7d },
+      ],
+    };
+  }
+
   res.json({
     role: "assistant",
     content: reply,
     timestamp: new Date().toISOString(),
+    chart,
   });
 });
 
