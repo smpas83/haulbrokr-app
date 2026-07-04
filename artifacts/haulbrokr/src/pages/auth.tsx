@@ -21,9 +21,9 @@ function postSignInTarget(): string {
 }
 
 const TRUST_POINTS = [
-  { icon: Truck, label: "14,000+ trucks on network" },
+  { icon: Truck, label: "Verified carrier network" },
   { icon: MapPin, label: "Live GPS on every active haul" },
-  { icon: ShieldCheck, label: "Verified compliance network" },
+  { icon: ShieldCheck, label: "Compliance document gates" },
   { icon: Zap, label: "AI dispatch copilot included" },
 ];
 

@@ -1,10 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useMemo } from "react";
 import {
   Alert,
-  Animated,
   Linking,
   Platform,
   Pressable,
@@ -12,22 +11,22 @@ import {
   StyleSheet,
   Text,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import MapView, { Marker } from "@/lib/maps";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { ACCENT } from "@/constants/theme";
-import { useLiveJobs, useLiveRequests, useUpdateJob } from "@/hooks/useLiveApi";
+import { useLiveJobs, useLiveRequests, useUpdateJob, useJobTracking } from "@/hooks/useLiveApi";
 import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
-
-const TRUCK_EMOJI = "🚛";
 
 export default function TrackingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { jobs, profile, checkOut, updateJobStatus, userLocation } = useApp();
+  const { jobs, profile, checkOut, updateJobStatus } = useApp();
   const updateJob = useUpdateJob();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
@@ -54,34 +53,17 @@ export default function TrackingScreen() {
     ? liveRequestToViewJob(liveRequest)
     : jobs.find((j) => j.id === id);
   const isProvider = profile.role === "provider";
-  const areaLabel = (() => {
-    const parts = userLocation.split(",");
-    const city = parts[0]?.trim() ?? "Dallas";
-    const state = parts[1]?.trim() ?? "";
-    return state ? `${city.toUpperCase()} – ${state.toUpperCase()} AREA` : `${city.toUpperCase()} AREA`;
-  })();
+  const { data: tracking, isLoading: trackingLoading } = useJobTracking(numericId, isLiveJob);
 
-  // Animated truck progress (0 = pickup, 1 = delivery)
-  const progress = useRef(new Animated.Value(0.28)).current;
-  const [progressPct, setProgressPct] = useState(28);
-  const [eta, setEta] = useState(34); // minutes remaining
-
-  useEffect(() => {
-    // Slowly animate truck toward delivery
-    Animated.timing(progress, {
-      toValue: 0.9,
-      duration: 60000, // 60s to get to 90%
-      useNativeDriver: false,
-    }).start();
-
-    // Update ETA every 10 seconds
-    const timer = setInterval(() => {
-      setEta((prev) => Math.max(1, prev - 1));
-      setProgressPct((prev) => Math.min(90, prev + 1));
-    }, 10000);
-
-    return () => clearInterval(timer);
-  }, []);
+  const latestPosition = tracking?.latest ?? null;
+  const lastUpdatedLabel = useMemo(() => {
+    if (!latestPosition?.at) return null;
+    try {
+      return new Date(latestPosition.at).toLocaleString();
+    } catch {
+      return null;
+    }
+  }, [latestPosition?.at]);
 
   if (!job) {
     return (
@@ -157,11 +139,7 @@ export default function TrackingScreen() {
     );
   };
 
-  // Interpolate truck X position across the route line
-  const truckLeft = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["2%", "88%"],
-  });
+  // Interpolate truck X position across the route line — removed simulated movement
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -178,87 +156,76 @@ export default function TrackingScreen() {
             Live Tracking
           </Text>
           <Text style={[styles.headerSub, { color: ACCENT.green, fontFamily: "Inter_500Medium" }]}>
-            ● In Progress
+            ● {job.status === "in_progress" ? "In Progress" : job.status.replace(/_/g, " ")}
           </Text>
         </View>
-        <View style={[styles.etaBadge, { backgroundColor: colors.primary }]}>
-          <Feather name="clock" size={12} color={colors.primaryForeground} />
-          <Text style={[styles.etaText, { color: colors.primaryForeground, fontFamily: "Inter_700Bold" }]}>
-            {eta} min
-          </Text>
-        </View>
+        {lastUpdatedLabel && (
+          <View style={[styles.etaBadge, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
+            <Feather name="clock" size={12} color={colors.mutedForeground} />
+            <Text style={[styles.etaText, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", fontSize: 11 }]}>
+              {lastUpdatedLabel}
+            </Text>
+          </View>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 120 + insets.bottom }]} showsVerticalScrollIndicator={false}>
 
-        {/* Simulated Map */}
-        <View style={[styles.mapBox, { backgroundColor: "#0a1628" }]}>
-          {/* Road grid */}
-          {[25, 50, 75].map((p) => (
-            <View key={`h${p}`} style={[styles.roadH, { top: `${p}%` as any }]} />
-          ))}
-          {[25, 50, 75].map((p) => (
-            <View key={`v${p}`} style={[styles.roadV, { left: `${p}%` as any }]} />
-          ))}
-
-          {/* Route dashed line */}
-          <View style={styles.routeLine}>
-            <View style={[styles.routeDash, { backgroundColor: colors.primary + "60" }]} />
-          </View>
-
-          {/* Pickup marker */}
-          <View style={[styles.mapMarker, { left: "2%", top: "42%" }]}>
-            <View style={[styles.markerDot, { backgroundColor: colors.primary }]} />
-            <View style={[styles.markerLabel, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Text style={[styles.markerText, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Pickup</Text>
+        {/* Live vehicle map */}
+        <View style={[styles.mapBox, { backgroundColor: "#0a1628", overflow: "hidden" }]}>
+          {isLiveJob && trackingLoading ? (
+            <View style={styles.center}>
+              <ActivityIndicator color={colors.primary} />
+              <Text style={{ color: colors.mutedForeground, marginTop: 12, fontFamily: "Inter_500Medium" }}>
+                Loading live vehicle location…
+              </Text>
             </View>
-          </View>
-
-          {/* Delivery marker */}
-          <View style={[styles.mapMarker, { right: "2%", top: "42%" }]}>
-            <View style={[styles.markerDot, { backgroundColor: ACCENT.green }]} />
-            <View style={[styles.markerLabel, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Text style={[styles.markerText, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>Delivery</Text>
+          ) : isLiveJob && latestPosition ? (
+            <MapView
+              style={StyleSheet.absoluteFill}
+              initialRegion={{
+                latitude: latestPosition.lat,
+                longitude: latestPosition.lng,
+                latitudeDelta: 0.08,
+                longitudeDelta: 0.08,
+              }}
+              showsUserLocation
+            >
+              <Marker
+                coordinate={{ latitude: latestPosition.lat, longitude: latestPosition.lng }}
+                title="Vehicle"
+                description={lastUpdatedLabel ? `Updated ${lastUpdatedLabel}` : "Latest GPS ping"}
+                pinColor={colors.primary}
+              />
+            </MapView>
+          ) : (
+            <View style={[styles.center, { paddingHorizontal: 24 }]}>
+              <Feather name="map-pin" size={36} color={colors.mutedForeground} style={{ marginBottom: 12 }} />
+              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 16, textAlign: "center", marginBottom: 8 }}>
+                Live vehicle location is currently unavailable.
+              </Text>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center" }}>
+                {isLiveJob
+                  ? "The driver has not shared a GPS update for this job yet. Check back when the haul is en route."
+                  : "Tracking is available only for active jobs on the platform."}
+              </Text>
             </View>
-          </View>
-
-          {/* Animated truck */}
-          <Animated.View style={[styles.truck, { left: truckLeft }]}>
-            <Text style={styles.truckEmoji}>{TRUCK_EMOJI}</Text>
-          </Animated.View>
-
-          {/* Area label */}
-          <Text style={styles.areaLabel}>{areaLabel}</Text>
-
-          {/* ETA overlay */}
-          <View style={[styles.etaOverlay, { backgroundColor: "#0a162890" }]}>
-            <Text style={[styles.etaOverlayPct, { color: "#ffffff", fontFamily: "Inter_700Bold" }]}>
-              {progressPct}% Complete
-            </Text>
-            <Text style={[styles.etaOverlayEta, { color: "#ffffff99", fontFamily: "Inter_400Regular" }]}>
-              ~{eta} min to delivery
-            </Text>
-          </View>
+          )}
         </View>
 
-        {/* Progress bar */}
+        {/* Job route summary */}
         <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.progressHeader}>
             <Text style={[styles.progressLabel, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
-              ROUTE PROGRESS
+              ROUTE
             </Text>
-            <Text style={[styles.progressPct, { color: colors.primary, fontFamily: "Inter_700Bold" }]}>
-              {progressPct}%
-            </Text>
-          </View>
-          <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-            <View style={[styles.progressFill, { width: `${progressPct}%` as any, backgroundColor: colors.primary }]} />
           </View>
           <View style={styles.progressAddresses}>
             <Text style={[styles.progressAddr, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]} numberOfLines={1}>
               {job.pickupAddress.split(",")[0]}
             </Text>
-            <Text style={[styles.progressAddr, { color: colors.mutedForeground, fontFamily: "Inter_400Regular", textAlign: "right" }]} numberOfLines={1}>
+            <Feather name="arrow-right" size={14} color={colors.mutedForeground} />
+            <Text style={[styles.progressAddr, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]} numberOfLines={1}>
               {job.deliveryAddress.split(",")[0]}
             </Text>
           </View>

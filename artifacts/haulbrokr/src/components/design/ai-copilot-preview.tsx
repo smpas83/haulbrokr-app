@@ -38,12 +38,12 @@ export function AiCopilotPreview({ className }: { className?: string }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">HaulBrokr AI</p>
-            <p className="text-xs text-muted-foreground">Dispatch Copilot</p>
+            <p className="text-xs text-muted-foreground">Example conversation</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5" />
-          <span className="font-medium">Online</span>
+          <span className="font-medium">Preview</span>
         </div>
       </div>
 

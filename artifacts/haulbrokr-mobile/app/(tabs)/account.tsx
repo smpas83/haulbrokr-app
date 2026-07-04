@@ -220,7 +220,7 @@ export default function AccountScreen() {
     try {
       await verifyCompliance.mutateAsync();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Verified ✅", "Authority & insurance checks passed (demo).");
+      Alert.alert("Verified ✅", "Authority and insurance checks passed.");
     } catch (err: any) {
       Alert.alert("Verification failed", err?.message ?? "Could not run verification.");
     } finally {

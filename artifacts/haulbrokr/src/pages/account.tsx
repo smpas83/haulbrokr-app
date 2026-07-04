@@ -1362,7 +1362,7 @@ function DotCdlTab() {
 
   const verify = useVerifyCompliance({
     mutation: {
-      onSuccess: () => { qc.invalidateQueries({ queryKey: getGetComplianceQueryKey() }); toast({ title: "Credentials verified (demo)" }); },
+      onSuccess: () => { qc.invalidateQueries({ queryKey: getGetComplianceQueryKey() }); toast({ title: "Credentials verified" }); },
       onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
     },
   });

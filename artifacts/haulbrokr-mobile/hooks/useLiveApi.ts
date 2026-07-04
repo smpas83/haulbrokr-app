@@ -389,7 +389,7 @@ export type MarketplaceMapData = {
   };
 };
 
-/** Nationwide map payload — auto demo mode when production has no live data. */
+/** Nationwide map payload from the production database. */
 export function useMarketplaceMap(opts?: { lat?: number; lng?: number; radiusMiles?: number }) {
   const { getToken, isSignedIn } = useAuth();
   const qs = new URLSearchParams();
@@ -403,6 +403,24 @@ export function useMarketplaceMap(opts?: { lat?: number; lng?: number; radiusMil
     enabled: !!isSignedIn,
     refetchInterval: 30_000,
     staleTime: 15_000,
+  });
+}
+
+export type JobTrackingData = {
+  jobId: number;
+  status: string;
+  latest: { lat: number; lng: number; at: string; source?: string; status?: string } | null;
+  trail: Array<{ lat: number; lng: number; at?: string; createdAt?: string; source?: string; status?: string }>;
+};
+
+/** Live vehicle GPS trail for an active job. */
+export function useJobTracking(jobId: number | null, enabled = true) {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery<JobTrackingData>({
+    queryKey: ["jobs", jobId, "tracking"],
+    queryFn: () => apiFetch(getToken, "GET", `/jobs/${jobId}/tracking`),
+    enabled: !!isSignedIn && jobId != null && enabled,
+    refetchInterval: 15_000,
   });
 }
 

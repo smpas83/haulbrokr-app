@@ -9,48 +9,45 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@workspace/db", () => {
-  const makeTable = (name: string) =>
-    new Proxy({}, { get: (_t, p) => `${name}.${String(p)}` });
-  const countFor = (table: unknown) => {
-    const token = String(table);
-    if (token.includes("requests")) return [{ count: h.openCount }];
-    if (token.includes("jobs")) return [{ count: h.activeJobCount }];
-    if (token.includes("trucks")) return [{ count: h.truckCount }];
-    if (token.includes("profiles")) return [{ count: 0 }];
+  const requestsTable = { __table: "requests" as const };
+  const jobsTable = { __table: "jobs" as const };
+  const trucksTable = { __table: "trucks" as const };
+  const profilesTable = { __table: "profiles" as const };
+  const bidsTable = { __table: "bids" as const };
+
+  const countFor = (table: { __table?: string }) => {
+    if (table.__table === "requests") return [{ count: h.openCount }];
+    if (table.__table === "jobs") return [{ count: h.activeJobCount }];
+    if (table.__table === "trucks") return [{ count: h.truckCount }];
+    if (table.__table === "profiles") return [{ count: 0 }];
     return [{ count: 0 }];
   };
+
   const db = {
     select: () => ({
-      from: (table: unknown) => ({
-        where: () => ({
-          orderBy: () => ({
-            limit: () => Promise.resolve([]),
-          }),
+      from: (table: { __table?: string }) => {
+        const countPromise = Promise.resolve(countFor(table));
+        return {
+          then: (
+            onFulfilled?: (value: { count: number }[]) => unknown,
+            onRejected?: (reason: unknown) => unknown,
+          ) => countPromise.then(onFulfilled, onRejected),
+          where: () => countPromise,
+          leftJoin: () => ({ limit: () => Promise.resolve([]) }),
           limit: () => Promise.resolve([]),
-        }),
-        leftJoin: () => ({
-          limit: () => Promise.resolve([]),
-        }),
-        limit: () => Promise.resolve([]),
-      }),
+          orderBy: () => ({ limit: () => Promise.resolve([]) }),
+        };
+      },
     }),
   };
-  // Patch count queries used by countLiveMarketplaceRows
-  (db as { select: () => unknown }).select = () => ({
-    from: (table: unknown) => ({
-      where: () => Promise.resolve(countFor(table)),
-      leftJoin: () => ({ limit: () => Promise.resolve([]) }),
-      limit: () => Promise.resolve([]),
-      orderBy: () => ({ limit: () => Promise.resolve([]) }),
-    }),
-  });
+
   return {
     db,
-    requestsTable: makeTable("requests"),
-    jobsTable: makeTable("jobs"),
-    trucksTable: makeTable("trucks"),
-    profilesTable: makeTable("profiles"),
-    bidsTable: makeTable("bids"),
+    requestsTable,
+    jobsTable,
+    trucksTable,
+    profilesTable,
+    bidsTable,
   };
 });
 
@@ -86,20 +83,21 @@ describe("GET /api/map/marketplace", () => {
     h.truckCount = 0;
   });
 
-  it("returns demo marketplace when DB is empty", async () => {
+  it("returns empty marketplace when DB is empty", async () => {
     const res = await request(app()).get("/api/map/marketplace");
     expect(res.status).toBe(200);
-    expect(res.body.demoMode).toBe(true);
-    expect(res.body.loads.length).toBe(250);
-    expect(res.body.trucks.length).toBe(150);
-    expect(res.body.heatZones.length).toBeGreaterThan(0);
+    expect(res.body.demoMode).toBe(false);
+    expect(res.body.loads).toEqual([]);
+    expect(res.body.trucks).toEqual([]);
+    expect(res.body.heatZones).toEqual([]);
+    expect(res.body.stats.openLoads).toBe(0);
   });
 
   it("aliases /api/maps to the same payload", async () => {
     const res = await request(app()).get("/api/maps");
     expect(res.status).toBe(200);
-    expect(res.body.demoMode).toBe(true);
-    expect(res.body.loads.length).toBe(250);
+    expect(res.body.demoMode).toBe(false);
+    expect(res.body.loads).toEqual([]);
   });
 });
 

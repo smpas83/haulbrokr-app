@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "haulbrokr",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "usesAppleSignIn": true,
       "icon": "./assets/images/app-icon-ios.png",
       "infoPlist": {
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.haulbrokr.mobile",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/app-icon-v2.png",
         "backgroundColor": "#0f172a"
