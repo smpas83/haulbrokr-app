@@ -80,7 +80,9 @@ router.post("/admin/login", async (req, res): Promise<void> => {
   const username = parsed.data.username.toLowerCase();
   const attemptKey = loginAttemptKey(req.ip, username);
   if (isLoginRateLimited(attemptKey)) {
-    res.status(429).json({ error: "Too many failed login attempts. Try again later." });
+    res
+      .status(429)
+      .json({ error: "Too many failed login attempts. Try again later." });
     return;
   }
   const [user] = await db

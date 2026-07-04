@@ -4,18 +4,18 @@ Generated: June 2026. See also `MIGRATION_TO_CURSOR.md` and `DEVELOPER_HANDOFF.m
 
 ## Production Readiness Score: **58 / 100** (after Phase 1 fixes)
 
-| Category | Score | Notes |
-|----------|-------|-------|
-| Core marketplace | 75 | Web + mobile bidding/completion flows improved |
-| Auth | 85 | Clerk integrated; set `ADMIN_USER_IDS` in prod |
-| Payments | 60 | Stripe env vars supported off Replit |
-| Mobile | 55 | Fleet registration, open loads, dump sites API |
-| API docs | 50 | ~35 routes still missing from OpenAPI |
-| Database | 60 | Push-only schema — add migrations before scale |
-| Security | 65 | Factoring auth fixed |
-| Testing | 45 | CRUD routes need tests |
-| Deployment | 40 | Verify healthchecks on target host |
-| Store readiness | 60 | EAS + ASC configured |
+| Category         | Score | Notes                                          |
+| ---------------- | ----- | ---------------------------------------------- |
+| Core marketplace | 75    | Web + mobile bidding/completion flows improved |
+| Auth             | 85    | Clerk integrated; set `ADMIN_USER_IDS` in prod |
+| Payments         | 60    | Stripe env vars supported off Replit           |
+| Mobile           | 55    | Fleet registration, open loads, dump sites API |
+| API docs         | 50    | ~35 routes still missing from OpenAPI          |
+| Database         | 60    | Push-only schema — add migrations before scale |
+| Security         | 65    | Factoring auth fixed                           |
+| Testing          | 45    | CRUD routes need tests                         |
+| Deployment       | 40    | Verify healthchecks on target host             |
+| Store readiness  | 60    | EAS + ASC configured                           |
 
 ---
 
@@ -142,16 +142,16 @@ Enable live Stripe webhooks, monitoring, App Store + Play release.
 
 ## Environment Variables (quick reference)
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `DATABASE_URL` | yes | PostgreSQL |
-| `CLERK_SECRET_KEY` | yes | API auth |
-| `CLERK_PUBLISHABLE_KEY` | yes | Clerk proxy |
-| `STRIPE_SECRET_KEY` | prod | Payments off Replit |
-| `STRIPE_PUBLISHABLE_KEY` | prod | Client Stripe.js |
-| `RESEND_API_KEY` | optional | Review emails |
-| `RESEND_FROM_EMAIL` | optional | Email from address |
-| `UPLOAD_TOKEN_SECRET` | yes | Upload tokens |
-| `TICKET_QR_SECRET` | yes | QR tickets |
-| `ADMIN_USER_IDS` | prod | Admin bootstrap |
-| `EXPO_PUBLIC_DOMAIN` | mobile | API host |
+| Variable                 | Required | Purpose             |
+| ------------------------ | -------- | ------------------- |
+| `DATABASE_URL`           | yes      | PostgreSQL          |
+| `CLERK_SECRET_KEY`       | yes      | API auth            |
+| `CLERK_PUBLISHABLE_KEY`  | yes      | Clerk proxy         |
+| `STRIPE_SECRET_KEY`      | prod     | Payments off Replit |
+| `STRIPE_PUBLISHABLE_KEY` | prod     | Client Stripe.js    |
+| `RESEND_API_KEY`         | optional | Review emails       |
+| `RESEND_FROM_EMAIL`      | optional | Email from address  |
+| `UPLOAD_TOKEN_SECRET`    | yes      | Upload tokens       |
+| `TICKET_QR_SECRET`       | yes      | QR tickets          |
+| `ADMIN_USER_IDS`         | prod     | Admin bootstrap     |
+| `EXPO_PUBLIC_DOMAIN`     | mobile   | API host            |

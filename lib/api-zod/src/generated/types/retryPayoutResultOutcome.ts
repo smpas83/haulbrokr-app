@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type RetryPayoutResultOutcome = typeof RetryPayoutResultOutcome[keyof typeof RetryPayoutResultOutcome];
-
+export type RetryPayoutResultOutcome =
+  (typeof RetryPayoutResultOutcome)[keyof typeof RetryPayoutResultOutcome];
 
 export const RetryPayoutResultOutcome = {
-  released: 'released',
-  skipped: 'skipped',
-  failed: 'failed',
+  released: "released",
+  skipped: "skipped",
+  failed: "failed",
 } as const;

@@ -84,10 +84,14 @@ export default function Slide08Market2() {
               margin: 0,
             }}
           >
-            The U.S. has over 500,000 licensed commercial dump truck operators across all 50 states — none connected by a single digital dispatch platform. Texas is the beachhead; national coverage is the mission.
+            The U.S. has over 500,000 licensed commercial dump truck operators
+            across all 50 states — none connected by a single digital dispatch
+            platform. Texas is the beachhead; national coverage is the mission.
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "2.5vh" }}>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "2.5vh" }}
+          >
             <div
               style={{
                 display: "flex",
@@ -97,11 +101,23 @@ export default function Slide08Market2() {
                 paddingBottom: "1.5vh",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "1.5vw" }}>
-                <div style={{ width: "0.8vw", height: "0.8vw", backgroundColor: "#A0785A" }} />
-                <span style={{ fontSize: "1.2vw", color: "#FFFFFF" }}>Texas (Houston, DFW, SA/Austin)</span>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "1.5vw" }}
+              >
+                <div
+                  style={{
+                    width: "0.8vw",
+                    height: "0.8vw",
+                    backgroundColor: "#A0785A",
+                  }}
+                />
+                <span style={{ fontSize: "1.2vw", color: "#FFFFFF" }}>
+                  Texas (Houston, DFW, SA/Austin)
+                </span>
               </div>
-              <span style={{ fontSize: "1.1vw", color: "#A0785A" }}>Phase 1 — 2025–2026</span>
+              <span style={{ fontSize: "1.1vw", color: "#A0785A" }}>
+                Phase 1 — 2025–2026
+              </span>
             </div>
 
             <div
@@ -113,11 +129,23 @@ export default function Slide08Market2() {
                 paddingBottom: "1.5vh",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "1.5vw" }}>
-                <div style={{ width: "0.8vw", height: "0.8vw", backgroundColor: "#888888" }} />
-                <span style={{ fontSize: "1.2vw", color: "#888888" }}>Sun Belt + Northeast + Midwest</span>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "1.5vw" }}
+              >
+                <div
+                  style={{
+                    width: "0.8vw",
+                    height: "0.8vw",
+                    backgroundColor: "#888888",
+                  }}
+                />
+                <span style={{ fontSize: "1.2vw", color: "#888888" }}>
+                  Sun Belt + Northeast + Midwest
+                </span>
               </div>
-              <span style={{ fontSize: "1.1vw", color: "#666666" }}>Phase 2 — 2027 (Series A)</span>
+              <span style={{ fontSize: "1.1vw", color: "#666666" }}>
+                Phase 2 — 2027 (Series A)
+              </span>
             </div>
 
             <div
@@ -129,11 +157,23 @@ export default function Slide08Market2() {
                 paddingBottom: "1.5vh",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "1.5vw" }}>
-                <div style={{ width: "0.8vw", height: "0.8vw", backgroundColor: "#555555" }} />
-                <span style={{ fontSize: "1.2vw", color: "#666666" }}>All 50 U.S. States</span>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "1.5vw" }}
+              >
+                <div
+                  style={{
+                    width: "0.8vw",
+                    height: "0.8vw",
+                    backgroundColor: "#555555",
+                  }}
+                />
+                <span style={{ fontSize: "1.2vw", color: "#666666" }}>
+                  All 50 U.S. States
+                </span>
               </div>
-              <span style={{ fontSize: "1.1vw", color: "#555555" }}>Phase 3 — 2028</span>
+              <span style={{ fontSize: "1.1vw", color: "#555555" }}>
+                Phase 3 — 2028
+              </span>
             </div>
 
             <div
@@ -145,11 +185,23 @@ export default function Slide08Market2() {
                 paddingBottom: "1.5vh",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "1.5vw" }}>
-                <div style={{ width: "0.8vw", height: "0.8vw", backgroundColor: "#333333" }} />
-                <span style={{ fontSize: "1.2vw", color: "#555555" }}>Canada &amp; Mexico</span>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "1.5vw" }}
+              >
+                <div
+                  style={{
+                    width: "0.8vw",
+                    height: "0.8vw",
+                    backgroundColor: "#333333",
+                  }}
+                />
+                <span style={{ fontSize: "1.2vw", color: "#555555" }}>
+                  Canada &amp; Mexico
+                </span>
               </div>
-              <span style={{ fontSize: "1.1vw", color: "#444444" }}>Phase 4 — 2029</span>
+              <span style={{ fontSize: "1.1vw", color: "#444444" }}>
+                Phase 4 — 2029
+              </span>
             </div>
           </div>
         </div>
@@ -165,35 +217,98 @@ export default function Slide08Market2() {
             gap: "4vh",
           }}
         >
-          <div style={{ fontSize: "1.1vw", fontWeight: 500, color: "#A0785A", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          <div
+            style={{
+              fontSize: "1.1vw",
+              fontWeight: 500,
+              color: "#A0785A",
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+            }}
+          >
             International Vision
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "1.5vw" }}>
-            <div style={{ width: "0.5vw", height: "0.5vw", backgroundColor: "#A0785A", marginTop: "0.8vh", flexShrink: 0 }} />
-            <span style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}>
-              <strong style={{ color: "#FFFFFF" }}>Canada:</strong> Cross-border construction boom; regulatory alignment with U.S. standards makes entry low-friction.
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "1.5vw" }}
+          >
+            <div
+              style={{
+                width: "0.5vw",
+                height: "0.5vw",
+                backgroundColor: "#A0785A",
+                marginTop: "0.8vh",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}
+            >
+              <strong style={{ color: "#FFFFFF" }}>Canada:</strong> Cross-border
+              construction boom; regulatory alignment with U.S. standards makes
+              entry low-friction.
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "1.5vw" }}>
-            <div style={{ width: "0.5vw", height: "0.5vw", backgroundColor: "#A0785A", marginTop: "0.8vh", flexShrink: 0 }} />
-            <span style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}>
-              <strong style={{ color: "#FFFFFF" }}>Mexico:</strong> $45B infrastructure investment pipeline; massive unserved dump truck market with no digital dispatch layer.
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "1.5vw" }}
+          >
+            <div
+              style={{
+                width: "0.5vw",
+                height: "0.5vw",
+                backgroundColor: "#A0785A",
+                marginTop: "0.8vh",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}
+            >
+              <strong style={{ color: "#FFFFFF" }}>Mexico:</strong> $45B
+              infrastructure investment pipeline; massive unserved dump truck
+              market with no digital dispatch layer.
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "1.5vw" }}>
-            <div style={{ width: "0.5vw", height: "0.5vw", backgroundColor: "#A0785A", marginTop: "0.8vh", flexShrink: 0 }} />
-            <span style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}>
-              <strong style={{ color: "#FFFFFF" }}>Worldwide:</strong> The dispatch problem is global — Europe, LatAm, and Southeast Asia represent long-term expansion runways.
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "1.5vw" }}
+          >
+            <div
+              style={{
+                width: "0.5vw",
+                height: "0.5vw",
+                backgroundColor: "#A0785A",
+                marginTop: "0.8vh",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}
+            >
+              <strong style={{ color: "#FFFFFF" }}>Worldwide:</strong> The
+              dispatch problem is global — Europe, LatAm, and Southeast Asia
+              represent long-term expansion runways.
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "1.5vw" }}>
-            <div style={{ width: "0.5vw", height: "0.5vw", backgroundColor: "#A0785A", marginTop: "0.8vh", flexShrink: 0 }} />
-            <span style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}>
-              Platform architecture is internationalization-ready — multi-currency, multi-language from day one.
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "1.5vw" }}
+          >
+            <div
+              style={{
+                width: "0.5vw",
+                height: "0.5vw",
+                backgroundColor: "#A0785A",
+                marginTop: "0.8vh",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}
+            >
+              Platform architecture is internationalization-ready —
+              multi-currency, multi-language from day one.
             </span>
           </div>
         </div>
@@ -215,7 +330,9 @@ export default function Slide08Market2() {
           letterSpacing: "0.2em",
         }}
       >
-        <span>HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026</span>
+        <span>
+          HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026
+        </span>
         <span style={{ color: "#A0785A" }}>08</span>
       </div>
     </div>

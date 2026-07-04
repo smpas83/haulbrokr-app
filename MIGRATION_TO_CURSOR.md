@@ -15,23 +15,23 @@ code actually reads, and the known caveats.
 customers who need material hauled with truck providers. It is a **pnpm monorepo**
 containing several independently runnable apps ("artifacts") plus shared libraries.
 
-| Path | Name | Kind | Stack |
-|---|---|---|---|
-| `artifacts/api-server` | `@workspace/api-server` | Backend API | Node + Express 5 + Drizzle ORM (TypeScript), bundled with esbuild |
-| `artifacts/haulbrokr` | `@workspace/haulbrokr` | Marketing/web app | React 19 + Vite 7 + Tailwind CSS 4 |
-| `artifacts/haulbrokr-mobile` | `@workspace/haulbrokr-mobile` | Mobile app (iOS + Android) | React Native + Expo (Expo Router) |
-| `artifacts/haulbrokr-deck` | `@workspace/haulbrokr-deck` | Pitch deck (slides) | React + Vite |
-| `artifacts/haulbrokr-promo` | `@workspace/haulbrokr-promo` | Promo video | React + Vite |
-| `artifacts/mockup-sandbox` | `@workspace/mockup-sandbox` | Component preview (dev tooling) | React + Vite |
+| Path                         | Name                          | Kind                            | Stack                                                             |
+| ---------------------------- | ----------------------------- | ------------------------------- | ----------------------------------------------------------------- |
+| `artifacts/api-server`       | `@workspace/api-server`       | Backend API                     | Node + Express 5 + Drizzle ORM (TypeScript), bundled with esbuild |
+| `artifacts/haulbrokr`        | `@workspace/haulbrokr`        | Marketing/web app               | React 19 + Vite 7 + Tailwind CSS 4                                |
+| `artifacts/haulbrokr-mobile` | `@workspace/haulbrokr-mobile` | Mobile app (iOS + Android)      | React Native + Expo (Expo Router)                                 |
+| `artifacts/haulbrokr-deck`   | `@workspace/haulbrokr-deck`   | Pitch deck (slides)             | React + Vite                                                      |
+| `artifacts/haulbrokr-promo`  | `@workspace/haulbrokr-promo`  | Promo video                     | React + Vite                                                      |
+| `artifacts/mockup-sandbox`   | `@workspace/mockup-sandbox`   | Component preview (dev tooling) | React + Vite                                                      |
 
 Shared libraries (`lib/*`):
 
-| Path | Name | Purpose |
-|---|---|---|
-| `lib/db` | `@workspace/db` | PostgreSQL schema + Drizzle client |
-| `lib/api-spec` | `@workspace/api-spec` | OpenAPI spec + Orval codegen config |
-| `lib/api-zod` | `@workspace/api-zod` | Generated Zod schemas from the OpenAPI spec |
-| `lib/api-client-react` | `@workspace/api-client-react` | Generated React Query hooks for the API |
+| Path                   | Name                          | Purpose                                     |
+| ---------------------- | ----------------------------- | ------------------------------------------- |
+| `lib/db`               | `@workspace/db`               | PostgreSQL schema + Drizzle client          |
+| `lib/api-spec`         | `@workspace/api-spec`         | OpenAPI spec + Orval codegen config         |
+| `lib/api-zod`          | `@workspace/api-zod`          | Generated Zod schemas from the OpenAPI spec |
+| `lib/api-client-react` | `@workspace/api-client-react` | Generated React Query hooks for the API     |
 
 ---
 
@@ -85,21 +85,22 @@ Set these in your shell, your hosting provider's secret manager, or a local `.en
 (which is git-ignored). **No `.env` file or secret values are included in this repo.**
 
 ### Backend — `artifacts/api-server`
-| Variable | Required | Purpose |
-|---|---|---|
-| `DATABASE_URL` | yes | PostgreSQL connection string |
-| `CLERK_SECRET_KEY` | yes (auth) | Clerk backend secret key |
-| `CLERK_PUBLISHABLE_KEY` | yes (auth) | Clerk publishable key (used for proxy host key derivation) |
-| `ADMIN_USER_IDS` | optional | Comma-separated Clerk user IDs granted admin access |
-| `PAYMENTS_MOCK_MODE` | optional | `"true"` uses a mock Stripe client instead of the real one |
-| `UPLOAD_TOKEN_SECRET` | yes (uploads) | Secret used to sign/verify temporary upload tokens |
-| `TICKET_QR_SECRET` | yes (tickets) | Secret used to sign/verify ticket QR codes |
-| `PRIVATE_OBJECT_DIR` | object storage | Path/prefix for private object storage |
-| `PUBLIC_OBJECT_SEARCH_PATHS` | object storage | Comma-separated public object search paths |
-| `LOG_LEVEL` | optional | Pino log level (`info`, `debug`, …) |
-| `PORT` | yes | Port the API server listens on |
-| `NODE_ENV` | optional | `development` / `production` / `test` |
-| `REPLIT_DEPLOYMENT` | Replit-only | Set to `"1"` in a Replit deployment; used to detect production |
+
+| Variable                     | Required       | Purpose                                                        |
+| ---------------------------- | -------------- | -------------------------------------------------------------- |
+| `DATABASE_URL`               | yes            | PostgreSQL connection string                                   |
+| `CLERK_SECRET_KEY`           | yes (auth)     | Clerk backend secret key                                       |
+| `CLERK_PUBLISHABLE_KEY`      | yes (auth)     | Clerk publishable key (used for proxy host key derivation)     |
+| `ADMIN_USER_IDS`             | optional       | Comma-separated Clerk user IDs granted admin access            |
+| `PAYMENTS_MOCK_MODE`         | optional       | `"true"` uses a mock Stripe client instead of the real one     |
+| `UPLOAD_TOKEN_SECRET`        | yes (uploads)  | Secret used to sign/verify temporary upload tokens             |
+| `TICKET_QR_SECRET`           | yes (tickets)  | Secret used to sign/verify ticket QR codes                     |
+| `PRIVATE_OBJECT_DIR`         | object storage | Path/prefix for private object storage                         |
+| `PUBLIC_OBJECT_SEARCH_PATHS` | object storage | Comma-separated public object search paths                     |
+| `LOG_LEVEL`                  | optional       | Pino log level (`info`, `debug`, …)                            |
+| `PORT`                       | yes            | Port the API server listens on                                 |
+| `NODE_ENV`                   | optional       | `development` / `production` / `test`                          |
+| `REPLIT_DEPLOYMENT`          | Replit-only    | Set to `"1"` in a Replit deployment; used to detect production |
 
 > **Stripe:** real Stripe keys are not read directly from the environment in code —
 > on Replit they are provided through the Stripe integration / `stripe-replit-sync`.
@@ -110,26 +111,29 @@ Set these in your shell, your hosting provider's secret manager, or a local `.en
 > Replit, supply a Resend API key in `src/.../resendClient.ts`.
 
 ### Web app — `artifacts/haulbrokr`
-| Variable | Purpose |
-|---|---|
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for the browser |
-| `VITE_CLERK_PROXY_URL` | Clerk proxy URL (used to route Clerk via the API) |
-| `BASE_PATH` | Base path prefix (defaults to `/`; injected at serve time on Replit) |
-| `PORT` | Vite dev/preview server port |
+
+| Variable                     | Purpose                                                              |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for the browser                                |
+| `VITE_CLERK_PROXY_URL`       | Clerk proxy URL (used to route Clerk via the API)                    |
+| `BASE_PATH`                  | Base path prefix (defaults to `/`; injected at serve time on Replit) |
+| `PORT`                       | Vite dev/preview server port                                         |
 
 ### Mobile app — `artifacts/haulbrokr-mobile`
-| Variable | Purpose |
-|---|---|
-| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for the app |
-| `EXPO_PUBLIC_DOMAIN` | Domain used to build the API base URL (`https://<domain>/api`) |
-| `EXPO_PUBLIC_REPL_ID` | Environment identifier (Replit-specific; safe to omit off Replit) |
-| `METRO_PORT` / `RCT_METRO_PORT` | Metro bundler port |
-| `PORT` | Expo dev server port |
+
+| Variable                            | Purpose                                                           |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for the app                                 |
+| `EXPO_PUBLIC_DOMAIN`                | Domain used to build the API base URL (`https://<domain>/api`)    |
+| `EXPO_PUBLIC_REPL_ID`               | Environment identifier (Replit-specific; safe to omit off Replit) |
+| `METRO_PORT` / `RCT_METRO_PORT`     | Metro bundler port                                                |
+| `PORT`                              | Expo dev server port                                              |
 
 ### Slides / promo / sandbox (`haulbrokr-deck`, `haulbrokr-promo`, `mockup-sandbox`)
-| Variable | Purpose |
-|---|---|
-| `PORT` | Vite dev/preview server port |
+
+| Variable    | Purpose                                   |
+| ----------- | ----------------------------------------- |
+| `PORT`      | Vite dev/preview server port              |
 | `BASE_PATH` | Base path prefix for static asset routing |
 
 > Replit-only variables (`REPLIT_DEPLOYMENT`, `REPLIT_DEV_DOMAIN`,
@@ -148,7 +152,7 @@ Auth is handled by **Clerk** across all three runtimes (backend, web, mobile).
   authenticated from the Clerk session token. A custom **Clerk proxy** middleware
   (`src/middlewares/clerkProxyMiddleware.ts`, mounted at `CLERK_PROXY_PATH`) lets the
   browser reach Clerk through the API origin. The health check (`/api/healthz`) is mounted
-  *before* the Clerk middleware so deploy probes succeed even when Clerk keys are absent.
+  _before_ the Clerk middleware so deploy probes succeed even when Clerk keys are absent.
   Requires `CLERK_SECRET_KEY` and `CLERK_PUBLISHABLE_KEY`.
 - **Admin authorization:** there is no separate admin provider — admin access is granted by
   listing Clerk user IDs in `ADMIN_USER_IDS` (comma-separated). It is secure-by-default in
@@ -169,17 +173,17 @@ Auth is handled by **Clerk** across all three runtimes (backend, web, mobile).
 
 ## 6. Third-party integrations
 
-| Service | Used for | Wired in |
-|---|---|---|
-| **Clerk** | Authentication (see §5) | `@clerk/express`, `@clerk/clerk-react`, `@clerk/expo` |
-| **Stripe** | Payments + Connect payouts (has a mock mode) | `artifacts/api-server/src/lib/stripeClient.ts` |
-| **Resend** | Transactional email (e.g. payout alerts) | `artifacts/api-server/src/lib/resendClient.ts` |
-| **Object storage** | Document/file uploads (W-9, insurance, delivery evidence, driver docs) | `artifacts/api-server/src/lib/objectStorage.ts` |
-| **Google Maps** | Mobile map UI | `react-native-maps` via `artifacts/haulbrokr-mobile/lib/maps.ts` |
+| Service            | Used for                                                               | Wired in                                                         |
+| ------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Clerk**          | Authentication (see §5)                                                | `@clerk/express`, `@clerk/clerk-react`, `@clerk/expo`            |
+| **Stripe**         | Payments + Connect payouts (has a mock mode)                           | `artifacts/api-server/src/lib/stripeClient.ts`                   |
+| **Resend**         | Transactional email (e.g. payout alerts)                               | `artifacts/api-server/src/lib/resendClient.ts`                   |
+| **Object storage** | Document/file uploads (W-9, insurance, delivery evidence, driver docs) | `artifacts/api-server/src/lib/objectStorage.ts`                  |
+| **Google Maps**    | Mobile map UI                                                          | `react-native-maps` via `artifacts/haulbrokr-mobile/lib/maps.ts` |
 
 **Important — Replit Connectors:** on Replit, **Stripe** and **Resend** credentials are
 fetched at runtime from the Replit Connectors proxy (`REPLIT_CONNECTORS_HOSTNAME` plus a
-repl/deploy identity token), *not* from plain env vars. Those client modules request fresh
+repl/deploy identity token), _not_ from plain env vars. Those client modules request fresh
 keys on every call (tokens expire — the clients are intentionally never cached).
 
 Off Replit you must replace that lookup:
@@ -187,7 +191,7 @@ Off Replit you must replace that lookup:
 - **Stripe** (`stripeClient.ts`): provide a real secret key (e.g. from a `STRIPE_SECRET_KEY`
   env var) where `getCredentials()` calls the connector, **or** set `PAYMENTS_MOCK_MODE=true`
   to run on the built-in mock client (simulated, always-successful payments — no real money
-  moves). Note: in a production deployment a connector *lookup error* fails closed (it
+  moves). Note: in a production deployment a connector _lookup error_ fails closed (it
   refuses to silently fall back to mock), so wire real keys before going live.
 - **Resend** (`resendClient.ts`): provide `api_key` + `from_email` (e.g. `RESEND_API_KEY` /
   `RESEND_FROM_EMAIL`) in place of the connector lookup. Email is best-effort; the app runs
@@ -202,6 +206,7 @@ Off Replit you must replace that lookup:
 ## 7. Running locally
 
 ### Prerequisites
+
 - **Node.js 24** (or 20+)
 - **pnpm** — `npm install -g pnpm`
 - **PostgreSQL 14+** (local or hosted), reachable via `DATABASE_URL`
@@ -209,17 +214,20 @@ Off Replit you must replace that lookup:
   real device builds.
 
 ### Install
+
 ```bash
 pnpm install
 ```
 
 ### Push the DB schema
+
 ```bash
 export DATABASE_URL=postgres://user:pass@localhost:5432/haulbrokr
 pnpm --filter @workspace/db run push
 ```
 
 ### Start each app (dev)
+
 Each command runs one artifact. Set `PORT` to any free port you like.
 
 ```bash
@@ -247,6 +255,7 @@ PORT=8082 pnpm --filter @workspace/haulbrokr-mobile run dev
 > same command works off Replit. Locally, copy the example env file and fill it in
 > — Expo loads `.env` automatically and the `dev` command falls back to those
 > values:
+>
 > ```bash
 > cd artifacts/haulbrokr-mobile
 > cp .env.example .env          # set EXPO_PUBLIC_DOMAIN + EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
@@ -263,6 +272,7 @@ pnpm run build       # typecheck, then build every package that has a build scri
 ```
 
 Per-artifact builds (run from the repo root):
+
 ```bash
 pnpm --filter @workspace/api-server run build      # esbuild bundle → dist/
 pnpm --filter @workspace/haulbrokr run build      # Vite build + prerender
@@ -270,6 +280,7 @@ pnpm --filter @workspace/haulbrokr-mobile run build
 ```
 
 Regenerate API hooks / Zod schemas after editing the OpenAPI spec:
+
 ```bash
 pnpm --filter @workspace/api-spec run codegen
 ```
@@ -296,6 +307,7 @@ target that suits it:
   Config lives in `app.json` (icon, splash, bundle id, permissions) and `eas.json`.
 
 ### Mapping Replit-specific config to a non-Replit environment
+
 - **Workflows** (`.replit` `[workflows]`): these are just named shell commands Replit
   runs. The equivalents are the `pnpm --filter ... run dev` commands above (and the
   `test` / `webbuild` validation commands). There is nothing to migrate beyond running

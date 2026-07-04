@@ -9,7 +9,8 @@ const h = vi.hoisted(() => ({
     Metadata: {},
   },
   listedObjects: [] as Array<{ Key?: string; LastModified?: Date }>,
-  signedUrl: "https://account.r2.cloudflarestorage.com/haulbrokr-uploads/haulbrokr/private/uploads/test-uuid?X-Amz-Signature=abc",
+  signedUrl:
+    "https://account.r2.cloudflarestorage.com/haulbrokr-uploads/haulbrokr/private/uploads/test-uuid?X-Amz-Signature=abc",
 }));
 
 vi.mock("@aws-sdk/client-s3", () => {
@@ -33,33 +34,38 @@ vi.mock("@aws-sdk/client-s3", () => {
   }
 
   const client = {
-    send: vi.fn(async (command: { constructor: { name: string }; input?: { Prefix?: string } }) => {
-      if (command.constructor.name === "HeadObjectCommand") {
-        if (!h.headExists) {
-          const err = new Error("NotFound");
-          (err as { name: string }).name = "NotFound";
-          throw err;
+    send: vi.fn(
+      async (command: {
+        constructor: { name: string };
+        input?: { Prefix?: string };
+      }) => {
+        if (command.constructor.name === "HeadObjectCommand") {
+          if (!h.headExists) {
+            const err = new Error("NotFound");
+            (err as { name: string }).name = "NotFound";
+            throw err;
+          }
+          return h.headMetadata;
         }
-        return h.headMetadata;
-      }
-      if (command.constructor.name === "PutObjectCommand") {
-        return {};
-      }
-      if (command.constructor.name === "ListObjectsV2Command") {
-        return { Contents: h.listedObjects, IsTruncated: false };
-      }
-      if (command.constructor.name === "GetObjectCommand") {
-        const { Readable } = await import("stream");
-        return { Body: Readable.from([Buffer.from("test")]) };
-      }
-      if (command.constructor.name === "DeleteObjectCommand") {
-        return {};
-      }
-      if (command.constructor.name === "CopyObjectCommand") {
-        return {};
-      }
-      throw new Error(`Unexpected command: ${command.constructor.name}`);
-    }),
+        if (command.constructor.name === "PutObjectCommand") {
+          return {};
+        }
+        if (command.constructor.name === "ListObjectsV2Command") {
+          return { Contents: h.listedObjects, IsTruncated: false };
+        }
+        if (command.constructor.name === "GetObjectCommand") {
+          const { Readable } = await import("stream");
+          return { Body: Readable.from([Buffer.from("test")]) };
+        }
+        if (command.constructor.name === "DeleteObjectCommand") {
+          return {};
+        }
+        if (command.constructor.name === "CopyObjectCommand") {
+          return {};
+        }
+        throw new Error(`Unexpected command: ${command.constructor.name}`);
+      },
+    ),
   };
 
   class S3Client {
@@ -119,13 +125,15 @@ describe("ObjectStorageService (R2)", () => {
     const service = await loadService();
     const uploadURL = await service.getObjectEntityUploadURL();
     expect(uploadURL).toBe(h.signedUrl);
-    expect(service.normalizeObjectEntityPath(uploadURL)).toBe("/objects/uploads/test-uuid");
+    expect(service.normalizeObjectEntityPath(uploadURL)).toBe(
+      "/objects/uploads/test-uuid",
+    );
   });
 
   it("normalizes legacy GCS URLs to /objects paths", async () => {
     const service = await loadService();
     const normalized = service.normalizeObjectEntityPath(
-      "https://storage.googleapis.com/haulbrokr/private/uploads/legacy-id"
+      "https://storage.googleapis.com/haulbrokr/private/uploads/legacy-id",
     );
     expect(normalized).toBe("/objects/uploads/legacy-id");
   });
@@ -133,14 +141,16 @@ describe("ObjectStorageService (R2)", () => {
   it("normalizes R2 public URLs to /objects paths", async () => {
     const service = await loadService();
     const normalized = service.normalizeObjectEntityPath(
-      "https://cdn.example.com/haulbrokr/private/uploads/public-id"
+      "https://cdn.example.com/haulbrokr/private/uploads/public-id",
     );
     expect(normalized).toBe("/objects/uploads/public-id");
   });
 
   it("loads an existing private object by /objects path", async () => {
     const service = await loadService();
-    const objectFile = await service.getObjectEntityFile("/objects/uploads/existing-id");
+    const objectFile = await service.getObjectEntityFile(
+      "/objects/uploads/existing-id",
+    );
     const [metadata] = await objectFile.getMetadata();
     expect(metadata.size).toBe(1024);
     expect(metadata.contentType).toBe("image/jpeg");
@@ -151,9 +161,9 @@ describe("ObjectStorageService (R2)", () => {
     h.headExists = false;
     const service = await loadService();
     const mod = await import("./objectStorage");
-    await expect(service.getObjectEntityFile("/objects/uploads/missing-id"))
-      .rejects
-      .toBeInstanceOf(mod.ObjectNotFoundError);
+    await expect(
+      service.getObjectEntityFile("/objects/uploads/missing-id"),
+    ).rejects.toBeInstanceOf(mod.ObjectNotFoundError);
   });
 
   it("finds public objects under PUBLIC_OBJECT_SEARCH_PATHS", async () => {
@@ -172,7 +182,9 @@ describe("ObjectStorageService (R2)", () => {
 
   it("streams object bytes via downloadObject", async () => {
     const service = await loadService();
-    const objectFile = await service.getObjectEntityFile("/objects/uploads/existing-id");
+    const objectFile = await service.getObjectEntityFile(
+      "/objects/uploads/existing-id",
+    );
     const response = await service.downloadObject(objectFile);
     expect(response.headers.get("Content-Type")).toBe("image/jpeg");
     expect(response.headers.get("Content-Length")).toBe("1024");
@@ -181,12 +193,16 @@ describe("ObjectStorageService (R2)", () => {
   });
 
   it("lists private upload objects by prefix", async () => {
-    h.listedObjects = [{
-      Key: "haulbrokr/private/uploads/orphan-1",
-      LastModified: new Date("2020-01-01T00:00:00.000Z"),
-    }];
+    h.listedObjects = [
+      {
+        Key: "haulbrokr/private/uploads/orphan-1",
+        LastModified: new Date("2020-01-01T00:00:00.000Z"),
+      },
+    ];
     const mod = await import("./objectStorage");
-    const objects = await mod.listPrivateUploadObjects("haulbrokr/private/uploads/");
+    const objects = await mod.listPrivateUploadObjects(
+      "haulbrokr/private/uploads/",
+    );
     expect(objects).toHaveLength(1);
     expect(objects[0]?.name).toBe("haulbrokr/private/uploads/orphan-1");
     expect(objects[0]?.metadata?.timeCreated).toBe("2020-01-01T00:00:00.000Z");

@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from 'wouter';
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import SupportPage from "./pages/support";
 import PrivacyPage from "./pages/privacy";
 import { SignInPage, SignUpPage } from "./pages/auth";

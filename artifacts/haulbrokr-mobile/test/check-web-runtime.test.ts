@@ -26,7 +26,10 @@ const runtime = require("../scripts/check-web-runtime.js") as {
     dom?: { rootChildren: number; bodyText: string };
   }) => { ok: boolean; reason?: string; message?: string };
   summarizeRouteFailures: (
-    failures: { route: string; result: { reason?: string; message?: string } }[],
+    failures: {
+      route: string;
+      result: { reason?: string; message?: string };
+    }[],
   ) => string;
   checkWebRuntime: (
     outputDir: string,
@@ -66,8 +69,7 @@ describe("analyzeRuntime", () => {
       pageErrors: [
         {
           message: "Cannot read properties of undefined (reading 'View')",
-          stack:
-            "TypeError: ...\n    at react-native-maps (bundle.js:1:200)",
+          stack: "TypeError: ...\n    at react-native-maps (bundle.js:1:200)",
         },
       ],
       consoleErrors: [],
@@ -94,9 +96,7 @@ describe("analyzeRuntime", () => {
   it("fails when the ErrorBoundary fallback rendered", () => {
     const result = runtime.analyzeRuntime({
       pageErrors: [],
-      consoleErrors: [
-        "Error: Maps are not supported on web at MapScreen",
-      ],
+      consoleErrors: ["Error: Maps are not supported on web at MapScreen"],
       dom: {
         rootChildren: 1,
         bodyText: "Something went wrong\nPlease reload the app to continue.",
@@ -246,7 +246,7 @@ describe("createStaticServer", () => {
     rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "webroot-"));
     fs.writeFileSync(
       path.join(rootDir, "index.html"),
-      "<!doctype html><div id=\"root\"></div>",
+      '<!doctype html><div id="root"></div>',
     );
     fs.mkdirSync(path.join(rootDir, "_expo"), { recursive: true });
     fs.writeFileSync(
@@ -309,69 +309,90 @@ const chromiumExecutable = runtime.resolveChromiumExecutable();
 // each case plenty of headroom over Vitest's 5s default so it never flakes.
 const E2E_TIMEOUT = 60_000;
 
-describe.skipIf(!chromiumExecutable)("checkWebRuntime (headless Chromium)", () => {
-  const fixtureDirs: string[] = [];
+describe.skipIf(!chromiumExecutable)(
+  "checkWebRuntime (headless Chromium)",
+  () => {
+    const fixtureDirs: string[] = [];
 
-  function writeFixture(html: string): string {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "web-runtime-fixture-"));
-    fs.writeFileSync(path.join(dir, "index.html"), html);
-    fixtureDirs.push(dir);
-    return dir;
-  }
-
-  function run(dir: string): Promise<void> {
-    return runtime.checkWebRuntime(dir, {
-      executablePath: chromiumExecutable as string,
-      routes: [{ name: "Fixture route (/)", path: "/" }],
-      // Keep the no-render case from waiting the full 30s default.
-      navTimeoutMs: 15_000,
-      renderTimeoutMs: 3_000,
-      pollMs: 100,
-    });
-  }
-
-  afterEach(() => {
-    while (fixtureDirs.length) {
-      const dir = fixtureDirs.pop();
-      if (dir) fs.rmSync(dir, { recursive: true, force: true });
+    function writeFixture(html: string): string {
+      const dir = fs.mkdtempSync(
+        path.join(os.tmpdir(), "web-runtime-fixture-"),
+      );
+      fs.writeFileSync(path.join(dir, "index.html"), html);
+      fixtureDirs.push(dir);
+      return dir;
     }
-  });
 
-  it("resolves for a healthy bundle that renders content", async () => {
-    const dir = writeFixture(
-      `<!doctype html><html><body><div id="root"></div>` +
-        `<script>` +
-        `var c=document.createElement('div');` +
-        `c.textContent='Sign in to HaulBrokr';` +
-        `document.getElementById('root').appendChild(c);` +
-        `</script></body></html>`,
-    );
-    await expect(run(dir)).resolves.toBeUndefined();
-  }, E2E_TIMEOUT);
+    function run(dir: string): Promise<void> {
+      return runtime.checkWebRuntime(dir, {
+        executablePath: chromiumExecutable as string,
+        routes: [{ name: "Fixture route (/)", path: "/" }],
+        // Keep the no-render case from waiting the full 30s default.
+        navTimeoutMs: 15_000,
+        renderTimeoutMs: 3_000,
+        pollMs: 100,
+      });
+    }
 
-  it("rejects when the bundle throws an uncaught exception", async () => {
-    const dir = writeFixture(
-      `<!doctype html><html><body><div id="root"></div>` +
-        `<script>throw new Error("react-native-maps is not supported on web");` +
-        `</script></body></html>`,
-    );
-    await expect(run(dir)).rejects.toThrow(/uncaught exception/i);
-  }, E2E_TIMEOUT);
+    afterEach(() => {
+      while (fixtureDirs.length) {
+        const dir = fixtureDirs.pop();
+        if (dir) fs.rmSync(dir, { recursive: true, force: true });
+      }
+    });
 
-  it("rejects when the ErrorBoundary fallback renders", async () => {
-    const dir = writeFixture(
-      `<!doctype html><html><body><div id="root">` +
-        `<div>Something went wrong</div>` +
-        `<div>Please reload the app to continue.</div>` +
-        `</div></body></html>`,
+    it(
+      "resolves for a healthy bundle that renders content",
+      async () => {
+        const dir = writeFixture(
+          `<!doctype html><html><body><div id="root"></div>` +
+            `<script>` +
+            `var c=document.createElement('div');` +
+            `c.textContent='Sign in to HaulBrokr';` +
+            `document.getElementById('root').appendChild(c);` +
+            `</script></body></html>`,
+        );
+        await expect(run(dir)).resolves.toBeUndefined();
+      },
+      E2E_TIMEOUT,
     );
-    await expect(run(dir)).rejects.toThrow(/Something went wrong/i);
-  }, E2E_TIMEOUT);
 
-  it("rejects when nothing mounts into the root", async () => {
-    const dir = writeFixture(
-      `<!doctype html><html><body><div id="root"></div></body></html>`,
+    it(
+      "rejects when the bundle throws an uncaught exception",
+      async () => {
+        const dir = writeFixture(
+          `<!doctype html><html><body><div id="root"></div>` +
+            `<script>throw new Error("react-native-maps is not supported on web");` +
+            `</script></body></html>`,
+        );
+        await expect(run(dir)).rejects.toThrow(/uncaught exception/i);
+      },
+      E2E_TIMEOUT,
     );
-    await expect(run(dir)).rejects.toThrow(/mounted nothing/i);
-  }, E2E_TIMEOUT);
-});
+
+    it(
+      "rejects when the ErrorBoundary fallback renders",
+      async () => {
+        const dir = writeFixture(
+          `<!doctype html><html><body><div id="root">` +
+            `<div>Something went wrong</div>` +
+            `<div>Please reload the app to continue.</div>` +
+            `</div></body></html>`,
+        );
+        await expect(run(dir)).rejects.toThrow(/Something went wrong/i);
+      },
+      E2E_TIMEOUT,
+    );
+
+    it(
+      "rejects when nothing mounts into the root",
+      async () => {
+        const dir = writeFixture(
+          `<!doctype html><html><body><div id="root"></div></body></html>`,
+        );
+        await expect(run(dir)).rejects.toThrow(/mounted nothing/i);
+      },
+      E2E_TIMEOUT,
+    );
+  },
+);

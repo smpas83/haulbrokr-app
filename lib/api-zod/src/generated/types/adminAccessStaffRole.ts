@@ -10,15 +10,16 @@
  * The caller's resolved HaulBrokr staff role, or null if not staff.
  * @nullable
  */
-export type AdminAccessStaffRole = typeof AdminAccessStaffRole[keyof typeof AdminAccessStaffRole] | null;
-
+export type AdminAccessStaffRole =
+  | (typeof AdminAccessStaffRole)[keyof typeof AdminAccessStaffRole]
+  | null;
 
 export const AdminAccessStaffRole = {
-  ap: 'ap',
-  ar: 'ar',
-  cfo: 'cfo',
-  cto: 'cto',
-  ceo: 'ceo',
-  accounting: 'accounting',
-  it: 'it',
+  ap: "ap",
+  ar: "ar",
+  cfo: "cfo",
+  cto: "cto",
+  ceo: "ceo",
+  accounting: "accounting",
+  it: "it",
 } as const;

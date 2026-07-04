@@ -148,10 +148,14 @@ describe("build.js Metro port resolution", () => {
 
   it("rejects an invalid METRO_PORT override", async () => {
     process.env.METRO_PORT = "not-a-port";
-    await expect(build.resolveMetroPort()).rejects.toThrow(/Invalid METRO_PORT/);
+    await expect(build.resolveMetroPort()).rejects.toThrow(
+      /Invalid METRO_PORT/,
+    );
 
     process.env.METRO_PORT = "99999";
-    await expect(build.resolveMetroPort()).rejects.toThrow(/Invalid METRO_PORT/);
+    await expect(build.resolveMetroPort()).rejects.toThrow(
+      /Invalid METRO_PORT/,
+    );
   });
 
   it("starts Metro on the resolved port (avoiding a busy one) and reports ready", async () => {

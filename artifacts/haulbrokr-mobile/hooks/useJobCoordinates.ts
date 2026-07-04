@@ -4,7 +4,9 @@ import { geocodeAddress, type GeoCoord } from "@/lib/geocode";
 
 /** Geocode pickup addresses for map markers; results are cached in geocode.ts. */
 export function useJobCoordinates(jobs: Job[]) {
-  const [coordsByJobId, setCoordsByJobId] = useState<Record<string, GeoCoord>>({});
+  const [coordsByJobId, setCoordsByJobId] = useState<Record<string, GeoCoord>>(
+    {},
+  );
   const [loading, setLoading] = useState(false);
 
   const jobsKey = useMemo(
@@ -34,7 +36,9 @@ export function useJobCoordinates(jobs: Job[]) {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [jobsKey, jobs]);
 
   return { coordsByJobId, loading };

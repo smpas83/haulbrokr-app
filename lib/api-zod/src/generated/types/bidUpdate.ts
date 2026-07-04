@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { BidUpdateStatus } from './bidUpdateStatus';
+import type { BidUpdateStatus } from "./bidUpdateStatus";
 
 export interface BidUpdate {
   status: BidUpdateStatus;

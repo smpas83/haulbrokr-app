@@ -13,12 +13,12 @@ export DATABASE_URL=postgres://haulbrokr:haulbrokr@localhost:5432/haulbrokr?sslm
 
 ## Stack summary
 
-| Layer | Provider |
-|-------|----------|
-| Web | Vercel (`haulbrokr.com`) |
-| API | Render (`haulbrokr-api.onrender.com`, proxied at `/api`) |
-| Database | Neon Postgres |
-| Mobile | EAS → App Store / Play Store |
+| Layer    | Provider                                                 |
+| -------- | -------------------------------------------------------- |
+| Web      | Vercel (`haulbrokr.com`)                                 |
+| API      | Render (`haulbrokr-api.onrender.com`, proxied at `/api`) |
+| Database | Neon Postgres                                            |
+| Mobile   | EAS → App Store / Play Store                             |
 
 See [DEPLOY-VERCEL-RENDER.md](./DEPLOY-VERCEL-RENDER.md) for the full step-by-step checklist.
 

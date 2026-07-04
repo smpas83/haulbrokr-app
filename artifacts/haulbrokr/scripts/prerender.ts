@@ -111,12 +111,13 @@ const root = path.resolve(__dirname, "..");
 const distDir = path.join(root, "dist/public");
 const assetsDir = path.join(distDir, "assets");
 
-const routes: Array<{ component: string; outputFile: string; route: string }> = [
-  { component: "landing", outputFile: "index.html", route: "/" },
-  { component: "support", outputFile: "support.html", route: "/support" },
-  { component: "privacy", outputFile: "privacy.html", route: "/privacy" },
-  { component: "not-found", outputFile: "404.html", route: "/404" },
-];
+const routes: Array<{ component: string; outputFile: string; route: string }> =
+  [
+    { component: "landing", outputFile: "index.html", route: "/" },
+    { component: "support", outputFile: "support.html", route: "/support" },
+    { component: "privacy", outputFile: "privacy.html", route: "/privacy" },
+    { component: "not-found", outputFile: "404.html", route: "/404" },
+  ];
 
 const mockAssetsPlugin = {
   name: "prerender-mock-assets",
@@ -166,7 +167,9 @@ for (const { component, outputFile, route } of routes) {
   const htmlFilePath = path.join(distDir, outputFile);
 
   if (!existsSync(htmlFilePath)) {
-    console.warn(`[prerender] skipping ${route}: ${outputFile} not found in dist`);
+    console.warn(
+      `[prerender] skipping ${route}: ${outputFile} not found in dist`,
+    );
     continue;
   }
 
@@ -174,9 +177,7 @@ for (const { component, outputFile, route } of routes) {
     const mod = await vite.ssrLoadModule(`/src/pages/${component}.tsx`);
     const Component = mod.default as React.ComponentType;
 
-    const appHtml = renderToStaticMarkup(
-      React.createElement(Component),
-    );
+    const appHtml = renderToStaticMarkup(React.createElement(Component));
 
     let template = readFileSync(htmlFilePath, "utf-8");
     template = template.replace(

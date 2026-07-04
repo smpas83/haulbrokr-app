@@ -13,7 +13,11 @@ export interface StaffSessionUser {
 }
 
 /** Parse staff session cookie (if present) and attach `req.staffUser`. */
-export async function attachStaffSession(req: Request, _res: Response, next: NextFunction): Promise<void> {
+export async function attachStaffSession(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> {
   const token = req.cookies?.[STAFF_SESSION_COOKIE] as string | undefined;
   if (!token) {
     next();
@@ -48,7 +52,11 @@ export async function attachStaffSession(req: Request, _res: Response, next: Nex
 }
 
 /** Staff password session OR Clerk profile (for admin routes). */
-export async function requireStaffOrProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function requireStaffOrProfile(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   if (req.staffUser || req.profile) {
     next();
     return;

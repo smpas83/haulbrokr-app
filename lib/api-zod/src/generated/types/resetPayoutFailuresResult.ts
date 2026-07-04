@@ -11,8 +11,8 @@ export interface ResetPayoutFailuresResult {
   /** Always 0 after a reset. */
   payoutRetryFailures: number;
   /**
-     * Always null after a reset.
-     * @nullable
-     */
+   * Always null after a reset.
+   * @nullable
+   */
   payoutAlertSentAt: Date | null;
 }

@@ -6,7 +6,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const specDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../lib/api-spec");
+const specDir = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../lib/api-spec",
+);
 const mainPath = path.join(specDir, "openapi.yaml");
 const extPath = path.join(specDir, "openapi-extensions.yaml");
 
@@ -30,6 +33,11 @@ if (idx === -1) {
   process.exit(1);
 }
 
-const merged = main.slice(0, idx) + "\n" + extensions + marker + main.slice(idx + marker.length);
+const merged =
+  main.slice(0, idx) +
+  "\n" +
+  extensions +
+  marker +
+  main.slice(idx + marker.length);
 writeFileSync(mainPath, merged);
 console.log("Merged openapi-extensions.yaml into openapi.yaml");

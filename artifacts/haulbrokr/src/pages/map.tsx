@@ -4,7 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { MapPin, RefreshCw, Truck, Layers, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 type MarketplaceMapData = {
@@ -31,8 +37,18 @@ type MarketplaceMapData = {
     latitude: number;
     longitude: number;
   }>;
-  heatZones: Array<{ latitude: number; longitude: number; radius: number; intensity: number }>;
-  stats: { openLoads: number; activeJobs: number; availableTrucks: number; providers: number };
+  heatZones: Array<{
+    latitude: number;
+    longitude: number;
+    radius: number;
+    intensity: number;
+  }>;
+  stats: {
+    openLoads: number;
+    activeJobs: number;
+    availableTrucks: number;
+    providers: number;
+  };
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -56,7 +72,8 @@ declare global {
 function loadGoogleMaps(): Promise<void> {
   if (window.google?.maps) return Promise.resolve();
   const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  if (!key) return Promise.reject(new Error("VITE_GOOGLE_MAPS_API_KEY is not set"));
+  if (!key)
+    return Promise.reject(new Error("VITE_GOOGLE_MAPS_API_KEY is not set"));
   return new Promise((resolve, reject) => {
     window.__haulbrokrWebMapInit = () => resolve();
     const s = document.createElement("script");
@@ -67,7 +84,9 @@ function loadGoogleMaps(): Promise<void> {
   });
 }
 
-async function fetchMarketplace(getToken: () => Promise<string | null>): Promise<MarketplaceMapData> {
+async function fetchMarketplace(
+  getToken: () => Promise<string | null>,
+): Promise<MarketplaceMapData> {
   const token = await getToken();
   const res = await fetch("/api/map/marketplace", {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -106,14 +125,27 @@ export default function MapPage() {
           fullscreenControl: true,
           styles: [
             { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
-            { elementType: "labels.text.fill", stylers: [{ color: "#6b7280" }] },
-            { featureType: "road", elementType: "geometry", stylers: [{ color: "#1c2333" }] },
-            { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a1628" }] },
+            {
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#6b7280" }],
+            },
+            {
+              featureType: "road",
+              elementType: "geometry",
+              stylers: [{ color: "#1c2333" }],
+            },
+            {
+              featureType: "water",
+              elementType: "geometry",
+              stylers: [{ color: "#0a1628" }],
+            },
           ],
         });
         setMapReady(true);
       })
-      .catch((err) => setMapError(err instanceof Error ? err.message : "Map failed"));
+      .catch((err) =>
+        setMapError(err instanceof Error ? err.message : "Map failed"),
+      );
   }, []);
 
   const renderMarkers = useCallback(() => {
@@ -188,12 +220,25 @@ export default function MapPage() {
         </div>
         <div className="flex items-center gap-2">
           {data?.demoMode && (
-            <Badge variant="outline" className="rounded-none border-2 border-blue-400/50 text-blue-600 bg-blue-50">
+            <Badge
+              variant="outline"
+              className="rounded-none border-2 border-blue-400/50 text-blue-600 bg-blue-50"
+            >
               Demo Mode
             </Badge>
           )}
-          <Button variant="outline" size="sm" className="rounded-none border-2" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-none border-2"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            {isFetching ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
             <span className="ml-2">Refresh</span>
           </Button>
         </div>
@@ -201,10 +246,22 @@ export default function MapPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Open Loads", value: data?.stats.openLoads ?? "—", icon: MapPin },
-          { label: "Active Jobs", value: data?.stats.activeJobs ?? "—", icon: Layers },
+          {
+            label: "Open Loads",
+            value: data?.stats.openLoads ?? "—",
+            icon: MapPin,
+          },
+          {
+            label: "Active Jobs",
+            value: data?.stats.activeJobs ?? "—",
+            icon: Layers,
+          },
           { label: "Trucks", value: data?.trucks.length ?? "—", icon: Truck },
-          { label: "Carriers", value: data?.stats.providers ?? "—", icon: Truck },
+          {
+            label: "Carriers",
+            value: data?.stats.providers ?? "—",
+            icon: Truck,
+          },
         ].map((stat) => (
           <Card key={stat.label} className="rounded-none border-2">
             <CardHeader className="pb-2 pt-4 px-4">
@@ -223,7 +280,9 @@ export default function MapPage() {
             <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-2 text-muted-foreground">
               <MapPin className="h-10 w-10 opacity-40" />
               <p className="font-semibold text-destructive">{mapError}</p>
-              <p className="text-sm">Set VITE_GOOGLE_MAPS_API_KEY on Vercel to enable the live map.</p>
+              <p className="text-sm">
+                Set VITE_GOOGLE_MAPS_API_KEY on Vercel to enable the live map.
+              </p>
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center h-full min-h-[480px]">
@@ -231,12 +290,22 @@ export default function MapPage() {
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-3">
-              <p className="text-destructive font-semibold">Failed to load marketplace data</p>
-              <Button variant="outline" onClick={() => refetch()}>Retry</Button>
+              <p className="text-destructive font-semibold">
+                Failed to load marketplace data
+              </p>
+              <Button variant="outline" onClick={() => refetch()}>
+                Retry
+              </Button>
             </div>
           ) : (
             <>
-              <div ref={mapDivRef} className={cn("w-full h-full min-h-[480px]", !mapReady && "opacity-0")} />
+              <div
+                ref={mapDivRef}
+                className={cn(
+                  "w-full h-full min-h-[480px]",
+                  !mapReady && "opacity-0",
+                )}
+              />
               {!mapReady && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -252,13 +321,22 @@ export default function MapPage() {
           <Card className="rounded-none border-2">
             <CardHeader>
               <CardTitle className="text-base">Nearby Loads</CardTitle>
-              <CardDescription>{data.loads.slice(0, 8).length} shown · {data.loads.length} total on map</CardDescription>
+              <CardDescription>
+                {data.loads.slice(0, 8).length} shown · {data.loads.length}{" "}
+                total on map
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 max-h-64 overflow-y-auto">
               {data.loads.slice(0, 8).map((load) => (
-                <div key={load.id} className="text-sm border-b border-border pb-2">
+                <div
+                  key={load.id}
+                  className="text-sm border-b border-border pb-2"
+                >
                   <div className="font-semibold">{load.projectName}</div>
-                  <div className="text-muted-foreground text-xs">{load.material} · ${load.budgetPerHour}/hr · {load.bidsCount} bids</div>
+                  <div className="text-muted-foreground text-xs">
+                    {load.material} · ${load.budgetPerHour}/hr ·{" "}
+                    {load.bidsCount} bids
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -266,13 +344,21 @@ export default function MapPage() {
           <Card className="rounded-none border-2">
             <CardHeader>
               <CardTitle className="text-base">Fleet Trucks</CardTitle>
-              <CardDescription>{data.stats.availableTrucks} available · {data.trucks.length} on map</CardDescription>
+              <CardDescription>
+                {data.stats.availableTrucks} available · {data.trucks.length} on
+                map
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 max-h-64 overflow-y-auto">
               {data.trucks.slice(0, 8).map((truck) => (
-                <div key={truck.id} className="text-sm border-b border-border pb-2 flex justify-between">
+                <div
+                  key={truck.id}
+                  className="text-sm border-b border-border pb-2 flex justify-between"
+                >
                   <span className="font-semibold">{truck.label}</span>
-                  <Badge variant="outline" className="rounded-none text-xs">{truck.status}</Badge>
+                  <Badge variant="outline" className="rounded-none text-xs">
+                    {truck.status}
+                  </Badge>
                 </div>
               ))}
             </CardContent>

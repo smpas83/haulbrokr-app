@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { DumpSiteType } from './dumpSiteType';
+import type { DumpSiteType } from "./dumpSiteType";
 
 export interface DumpSite {
   id: number;

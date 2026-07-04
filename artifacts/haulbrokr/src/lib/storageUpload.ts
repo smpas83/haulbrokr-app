@@ -20,7 +20,9 @@ async function parseApiError(res: Response, fallback: string): Promise<string> {
 }
 
 /** Upload a file via presigned URL + finalize (same pipeline as mobile). */
-export async function uploadFileToStorage(file: File): Promise<FinalizeResponse> {
+export async function uploadFileToStorage(
+  file: File,
+): Promise<FinalizeResponse> {
   const contentType = file.type || "application/octet-stream";
 
   const presignRes = await fetch("/api/storage/uploads/request-url", {
@@ -33,7 +35,9 @@ export async function uploadFileToStorage(file: File): Promise<FinalizeResponse>
     }),
   });
   if (!presignRes.ok) {
-    throw new Error(await parseApiError(presignRes, "Failed to request upload URL"));
+    throw new Error(
+      await parseApiError(presignRes, "Failed to request upload URL"),
+    );
   }
   const presign = (await presignRes.json()) as PresignResponse;
 
@@ -55,7 +59,9 @@ export async function uploadFileToStorage(file: File): Promise<FinalizeResponse>
     }),
   });
   if (!finalizeRes.ok) {
-    throw new Error(await parseApiError(finalizeRes, "Failed to finalize upload"));
+    throw new Error(
+      await parseApiError(finalizeRes, "Failed to finalize upload"),
+    );
   }
 
   return (await finalizeRes.json()) as FinalizeResponse;

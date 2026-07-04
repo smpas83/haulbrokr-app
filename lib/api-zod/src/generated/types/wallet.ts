@@ -5,8 +5,8 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { WalletPayoutAccount } from './walletPayoutAccount';
-import type { WalletTransaction } from './walletTransaction';
+import type { WalletPayoutAccount } from "./walletPayoutAccount";
+import type { WalletTransaction } from "./walletTransaction";
 
 export interface Wallet {
   availableBalance: number;

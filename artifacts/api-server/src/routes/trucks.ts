@@ -28,7 +28,10 @@ router.get("/trucks", requireProfile, async (req, res): Promise<void> => {
       .where(eq(trucksTable.ownerId, profile.id));
   } else {
     const conditions = [eq(trucksTable.isAvailable, true)];
-    trucks = await db.select().from(trucksTable).where(and(...conditions));
+    trucks = await db
+      .select()
+      .from(trucksTable)
+      .where(and(...conditions));
   }
 
   const enriched = trucks.map((t) => ({
@@ -52,12 +55,15 @@ router.post("/trucks", requireProfile, async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [truck] = await db.insert(trucksTable).values({
-    ...parsed.data,
-    ownerId: profile.id,
-    capacityTons: String(parsed.data.capacityTons),
-    ratePerHour: String(parsed.data.ratePerHour),
-  }).returning();
+  const [truck] = await db
+    .insert(trucksTable)
+    .values({
+      ...parsed.data,
+      ownerId: profile.id,
+      capacityTons: String(parsed.data.capacityTons),
+      ratePerHour: String(parsed.data.ratePerHour),
+    })
+    .returning();
   res.status(201).json({
     ...truck,
     capacityTons: parseFloat(truck.capacityTons),
@@ -73,17 +79,22 @@ router.get("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [truck] = await db.select().from(trucksTable).where(eq(trucksTable.id, params.data.id));
+  const [truck] = await db
+    .select()
+    .from(trucksTable)
+    .where(eq(trucksTable.id, params.data.id));
   if (!truck) {
     res.status(404).json({ error: "Truck not found" });
     return;
   }
-  res.json(GetTruckResponse.parse({
-    ...truck,
-    capacityTons: parseFloat(truck.capacityTons),
-    ratePerHour: parseFloat(truck.ratePerHour),
-    ownerCompany: "",
-  }));
+  res.json(
+    GetTruckResponse.parse({
+      ...truck,
+      capacityTons: parseFloat(truck.capacityTons),
+      ratePerHour: parseFloat(truck.ratePerHour),
+      ownerCompany: "",
+    }),
+  );
 });
 
 router.patch("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
@@ -103,40 +114,62 @@ router.patch("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
     .update(trucksTable)
     .set({
       ...parsed.data,
-      capacityTons: parsed.data.capacityTons != null ? String(parsed.data.capacityTons) : undefined,
-      ratePerHour: parsed.data.ratePerHour != null ? String(parsed.data.ratePerHour) : undefined,
+      capacityTons:
+        parsed.data.capacityTons != null
+          ? String(parsed.data.capacityTons)
+          : undefined,
+      ratePerHour:
+        parsed.data.ratePerHour != null
+          ? String(parsed.data.ratePerHour)
+          : undefined,
     })
-    .where(and(eq(trucksTable.id, params.data.id), eq(trucksTable.ownerId, profile.id)))
+    .where(
+      and(
+        eq(trucksTable.id, params.data.id),
+        eq(trucksTable.ownerId, profile.id),
+      ),
+    )
     .returning();
   if (!truck) {
     res.status(404).json({ error: "Truck not found" });
     return;
   }
-  res.json(UpdateTruckResponse.parse({
-    ...truck,
-    capacityTons: parseFloat(truck.capacityTons),
-    ratePerHour: parseFloat(truck.ratePerHour),
-    ownerCompany: profile.companyName,
-  }));
+  res.json(
+    UpdateTruckResponse.parse({
+      ...truck,
+      capacityTons: parseFloat(truck.capacityTons),
+      ratePerHour: parseFloat(truck.ratePerHour),
+      ownerCompany: profile.companyName,
+    }),
+  );
 });
 
-router.delete("/trucks/:id", requireProfile, async (req, res): Promise<void> => {
-  const profile = getRequestProfile(req);
-  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = DeleteTruckParams.safeParse({ id: parseInt(raw, 10) });
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const [truck] = await db
-    .delete(trucksTable)
-    .where(and(eq(trucksTable.id, params.data.id), eq(trucksTable.ownerId, profile.id)))
-    .returning();
-  if (!truck) {
-    res.status(404).json({ error: "Truck not found" });
-    return;
-  }
-  res.sendStatus(204);
-});
+router.delete(
+  "/trucks/:id",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const profile = getRequestProfile(req);
+    const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const params = DeleteTruckParams.safeParse({ id: parseInt(raw, 10) });
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+    const [truck] = await db
+      .delete(trucksTable)
+      .where(
+        and(
+          eq(trucksTable.id, params.data.id),
+          eq(trucksTable.ownerId, profile.id),
+        ),
+      )
+      .returning();
+    if (!truck) {
+      res.status(404).json({ error: "Truck not found" });
+      return;
+    }
+    res.sendStatus(204);
+  },
+);
 
 export default router;

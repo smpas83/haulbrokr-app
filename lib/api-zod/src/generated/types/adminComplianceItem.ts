@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { AdminProfileSummary } from './adminProfileSummary';
+import type { AdminProfileSummary } from "./adminProfileSummary";
 
 export interface AdminComplianceItem {
   id: number;

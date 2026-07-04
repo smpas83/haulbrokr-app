@@ -1,5 +1,8 @@
 import { CheckCircle } from "lucide-react";
-import { useSetPaymentMethod, useUpdatePaymentMethod } from "@workspace/api-client-react";
+import {
+  useSetPaymentMethod,
+  useUpdatePaymentMethod,
+} from "@workspace/api-client-react";
 import { StripeCardForm } from "@/components/stripe-card-form";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,7 +27,10 @@ export default function MobilePaymentPage() {
       { data: cardData },
       {
         onSuccess: () => {
-          toast({ title: "Card saved", description: "Your payment method is ready." });
+          toast({
+            title: "Card saved",
+            description: "Your payment method is ready.",
+          });
           window.location.href = RETURN_URL;
         },
         onError: () => {
@@ -36,7 +42,11 @@ export default function MobilePaymentPage() {
                 window.location.href = RETURN_URL;
               },
               onError: (e) =>
-                toast({ title: "Could not save card", description: e.message, variant: "destructive" }),
+                toast({
+                  title: "Could not save card",
+                  description: e.message,
+                  variant: "destructive",
+                }),
             },
           );
         },
@@ -52,7 +62,8 @@ export default function MobilePaymentPage() {
           <h1 className="text-lg font-bold">Add Payment Card</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Secure card setup powered by Stripe. When finished, you&apos;ll return to the HaulBrokr app.
+          Secure card setup powered by Stripe. When finished, you&apos;ll return
+          to the HaulBrokr app.
         </p>
         <StripeCardForm
           onSaved={onSaved}

@@ -6,17 +6,17 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type JobRequestMaterialType = typeof JobRequestMaterialType[keyof typeof JobRequestMaterialType];
-
+export type JobRequestMaterialType =
+  (typeof JobRequestMaterialType)[keyof typeof JobRequestMaterialType];
 
 export const JobRequestMaterialType = {
-  dirt: 'dirt',
-  gravel: 'gravel',
-  sand: 'sand',
-  concrete: 'concrete',
-  asphalt: 'asphalt',
-  demolition: 'demolition',
-  topsoil: 'topsoil',
-  fill: 'fill',
-  other: 'other',
+  dirt: "dirt",
+  gravel: "gravel",
+  sand: "sand",
+  concrete: "concrete",
+  asphalt: "asphalt",
+  demolition: "demolition",
+  topsoil: "topsoil",
+  fill: "fill",
+  other: "other",
 } as const;

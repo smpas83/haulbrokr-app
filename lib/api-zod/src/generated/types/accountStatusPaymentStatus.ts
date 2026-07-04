@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type AccountStatusPaymentStatus = typeof AccountStatusPaymentStatus[keyof typeof AccountStatusPaymentStatus];
-
+export type AccountStatusPaymentStatus =
+  (typeof AccountStatusPaymentStatus)[keyof typeof AccountStatusPaymentStatus];
 
 export const AccountStatusPaymentStatus = {
-  not_set: 'not_set',
-  set: 'set',
+  not_set: "not_set",
+  set: "set",
 } as const;

@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Bot, Send, Sparkles, TrendingUp, Truck, DollarSign } from "lucide-react";
+import {
+  Bot,
+  Send,
+  Sparkles,
+  TrendingUp,
+  Truck,
+  DollarSign,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SUGGESTED_PROMPTS = [
@@ -11,7 +18,8 @@ const SUGGESTED_PROMPTS = [
 const DEMO_MESSAGES = [
   {
     role: "assistant" as const,
-    content: "Good morning! I've analyzed your fleet data. You have 3 trucks idle in the Houston area — I found 7 matching loads within 15 miles.",
+    content:
+      "Good morning! I've analyzed your fleet data. You have 3 trucks idle in the Houston area — I found 7 matching loads within 15 miles.",
     insight: { label: "Potential revenue", value: "$4,200", icon: DollarSign },
   },
   {
@@ -20,7 +28,8 @@ const DEMO_MESSAGES = [
   },
   {
     role: "assistant" as const,
-    content: "Done. Truck #247 (Mike R.) dispatched to gravel load at I-45 & Beltway. ETA 12 min. Customer notified.",
+    content:
+      "Done. Truck #247 (Mike R.) dispatched to gravel load at I-45 & Beltway. ETA 12 min. Customer notified.",
     insight: { label: "Fleet utilization", value: "94%", icon: TrendingUp },
   },
 ];
@@ -29,7 +38,12 @@ export function AiCopilotPreview({ className }: { className?: string }) {
   const [activePrompt, setActivePrompt] = useState<number | null>(null);
 
   return (
-    <div className={cn("surface-panel-elevated rounded-2xl overflow-hidden flex flex-col", className)}>
+    <div
+      className={cn(
+        "surface-panel-elevated rounded-2xl overflow-hidden flex flex-col",
+        className,
+      )}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
         <div className="flex items-center gap-3">
@@ -37,13 +51,17 @@ export function AiCopilotPreview({ className }: { className?: string }) {
             <Bot className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">HaulBrokr AI</p>
-            <p className="text-xs text-muted-foreground">Dispatch Copilot</p>
+            <p className="text-sm font-semibold text-foreground">
+              HaulBrokr AI
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Dispatch Copilot · Sample conversation
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+        <div className="flex items-center gap-1.5 text-xs text-amber-400">
           <Sparkles className="h-3.5 w-3.5" />
-          <span className="font-medium">Online</span>
+          <span className="font-medium">Preview</span>
         </div>
       </div>
 
@@ -54,7 +72,7 @@ export function AiCopilotPreview({ className }: { className?: string }) {
             key={i}
             className={cn(
               "flex gap-3 animate-slide-up",
-              msg.role === "user" && "flex-row-reverse"
+              msg.role === "user" && "flex-row-reverse",
             )}
             style={{ animationDelay: `${i * 0.15}s` }}
           >
@@ -68,7 +86,7 @@ export function AiCopilotPreview({ className }: { className?: string }) {
                 "rounded-xl px-4 py-2.5 max-w-[85%] text-sm leading-relaxed",
                 msg.role === "assistant"
                   ? "bg-muted/50 text-foreground/90"
-                  : "bg-primary/15 text-foreground ml-auto"
+                  : "bg-primary/15 text-foreground ml-auto",
               )}
             >
               {msg.content}
@@ -76,8 +94,12 @@ export function AiCopilotPreview({ className }: { className?: string }) {
                 <div className="mt-3 flex items-center gap-3 rounded-lg bg-background/50 px-3 py-2 border border-border/50">
                   <msg.insight.icon className="h-4 w-4 text-accent" />
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{msg.insight.label}</p>
-                    <p className="text-base font-bold text-accent">{msg.insight.value}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {msg.insight.label}
+                    </p>
+                    <p className="text-base font-bold text-accent">
+                      {msg.insight.value}
+                    </p>
                   </div>
                 </div>
               )}
@@ -97,7 +119,7 @@ export function AiCopilotPreview({ className }: { className?: string }) {
               "text-xs px-3 py-1.5 rounded-full border transition-colors",
               activePrompt === i
                 ? "border-primary/40 bg-primary/10 text-primary"
-                : "border-border/50 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                : "border-border/50 text-muted-foreground hover:border-primary/30 hover:text-foreground",
             )}
           >
             {prompt}

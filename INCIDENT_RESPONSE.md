@@ -2,12 +2,12 @@
 
 ## Severity levels
 
-| Severity | Definition | Examples |
-|---|---|---|
-| SEV1 | Marketplace unavailable or money movement broken | API down, DB unreachable, Stripe payments failing globally |
-| SEV2 | Major workflow degraded | provider dispatch broken, uploads failing, admin compliance unavailable |
-| SEV3 | Limited user or non-critical workflow impact | email delays, isolated UI error, reporting issue |
-| SEV4 | Low-risk operational issue | documentation mismatch, cosmetic staging-only issue |
+| Severity | Definition                                       | Examples                                                                |
+| -------- | ------------------------------------------------ | ----------------------------------------------------------------------- |
+| SEV1     | Marketplace unavailable or money movement broken | API down, DB unreachable, Stripe payments failing globally              |
+| SEV2     | Major workflow degraded                          | provider dispatch broken, uploads failing, admin compliance unavailable |
+| SEV3     | Limited user or non-critical workflow impact     | email delays, isolated UI error, reporting issue                        |
+| SEV4     | Low-risk operational issue                       | documentation mismatch, cosmetic staging-only issue                     |
 
 ## Immediate response
 

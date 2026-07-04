@@ -55,21 +55,32 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
       }
       body = { descriptorCode: trimmed };
     }
-    verify.mutate({ data: body }, {
-      onSuccess: () => {
-        setDone(true);
-        onVerified?.();
+    verify.mutate(
+      { data: body },
+      {
+        onSuccess: () => {
+          setDone(true);
+          onVerified?.();
+        },
+        onError: (err: unknown) =>
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Verification failed. Double-check and try again.",
+          ),
       },
-      onError: (err: unknown) =>
-        setError(err instanceof Error ? err.message : "Verification failed. Double-check and try again."),
-    });
+    );
   }
 
   if (done) {
     return (
       <Alert className="rounded-none border-green-600/40 bg-green-50 dark:bg-green-950/20">
-        <AlertTitle className="text-green-700 dark:text-green-400">Bank account verified</AlertTitle>
-        <AlertDescription>Your bank account is now ready to use for payments.</AlertDescription>
+        <AlertTitle className="text-green-700 dark:text-green-400">
+          Bank account verified
+        </AlertTitle>
+        <AlertDescription>
+          Your bank account is now ready to use for payments.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -80,16 +91,19 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
       <AlertTitle>Finish verifying your bank account</AlertTitle>
       <AlertDescription className="space-y-3">
         <p className="text-sm">
-          Stripe sent small deposits to your bank account (1-2 business days). Enter
-          the two amounts in dollars exactly as they appear on your statement (e.g.
-          $0.32) — or the descriptor code from a single deposit — to confirm
-          ownership and start using this account for payments.
+          Stripe sent small deposits to your bank account (1-2 business days).
+          Enter the two amounts in dollars exactly as they appear on your
+          statement (e.g. $0.32) — or the descriptor code from a single deposit
+          — to confirm ownership and start using this account for payments.
         </p>
 
         <div className="flex items-center gap-2 text-xs">
           <button
             type="button"
-            onClick={() => { setMode("amounts"); setError(null); }}
+            onClick={() => {
+              setMode("amounts");
+              setError(null);
+            }}
             className={`underline-offset-2 ${mode === "amounts" ? "font-bold underline" : "text-muted-foreground"}`}
           >
             Enter deposit amounts
@@ -97,7 +111,10 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
           <span className="text-muted-foreground">·</span>
           <button
             type="button"
-            onClick={() => { setMode("code"); setError(null); }}
+            onClick={() => {
+              setMode("code");
+              setError(null);
+            }}
             className={`underline-offset-2 ${mode === "code" ? "font-bold underline" : "text-muted-foreground"}`}
           >
             Use descriptor code
@@ -107,7 +124,9 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
         {mode === "amounts" ? (
           <div className="flex items-center gap-2 max-w-xs">
             <div className="relative flex-1">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                $
+              </span>
               <Input
                 inputMode="decimal"
                 placeholder="0.32"
@@ -117,7 +136,9 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
               />
             </div>
             <div className="relative flex-1">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                $
+              </span>
               <Input
                 inputMode="decimal"
                 placeholder="0.45"
@@ -142,8 +163,15 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
           </p>
         )}
 
-        <Button type="button" onClick={submit} disabled={verify.isPending} className="rounded-none font-bold">
-          {verify.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+        <Button
+          type="button"
+          onClick={submit}
+          disabled={verify.isPending}
+          className="rounded-none font-bold"
+        >
+          {verify.isPending && (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          )}
           Verify bank account
         </Button>
       </AlertDescription>

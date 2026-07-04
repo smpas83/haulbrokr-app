@@ -6,7 +6,7 @@ function getSecret(): string {
   const secret = process.env.UPLOAD_TOKEN_SECRET;
   if (!secret) {
     throw new Error(
-      "UPLOAD_TOKEN_SECRET is not set. Set this environment variable to a strong random secret before accepting file uploads."
+      "UPLOAD_TOKEN_SECRET is not set. Set this environment variable to a strong random secret before accepting file uploads.",
     );
   }
   return secret;
@@ -27,7 +27,9 @@ export interface UploadTokenPayload {
   nonce: string;
 }
 
-export function issueUploadToken(payload: Omit<UploadTokenPayload, "nonce">): string {
+export function issueUploadToken(
+  payload: Omit<UploadTokenPayload, "nonce">,
+): string {
   const full: UploadTokenPayload = { ...payload, nonce: randomUUID() };
   const encoded = Buffer.from(JSON.stringify(full)).toString("base64url");
   const sig = sign("upload", encoded);
@@ -41,11 +43,13 @@ type VerifyError =
   | "profile_mismatch"
   | "path_mismatch";
 
-function verify<T extends { issuedAt: number; profileId: string; objectPath: string }>(
+function verify<
+  T extends { issuedAt: number; profileId: string; objectPath: string },
+>(
   scope: "upload" | "storage",
   token: string,
   expectedProfileId: string,
-  expectedObjectPath: string
+  expectedObjectPath: string,
 ): { ok: true; payload: T } | { ok: false; error: VerifyError } {
   const dotIndex = token.lastIndexOf(".");
   if (dotIndex < 1) return { ok: false, error: "malformed" };
@@ -70,7 +74,9 @@ function verify<T extends { issuedAt: number; profileId: string; objectPath: str
 
   let payload: T;
   try {
-    payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as T;
+    payload = JSON.parse(
+      Buffer.from(encoded, "base64url").toString("utf8"),
+    ) as T;
   } catch {
     return { ok: false, error: "malformed" };
   }
@@ -101,9 +107,16 @@ function verify<T extends { issuedAt: number; profileId: string; objectPath: str
 export function verifyUploadToken(
   token: string,
   expectedProfileId: string,
-  expectedObjectPath: string
-): { ok: true; payload: UploadTokenPayload } | { ok: false; error: VerifyError } {
-  const result = verify<UploadTokenPayload>("upload", token, expectedProfileId, expectedObjectPath);
+  expectedObjectPath: string,
+):
+  | { ok: true; payload: UploadTokenPayload }
+  | { ok: false; error: VerifyError } {
+  const result = verify<UploadTokenPayload>(
+    "upload",
+    token,
+    expectedProfileId,
+    expectedObjectPath,
+  );
   if (!result.ok) return result;
   if (
     typeof result.payload.maxSize !== "number" ||
@@ -148,7 +161,14 @@ export type StorageTokenError =
 export function verifyStorageToken(
   token: string,
   expectedProfileId: string,
-  expectedObjectPath: string
-): { ok: true; payload: StorageTokenPayload } | { ok: false; error: StorageTokenError } {
-  return verify<StorageTokenPayload>("storage", token, expectedProfileId, expectedObjectPath);
+  expectedObjectPath: string,
+):
+  | { ok: true; payload: StorageTokenPayload }
+  | { ok: false; error: StorageTokenError } {
+  return verify<StorageTokenPayload>(
+    "storage",
+    token,
+    expectedProfileId,
+    expectedObjectPath,
+  );
 }

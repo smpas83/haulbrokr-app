@@ -29,7 +29,9 @@ async function runSweep() {
 export function startDocReminderScheduler(intervalMs = DEFAULT_INTERVAL_MS) {
   if (timer) return;
   // Kick off a sweep shortly after boot, then on the interval.
-  setTimeout(() => { void runSweep(); }, 60 * 1000).unref?.();
+  setTimeout(() => {
+    void runSweep();
+  }, 60 * 1000).unref?.();
   timer = setInterval(() => {
     void runSweep();
   }, intervalMs);

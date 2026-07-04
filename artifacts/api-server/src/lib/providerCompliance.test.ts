@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { computeProviderCanBid, hasPendingComplianceReview } from "./providerCompliance";
+import {
+  computeProviderCanBid,
+  hasPendingComplianceReview,
+} from "./providerCompliance";
 
 describe("computeProviderCanBid", () => {
   const base = {
@@ -19,23 +22,33 @@ describe("computeProviderCanBid", () => {
   });
 
   it("is false when insurance is pending", () => {
-    expect(computeProviderCanBid({ ...base, insuranceStatus: "pending" })).toBe(false);
+    expect(computeProviderCanBid({ ...base, insuranceStatus: "pending" })).toBe(
+      false,
+    );
   });
 
   it("is false when DOT/CDL is not verified", () => {
-    expect(computeProviderCanBid({ ...base, dotCdlStatus: "pending" })).toBe(false);
+    expect(computeProviderCanBid({ ...base, dotCdlStatus: "pending" })).toBe(
+      false,
+    );
   });
 
   it("is false when payout has not been submitted", () => {
-    expect(computeProviderCanBid({ ...base, payoutStatus: "not_submitted" })).toBe(false);
+    expect(
+      computeProviderCanBid({ ...base, payoutStatus: "not_submitted" }),
+    ).toBe(false);
   });
 
   it("is false when payout is pending verification", () => {
-    expect(computeProviderCanBid({ ...base, payoutStatus: "pending" })).toBe(false);
+    expect(computeProviderCanBid({ ...base, payoutStatus: "pending" })).toBe(
+      false,
+    );
   });
 
   it("is false when payout is rejected", () => {
-    expect(computeProviderCanBid({ ...base, payoutStatus: "rejected" })).toBe(false);
+    expect(computeProviderCanBid({ ...base, payoutStatus: "rejected" })).toBe(
+      false,
+    );
   });
 
   it("is false for non-provider roles", () => {
@@ -43,39 +56,51 @@ describe("computeProviderCanBid", () => {
   });
 
   it("is false when W-9 is rejected", () => {
-    expect(computeProviderCanBid({ ...base, w9Status: "rejected" })).toBe(false);
+    expect(computeProviderCanBid({ ...base, w9Status: "rejected" })).toBe(
+      false,
+    );
   });
 
   it("is false when insurance is rejected", () => {
-    expect(computeProviderCanBid({ ...base, insuranceStatus: "rejected" })).toBe(false);
+    expect(
+      computeProviderCanBid({ ...base, insuranceStatus: "rejected" }),
+    ).toBe(false);
   });
 
   it("is false when DOT/CDL is rejected", () => {
-    expect(computeProviderCanBid({ ...base, dotCdlStatus: "rejected" })).toBe(false);
+    expect(computeProviderCanBid({ ...base, dotCdlStatus: "rejected" })).toBe(
+      false,
+    );
   });
 });
 
 describe("hasPendingComplianceReview", () => {
   it("detects pending form submissions and uploaded docs awaiting review", () => {
-    expect(hasPendingComplianceReview({
-      w9Status: "verified",
-      insuranceStatus: "pending",
-      dotCdlStatus: "verified",
-      uploadedDocs: [{ status: "verified" }],
-    })).toBe(true);
+    expect(
+      hasPendingComplianceReview({
+        w9Status: "verified",
+        insuranceStatus: "pending",
+        dotCdlStatus: "verified",
+        uploadedDocs: [{ status: "verified" }],
+      }),
+    ).toBe(true);
 
-    expect(hasPendingComplianceReview({
-      w9Status: "verified",
-      insuranceStatus: "verified",
-      dotCdlStatus: "verified",
-      uploadedDocs: [{ status: "uploaded" }],
-    })).toBe(true);
+    expect(
+      hasPendingComplianceReview({
+        w9Status: "verified",
+        insuranceStatus: "verified",
+        dotCdlStatus: "verified",
+        uploadedDocs: [{ status: "uploaded" }],
+      }),
+    ).toBe(true);
 
-    expect(hasPendingComplianceReview({
-      w9Status: "verified",
-      insuranceStatus: "verified",
-      dotCdlStatus: "verified",
-      uploadedDocs: [],
-    })).toBe(false);
+    expect(
+      hasPendingComplianceReview({
+        w9Status: "verified",
+        insuranceStatus: "verified",
+        dotCdlStatus: "verified",
+        uploadedDocs: [],
+      }),
+    ).toBe(false);
   });
 });

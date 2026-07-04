@@ -18,10 +18,24 @@ import {
   isAdminUploadDocType,
 } from "./providerCompliance";
 
-function driverDocReviewUpdate(approved: boolean, note: string | null, now: Date) {
+function driverDocReviewUpdate(
+  approved: boolean,
+  note: string | null,
+  now: Date,
+) {
   return approved
-    ? { status: "verified" as const, verifiedAt: now, rejectedAt: null, reviewNote: note }
-    : { status: "rejected" as const, rejectedAt: now, verifiedAt: null, reviewNote: note };
+    ? {
+        status: "verified" as const,
+        verifiedAt: now,
+        rejectedAt: null,
+        reviewNote: note,
+      }
+    : {
+        status: "rejected" as const,
+        rejectedAt: now,
+        verifiedAt: null,
+        reviewNote: note,
+      };
 }
 
 async function syncUploadedDocReview(
@@ -35,41 +49,67 @@ async function syncUploadedDocReview(
   await db
     .update(driverDocumentsTable)
     .set(driverDocReviewUpdate(approved, note, now))
-    .where(and(
-      eq(driverDocumentsTable.profileId, profileId),
-      eq(driverDocumentsTable.docType, docType),
-      eq(driverDocumentsTable.status, "uploaded"),
-    ));
+    .where(
+      and(
+        eq(driverDocumentsTable.profileId, profileId),
+        eq(driverDocumentsTable.docType, docType),
+        eq(driverDocumentsTable.status, "uploaded"),
+      ),
+    );
 }
 
-async function syncW9FormReview(profileId: number, approved: boolean, note: string | null) {
+async function syncW9FormReview(
+  profileId: number,
+  approved: boolean,
+  note: string | null,
+) {
   const status = approved ? "verified" : "rejected";
   await db
     .update(w9SubmissionsTable)
     .set({ status, reviewNote: note })
-    .where(and(eq(w9SubmissionsTable.profileId, profileId), ne(w9SubmissionsTable.status, "not_submitted")));
+    .where(
+      and(
+        eq(w9SubmissionsTable.profileId, profileId),
+        ne(w9SubmissionsTable.status, "not_submitted"),
+      ),
+    );
 }
 
-async function syncInsuranceFormReview(profileId: number, approved: boolean, note: string | null) {
+async function syncInsuranceFormReview(
+  profileId: number,
+  approved: boolean,
+  note: string | null,
+) {
   const status = approved ? "verified" : "rejected";
   await db
     .update(insuranceSubmissionsTable)
     .set({ status, reviewNote: note })
-    .where(and(eq(insuranceSubmissionsTable.profileId, profileId), ne(insuranceSubmissionsTable.status, "not_submitted")));
+    .where(
+      and(
+        eq(insuranceSubmissionsTable.profileId, profileId),
+        ne(insuranceSubmissionsTable.status, "not_submitted"),
+      ),
+    );
 }
 
 /** When DOT/CDL is approved, mark related uploaded carrier files as verified too. */
-export async function syncDotCdlUploadedDocs(profileId: number, approved: boolean, note: string | null) {
+export async function syncDotCdlUploadedDocs(
+  profileId: number,
+  approved: boolean,
+  note: string | null,
+) {
   const now = new Date();
   const docTypes = [...DOT_UPLOAD_DOC_TYPES, ...CDL_UPLOAD_DOC_TYPES];
   await db
     .update(driverDocumentsTable)
     .set(driverDocReviewUpdate(approved, note, now))
-    .where(and(
-      eq(driverDocumentsTable.profileId, profileId),
-      inArray(driverDocumentsTable.docType, docTypes),
-      eq(driverDocumentsTable.status, "uploaded"),
-    ));
+    .where(
+      and(
+        eq(driverDocumentsTable.profileId, profileId),
+        inArray(driverDocumentsTable.docType, docTypes),
+        eq(driverDocumentsTable.status, "uploaded"),
+      ),
+    );
 }
 
 export function profileSummary(p: Profile) {
@@ -85,7 +125,10 @@ export function profileSummary(p: Profile) {
   };
 }
 
-function docStatusOr(submitted: { status: string } | undefined, fallback: string) {
+function docStatusOr(
+  submitted: { status: string } | undefined,
+  fallback: string,
+) {
   return submitted?.status ?? fallback;
 }
 
@@ -100,21 +143,39 @@ export async function listProviderComplianceBundles() {
 
   const providerIds = providers.map((p) => p.id);
 
-  const [w9Rows, insuranceRows, dotRows, payoutRows, uploadRows] = await Promise.all([
-    db.select().from(w9SubmissionsTable).where(inArray(w9SubmissionsTable.profileId, providerIds)),
-    db.select().from(insuranceSubmissionsTable).where(inArray(insuranceSubmissionsTable.profileId, providerIds)),
-    db.select().from(dotCdlTable).where(inArray(dotCdlTable.profileId, providerIds)),
-    db.select().from(payoutAccountsTable).where(inArray(payoutAccountsTable.profileId, providerIds)),
-    db.select().from(driverDocumentsTable).where(
-      and(
-        inArray(driverDocumentsTable.profileId, providerIds),
-        inArray(driverDocumentsTable.docType, [...ADMIN_UPLOAD_DOC_TYPES]),
-      ),
-    ),
-  ]);
+  const [w9Rows, insuranceRows, dotRows, payoutRows, uploadRows] =
+    await Promise.all([
+      db
+        .select()
+        .from(w9SubmissionsTable)
+        .where(inArray(w9SubmissionsTable.profileId, providerIds)),
+      db
+        .select()
+        .from(insuranceSubmissionsTable)
+        .where(inArray(insuranceSubmissionsTable.profileId, providerIds)),
+      db
+        .select()
+        .from(dotCdlTable)
+        .where(inArray(dotCdlTable.profileId, providerIds)),
+      db
+        .select()
+        .from(payoutAccountsTable)
+        .where(inArray(payoutAccountsTable.profileId, providerIds)),
+      db
+        .select()
+        .from(driverDocumentsTable)
+        .where(
+          and(
+            inArray(driverDocumentsTable.profileId, providerIds),
+            inArray(driverDocumentsTable.docType, [...ADMIN_UPLOAD_DOC_TYPES]),
+          ),
+        ),
+    ]);
 
   const w9ByProfile = new Map(w9Rows.map((r) => [r.profileId, r]));
-  const insuranceByProfile = new Map(insuranceRows.map((r) => [r.profileId, r]));
+  const insuranceByProfile = new Map(
+    insuranceRows.map((r) => [r.profileId, r]),
+  );
   const dotByProfile = new Map(dotRows.map((r) => [r.profileId, r]));
   const payoutByProfile = new Map(payoutRows.map((r) => [r.profileId, r]));
   const uploadsByProfile = new Map<number, typeof uploadRows>();
@@ -131,15 +192,17 @@ export async function listProviderComplianceBundles() {
       const insurance = insuranceByProfile.get(profile.id);
       const dotCdl = dotByProfile.get(profile.id);
       const payout = payoutByProfile.get(profile.id);
-      const uploadedDocuments = (uploadsByProfile.get(profile.id) ?? []).map((doc) => ({
-        docType: doc.docType,
-        status: doc.status,
-        reviewNote: doc.reviewNote ?? null,
-        fileName: doc.fileName ?? null,
-        objectPath: doc.objectPath ?? null,
-        mimeType: doc.mimeType ?? null,
-        uploadedAt: doc.uploadedAt,
-      }));
+      const uploadedDocuments = (uploadsByProfile.get(profile.id) ?? []).map(
+        (doc) => ({
+          docType: doc.docType,
+          status: doc.status,
+          reviewNote: doc.reviewNote ?? null,
+          fileName: doc.fileName ?? null,
+          objectPath: doc.objectPath ?? null,
+          mimeType: doc.mimeType ?? null,
+          uploadedAt: doc.uploadedAt,
+        }),
+      );
 
       const w9Status = docStatusOr(w9, "not_submitted");
       const insuranceStatus = docStatusOr(insurance, "not_submitted");
@@ -213,15 +276,20 @@ export async function listProviderComplianceBundles() {
         uploadedDocuments,
       };
     })
-    .filter((bundle) =>
-      bundle.w9 != null
-      || bundle.insurance != null
-      || bundle.dotCdl != null
-      || bundle.uploadedDocuments.length > 0,
+    .filter(
+      (bundle) =>
+        bundle.w9 != null ||
+        bundle.insurance != null ||
+        bundle.dotCdl != null ||
+        bundle.uploadedDocuments.length > 0,
     );
 }
 
-export async function reviewProviderW9(profileId: number, approved: boolean, note: string | null) {
+export async function reviewProviderW9(
+  profileId: number,
+  approved: boolean,
+  note: string | null,
+) {
   const status = approved ? "verified" : "rejected";
   const [rec] = await db
     .update(w9SubmissionsTable)
@@ -232,7 +300,11 @@ export async function reviewProviderW9(profileId: number, approved: boolean, not
   return rec ?? null;
 }
 
-export async function reviewProviderInsurance(profileId: number, approved: boolean, note: string | null) {
+export async function reviewProviderInsurance(
+  profileId: number,
+  approved: boolean,
+  note: string | null,
+) {
   const status = approved ? "verified" : "rejected";
   const [rec] = await db
     .update(insuranceSubmissionsTable)
@@ -254,23 +326,44 @@ export async function reviewProviderUploadedDoc(
   const [rec] = await db
     .update(driverDocumentsTable)
     .set(driverDocReviewUpdate(approved, note, now))
-    .where(and(eq(driverDocumentsTable.profileId, profileId), eq(driverDocumentsTable.docType, docType)))
+    .where(
+      and(
+        eq(driverDocumentsTable.profileId, profileId),
+        eq(driverDocumentsTable.docType, docType),
+      ),
+    )
     .returning();
   if (rec) {
     if (docType === "w9") await syncW9FormReview(profileId, approved, note);
-    if (docType === "coi") await syncInsuranceFormReview(profileId, approved, note);
+    if (docType === "coi")
+      await syncInsuranceFormReview(profileId, approved, note);
   }
   return rec ?? null;
 }
 
 export async function getCarrierComplianceSnapshot(profileId: number) {
-  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, profileId));
+  const [profile] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, profileId));
   if (!profile) return null;
 
-  const [w9] = await db.select().from(w9SubmissionsTable).where(eq(w9SubmissionsTable.profileId, profileId));
-  const [insurance] = await db.select().from(insuranceSubmissionsTable).where(eq(insuranceSubmissionsTable.profileId, profileId));
-  const [dotCdl] = await db.select().from(dotCdlTable).where(eq(dotCdlTable.profileId, profileId));
-  const [payout] = await db.select().from(payoutAccountsTable).where(eq(payoutAccountsTable.profileId, profileId));
+  const [w9] = await db
+    .select()
+    .from(w9SubmissionsTable)
+    .where(eq(w9SubmissionsTable.profileId, profileId));
+  const [insurance] = await db
+    .select()
+    .from(insuranceSubmissionsTable)
+    .where(eq(insuranceSubmissionsTable.profileId, profileId));
+  const [dotCdl] = await db
+    .select()
+    .from(dotCdlTable)
+    .where(eq(dotCdlTable.profileId, profileId));
+  const [payout] = await db
+    .select()
+    .from(payoutAccountsTable)
+    .where(eq(payoutAccountsTable.profileId, profileId));
 
   const w9Status = w9?.status ?? "not_submitted";
   const insuranceStatus = insurance?.status ?? "not_submitted";

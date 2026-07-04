@@ -10,7 +10,8 @@ import type { Request } from "express";
 
 /** Origin (proto://host) of the incoming request, honouring the proxy headers. */
 export function returnUrlBase(req: Request): string {
-  const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
+  const proto =
+    (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
   const host = (req.headers["x-forwarded-host"] as string) || req.get("host");
   return `${proto}://${host}`;
 }

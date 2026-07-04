@@ -38,7 +38,15 @@ function runExport(outputDir) {
   return new Promise((resolve) => {
     const child = spawn(
       "pnpm",
-      ["exec", "expo", "export", "--platform", "web", "--output-dir", outputDir],
+      [
+        "exec",
+        "expo",
+        "export",
+        "--platform",
+        "web",
+        "--output-dir",
+        outputDir,
+      ],
       {
         cwd: projectRoot,
         env: { ...process.env, CI: "1", EXPO_NO_TELEMETRY: "1" },
@@ -58,7 +66,10 @@ function runExport(outputDir) {
     if (child.stderr) child.stderr.on("data", capture);
 
     child.on("error", (error) => {
-      resolve({ code: 1, output: `${output}\nFailed to spawn expo: ${error.message}` });
+      resolve({
+        code: 1,
+        output: `${output}\nFailed to spawn expo: ${error.message}`,
+      });
     });
 
     child.on("close", (code) => {
@@ -72,14 +83,14 @@ function findWebBundle(outputDir) {
   if (!fs.existsSync(webJsDir)) {
     return null;
   }
-  const bundle = fs
-    .readdirSync(webJsDir)
-    .find((name) => name.endsWith(".js"));
+  const bundle = fs.readdirSync(webJsDir).find((name) => name.endsWith(".js"));
   return bundle ? path.join(webJsDir, bundle) : null;
 }
 
 async function main() {
-  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "haulbrokr-webbuild-"));
+  const outputDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "haulbrokr-webbuild-"),
+  );
 
   try {
     console.log("Checking that the Expo web bundle builds...");
@@ -92,8 +103,7 @@ async function main() {
         re.test(output),
       );
 
-      let message =
-        `Expo web bundle failed to build (expo export --platform web exited ${code}).`;
+      let message = `Expo web bundle failed to build (expo export --platform web exited ${code}).`;
 
       if (hitBabelSignature) {
         message +=

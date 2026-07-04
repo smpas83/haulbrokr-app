@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { UserProfileUpdatePaymentTerms } from './userProfileUpdatePaymentTerms';
+import type { UserProfileUpdatePaymentTerms } from "./userProfileUpdatePaymentTerms";
 
 export interface UserProfileUpdate {
   companyName?: string;

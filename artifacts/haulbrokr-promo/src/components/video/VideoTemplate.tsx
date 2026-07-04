@@ -1,13 +1,19 @@
-import { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useVideoPlayer } from '@/lib/video';
-import { Scene1 } from './video_scenes/Scene1';
-import { Scene2 } from './video_scenes/Scene2';
-import { Scene3 } from './video_scenes/Scene3';
-import { Scene4 } from './video_scenes/Scene4';
-import { Scene5 } from './video_scenes/Scene5';
+import { useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useVideoPlayer } from "@/lib/video";
+import { Scene1 } from "./video_scenes/Scene1";
+import { Scene2 } from "./video_scenes/Scene2";
+import { Scene3 } from "./video_scenes/Scene3";
+import { Scene4 } from "./video_scenes/Scene4";
+import { Scene5 } from "./video_scenes/Scene5";
 
-export const SCENE_DURATIONS = { open: 4000, build1: 4500, build2: 4000, build3: 4500, close: 4000 };
+export const SCENE_DURATIONS = {
+  open: 4000,
+  build1: 4500,
+  build2: 4000,
+  build3: 4500,
+  close: 4000,
+};
 
 const SCENE_COMPONENTS: Record<string, React.ComponentType> = {
   open: Scene1,
@@ -46,7 +52,10 @@ export default function VideoTemplate({
     onSceneChange?.(currentSceneKey);
   }, [currentSceneKey, onSceneChange]);
 
-  const baseSceneKey = currentSceneKey.replace(/_r[12]$/, '') as keyof typeof SCENE_DURATIONS;
+  const baseSceneKey = currentSceneKey.replace(
+    /_r[12]$/,
+    "",
+  ) as keyof typeof SCENE_DURATIONS;
   const sceneIndex = Object.keys(SCENE_DURATIONS).indexOf(baseSceneKey);
   const SceneComponent = SCENE_COMPONENTS[baseSceneKey];
 
@@ -79,7 +88,10 @@ export default function VideoTemplate({
           >
             <video
               src={`${import.meta.env.BASE_URL}videos/intro.mp4`}
-              autoPlay muted loop playsInline
+              autoPlay
+              muted
+              loop
+              playsInline
               className="absolute w-full h-full object-cover opacity-40 mix-blend-luminosity"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-bg-dark via-bg-dark/50 to-transparent" />
@@ -90,7 +102,7 @@ export default function VideoTemplate({
       <motion.div
         className="absolute inset-0 bg-gradient-to-br from-bg-dark via-bg-dark to-secondary"
         animate={{
-          opacity: sceneIndex === 0 ? 0.8 : 1
+          opacity: sceneIndex === 0 ? 0.8 : 1,
         }}
         transition={{ duration: 1 }}
       />
@@ -98,19 +110,27 @@ export default function VideoTemplate({
       {/* Noise Texture */}
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }}
       />
 
       <motion.div
         className="absolute rounded-full blur-[100px] pointer-events-none"
         animate={{
-          x: ['-20vw', '10vw', '60vw', '40vw', '50vw'][sceneIndex],
-          y: ['-20vh', '50vh', '10vh', '70vh', '50vh'][sceneIndex],
+          x: ["-20vw", "10vw", "60vw", "40vw", "50vw"][sceneIndex],
+          y: ["-20vh", "50vh", "10vh", "70vh", "50vh"][sceneIndex],
           scale: [1, 1.5, 2, 1, 1.5][sceneIndex],
-          backgroundColor: ['#F97316', '#3B82F6', '#10B981', '#F97316', '#F97316'][sceneIndex],
-          width: ['40vw', '50vw', '30vw', '60vw', '50vw'][sceneIndex],
-          height: ['40vh', '50vh', '30vh', '60vh', '50vh'][sceneIndex],
-          opacity: [0.15, 0.1, 0.15, 0.1, 0.2][sceneIndex]
+          backgroundColor: [
+            "#F97316",
+            "#3B82F6",
+            "#10B981",
+            "#F97316",
+            "#F97316",
+          ][sceneIndex],
+          width: ["40vw", "50vw", "30vw", "60vw", "50vw"][sceneIndex],
+          height: ["40vh", "50vh", "30vh", "60vh", "50vh"][sceneIndex],
+          opacity: [0.15, 0.1, 0.15, 0.1, 0.2][sceneIndex],
         }}
         transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
       />
@@ -118,9 +138,9 @@ export default function VideoTemplate({
       <motion.div
         className="absolute w-[2px] bg-primary origin-top"
         animate={{
-          left: ['10%', '80%', '5%', '90%', '50%'][sceneIndex],
-          height: ['0%', '100%', '30%', '100%', '0%'][sceneIndex],
-          opacity: [0, 0.5, 0.8, 0.3, 0][sceneIndex]
+          left: ["10%", "80%", "5%", "90%", "50%"][sceneIndex],
+          height: ["0%", "100%", "30%", "100%", "0%"][sceneIndex],
+          opacity: [0, 0.5, 0.8, 0.3, 0][sceneIndex],
         }}
         transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
       />

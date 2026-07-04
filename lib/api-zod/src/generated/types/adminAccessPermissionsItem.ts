@@ -6,15 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type AdminAccessPermissionsItem = typeof AdminAccessPermissionsItem[keyof typeof AdminAccessPermissionsItem];
-
+export type AdminAccessPermissionsItem =
+  (typeof AdminAccessPermissionsItem)[keyof typeof AdminAccessPermissionsItem];
 
 export const AdminAccessPermissionsItem = {
-  overview: 'overview',
-  payouts: 'payouts',
-  credit: 'credit',
-  compliance: 'compliance',
-  bins: 'bins',
-  view_staff: 'view_staff',
-  manage_staff: 'manage_staff',
+  overview: "overview",
+  payouts: "payouts",
+  credit: "credit",
+  compliance: "compliance",
+  bins: "bins",
+  view_staff: "view_staff",
+  manage_staff: "manage_staff",
 } as const;

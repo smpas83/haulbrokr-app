@@ -21,9 +21,10 @@ import { ErrorFallback } from "@/components/ErrorFallback";
  */
 
 const require = createRequire(import.meta.url);
-const { ERROR_FALLBACK_SIGNATURE } = require("../scripts/check-web-runtime.js") as {
-  ERROR_FALLBACK_SIGNATURE: RegExp;
-};
+const { ERROR_FALLBACK_SIGNATURE } =
+  require("../scripts/check-web-runtime.js") as {
+    ERROR_FALLBACK_SIGNATURE: RegExp;
+  };
 
 describe("ErrorFallback copy ↔ web runtime guard signature", () => {
   it("renders text the guard's ERROR_FALLBACK_SIGNATURE recognizes", () => {

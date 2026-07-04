@@ -30,9 +30,17 @@ const QuerySchema = z.object({
 const GeocodeBody = z.object({ address: z.string().min(3).max(500) });
 
 const OPEN_STATUSES = ["open", "bid_received", "bidding"] as const;
-const ACTIVE_JOB_STATUSES = ["active", "awarded", "accepted", "in_progress"] as const;
+const ACTIVE_JOB_STATUSES = [
+  "active",
+  "awarded",
+  "accepted",
+  "in_progress",
+] as const;
 
-function haversineMiles(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
+function haversineMiles(
+  a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number },
+): number {
   const R = 3958.8;
   const dLat = ((b.latitude - a.latitude) * Math.PI) / 180;
   const dLon = ((b.longitude - a.longitude) * Math.PI) / 180;
@@ -49,46 +57,61 @@ async function countLiveMarketplaceRows(): Promise<number> {
     db
       .select({ count: sql<number>`count(*)` })
       .from(requestsTable)
-      .where(or(
-        eq(requestsTable.status, "open"),
-        eq(requestsTable.status, "bid_received"),
-        eq(requestsTable.status, "bidding"),
-      )),
+      .where(
+        or(
+          eq(requestsTable.status, "open"),
+          eq(requestsTable.status, "bid_received"),
+          eq(requestsTable.status, "bidding"),
+        ),
+      ),
     db
       .select({ count: sql<number>`count(*)` })
       .from(jobsTable)
-      .where(or(
-        eq(jobsTable.status, "active"),
-        eq(jobsTable.status, "awarded"),
-        eq(jobsTable.status, "accepted"),
-        eq(jobsTable.status, "in_progress"),
-      )),
+      .where(
+        or(
+          eq(jobsTable.status, "active"),
+          eq(jobsTable.status, "awarded"),
+          eq(jobsTable.status, "accepted"),
+          eq(jobsTable.status, "in_progress"),
+        ),
+      ),
     db.select({ count: sql<number>`count(*)` }).from(trucksTable),
   ]);
-  return Number(openReq?.count ?? 0) + Number(activeJob?.count ?? 0) + Number(truckCount?.count ?? 0);
+  return (
+    Number(openReq?.count ?? 0) +
+    Number(activeJob?.count ?? 0) +
+    Number(truckCount?.count ?? 0)
+  );
 }
 
-async function buildLiveMarketplace(profile: { id: number; role: string }): Promise<MarketplacePayload> {
+async function buildLiveMarketplace(profile: {
+  id: number;
+  role: string;
+}): Promise<MarketplacePayload> {
   const [openRequests, activeJobs, allTrucks] = await Promise.all([
     db
       .select()
       .from(requestsTable)
-      .where(or(
-        eq(requestsTable.status, "open"),
-        eq(requestsTable.status, "bid_received"),
-        eq(requestsTable.status, "bidding"),
-      ))
+      .where(
+        or(
+          eq(requestsTable.status, "open"),
+          eq(requestsTable.status, "bid_received"),
+          eq(requestsTable.status, "bidding"),
+        ),
+      )
       .orderBy(sql`${requestsTable.createdAt} desc`)
       .limit(300),
     db
       .select()
       .from(jobsTable)
-      .where(or(
-        eq(jobsTable.status, "active"),
-        eq(jobsTable.status, "awarded"),
-        eq(jobsTable.status, "accepted"),
-        eq(jobsTable.status, "in_progress"),
-      ))
+      .where(
+        or(
+          eq(jobsTable.status, "active"),
+          eq(jobsTable.status, "awarded"),
+          eq(jobsTable.status, "accepted"),
+          eq(jobsTable.status, "in_progress"),
+        ),
+      )
       .orderBy(sql`${jobsTable.createdAt} desc`)
       .limit(200),
     db
@@ -151,9 +174,10 @@ async function buildLiveMarketplace(profile: { id: number; role: string }): Prom
   for (const row of allTrucks) {
     const owner = row.ownerCompany ?? "Carrier";
     const baseCity = owner.split(" ")[0] ?? "Dallas";
-    const coord =
-      (await geocodeAddressCached(`${baseCity}, TX, USA`)) ??
-      { latitude: 32.7767 + (row.truck.id % 10) * 0.05, longitude: -96.797 + (row.truck.id % 10) * 0.05 };
+    const coord = (await geocodeAddressCached(`${baseCity}, TX, USA`)) ?? {
+      latitude: 32.7767 + (row.truck.id % 10) * 0.05,
+      longitude: -96.797 + (row.truck.id % 10) * 0.05,
+    };
     trucks.push({
       id: row.truck.id,
       label: row.truck.truckNumber ?? `Truck ${row.truck.id}`,
@@ -168,7 +192,10 @@ async function buildLiveMarketplace(profile: { id: number; role: string }): Prom
   }
 
   const [[providerCount]] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(profilesTable).where(eq(profilesTable.role, "provider")),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(profilesTable)
+      .where(eq(profilesTable.role, "provider")),
   ]);
 
   const center =
@@ -186,24 +213,45 @@ async function buildLiveMarketplace(profile: { id: number; role: string }): Prom
     trucks,
     heatZones: buildDemoHeatZones(loads),
     stats: {
-      openLoads: loads.filter((l) => OPEN_STATUSES.includes(l.status as typeof OPEN_STATUSES[number])).length,
-      activeJobs: loads.filter((l) => ACTIVE_JOB_STATUSES.includes(l.status as typeof ACTIVE_JOB_STATUSES[number]) || l.status === "accepted" || l.status === "in_progress").length,
+      openLoads: loads.filter((l) =>
+        OPEN_STATUSES.includes(l.status as (typeof OPEN_STATUSES)[number]),
+      ).length,
+      activeJobs: loads.filter(
+        (l) =>
+          ACTIVE_JOB_STATUSES.includes(
+            l.status as (typeof ACTIVE_JOB_STATUSES)[number],
+          ) ||
+          l.status === "accepted" ||
+          l.status === "in_progress",
+      ).length,
       availableTrucks: trucks.filter((t) => t.status === "available").length,
       providers: Number(providerCount?.count ?? 0),
     },
   };
 }
 
-function filterByRadius(payload: MarketplacePayload, lat: number, lng: number, radiusMiles: number): MarketplacePayload {
+function filterByRadius(
+  payload: MarketplacePayload,
+  lat: number,
+  lng: number,
+  radiusMiles: number,
+): MarketplacePayload {
   const origin = { latitude: lat, longitude: lng };
   return {
     ...payload,
-    loads: payload.loads.filter((l) => haversineMiles(origin, l) <= radiusMiles),
-    trucks: payload.trucks.filter((t) => haversineMiles(origin, t) <= radiusMiles),
+    loads: payload.loads.filter(
+      (l) => haversineMiles(origin, l) <= radiusMiles,
+    ),
+    trucks: payload.trucks.filter(
+      (t) => haversineMiles(origin, t) <= radiusMiles,
+    ),
   };
 }
 
-async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], res: import("express").Response): Promise<void> {
+async function handleMarketplace(
+  req: Parameters<typeof getRequestProfile>[0],
+  res: import("express").Response,
+): Promise<void> {
   const profile = getRequestProfile(req);
   const parsed = QuerySchema.safeParse(req.query);
   if (!parsed.success) {
@@ -214,10 +262,21 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
   try {
     const liveCount = await countLiveMarketplaceRows();
     let payload: MarketplacePayload =
-      liveCount === 0 ? buildDemoMarketplace() : await buildLiveMarketplace(profile);
+      liveCount === 0
+        ? buildDemoMarketplace()
+        : await buildLiveMarketplace(profile);
 
-    if (parsed.data.lat != null && parsed.data.lng != null && parsed.data.radiusMiles != null) {
-      payload = filterByRadius(payload, parsed.data.lat, parsed.data.lng, parsed.data.radiusMiles);
+    if (
+      parsed.data.lat != null &&
+      parsed.data.lng != null &&
+      parsed.data.radiusMiles != null
+    ) {
+      payload = filterByRadius(
+        payload,
+        parsed.data.lat,
+        parsed.data.lng,
+        parsed.data.radiusMiles,
+      );
     }
 
     res.json(payload);
@@ -231,25 +290,31 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
  * Forward-geocode a street address (Google Geocoding API when configured, else Nominatim).
  * Kept for clients that predate GET /map/marketplace server-side geocoding.
  */
-router.post("/maps/geocode", requireProfile, async (req, res): Promise<void> => {
-  const parsed = GeocodeBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const coord = await geocodeAddressCached(parsed.data.address);
-  if (!coord) {
-    res.status(404).json({ error: "Address not found" });
-    return;
-  }
-  res.json(coord);
-});
+router.post(
+  "/maps/geocode",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const parsed = GeocodeBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+    const coord = await geocodeAddressCached(parsed.data.address);
+    if (!coord) {
+      res.status(404).json({ error: "Address not found" });
+      return;
+    }
+    res.json(coord);
+  },
+);
 
 /**
  * Nationwide marketplace map data — loads, trucks, heat zones.
  * Automatically returns demo data when production has zero live marketplace rows.
  */
-router.get("/map/marketplace", requireProfile, (req, res) => handleMarketplace(req, res));
+router.get("/map/marketplace", requireProfile, (req, res) =>
+  handleMarketplace(req, res),
+);
 router.get("/map", requireProfile, (req, res) => handleMarketplace(req, res));
 router.get("/maps", requireProfile, (req, res) => handleMarketplace(req, res));
 

@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from "react";
 
 const REPEAT_SUFFIX_RE = /_r[12]$/;
 
 export function stripRepeatSuffix(key: string): string {
-  return key.replace(REPEAT_SUFFIX_RE, '');
+  return key.replace(REPEAT_SUFFIX_RE, "");
 }
 
 function rotateFromIndex(
@@ -20,7 +20,10 @@ function rotateFromIndex(
   return result;
 }
 
-function buildLockedDurations(key: string, duration: number): Record<string, number> {
+function buildLockedDurations(
+  key: string,
+  duration: number,
+): Record<string, number> {
   return { [`${key}_r1`]: duration, [`${key}_r2`]: duration };
 }
 

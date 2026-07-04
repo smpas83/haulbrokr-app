@@ -10,7 +10,10 @@ export async function hashStaffPassword(password: string): Promise<string> {
   return `${salt}:${derived.toString("hex")}`;
 }
 
-export async function verifyStaffPassword(password: string, stored: string): Promise<boolean> {
+export async function verifyStaffPassword(
+  password: string,
+  stored: string,
+): Promise<boolean> {
   const [salt, hashHex] = stored.split(":");
   if (!salt || !hashHex) return false;
   const expected = Buffer.from(hashHex, "hex");

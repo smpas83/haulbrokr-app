@@ -6,16 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type ListRequestsStatus = typeof ListRequestsStatus[keyof typeof ListRequestsStatus];
-
+export type ListRequestsStatus =
+  (typeof ListRequestsStatus)[keyof typeof ListRequestsStatus];
 
 export const ListRequestsStatus = {
-  open: 'open',
-  bid_received: 'bid_received',
-  bidding: 'bidding',
-  awarded: 'awarded',
-  accepted: 'accepted',
-  in_progress: 'in_progress',
-  completed: 'completed',
-  cancelled: 'cancelled',
+  open: "open",
+  bid_received: "bid_received",
+  bidding: "bidding",
+  awarded: "awarded",
+  accepted: "accepted",
+  in_progress: "in_progress",
+  completed: "completed",
+  cancelled: "cancelled",
 } as const;

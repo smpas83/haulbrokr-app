@@ -26,7 +26,7 @@ export function useUnreadCount(): number {
       return () => {
         active = false;
       };
-    }, [])
+    }, []),
   );
 
   return React.useMemo(() => {

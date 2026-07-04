@@ -1,4 +1,13 @@
-import { Truck, Mail, Rocket, PackagePlus, Wallet, ReceiptText, UserCog, ArrowRight } from "lucide-react";
+import {
+  Truck,
+  Mail,
+  Rocket,
+  PackagePlus,
+  Wallet,
+  ReceiptText,
+  UserCog,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const SUPPORT_EMAIL = "info@haulbrokr.com";
@@ -14,7 +23,7 @@ const faqs = [
     icon: PackagePlus,
     question: "Posting a load",
     answer:
-      'From your dashboard, tap \u201cNew Request\u201d and enter the material, pickup and drop-off, quantity, and timing. Available fleets get notified instantly and send back bids \u2014 accept the one that works and the job goes live.',
+      "From your dashboard, tap \u201cNew Request\u201d and enter the material, pickup and drop-off, quantity, and timing. Available fleets get notified instantly and send back bids \u2014 accept the one that works and the job goes live.",
   },
   {
     icon: Wallet,
@@ -65,7 +74,11 @@ export default function SupportPage() {
             </div>
           </a>
           <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" className="font-semibold text-foreground hover:text-primary">
+            <Button
+              asChild
+              variant="ghost"
+              className="font-semibold text-foreground hover:text-primary"
+            >
               <a href="/sign-in">Log in</a>
             </Button>
             <Button asChild className="font-semibold">
@@ -80,12 +93,17 @@ export default function SupportPage() {
         <section className="py-16 md:py-24 px-4 bg-card border-b border-border relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
           <div className="container mx-auto max-w-5xl relative z-10">
-            <p className="font-mono text-sm uppercase tracking-widest text-primary mb-4">Support</p>
+            <p className="font-mono text-sm uppercase tracking-widest text-primary mb-4">
+              Support
+            </p>
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-foreground leading-[1.1]">
-              We're here to <span className="text-primary">keep you moving.</span>
+              We're here to{" "}
+              <span className="text-primary">keep you moving.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-              Questions about posting loads, payouts, or your account? Find quick answers below, or reach our team directly — we typically respond within one business day.
+              Questions about posting loads, payouts, or your account? Find
+              quick answers below, or reach our team directly — we typically
+              respond within one business day.
             </p>
           </div>
         </section>
@@ -101,12 +119,17 @@ export default function SupportPage() {
                 <div>
                   <h2 className="text-2xl font-bold mb-1">Contact us</h2>
                   <p className="text-muted-foreground max-w-md">
-                    Email our support team for help with any issue. Include your account email and a short description so we can assist you faster.
+                    Email our support team for help with any issue. Include your
+                    account email and a short description so we can assist you
+                    faster.
                   </p>
                 </div>
               </div>
               <a href={`mailto:${SUPPORT_EMAIL}`} className="shrink-0">
-                <Button size="lg" className="text-base h-12 px-6 font-bold w-full md:w-auto">
+                <Button
+                  size="lg"
+                  className="text-base h-12 px-6 font-bold w-full md:w-auto"
+                >
                   {SUPPORT_EMAIL}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -118,12 +141,19 @@ export default function SupportPage() {
         {/* FAQ */}
         <section className="py-16 md:py-20 px-4 bg-background">
           <div className="container mx-auto max-w-5xl">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Common help topics</h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
+              Common help topics
+            </h2>
             <p className="text-muted-foreground mb-12 max-w-2xl">
-              The quickest answers to the questions we hear most. Still stuck? Email us at{" "}
-              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary font-bold hover:underline">
+              The quickest answers to the questions we hear most. Still stuck?
+              Email us at{" "}
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="text-primary font-bold hover:underline"
+              >
                 {SUPPORT_EMAIL}
-              </a>.
+              </a>
+              .
             </p>
             <div className="grid md:grid-cols-2 gap-px bg-border border border-border/60">
               {faqs.map((faq) => (
@@ -132,7 +162,9 @@ export default function SupportPage() {
                     <faq.icon className="h-6 w-6" />
                   </div>
                   <h3 className="text-xl font-bold">{faq.question}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {faq.answer}
+                  </p>
                 </div>
               ))}
             </div>
@@ -146,11 +178,19 @@ export default function SupportPage() {
           HaulBrokr
         </div>
         <div className="flex items-center justify-center gap-6 mb-4 text-sm font-semibold">
-          <a href="/" className="hover:text-primary">Home</a>
-          <a href="/support" className="hover:text-primary">Support</a>
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-primary">Contact</a>
+          <a href="/" className="hover:text-primary">
+            Home
+          </a>
+          <a href="/support" className="hover:text-primary">
+            Support
+          </a>
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-primary">
+            Contact
+          </a>
         </div>
-        <p>© {new Date().getFullYear()} HaulBrokr Logistics. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} HaulBrokr Logistics. All rights reserved.
+        </p>
       </footer>
     </div>
   );

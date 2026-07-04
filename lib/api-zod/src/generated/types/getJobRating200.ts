@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { RatingResponse } from './ratingResponse';
+import type { RatingResponse } from "./ratingResponse";
 
 export type GetJobRating200 = {
   mine: RatingResponse | null;

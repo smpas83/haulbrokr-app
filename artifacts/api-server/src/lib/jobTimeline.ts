@@ -1,4 +1,8 @@
-import { db, jobStatusUpdatesTable, type InsertJobStatusUpdate } from "@workspace/db";
+import {
+  db,
+  jobStatusUpdatesTable,
+  type InsertJobStatusUpdate,
+} from "@workspace/db";
 
 type TimelineStatus = InsertJobStatusUpdate["status"];
 

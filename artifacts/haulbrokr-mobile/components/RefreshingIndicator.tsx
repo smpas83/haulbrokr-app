@@ -1,5 +1,11 @@
 import React from "react";
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -61,9 +67,19 @@ export function RefreshingIndicator({
       pointerEvents="none"
       style={[styles.wrap, { top }]}
     >
-      <View style={[styles.pill, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.pill,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
         <ActivityIndicator size="small" color={colors.primary} />
-        <Text style={[styles.text, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
+        <Text
+          style={[
+            styles.text,
+            { color: colors.mutedForeground, fontFamily: "Inter_500Medium" },
+          ]}
+        >
           {label}
         </Text>
       </View>

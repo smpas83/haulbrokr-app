@@ -8,9 +8,9 @@
 
 export interface CreateRatingRequest {
   /**
-     * @minimum 1
-     * @maximum 5
-     */
+   * @minimum 1
+   * @maximum 5
+   */
   stars: number;
   comment?: string;
 }

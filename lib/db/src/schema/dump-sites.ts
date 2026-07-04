@@ -1,4 +1,11 @@
-import { pgTable, text, serial, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  boolean,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -21,9 +28,14 @@ export const dumpSitesTable = pgTable("dump_sites", {
   type: dumpSiteTypeEnum("type").notNull().default("landfill"),
   phone: text("phone"),
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
-export const insertDumpSiteSchema = createInsertSchema(dumpSitesTable).omit({ id: true, createdAt: true });
+export const insertDumpSiteSchema = createInsertSchema(dumpSitesTable).omit({
+  id: true,
+  createdAt: true,
+});
 export type InsertDumpSite = z.infer<typeof insertDumpSiteSchema>;
 export type DumpSite = typeof dumpSitesTable.$inferSelect;

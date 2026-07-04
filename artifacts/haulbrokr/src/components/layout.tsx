@@ -1,13 +1,29 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  Truck, ClipboardList, Briefcase, LayoutDashboard,
-  LogOut, Loader2, Settings, Menu, Trash2,
-  FolderOpen, DollarSign, Plug, ShieldCheck, Building2, MapPin,
-  Sparkles, Radio
+  Truck,
+  ClipboardList,
+  Briefcase,
+  LayoutDashboard,
+  LogOut,
+  Loader2,
+  Settings,
+  Menu,
+  Trash2,
+  FolderOpen,
+  DollarSign,
+  Plug,
+  ShieldCheck,
+  Building2,
+  MapPin,
+  Sparkles,
+  Radio,
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/react";
-import { useGetMyProfile, useGetAdminAccess } from "@workspace/api-client-react";
+import {
+  useGetMyProfile,
+  useGetAdminAccess,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -21,16 +37,28 @@ interface NavItem {
   show: boolean;
 }
 
-function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; onClick?: () => void }) {
+function NavLink({
+  item,
+  active,
+  onClick,
+}: {
+  item: NavItem;
+  active: boolean;
+  onClick?: () => void;
+}) {
   return (
     <Link href={item.href} onClick={onClick}>
-      <div className={cn(
-        "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 cursor-pointer",
-        active
-          ? "bg-primary/15 text-primary border border-primary/20"
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent"
-      )}>
-        <item.icon className={cn("h-4 w-4 flex-shrink-0", active && "text-primary")} />
+      <div
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 cursor-pointer",
+          active
+            ? "bg-primary/15 text-primary border border-primary/20"
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent",
+        )}
+      >
+        <item.icon
+          className={cn("h-4 w-4 flex-shrink-0", active && "text-primary")}
+        />
         {item.label}
         {active && (
           <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
@@ -40,7 +68,13 @@ function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; on
   );
 }
 
-function Sidebar({ navItems, profile, user, onSignOut, onCopilotOpen }: {
+function Sidebar({
+  navItems,
+  profile,
+  user,
+  onSignOut,
+  onCopilotOpen,
+}: {
   navItems: NavItem[];
   profile: any;
   user: any;
@@ -76,20 +110,33 @@ function Sidebar({ navItems, profile, user, onSignOut, onCopilotOpen }: {
         <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Mission Control
         </p>
-        {navItems.filter(i => i.show).map((item) => (
-          <NavLink
-            key={item.href}
-            item={item}
-            active={location === item.href || location.startsWith(`${item.href}/`)}
-          />
-        ))}
+        {navItems
+          .filter((i) => i.show)
+          .map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              active={
+                location === item.href || location.startsWith(`${item.href}/`)
+              }
+            />
+          ))}
       </nav>
 
       <div className="p-4 border-t border-sidebar-border/50 space-y-2">
-        <div className="surface-panel rounded-xl p-3 flex items-center gap-2 cursor-pointer hover:border-primary/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onCopilotOpen} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onCopilotOpen()} aria-label="Open AI Copilot">
+        <div
+          className="surface-panel rounded-xl p-3 flex items-center gap-2 cursor-pointer hover:border-primary/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={onCopilotOpen}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && onCopilotOpen()}
+          aria-label="Open AI Copilot"
+        >
           <Sparkles className="h-4 w-4 text-primary shrink-0" />
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-sidebar-foreground truncate">AI Copilot</p>
+            <p className="text-xs font-semibold text-sidebar-foreground truncate">
+              AI Copilot
+            </p>
             <p className="text-[10px] text-emerald-400">Online</p>
           </div>
         </div>
@@ -120,7 +167,9 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading mission control...</p>
+          <p className="text-sm text-muted-foreground">
+            Loading mission control...
+          </p>
         </div>
       </div>
     );
@@ -130,39 +179,76 @@ export function Layout({ children }: { children: ReactNode }) {
   const isProvider = profile?.role === "provider";
 
   const STAFF_EMAIL_DOMAIN = "@haulbrokr.com";
-  const isStaffEmail = (user?.emailAddresses ?? []).some(
-    (e: any) => e?.emailAddress?.toLowerCase().endsWith(STAFF_EMAIL_DOMAIN)
+  const isStaffEmail = (user?.emailAddresses ?? []).some((e: any) =>
+    e?.emailAddress?.toLowerCase().endsWith(STAFF_EMAIL_DOMAIN),
   );
   const isStaff = !!adminAccess?.isAdmin && isStaffEmail;
 
   const navItems: NavItem[] = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
-    { href: "/requests", label: isCustomer ? "My Requests" : "Load Board", icon: ClipboardList, show: true },
+    {
+      href: "/dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      show: true,
+    },
+    {
+      href: "/requests",
+      label: isCustomer ? "My Requests" : "Load Board",
+      icon: ClipboardList,
+      show: true,
+    },
     { href: "/fleet", label: "My Fleet", icon: Truck, show: isProvider },
     { href: "/dispatch", label: "Digital Twin", icon: Radio, show: true },
     { href: "/jobs", label: "Active Jobs", icon: Briefcase, show: true },
     { href: "/map", label: "Live Map", icon: MapPin, show: true },
-    { href: "/projects", label: "Projects", icon: FolderOpen, show: isCustomer },
-    { href: "/company", label: "Company", icon: Building2, show: isCustomer || isProvider },
-    { href: "/factoring", label: "Get Paid Early", icon: DollarSign, show: isProvider },
+    {
+      href: "/projects",
+      label: "Projects",
+      icon: FolderOpen,
+      show: isCustomer,
+    },
+    {
+      href: "/company",
+      label: "Company",
+      icon: Building2,
+      show: isCustomer || isProvider,
+    },
+    {
+      href: "/factoring",
+      label: "Get Paid Early",
+      icon: DollarSign,
+      show: isProvider,
+    },
     { href: "/bins", label: "Bin Rental", icon: Trash2, show: true },
     { href: "/integrations", label: "Integrations", icon: Plug, show: isStaff },
     { href: "/admin", label: "Admin", icon: ShieldCheck, show: isStaff },
     { href: "/account", label: "Account", icon: Settings, show: true },
   ];
 
-  const visibleNav = navItems.filter(i => i.show);
+  const visibleNav = navItems.filter((i) => i.show);
 
-  const handleSignOut = () => signOut(() => { window.location.href = import.meta.env.BASE_URL; });
+  const handleSignOut = () =>
+    signOut(() => {
+      window.location.href = import.meta.env.BASE_URL;
+    });
 
   return (
     <div className="flex min-h-screen bg-background">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-4 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-4 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+      >
         Skip to main content
       </a>
       {/* Desktop Sidebar */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden md:flex flex-col shrink-0">
-        <Sidebar navItems={navItems} profile={profile} user={user} onSignOut={handleSignOut} onCopilotOpen={() => setCopilotOpen(true)} />
+        <Sidebar
+          navItems={navItems}
+          profile={profile}
+          user={user}
+          onSignOut={handleSignOut}
+          onCopilotOpen={() => setCopilotOpen(true)}
+        />
       </aside>
 
       {/* Main Content */}
@@ -179,23 +265,39 @@ export function Layout({ children }: { children: ReactNode }) {
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-sidebar-foreground">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-sidebar-foreground"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72 bg-sidebar border-r border-sidebar-border">
+            <SheetContent
+              side="left"
+              className="p-0 w-72 bg-sidebar border-r border-sidebar-border"
+            >
               <Sidebar
                 navItems={navItems}
                 profile={profile}
                 user={user}
-                onSignOut={() => { setMobileOpen(false); handleSignOut(); }}
-                onCopilotOpen={() => { setMobileOpen(false); setCopilotOpen(true); }}
+                onSignOut={() => {
+                  setMobileOpen(false);
+                  handleSignOut();
+                }}
+                onCopilotOpen={() => {
+                  setMobileOpen(false);
+                  setCopilotOpen(true);
+                }}
               />
             </SheetContent>
           </Sheet>
         </header>
 
-        <div id="main-content" className="flex-1 overflow-auto p-4 md:p-8 pb-24 md:pb-8 page-enter">
+        <div
+          id="main-content"
+          className="flex-1 overflow-auto p-4 md:p-8 pb-24 md:pb-8 page-enter"
+        >
           <DocumentGateBanner />
           {children}
         </div>
@@ -204,18 +306,25 @@ export function Layout({ children }: { children: ReactNode }) {
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-sidebar border-t border-sidebar-border safe-area-bottom">
           <div className="flex items-stretch h-16">
             {visibleNav.slice(0, 5).map((item) => {
-              const active = location === item.href || location.startsWith(`${item.href}/`);
+              const active =
+                location === item.href || location.startsWith(`${item.href}/`);
               return (
                 <Link key={item.href} href={item.href} className="flex-1">
-                  <div className={cn(
-                    "flex flex-col items-center justify-center h-full gap-0.5 text-[10px] font-semibold transition-colors",
-                    active
-                      ? "text-primary"
-                      : "text-sidebar-foreground/50"
-                  )}>
-                    <item.icon className={cn("h-5 w-5", active && "text-primary")} />
-                    <span className="leading-none truncate max-w-[60px]">{item.label.split(" ")[0]}</span>
-                    {active && <div className="absolute bottom-1 h-0.5 w-6 rounded-full bg-primary" />}
+                  <div
+                    className={cn(
+                      "flex flex-col items-center justify-center h-full gap-0.5 text-[10px] font-semibold transition-colors",
+                      active ? "text-primary" : "text-sidebar-foreground/50",
+                    )}
+                  >
+                    <item.icon
+                      className={cn("h-5 w-5", active && "text-primary")}
+                    />
+                    <span className="leading-none truncate max-w-[60px]">
+                      {item.label.split(" ")[0]}
+                    </span>
+                    {active && (
+                      <div className="absolute bottom-1 h-0.5 w-6 rounded-full bg-primary" />
+                    )}
                   </div>
                 </Link>
               );

@@ -7,7 +7,13 @@ export interface FaqItem {
   answer: string;
 }
 
-export function FaqSection({ items, className }: { items: FaqItem[]; className?: string }) {
+export function FaqSection({
+  items,
+  className,
+}: {
+  items: FaqItem[];
+  className?: string;
+}) {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
@@ -15,23 +21,33 @@ export function FaqSection({ items, className }: { items: FaqItem[]; className?:
       {items.map((item, i) => {
         const isOpen = open === i;
         return (
-          <div key={item.question} className="surface-panel rounded-2xl overflow-hidden">
+          <div
+            key={item.question}
+            className="surface-panel rounded-2xl overflow-hidden"
+          >
             <button
               type="button"
               className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
               onClick={() => setOpen(isOpen ? null : i)}
               aria-expanded={isOpen}
             >
-              <span className="font-semibold text-foreground">{item.question}</span>
+              <span className="font-semibold text-foreground">
+                {item.question}
+              </span>
               <ChevronDown
-                className={cn("h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")}
+                className={cn(
+                  "h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200",
+                  isOpen && "rotate-180",
+                )}
                 aria-hidden
               />
             </button>
             <div
               className={cn(
                 "grid transition-all duration-200 ease-out",
-                isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+                isOpen
+                  ? "grid-rows-[1fr] opacity-100"
+                  : "grid-rows-[0fr] opacity-0",
               )}
             >
               <div className="overflow-hidden">

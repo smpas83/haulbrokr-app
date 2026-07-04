@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { PayoutRequirements } from './payoutRequirements';
+import type { PayoutRequirements } from "./payoutRequirements";
 
 export interface PayoutStatus {
   connected: boolean;

@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { OrgMember } from './orgMember';
+import type { OrgMember } from "./orgMember";
 
 export interface OrgMembersResponse {
   members: OrgMember[];

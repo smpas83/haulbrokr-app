@@ -9,27 +9,28 @@ export interface HealthStatus {
   status: string;
 }
 
-export type UserProfileRole = typeof UserProfileRole[keyof typeof UserProfileRole];
-
+export type UserProfileRole =
+  (typeof UserProfileRole)[keyof typeof UserProfileRole];
 
 export const UserProfileRole = {
-  customer: 'customer',
-  provider: 'provider',
-  driver: 'driver',
-  supervisor: 'supervisor',
+  customer: "customer",
+  provider: "provider",
+  driver: "driver",
+  supervisor: "supervisor",
 } as const;
 
 /**
  * @nullable
  */
-export type UserProfilePaymentTerms = typeof UserProfilePaymentTerms[keyof typeof UserProfilePaymentTerms] | null;
-
+export type UserProfilePaymentTerms =
+  | (typeof UserProfilePaymentTerms)[keyof typeof UserProfilePaymentTerms]
+  | null;
 
 export const UserProfilePaymentTerms = {
-  due_on_receipt: 'due_on_receipt',
-  net_15: 'net_15',
-  net_30: 'net_30',
-  prepaid: 'prepaid',
+  due_on_receipt: "due_on_receipt",
+  net_15: "net_15",
+  net_30: "net_30",
+  prepaid: "prepaid",
 } as const;
 
 export interface UserProfile {
@@ -82,24 +83,24 @@ export interface UserProfile {
   createdAt: string;
 }
 
-export type UserProfileInputRole = typeof UserProfileInputRole[keyof typeof UserProfileInputRole];
-
+export type UserProfileInputRole =
+  (typeof UserProfileInputRole)[keyof typeof UserProfileInputRole];
 
 export const UserProfileInputRole = {
-  customer: 'customer',
-  provider: 'provider',
-  driver: 'driver',
-  supervisor: 'supervisor',
+  customer: "customer",
+  provider: "provider",
+  driver: "driver",
+  supervisor: "supervisor",
 } as const;
 
-export type UserProfileInputPaymentTerms = typeof UserProfileInputPaymentTerms[keyof typeof UserProfileInputPaymentTerms];
-
+export type UserProfileInputPaymentTerms =
+  (typeof UserProfileInputPaymentTerms)[keyof typeof UserProfileInputPaymentTerms];
 
 export const UserProfileInputPaymentTerms = {
-  due_on_receipt: 'due_on_receipt',
-  net_15: 'net_15',
-  net_30: 'net_30',
-  prepaid: 'prepaid',
+  due_on_receipt: "due_on_receipt",
+  net_15: "net_15",
+  net_30: "net_30",
+  prepaid: "prepaid",
 } as const;
 
 export interface UserProfileInput {
@@ -128,14 +129,14 @@ export interface UserProfileInput {
   paymentTerms?: UserProfileInputPaymentTerms;
 }
 
-export type UserProfileUpdatePaymentTerms = typeof UserProfileUpdatePaymentTerms[keyof typeof UserProfileUpdatePaymentTerms];
-
+export type UserProfileUpdatePaymentTerms =
+  (typeof UserProfileUpdatePaymentTerms)[keyof typeof UserProfileUpdatePaymentTerms];
 
 export const UserProfileUpdatePaymentTerms = {
-  due_on_receipt: 'due_on_receipt',
-  net_15: 'net_15',
-  net_30: 'net_30',
-  prepaid: 'prepaid',
+  due_on_receipt: "due_on_receipt",
+  net_15: "net_15",
+  net_30: "net_30",
+  prepaid: "prepaid",
 } as const;
 
 export interface UserProfileUpdate {
@@ -162,34 +163,34 @@ export interface UserProfileUpdate {
   paymentTerms?: UserProfileUpdatePaymentTerms;
 }
 
-export type TruckTruckType = typeof TruckTruckType[keyof typeof TruckTruckType];
-
+export type TruckTruckType =
+  (typeof TruckTruckType)[keyof typeof TruckTruckType];
 
 export const TruckTruckType = {
-  standard: 'standard',
-  articulated: 'articulated',
-  side_dump: 'side_dump',
-  bottom_dump: 'bottom_dump',
-  transfer: 'transfer',
-  dump_truck: 'dump_truck',
-  super_10: 'super_10',
-  end_dump: 'end_dump',
-  belly_dump: 'belly_dump',
-  lowboy: 'lowboy',
-  water_truck: 'water_truck',
-  excavator: 'excavator',
-  dozer: 'dozer',
-  skid_steer: 'skid_steer',
+  standard: "standard",
+  articulated: "articulated",
+  side_dump: "side_dump",
+  bottom_dump: "bottom_dump",
+  transfer: "transfer",
+  dump_truck: "dump_truck",
+  super_10: "super_10",
+  end_dump: "end_dump",
+  belly_dump: "belly_dump",
+  lowboy: "lowboy",
+  water_truck: "water_truck",
+  excavator: "excavator",
+  dozer: "dozer",
+  skid_steer: "skid_steer",
 } as const;
 
-export type TruckCoiStatus = typeof TruckCoiStatus[keyof typeof TruckCoiStatus];
-
+export type TruckCoiStatus =
+  (typeof TruckCoiStatus)[keyof typeof TruckCoiStatus];
 
 export const TruckCoiStatus = {
-  none: 'none',
-  pending: 'pending',
-  active: 'active',
-  expired: 'expired',
+  none: "none",
+  pending: "pending",
+  active: "active",
+  expired: "expired",
 } as const;
 
 export interface Truck {
@@ -220,34 +221,34 @@ export interface Truck {
   createdAt: string;
 }
 
-export type TruckInputTruckType = typeof TruckInputTruckType[keyof typeof TruckInputTruckType];
-
+export type TruckInputTruckType =
+  (typeof TruckInputTruckType)[keyof typeof TruckInputTruckType];
 
 export const TruckInputTruckType = {
-  standard: 'standard',
-  articulated: 'articulated',
-  side_dump: 'side_dump',
-  bottom_dump: 'bottom_dump',
-  transfer: 'transfer',
-  dump_truck: 'dump_truck',
-  super_10: 'super_10',
-  end_dump: 'end_dump',
-  belly_dump: 'belly_dump',
-  lowboy: 'lowboy',
-  water_truck: 'water_truck',
-  excavator: 'excavator',
-  dozer: 'dozer',
-  skid_steer: 'skid_steer',
+  standard: "standard",
+  articulated: "articulated",
+  side_dump: "side_dump",
+  bottom_dump: "bottom_dump",
+  transfer: "transfer",
+  dump_truck: "dump_truck",
+  super_10: "super_10",
+  end_dump: "end_dump",
+  belly_dump: "belly_dump",
+  lowboy: "lowboy",
+  water_truck: "water_truck",
+  excavator: "excavator",
+  dozer: "dozer",
+  skid_steer: "skid_steer",
 } as const;
 
-export type TruckInputCoiStatus = typeof TruckInputCoiStatus[keyof typeof TruckInputCoiStatus];
-
+export type TruckInputCoiStatus =
+  (typeof TruckInputCoiStatus)[keyof typeof TruckInputCoiStatus];
 
 export const TruckInputCoiStatus = {
-  none: 'none',
-  pending: 'pending',
-  active: 'active',
-  expired: 'expired',
+  none: "none",
+  pending: "pending",
+  active: "active",
+  expired: "expired",
 } as const;
 
 export interface TruckInput {
@@ -266,34 +267,34 @@ export interface TruckInput {
   notes?: string;
 }
 
-export type TruckUpdateTruckType = typeof TruckUpdateTruckType[keyof typeof TruckUpdateTruckType];
-
+export type TruckUpdateTruckType =
+  (typeof TruckUpdateTruckType)[keyof typeof TruckUpdateTruckType];
 
 export const TruckUpdateTruckType = {
-  standard: 'standard',
-  articulated: 'articulated',
-  side_dump: 'side_dump',
-  bottom_dump: 'bottom_dump',
-  transfer: 'transfer',
-  dump_truck: 'dump_truck',
-  super_10: 'super_10',
-  end_dump: 'end_dump',
-  belly_dump: 'belly_dump',
-  lowboy: 'lowboy',
-  water_truck: 'water_truck',
-  excavator: 'excavator',
-  dozer: 'dozer',
-  skid_steer: 'skid_steer',
+  standard: "standard",
+  articulated: "articulated",
+  side_dump: "side_dump",
+  bottom_dump: "bottom_dump",
+  transfer: "transfer",
+  dump_truck: "dump_truck",
+  super_10: "super_10",
+  end_dump: "end_dump",
+  belly_dump: "belly_dump",
+  lowboy: "lowboy",
+  water_truck: "water_truck",
+  excavator: "excavator",
+  dozer: "dozer",
+  skid_steer: "skid_steer",
 } as const;
 
-export type TruckUpdateCoiStatus = typeof TruckUpdateCoiStatus[keyof typeof TruckUpdateCoiStatus];
-
+export type TruckUpdateCoiStatus =
+  (typeof TruckUpdateCoiStatus)[keyof typeof TruckUpdateCoiStatus];
 
 export const TruckUpdateCoiStatus = {
-  none: 'none',
-  pending: 'pending',
-  active: 'active',
-  expired: 'expired',
+  none: "none",
+  pending: "pending",
+  active: "active",
+  expired: "expired",
 } as const;
 
 export interface TruckUpdate {
@@ -312,53 +313,53 @@ export interface TruckUpdate {
   notes?: string;
 }
 
-export type JobRequestMaterialType = typeof JobRequestMaterialType[keyof typeof JobRequestMaterialType];
-
+export type JobRequestMaterialType =
+  (typeof JobRequestMaterialType)[keyof typeof JobRequestMaterialType];
 
 export const JobRequestMaterialType = {
-  dirt: 'dirt',
-  gravel: 'gravel',
-  sand: 'sand',
-  concrete: 'concrete',
-  asphalt: 'asphalt',
-  demolition: 'demolition',
-  topsoil: 'topsoil',
-  fill: 'fill',
-  other: 'other',
+  dirt: "dirt",
+  gravel: "gravel",
+  sand: "sand",
+  concrete: "concrete",
+  asphalt: "asphalt",
+  demolition: "demolition",
+  topsoil: "topsoil",
+  fill: "fill",
+  other: "other",
 } as const;
 
-export type JobRequestTruckType = typeof JobRequestTruckType[keyof typeof JobRequestTruckType];
-
+export type JobRequestTruckType =
+  (typeof JobRequestTruckType)[keyof typeof JobRequestTruckType];
 
 export const JobRequestTruckType = {
-  standard: 'standard',
-  articulated: 'articulated',
-  side_dump: 'side_dump',
-  bottom_dump: 'bottom_dump',
-  transfer: 'transfer',
-  dump_truck: 'dump_truck',
-  super_10: 'super_10',
-  end_dump: 'end_dump',
-  belly_dump: 'belly_dump',
-  lowboy: 'lowboy',
-  water_truck: 'water_truck',
-  excavator: 'excavator',
-  dozer: 'dozer',
-  skid_steer: 'skid_steer',
+  standard: "standard",
+  articulated: "articulated",
+  side_dump: "side_dump",
+  bottom_dump: "bottom_dump",
+  transfer: "transfer",
+  dump_truck: "dump_truck",
+  super_10: "super_10",
+  end_dump: "end_dump",
+  belly_dump: "belly_dump",
+  lowboy: "lowboy",
+  water_truck: "water_truck",
+  excavator: "excavator",
+  dozer: "dozer",
+  skid_steer: "skid_steer",
 } as const;
 
-export type JobRequestStatus = typeof JobRequestStatus[keyof typeof JobRequestStatus];
-
+export type JobRequestStatus =
+  (typeof JobRequestStatus)[keyof typeof JobRequestStatus];
 
 export const JobRequestStatus = {
-  open: 'open',
-  bid_received: 'bid_received',
-  bidding: 'bidding',
-  awarded: 'awarded',
-  accepted: 'accepted',
-  in_progress: 'in_progress',
-  completed: 'completed',
-  cancelled: 'cancelled',
+  open: "open",
+  bid_received: "bid_received",
+  bidding: "bidding",
+  awarded: "awarded",
+  accepted: "accepted",
+  in_progress: "in_progress",
+  completed: "completed",
+  cancelled: "cancelled",
 } as const;
 
 export interface JobRequest {
@@ -384,39 +385,39 @@ export interface JobRequest {
   createdAt: string;
 }
 
-export type JobRequestInputMaterialType = typeof JobRequestInputMaterialType[keyof typeof JobRequestInputMaterialType];
-
+export type JobRequestInputMaterialType =
+  (typeof JobRequestInputMaterialType)[keyof typeof JobRequestInputMaterialType];
 
 export const JobRequestInputMaterialType = {
-  dirt: 'dirt',
-  gravel: 'gravel',
-  sand: 'sand',
-  concrete: 'concrete',
-  asphalt: 'asphalt',
-  demolition: 'demolition',
-  topsoil: 'topsoil',
-  fill: 'fill',
-  other: 'other',
+  dirt: "dirt",
+  gravel: "gravel",
+  sand: "sand",
+  concrete: "concrete",
+  asphalt: "asphalt",
+  demolition: "demolition",
+  topsoil: "topsoil",
+  fill: "fill",
+  other: "other",
 } as const;
 
-export type JobRequestInputTruckType = typeof JobRequestInputTruckType[keyof typeof JobRequestInputTruckType];
-
+export type JobRequestInputTruckType =
+  (typeof JobRequestInputTruckType)[keyof typeof JobRequestInputTruckType];
 
 export const JobRequestInputTruckType = {
-  standard: 'standard',
-  articulated: 'articulated',
-  side_dump: 'side_dump',
-  bottom_dump: 'bottom_dump',
-  transfer: 'transfer',
-  dump_truck: 'dump_truck',
-  super_10: 'super_10',
-  end_dump: 'end_dump',
-  belly_dump: 'belly_dump',
-  lowboy: 'lowboy',
-  water_truck: 'water_truck',
-  excavator: 'excavator',
-  dozer: 'dozer',
-  skid_steer: 'skid_steer',
+  standard: "standard",
+  articulated: "articulated",
+  side_dump: "side_dump",
+  bottom_dump: "bottom_dump",
+  transfer: "transfer",
+  dump_truck: "dump_truck",
+  super_10: "super_10",
+  end_dump: "end_dump",
+  belly_dump: "belly_dump",
+  lowboy: "lowboy",
+  water_truck: "water_truck",
+  excavator: "excavator",
+  dozer: "dozer",
+  skid_steer: "skid_steer",
 } as const;
 
 export interface JobRequestInput {
@@ -427,9 +428,9 @@ export interface JobRequestInput {
   deliveryAddress: string;
   scheduledDate: string;
   /**
-     * Local start time in HH:mm (24-hour) format
-     * @pattern ^([01]\d|2[0-3]):[0-5]\d$
-     */
+   * Local start time in HH:mm (24-hour) format
+   * @pattern ^([01]\d|2[0-3]):[0-5]\d$
+   */
   startTime: string;
   /** @minimum 0.5 */
   estimatedHours: number;
@@ -438,53 +439,53 @@ export interface JobRequestInput {
   notes?: string;
 }
 
-export type JobRequestUpdateStatus = typeof JobRequestUpdateStatus[keyof typeof JobRequestUpdateStatus];
-
+export type JobRequestUpdateStatus =
+  (typeof JobRequestUpdateStatus)[keyof typeof JobRequestUpdateStatus];
 
 export const JobRequestUpdateStatus = {
-  open: 'open',
-  bid_received: 'bid_received',
-  bidding: 'bidding',
-  awarded: 'awarded',
-  accepted: 'accepted',
-  in_progress: 'in_progress',
-  completed: 'completed',
-  cancelled: 'cancelled',
+  open: "open",
+  bid_received: "bid_received",
+  bidding: "bidding",
+  awarded: "awarded",
+  accepted: "accepted",
+  in_progress: "in_progress",
+  completed: "completed",
+  cancelled: "cancelled",
 } as const;
 
-export type JobRequestUpdateMaterialType = typeof JobRequestUpdateMaterialType[keyof typeof JobRequestUpdateMaterialType];
-
+export type JobRequestUpdateMaterialType =
+  (typeof JobRequestUpdateMaterialType)[keyof typeof JobRequestUpdateMaterialType];
 
 export const JobRequestUpdateMaterialType = {
-  dirt: 'dirt',
-  gravel: 'gravel',
-  sand: 'sand',
-  concrete: 'concrete',
-  asphalt: 'asphalt',
-  demolition: 'demolition',
-  topsoil: 'topsoil',
-  fill: 'fill',
-  other: 'other',
+  dirt: "dirt",
+  gravel: "gravel",
+  sand: "sand",
+  concrete: "concrete",
+  asphalt: "asphalt",
+  demolition: "demolition",
+  topsoil: "topsoil",
+  fill: "fill",
+  other: "other",
 } as const;
 
-export type JobRequestUpdateTruckType = typeof JobRequestUpdateTruckType[keyof typeof JobRequestUpdateTruckType];
-
+export type JobRequestUpdateTruckType =
+  (typeof JobRequestUpdateTruckType)[keyof typeof JobRequestUpdateTruckType];
 
 export const JobRequestUpdateTruckType = {
-  standard: 'standard',
-  articulated: 'articulated',
-  side_dump: 'side_dump',
-  bottom_dump: 'bottom_dump',
-  transfer: 'transfer',
-  dump_truck: 'dump_truck',
-  super_10: 'super_10',
-  end_dump: 'end_dump',
-  belly_dump: 'belly_dump',
-  lowboy: 'lowboy',
-  water_truck: 'water_truck',
-  excavator: 'excavator',
-  dozer: 'dozer',
-  skid_steer: 'skid_steer',
+  standard: "standard",
+  articulated: "articulated",
+  side_dump: "side_dump",
+  bottom_dump: "bottom_dump",
+  transfer: "transfer",
+  dump_truck: "dump_truck",
+  super_10: "super_10",
+  end_dump: "end_dump",
+  belly_dump: "belly_dump",
+  lowboy: "lowboy",
+  water_truck: "water_truck",
+  excavator: "excavator",
+  dozer: "dozer",
+  skid_steer: "skid_steer",
 } as const;
 
 export interface JobRequestUpdate {
@@ -503,15 +504,14 @@ export interface JobRequestUpdate {
   notes?: string;
 }
 
-export type BidStatus = typeof BidStatus[keyof typeof BidStatus];
-
+export type BidStatus = (typeof BidStatus)[keyof typeof BidStatus];
 
 export const BidStatus = {
-  pending: 'pending',
-  awarded: 'awarded',
-  accepted: 'accepted',
-  rejected: 'rejected',
-  withdrawn: 'withdrawn',
+  pending: "pending",
+  awarded: "awarded",
+  accepted: "accepted",
+  rejected: "rejected",
+  withdrawn: "withdrawn",
 } as const;
 
 export interface Bid {
@@ -536,74 +536,73 @@ export interface BidInput {
   message?: string;
 }
 
-export type BidUpdateStatus = typeof BidUpdateStatus[keyof typeof BidUpdateStatus];
-
+export type BidUpdateStatus =
+  (typeof BidUpdateStatus)[keyof typeof BidUpdateStatus];
 
 export const BidUpdateStatus = {
-  accepted: 'accepted',
-  rejected: 'rejected',
-  withdrawn: 'withdrawn',
+  accepted: "accepted",
+  rejected: "rejected",
+  withdrawn: "withdrawn",
 } as const;
 
 export interface BidUpdate {
   status: BidUpdateStatus;
 }
 
-export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
-
+export type JobStatus = (typeof JobStatus)[keyof typeof JobStatus];
 
 export const JobStatus = {
-  active: 'active',
-  awarded: 'awarded',
-  accepted: 'accepted',
-  declined: 'declined',
-  cancelled: 'cancelled',
-  in_progress: 'in_progress',
-  completed: 'completed',
+  active: "active",
+  awarded: "awarded",
+  accepted: "accepted",
+  declined: "declined",
+  cancelled: "cancelled",
+  in_progress: "in_progress",
+  completed: "completed",
 } as const;
 
-export type JobTruckType = typeof JobTruckType[keyof typeof JobTruckType];
-
+export type JobTruckType = (typeof JobTruckType)[keyof typeof JobTruckType];
 
 export const JobTruckType = {
-  standard: 'standard',
-  articulated: 'articulated',
-  side_dump: 'side_dump',
-  bottom_dump: 'bottom_dump',
-  transfer: 'transfer',
-  dump_truck: 'dump_truck',
-  super_10: 'super_10',
-  end_dump: 'end_dump',
-  belly_dump: 'belly_dump',
-  lowboy: 'lowboy',
-  water_truck: 'water_truck',
-  excavator: 'excavator',
-  dozer: 'dozer',
-  skid_steer: 'skid_steer',
+  standard: "standard",
+  articulated: "articulated",
+  side_dump: "side_dump",
+  bottom_dump: "bottom_dump",
+  transfer: "transfer",
+  dump_truck: "dump_truck",
+  super_10: "super_10",
+  end_dump: "end_dump",
+  belly_dump: "belly_dump",
+  lowboy: "lowboy",
+  water_truck: "water_truck",
+  excavator: "excavator",
+  dozer: "dozer",
+  skid_steer: "skid_steer",
 } as const;
 
-export type JobPaymentStatus = typeof JobPaymentStatus[keyof typeof JobPaymentStatus];
-
+export type JobPaymentStatus =
+  (typeof JobPaymentStatus)[keyof typeof JobPaymentStatus];
 
 export const JobPaymentStatus = {
-  unpaid: 'unpaid',
-  invoiced: 'invoiced',
-  paid: 'paid',
-  released: 'released',
-  failed: 'failed',
-  requires_action: 'requires_action',
+  unpaid: "unpaid",
+  invoiced: "invoiced",
+  paid: "paid",
+  released: "released",
+  failed: "failed",
+  requires_action: "requires_action",
 } as const;
 
 /**
  * @nullable
  */
-export type JobCompletionApproval = typeof JobCompletionApproval[keyof typeof JobCompletionApproval] | null;
-
+export type JobCompletionApproval =
+  | (typeof JobCompletionApproval)[keyof typeof JobCompletionApproval]
+  | null;
 
 export const JobCompletionApproval = {
-  pending: 'pending',
-  approved: 'approved',
-  flagged: 'flagged',
+  pending: "pending",
+  approved: "approved",
+  flagged: "flagged",
 } as const;
 
 export interface Job {
@@ -664,12 +663,12 @@ export interface Job {
   createdAt: string;
 }
 
-export type JobUpdateStatus = typeof JobUpdateStatus[keyof typeof JobUpdateStatus];
-
+export type JobUpdateStatus =
+  (typeof JobUpdateStatus)[keyof typeof JobUpdateStatus];
 
 export const JobUpdateStatus = {
-  in_progress: 'in_progress',
-  completed: 'completed',
+  in_progress: "in_progress",
+  completed: "completed",
 } as const;
 
 export interface JobUpdate {
@@ -688,28 +687,28 @@ export interface DashboardStats {
   totalSpent: number;
 }
 
-export type ActivityItemType = typeof ActivityItemType[keyof typeof ActivityItemType];
-
+export type ActivityItemType =
+  (typeof ActivityItemType)[keyof typeof ActivityItemType];
 
 export const ActivityItemType = {
-  request_posted: 'request_posted',
-  bid_placed: 'bid_placed',
-  bid_awarded: 'bid_awarded',
-  bid_accepted: 'bid_accepted',
-  job_accepted: 'job_accepted',
-  job_declined: 'job_declined',
-  job_started: 'job_started',
-  job_completed: 'job_completed',
-  payment_failed: 'payment_failed',
-  payment_requires_action: 'payment_requires_action',
-  application_approved: 'application_approved',
-  application_rejected: 'application_rejected',
-  payout_delayed: 'payout_delayed',
-  payout_stuck_alert: 'payout_stuck_alert',
-  bin_confirmed: 'bin_confirmed',
-  bin_delivered: 'bin_delivered',
-  bin_picked_up: 'bin_picked_up',
-  bin_cancelled: 'bin_cancelled',
+  request_posted: "request_posted",
+  bid_placed: "bid_placed",
+  bid_awarded: "bid_awarded",
+  bid_accepted: "bid_accepted",
+  job_accepted: "job_accepted",
+  job_declined: "job_declined",
+  job_started: "job_started",
+  job_completed: "job_completed",
+  payment_failed: "payment_failed",
+  payment_requires_action: "payment_requires_action",
+  application_approved: "application_approved",
+  application_rejected: "application_rejected",
+  payout_delayed: "payout_delayed",
+  payout_stuck_alert: "payout_stuck_alert",
+  bin_confirmed: "bin_confirmed",
+  bin_delivered: "bin_delivered",
+  bin_picked_up: "bin_picked_up",
+  bin_cancelled: "bin_cancelled",
 } as const;
 
 export interface ActivityItem {
@@ -723,13 +722,13 @@ export interface ActivityItem {
   createdAt: string;
 }
 
-export type WalletTransactionType = typeof WalletTransactionType[keyof typeof WalletTransactionType];
-
+export type WalletTransactionType =
+  (typeof WalletTransactionType)[keyof typeof WalletTransactionType];
 
 export const WalletTransactionType = {
-  payout: 'payout',
-  factoring: 'factoring',
-  earning: 'earning',
+  payout: "payout",
+  factoring: "factoring",
+  earning: "earning",
 } as const;
 
 export interface WalletTransaction {
@@ -756,16 +755,15 @@ export interface Wallet {
   transactions: WalletTransaction[];
 }
 
-export type DumpSiteType = typeof DumpSiteType[keyof typeof DumpSiteType];
-
+export type DumpSiteType = (typeof DumpSiteType)[keyof typeof DumpSiteType];
 
 export const DumpSiteType = {
-  landfill: 'landfill',
-  transfer_station: 'transfer_station',
-  recycling_center: 'recycling_center',
-  construction_debris: 'construction_debris',
-  hazardous_waste: 'hazardous_waste',
-  compost: 'compost',
+  landfill: "landfill",
+  transfer_station: "transfer_station",
+  recycling_center: "recycling_center",
+  construction_debris: "construction_debris",
+  hazardous_waste: "hazardous_waste",
+  compost: "compost",
 } as const;
 
 export interface DumpSite {
@@ -782,35 +780,35 @@ export interface DumpSite {
   fullAddress?: string;
 }
 
-export type W9SubmissionBusinessType = typeof W9SubmissionBusinessType[keyof typeof W9SubmissionBusinessType];
-
+export type W9SubmissionBusinessType =
+  (typeof W9SubmissionBusinessType)[keyof typeof W9SubmissionBusinessType];
 
 export const W9SubmissionBusinessType = {
-  sole_proprietor: 'sole_proprietor',
-  single_member_llc: 'single_member_llc',
-  multi_member_llc: 'multi_member_llc',
-  partnership: 'partnership',
-  c_corporation: 'c_corporation',
-  s_corporation: 's_corporation',
-  other: 'other',
+  sole_proprietor: "sole_proprietor",
+  single_member_llc: "single_member_llc",
+  multi_member_llc: "multi_member_llc",
+  partnership: "partnership",
+  c_corporation: "c_corporation",
+  s_corporation: "s_corporation",
+  other: "other",
 } as const;
 
-export type W9SubmissionTaxIdType = typeof W9SubmissionTaxIdType[keyof typeof W9SubmissionTaxIdType];
-
+export type W9SubmissionTaxIdType =
+  (typeof W9SubmissionTaxIdType)[keyof typeof W9SubmissionTaxIdType];
 
 export const W9SubmissionTaxIdType = {
-  ein: 'ein',
-  ssn: 'ssn',
+  ein: "ein",
+  ssn: "ssn",
 } as const;
 
-export type W9SubmissionStatus = typeof W9SubmissionStatus[keyof typeof W9SubmissionStatus];
-
+export type W9SubmissionStatus =
+  (typeof W9SubmissionStatus)[keyof typeof W9SubmissionStatus];
 
 export const W9SubmissionStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
 export interface W9Submission {
@@ -834,25 +832,25 @@ export interface W9Submission {
   createdAt: string;
 }
 
-export type W9InputBusinessType = typeof W9InputBusinessType[keyof typeof W9InputBusinessType];
-
+export type W9InputBusinessType =
+  (typeof W9InputBusinessType)[keyof typeof W9InputBusinessType];
 
 export const W9InputBusinessType = {
-  sole_proprietor: 'sole_proprietor',
-  single_member_llc: 'single_member_llc',
-  multi_member_llc: 'multi_member_llc',
-  partnership: 'partnership',
-  c_corporation: 'c_corporation',
-  s_corporation: 's_corporation',
-  other: 'other',
+  sole_proprietor: "sole_proprietor",
+  single_member_llc: "single_member_llc",
+  multi_member_llc: "multi_member_llc",
+  partnership: "partnership",
+  c_corporation: "c_corporation",
+  s_corporation: "s_corporation",
+  other: "other",
 } as const;
 
-export type W9InputTaxIdType = typeof W9InputTaxIdType[keyof typeof W9InputTaxIdType];
-
+export type W9InputTaxIdType =
+  (typeof W9InputTaxIdType)[keyof typeof W9InputTaxIdType];
 
 export const W9InputTaxIdType = {
-  ein: 'ein',
-  ssn: 'ssn',
+  ein: "ein",
+  ssn: "ssn",
 } as const;
 
 export interface W9Input {
@@ -869,14 +867,14 @@ export interface W9Input {
   agreedToTerms: string;
 }
 
-export type InsuranceSubmissionStatus = typeof InsuranceSubmissionStatus[keyof typeof InsuranceSubmissionStatus];
-
+export type InsuranceSubmissionStatus =
+  (typeof InsuranceSubmissionStatus)[keyof typeof InsuranceSubmissionStatus];
 
 export const InsuranceSubmissionStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
 export interface InsuranceSubmission {
@@ -932,15 +930,15 @@ export interface InsuranceInput {
   certificateHolderName?: string;
 }
 
-export type PaymentMethodMethodType = typeof PaymentMethodMethodType[keyof typeof PaymentMethodMethodType];
-
+export type PaymentMethodMethodType =
+  (typeof PaymentMethodMethodType)[keyof typeof PaymentMethodMethodType];
 
 export const PaymentMethodMethodType = {
-  credit_card: 'credit_card',
-  ach: 'ach',
-  net_15: 'net_15',
-  net_30: 'net_30',
-  net_45: 'net_45',
+  credit_card: "credit_card",
+  ach: "ach",
+  net_15: "net_15",
+  net_30: "net_30",
+  net_45: "net_45",
 } as const;
 
 export interface PaymentMethod {
@@ -952,9 +950,9 @@ export interface PaymentMethod {
   /** @nullable */
   stripePaymentMethodId?: string | null;
   /**
-     * null when nothing needs verifying (cards, net terms, instantly-verified ACH); "pending" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); "verified" once confirmed.
-     * @nullable
-     */
+   * null when nothing needs verifying (cards, net terms, instantly-verified ACH); "pending" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); "verified" once confirmed.
+   * @nullable
+   */
   verificationStatus?: string | null;
   /** @nullable */
   cardLast4?: string | null;
@@ -981,15 +979,15 @@ export interface PaymentMethod {
   createdAt: string;
 }
 
-export type PaymentMethodInputMethodType = typeof PaymentMethodInputMethodType[keyof typeof PaymentMethodInputMethodType];
-
+export type PaymentMethodInputMethodType =
+  (typeof PaymentMethodInputMethodType)[keyof typeof PaymentMethodInputMethodType];
 
 export const PaymentMethodInputMethodType = {
-  credit_card: 'credit_card',
-  ach: 'ach',
-  net_15: 'net_15',
-  net_30: 'net_30',
-  net_45: 'net_45',
+  credit_card: "credit_card",
+  ach: "ach",
+  net_15: "net_15",
+  net_30: "net_30",
+  net_45: "net_45",
 } as const;
 
 export interface PaymentMethodInput {
@@ -1017,10 +1015,10 @@ export interface PaymentMethodInput {
  */
 export interface VerifyMicrodepositsInput {
   /**
-     * The two micro-deposit amounts in cents, e.g. [32, 45].
-     * @minItems 2
-     * @maxItems 2
-     */
+   * The two micro-deposit amounts in cents, e.g. [32, 45].
+   * @minItems 2
+   * @maxItems 2
+   */
   amounts?: number[];
   /** The descriptor code (e.g. "SM11AA") from the verification deposit. */
   descriptorCode?: string;
@@ -1042,22 +1040,22 @@ export interface PaymentConfirmation {
   paymentIntentId: string;
 }
 
-export type PayoutAccountAccountType = typeof PayoutAccountAccountType[keyof typeof PayoutAccountAccountType];
-
+export type PayoutAccountAccountType =
+  (typeof PayoutAccountAccountType)[keyof typeof PayoutAccountAccountType];
 
 export const PayoutAccountAccountType = {
-  checking: 'checking',
-  savings: 'savings',
+  checking: "checking",
+  savings: "savings",
 } as const;
 
-export type PayoutAccountStatus = typeof PayoutAccountStatus[keyof typeof PayoutAccountStatus];
-
+export type PayoutAccountStatus =
+  (typeof PayoutAccountStatus)[keyof typeof PayoutAccountStatus];
 
 export const PayoutAccountStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
 export interface PayoutAccount {
@@ -1072,12 +1070,12 @@ export interface PayoutAccount {
   createdAt: string;
 }
 
-export type PayoutAccountInputAccountType = typeof PayoutAccountInputAccountType[keyof typeof PayoutAccountInputAccountType];
-
+export type PayoutAccountInputAccountType =
+  (typeof PayoutAccountInputAccountType)[keyof typeof PayoutAccountInputAccountType];
 
 export const PayoutAccountInputAccountType = {
-  checking: 'checking',
-  savings: 'savings',
+  checking: "checking",
+  savings: "savings",
 } as const;
 
 export interface PayoutAccountInput {
@@ -1101,14 +1099,14 @@ export interface PayoutRequirements {
   /** Items Stripe is actively reviewing — nothing for the provider to do. */
   pendingVerification: PayoutRequirement[];
   /**
-     * Stripe's machine reason payouts are disabled, if any.
-     * @nullable
-     */
+   * Stripe's machine reason payouts are disabled, if any.
+   * @nullable
+   */
   disabledReason: string | null;
   /**
-     * Unix seconds by which currentlyDue items must be resolved, if Stripe set a deadline.
-     * @nullable
-     */
+   * Unix seconds by which currentlyDue items must be resolved, if Stripe set a deadline.
+   * @nullable
+   */
   currentDeadline: number | null;
 }
 
@@ -1148,52 +1146,52 @@ export interface VerifyCheckoutInput {
   sessionId: string;
 }
 
-export type AccountStatusW9Status = typeof AccountStatusW9Status[keyof typeof AccountStatusW9Status];
-
+export type AccountStatusW9Status =
+  (typeof AccountStatusW9Status)[keyof typeof AccountStatusW9Status];
 
 export const AccountStatusW9Status = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
-export type AccountStatusInsuranceStatus = typeof AccountStatusInsuranceStatus[keyof typeof AccountStatusInsuranceStatus];
-
+export type AccountStatusInsuranceStatus =
+  (typeof AccountStatusInsuranceStatus)[keyof typeof AccountStatusInsuranceStatus];
 
 export const AccountStatusInsuranceStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
-export type AccountStatusDotCdlStatus = typeof AccountStatusDotCdlStatus[keyof typeof AccountStatusDotCdlStatus];
-
+export type AccountStatusDotCdlStatus =
+  (typeof AccountStatusDotCdlStatus)[keyof typeof AccountStatusDotCdlStatus];
 
 export const AccountStatusDotCdlStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
-export type AccountStatusPaymentStatus = typeof AccountStatusPaymentStatus[keyof typeof AccountStatusPaymentStatus];
-
+export type AccountStatusPaymentStatus =
+  (typeof AccountStatusPaymentStatus)[keyof typeof AccountStatusPaymentStatus];
 
 export const AccountStatusPaymentStatus = {
-  not_set: 'not_set',
-  set: 'set',
+  not_set: "not_set",
+  set: "set",
 } as const;
 
-export type AccountStatusPayoutStatus = typeof AccountStatusPayoutStatus[keyof typeof AccountStatusPayoutStatus];
-
+export type AccountStatusPayoutStatus =
+  (typeof AccountStatusPayoutStatus)[keyof typeof AccountStatusPayoutStatus];
 
 export const AccountStatusPayoutStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
 export interface AccountStatus {
@@ -1207,44 +1205,44 @@ export interface AccountStatus {
   canPost: boolean;
 }
 
-export type OrganizationComplianceStatusW9Status = typeof OrganizationComplianceStatusW9Status[keyof typeof OrganizationComplianceStatusW9Status];
-
+export type OrganizationComplianceStatusW9Status =
+  (typeof OrganizationComplianceStatusW9Status)[keyof typeof OrganizationComplianceStatusW9Status];
 
 export const OrganizationComplianceStatusW9Status = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
-export type OrganizationComplianceStatusInsuranceStatus = typeof OrganizationComplianceStatusInsuranceStatus[keyof typeof OrganizationComplianceStatusInsuranceStatus];
-
+export type OrganizationComplianceStatusInsuranceStatus =
+  (typeof OrganizationComplianceStatusInsuranceStatus)[keyof typeof OrganizationComplianceStatusInsuranceStatus];
 
 export const OrganizationComplianceStatusInsuranceStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
-export type OrganizationComplianceStatusDotCdlStatus = typeof OrganizationComplianceStatusDotCdlStatus[keyof typeof OrganizationComplianceStatusDotCdlStatus];
-
+export type OrganizationComplianceStatusDotCdlStatus =
+  (typeof OrganizationComplianceStatusDotCdlStatus)[keyof typeof OrganizationComplianceStatusDotCdlStatus];
 
 export const OrganizationComplianceStatusDotCdlStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
-export type OrganizationComplianceStatusPayoutStatus = typeof OrganizationComplianceStatusPayoutStatus[keyof typeof OrganizationComplianceStatusPayoutStatus];
-
+export type OrganizationComplianceStatusPayoutStatus =
+  (typeof OrganizationComplianceStatusPayoutStatus)[keyof typeof OrganizationComplianceStatusPayoutStatus];
 
 export const OrganizationComplianceStatusPayoutStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;
 
 export interface OrganizationComplianceStatus {
@@ -1261,40 +1259,40 @@ export interface OrganizationComplianceStatus {
   dotCdlReviewNote?: string | null;
 }
 
-export type ComplianceRecordFmcsaAuthority = typeof ComplianceRecordFmcsaAuthority[keyof typeof ComplianceRecordFmcsaAuthority];
-
+export type ComplianceRecordFmcsaAuthority =
+  (typeof ComplianceRecordFmcsaAuthority)[keyof typeof ComplianceRecordFmcsaAuthority];
 
 export const ComplianceRecordFmcsaAuthority = {
-  unknown: 'unknown',
-  verified: 'verified',
-  failed: 'failed',
+  unknown: "unknown",
+  verified: "verified",
+  failed: "failed",
 } as const;
 
-export type ComplianceRecordInsuranceActive = typeof ComplianceRecordInsuranceActive[keyof typeof ComplianceRecordInsuranceActive];
-
+export type ComplianceRecordInsuranceActive =
+  (typeof ComplianceRecordInsuranceActive)[keyof typeof ComplianceRecordInsuranceActive];
 
 export const ComplianceRecordInsuranceActive = {
-  unknown: 'unknown',
-  verified: 'verified',
-  failed: 'failed',
+  unknown: "unknown",
+  verified: "verified",
+  failed: "failed",
 } as const;
 
-export type ComplianceRecordDotOperatingStatus = typeof ComplianceRecordDotOperatingStatus[keyof typeof ComplianceRecordDotOperatingStatus];
-
+export type ComplianceRecordDotOperatingStatus =
+  (typeof ComplianceRecordDotOperatingStatus)[keyof typeof ComplianceRecordDotOperatingStatus];
 
 export const ComplianceRecordDotOperatingStatus = {
-  unknown: 'unknown',
-  verified: 'verified',
-  failed: 'failed',
+  unknown: "unknown",
+  verified: "verified",
+  failed: "failed",
 } as const;
 
-export type ComplianceRecordNotSuspended = typeof ComplianceRecordNotSuspended[keyof typeof ComplianceRecordNotSuspended];
-
+export type ComplianceRecordNotSuspended =
+  (typeof ComplianceRecordNotSuspended)[keyof typeof ComplianceRecordNotSuspended];
 
 export const ComplianceRecordNotSuspended = {
-  unknown: 'unknown',
-  verified: 'verified',
-  failed: 'failed',
+  unknown: "unknown",
+  verified: "verified",
+  failed: "failed",
 } as const;
 
 export interface ComplianceRecord {
@@ -1341,14 +1339,14 @@ export interface ComplianceInput {
   cdlExpiry?: string;
 }
 
-export type CreditApplicationStatus = typeof CreditApplicationStatus[keyof typeof CreditApplicationStatus];
-
+export type CreditApplicationStatus =
+  (typeof CreditApplicationStatus)[keyof typeof CreditApplicationStatus];
 
 export const CreditApplicationStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  approved: 'approved',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
 } as const;
 
 export interface CreditApplication {
@@ -1378,39 +1376,40 @@ export interface CreditApplicationInput {
  * The caller's resolved HaulBrokr staff role, or null if not staff.
  * @nullable
  */
-export type AdminAccessStaffRole = typeof AdminAccessStaffRole[keyof typeof AdminAccessStaffRole] | null;
-
+export type AdminAccessStaffRole =
+  | (typeof AdminAccessStaffRole)[keyof typeof AdminAccessStaffRole]
+  | null;
 
 export const AdminAccessStaffRole = {
-  ap: 'ap',
-  ar: 'ar',
-  cfo: 'cfo',
-  cto: 'cto',
-  ceo: 'ceo',
-  accounting: 'accounting',
-  it: 'it',
+  ap: "ap",
+  ar: "ar",
+  cfo: "cfo",
+  cto: "cto",
+  ceo: "ceo",
+  accounting: "accounting",
+  it: "it",
 } as const;
 
-export type AdminAccessPermissionsItem = typeof AdminAccessPermissionsItem[keyof typeof AdminAccessPermissionsItem];
-
+export type AdminAccessPermissionsItem =
+  (typeof AdminAccessPermissionsItem)[keyof typeof AdminAccessPermissionsItem];
 
 export const AdminAccessPermissionsItem = {
-  overview: 'overview',
-  payouts: 'payouts',
-  credit: 'credit',
-  compliance: 'compliance',
-  bins: 'bins',
-  view_staff: 'view_staff',
-  manage_staff: 'manage_staff',
+  overview: "overview",
+  payouts: "payouts",
+  credit: "credit",
+  compliance: "compliance",
+  bins: "bins",
+  view_staff: "view_staff",
+  manage_staff: "manage_staff",
 } as const;
 
 export interface AdminAccess {
   /** True when the caller has any staff role (at least one permission). */
   isAdmin: boolean;
   /**
-     * The caller's resolved HaulBrokr staff role, or null if not staff.
-     * @nullable
-     */
+   * The caller's resolved HaulBrokr staff role, or null if not staff.
+   * @nullable
+   */
   staffRole?: AdminAccessStaffRole;
   /** The exact capabilities this staff role unlocks. */
   permissions: AdminAccessPermissionsItem[];
@@ -1419,17 +1418,18 @@ export interface AdminAccess {
 /**
  * @nullable
  */
-export type StaffMemberStaffRole = typeof StaffMemberStaffRole[keyof typeof StaffMemberStaffRole] | null;
-
+export type StaffMemberStaffRole =
+  | (typeof StaffMemberStaffRole)[keyof typeof StaffMemberStaffRole]
+  | null;
 
 export const StaffMemberStaffRole = {
-  ap: 'ap',
-  ar: 'ar',
-  cfo: 'cfo',
-  cto: 'cto',
-  ceo: 'ceo',
-  accounting: 'accounting',
-  it: 'it',
+  ap: "ap",
+  ar: "ar",
+  cfo: "cfo",
+  cto: "cto",
+  ceo: "ceo",
+  accounting: "accounting",
+  it: "it",
 } as const;
 
 export interface StaffMember {
@@ -1454,22 +1454,23 @@ export interface StaffMember {
  * The staff role to assign, or null to remove staff access.
  * @nullable
  */
-export type UpdateStaffRoleInputStaffRole = typeof UpdateStaffRoleInputStaffRole[keyof typeof UpdateStaffRoleInputStaffRole] | null;
-
+export type UpdateStaffRoleInputStaffRole =
+  | (typeof UpdateStaffRoleInputStaffRole)[keyof typeof UpdateStaffRoleInputStaffRole]
+  | null;
 
 export const UpdateStaffRoleInputStaffRole = {
-  ceo: 'ceo',
-  cto: 'cto',
-  cfo: 'cfo',
-  accounting: 'accounting',
-  it: 'it',
+  ceo: "ceo",
+  cto: "cto",
+  cfo: "cfo",
+  accounting: "accounting",
+  it: "it",
 } as const;
 
 export interface UpdateStaffRoleInput {
   /**
-     * The staff role to assign, or null to remove staff access.
-     * @nullable
-     */
+   * The staff role to assign, or null to remove staff access.
+   * @nullable
+   */
   staffRole: UpdateStaffRoleInputStaffRole;
 }
 
@@ -1501,13 +1502,13 @@ export interface AdminOverview {
 /**
  * The next lifecycle status to move the bin order to.
  */
-export type AdvanceBinOrderInputStatus = typeof AdvanceBinOrderInputStatus[keyof typeof AdvanceBinOrderInputStatus];
-
+export type AdvanceBinOrderInputStatus =
+  (typeof AdvanceBinOrderInputStatus)[keyof typeof AdvanceBinOrderInputStatus];
 
 export const AdvanceBinOrderInputStatus = {
-  confirmed: 'confirmed',
-  delivered: 'delivered',
-  picked_up: 'picked_up',
+  confirmed: "confirmed",
+  delivered: "delivered",
+  picked_up: "picked_up",
 } as const;
 
 export interface AdvanceBinOrderInput {
@@ -1565,22 +1566,22 @@ export interface StuckPayoutItem {
   /** Consecutive failed transfer attempts for this payout. */
   payoutRetryFailures: number;
   /**
-     * When admins were alerted that this payout crossed the failure threshold, if ever.
-     * @nullable
-     */
+   * When admins were alerted that this payout crossed the failure threshold, if ever.
+   * @nullable
+   */
   payoutAlertSentAt?: string | null;
   /** @nullable */
   completedAt?: string | null;
   createdAt?: string;
 }
 
-export type RetryPayoutResultOutcome = typeof RetryPayoutResultOutcome[keyof typeof RetryPayoutResultOutcome];
-
+export type RetryPayoutResultOutcome =
+  (typeof RetryPayoutResultOutcome)[keyof typeof RetryPayoutResultOutcome];
 
 export const RetryPayoutResultOutcome = {
-  released: 'released',
-  skipped: 'skipped',
-  failed: 'failed',
+  released: "released",
+  skipped: "skipped",
+  failed: "failed",
 } as const;
 
 export interface RetryPayoutResult {
@@ -1594,18 +1595,18 @@ export interface ResetPayoutFailuresResult {
   /** Always 0 after a reset. */
   payoutRetryFailures: number;
   /**
-     * Always null after a reset.
-     * @nullable
-     */
+   * Always null after a reset.
+   * @nullable
+   */
   payoutAlertSentAt: string | null;
 }
 
-export type AdminReviewInputAction = typeof AdminReviewInputAction[keyof typeof AdminReviewInputAction];
-
+export type AdminReviewInputAction =
+  (typeof AdminReviewInputAction)[keyof typeof AdminReviewInputAction];
 
 export const AdminReviewInputAction = {
-  approve: 'approve',
-  reject: 'reject',
+  approve: "approve",
+  reject: "reject",
 } as const;
 
 export interface AdminReviewInput {
@@ -1757,14 +1758,13 @@ export interface AdminCreditApplicationItem {
   profile: AdminProfileSummary;
 }
 
-export type OrgMemberRole = typeof OrgMemberRole[keyof typeof OrgMemberRole];
-
+export type OrgMemberRole = (typeof OrgMemberRole)[keyof typeof OrgMemberRole];
 
 export const OrgMemberRole = {
-  customer: 'customer',
-  provider: 'provider',
-  driver: 'driver',
-  supervisor: 'supervisor',
+  customer: "customer",
+  provider: "provider",
+  driver: "driver",
+  supervisor: "supervisor",
 } as const;
 
 export interface OrgMember {
@@ -1786,26 +1786,25 @@ export interface OrgMembersResponse {
   members: OrgMember[];
 }
 
-export type UpdateMemberRoleInputOrgRole = typeof UpdateMemberRoleInputOrgRole[keyof typeof UpdateMemberRoleInputOrgRole];
-
+export type UpdateMemberRoleInputOrgRole =
+  (typeof UpdateMemberRoleInputOrgRole)[keyof typeof UpdateMemberRoleInputOrgRole];
 
 export const UpdateMemberRoleInputOrgRole = {
-  admin: 'admin',
-  member: 'member',
+  admin: "admin",
+  member: "member",
 } as const;
 
 export interface UpdateMemberRoleInput {
   orgRole: UpdateMemberRoleInputOrgRole;
 }
 
-export type TicketStatus = typeof TicketStatus[keyof typeof TicketStatus];
-
+export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus];
 
 export const TicketStatus = {
-  pending: 'pending',
-  in_progress: 'in_progress',
-  completed: 'completed',
-  verified: 'verified',
+  pending: "pending",
+  in_progress: "in_progress",
+  completed: "completed",
+  verified: "verified",
 } as const;
 
 export interface Ticket {
@@ -1842,9 +1841,9 @@ export interface JobMessage {
 
 export interface CreateJobMessageRequest {
   /**
-     * @minLength 1
-     * @maxLength 2000
-     */
+   * @minLength 1
+   * @maxLength 2000
+   */
   body: string;
 }
 
@@ -1853,20 +1852,20 @@ export interface AssignJobInput {
   truckId?: number;
 }
 
-export type JobStatusUpdateStatus = typeof JobStatusUpdateStatus[keyof typeof JobStatusUpdateStatus];
-
+export type JobStatusUpdateStatus =
+  (typeof JobStatusUpdateStatus)[keyof typeof JobStatusUpdateStatus];
 
 export const JobStatusUpdateStatus = {
-  en_route: 'en_route',
-  arrived: 'arrived',
-  loading: 'loading',
-  loaded: 'loaded',
-  dumping: 'dumping',
-  checked_in: 'checked_in',
-  started: 'started',
-  ticket_uploaded: 'ticket_uploaded',
-  photo_uploaded: 'photo_uploaded',
-  completed: 'completed',
+  en_route: "en_route",
+  arrived: "arrived",
+  loading: "loading",
+  loaded: "loaded",
+  dumping: "dumping",
+  checked_in: "checked_in",
+  started: "started",
+  ticket_uploaded: "ticket_uploaded",
+  photo_uploaded: "photo_uploaded",
+  completed: "completed",
 } as const;
 
 export interface JobStatusUpdate {
@@ -1883,20 +1882,20 @@ export interface JobStatusUpdate {
   createdAt: string;
 }
 
-export type JobStatusUpdateInputStatus = typeof JobStatusUpdateInputStatus[keyof typeof JobStatusUpdateInputStatus];
-
+export type JobStatusUpdateInputStatus =
+  (typeof JobStatusUpdateInputStatus)[keyof typeof JobStatusUpdateInputStatus];
 
 export const JobStatusUpdateInputStatus = {
-  en_route: 'en_route',
-  arrived: 'arrived',
-  loading: 'loading',
-  loaded: 'loaded',
-  dumping: 'dumping',
-  checked_in: 'checked_in',
-  started: 'started',
-  ticket_uploaded: 'ticket_uploaded',
-  photo_uploaded: 'photo_uploaded',
-  completed: 'completed',
+  en_route: "en_route",
+  arrived: "arrived",
+  loading: "loading",
+  loaded: "loaded",
+  dumping: "dumping",
+  checked_in: "checked_in",
+  started: "started",
+  ticket_uploaded: "ticket_uploaded",
+  photo_uploaded: "photo_uploaded",
+  completed: "completed",
 } as const;
 
 export interface JobStatusUpdateInput {
@@ -1930,9 +1929,9 @@ export interface RatingResponse {
   raterProfileId: number;
   rateeProfileId: number;
   /**
-     * @minimum 1
-     * @maximum 5
-     */
+   * @minimum 1
+   * @maximum 5
+   */
   stars: number;
   /** @nullable */
   comment?: string | null;
@@ -1941,51 +1940,51 @@ export interface RatingResponse {
 
 export interface CreateRatingRequest {
   /**
-     * @minimum 1
-     * @maximum 5
-     */
+   * @minimum 1
+   * @maximum 5
+   */
   stars: number;
   comment?: string;
 }
 
 export type ListTrucksParams = {
-available?: boolean;
+  available?: boolean;
 };
 
 export type ListRequestsParams = {
-status?: ListRequestsStatus;
-mine?: boolean;
+  status?: ListRequestsStatus;
+  mine?: boolean;
 };
 
-export type ListRequestsStatus = typeof ListRequestsStatus[keyof typeof ListRequestsStatus];
-
+export type ListRequestsStatus =
+  (typeof ListRequestsStatus)[keyof typeof ListRequestsStatus];
 
 export const ListRequestsStatus = {
-  open: 'open',
-  bid_received: 'bid_received',
-  bidding: 'bidding',
-  awarded: 'awarded',
-  accepted: 'accepted',
-  in_progress: 'in_progress',
-  completed: 'completed',
-  cancelled: 'cancelled',
+  open: "open",
+  bid_received: "bid_received",
+  bidding: "bidding",
+  awarded: "awarded",
+  accepted: "accepted",
+  in_progress: "in_progress",
+  completed: "completed",
+  cancelled: "cancelled",
 } as const;
 
 export type ListJobsParams = {
-status?: ListJobsStatus;
+  status?: ListJobsStatus;
 };
 
-export type ListJobsStatus = typeof ListJobsStatus[keyof typeof ListJobsStatus];
-
+export type ListJobsStatus =
+  (typeof ListJobsStatus)[keyof typeof ListJobsStatus];
 
 export const ListJobsStatus = {
-  active: 'active',
-  awarded: 'awarded',
-  accepted: 'accepted',
-  declined: 'declined',
-  cancelled: 'cancelled',
-  in_progress: 'in_progress',
-  completed: 'completed',
+  active: "active",
+  awarded: "awarded",
+  accepted: "accepted",
+  declined: "declined",
+  cancelled: "cancelled",
+  in_progress: "in_progress",
+  completed: "completed",
 } as const;
 
 export type GetJobRating200 = {
@@ -1994,20 +1993,20 @@ export type GetJobRating200 = {
 };
 
 export type ListDumpSitesParams = {
-state?: string;
-type?: ListDumpSitesType;
+  state?: string;
+  type?: ListDumpSitesType;
 };
 
-export type ListDumpSitesType = typeof ListDumpSitesType[keyof typeof ListDumpSitesType];
-
+export type ListDumpSitesType =
+  (typeof ListDumpSitesType)[keyof typeof ListDumpSitesType];
 
 export const ListDumpSitesType = {
-  landfill: 'landfill',
-  transfer_station: 'transfer_station',
-  recycling_center: 'recycling_center',
-  construction_debris: 'construction_debris',
-  hazardous_waste: 'hazardous_waste',
-  compost: 'compost',
+  landfill: "landfill",
+  transfer_station: "transfer_station",
+  recycling_center: "recycling_center",
+  construction_debris: "construction_debris",
+  hazardous_waste: "hazardous_waste",
+  compost: "compost",
 } as const;
 
 export type GetMyOrganization200 = { [key: string]: unknown };
@@ -2093,14 +2092,14 @@ export type UpsertDriverDocBody = { [key: string]: unknown };
 
 export type UpsertDriverDoc200 = { [key: string]: unknown };
 
-export type CreateDriverEventBodyEventType = typeof CreateDriverEventBodyEventType[keyof typeof CreateDriverEventBodyEventType];
-
+export type CreateDriverEventBodyEventType =
+  (typeof CreateDriverEventBodyEventType)[keyof typeof CreateDriverEventBodyEventType];
 
 export const CreateDriverEventBodyEventType = {
-  checkin: 'checkin',
-  checkout: 'checkout',
-  pickup: 'pickup',
-  delivery: 'delivery',
+  checkin: "checkin",
+  checkout: "checkout",
+  pickup: "pickup",
+  delivery: "delivery",
 } as const;
 
 export type CreateDriverEventBodyGps = {
@@ -2125,4 +2124,3 @@ export type CreateDriverEventBody = {
 export type CreateDriverEvent201 = { [key: string]: unknown };
 
 export type CreateDriverEvent422 = { [key: string]: unknown };
-

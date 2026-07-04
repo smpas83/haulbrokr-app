@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type PayoutAccountAccountType = typeof PayoutAccountAccountType[keyof typeof PayoutAccountAccountType];
-
+export type PayoutAccountAccountType =
+  (typeof PayoutAccountAccountType)[keyof typeof PayoutAccountAccountType];
 
 export const PayoutAccountAccountType = {
-  checking: 'checking',
-  savings: 'savings',
+  checking: "checking",
+  savings: "savings",
 } as const;

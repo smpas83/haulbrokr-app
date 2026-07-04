@@ -113,7 +113,10 @@ vi.mock("../lib/payoutStatus", async (importActual) => {
   const actual = await importActual<typeof import("../lib/payoutStatus")>();
   return {
     ...actual,
-    checkProviderPayoutReadiness: vi.fn(async () => ({ ok: true, stripeAccountId: "acct_provider_ok" })),
+    checkProviderPayoutReadiness: vi.fn(async () => ({
+      ok: true,
+      stripeAccountId: "acct_provider_ok",
+    })),
   };
 });
 
@@ -193,7 +196,10 @@ function baseJob(overrides: Record<string, unknown> = {}) {
  */
 function mockStripe() {
   const setupIntents = {
-    create: vi.fn(async (_args: any) => ({ id: "seti_bank_e2e", client_secret: "seti_bank_e2e_secret" })),
+    create: vi.fn(async (_args: any) => ({
+      id: "seti_bank_e2e",
+      client_secret: "seti_bank_e2e_secret",
+    })),
     // The save path REQUIRES the SetupIntent that minted the pm and verifies the
     // linkage (si.payment_method === pm.id) — read it back from Stripe. The pm id
     // is derived from the seti id so "switch bank" resolves to the new account.
@@ -221,7 +227,10 @@ function mockStripe() {
     attach: vi.fn(async (_id: string, _opts: any) => ({})),
   };
   const paymentIntents = {
-    create: vi.fn(async (_args: any, _opts?: any) => ({ id: "pi_ach_e2e", latest_charge: "ch_ach_e2e" })),
+    create: vi.fn(async (_args: any, _opts?: any) => ({
+      id: "pi_ach_e2e",
+      latest_charge: "ch_ach_e2e",
+    })),
   };
   const transfers = {
     create: vi.fn(async (_args: any, _opts?: any) => ({ id: "tr_ach_e2e" })),
@@ -244,7 +253,11 @@ beforeEach(() => {
   // Customer (with Stripe id) first so single-row profile reads resolve to it;
   // provider present for company-name enrichment on the charge response.
   h.store.set(profilesTable, [
-    { id: CUSTOMER_ID, stripeCustomerId: CUSTOMER_STRIPE_ID, companyName: "Acme Hauling" },
+    {
+      id: CUSTOMER_ID,
+      stripeCustomerId: CUSTOMER_STRIPE_ID,
+      companyName: "Acme Hauling",
+    },
     { id: PROVIDER_ID, stripeCustomerId: null, companyName: "Bob's Trucking" },
   ]);
   vi.mocked(getUncachableStripeClient).mockReset();
@@ -254,7 +267,9 @@ describe("ACH capture → charge (account page)", () => {
   it("starts a us_bank_account SetupIntent for the bank-setup-intent endpoint", async () => {
     const stripe = mockStripe();
 
-    const res = await request(makeApp()).post("/account/payment-method/bank-setup-intent");
+    const res = await request(makeApp()).post(
+      "/account/payment-method/bank-setup-intent",
+    );
 
     expect(res.status).toBe(200);
     expect(res.body.clientSecret).toBe("seti_bank_e2e_secret");
@@ -266,7 +281,9 @@ describe("ACH capture → charge (account page)", () => {
     expect(args.customer).toBe(CUSTOMER_STRIPE_ID);
     expect(args.payment_method_types).toEqual(["us_bank_account"]);
     expect(args.usage).toBe("off_session");
-    expect(args.payment_method_options.us_bank_account.verification_method).toBe("automatic");
+    expect(
+      args.payment_method_options.us_bank_account.verification_method,
+    ).toBe("automatic");
   });
 
   it("connects a bank, persists the us_bank_account PaymentMethod, then charges the ACH job off-session", async () => {
@@ -275,13 +292,17 @@ describe("ACH capture → charge (account page)", () => {
     const stripe = mockStripe();
 
     // Step 1: server mints the SetupIntent the browser would confirm.
-    const setup = await request(makeApp()).post("/account/payment-method/bank-setup-intent");
+    const setup = await request(makeApp()).post(
+      "/account/payment-method/bank-setup-intent",
+    );
     expect(setup.status).toBe(200);
 
     // Step 2: Stripe.js minted pm_bank_e2e; persist it as the saved instrument.
-    const save = await request(makeApp())
-      .post("/account/payment-method")
-      .send({ methodType: "ach", stripePaymentMethodId: "pm_bank_e2e", stripeSetupIntentId: "seti_bank_e2e" });
+    const save = await request(makeApp()).post("/account/payment-method").send({
+      methodType: "ach",
+      stripePaymentMethodId: "pm_bank_e2e",
+      stripeSetupIntentId: "seti_bank_e2e",
+    });
 
     expect(save.status).toBe(201);
     expect(save.body.methodType).toBe("ach");
@@ -294,7 +315,9 @@ describe("ACH capture → charge (account page)", () => {
     expect(save.body.cardBrand ?? null).toBeNull();
     expect(save.body.cardLast4 ?? null).toBeNull();
     // The pm is attached to THIS customer before it is saved.
-    expect(stripe.paymentMethods.attach).toHaveBeenCalledWith("pm_bank_e2e", { customer: CUSTOMER_STRIPE_ID });
+    expect(stripe.paymentMethods.attach).toHaveBeenCalledWith("pm_bank_e2e", {
+      customer: CUSTOMER_STRIPE_ID,
+    });
 
     // Step 3: charge the completed job — it must hit the ACH rail off-session.
     const charge = await request(makeApp()).post(`/jobs/${JOB_ID}/charge`);
@@ -319,11 +342,13 @@ describe("ACH capture → charge (account page)", () => {
   });
 });
 
-describe("ACH capture → charge (failed-job \"use a different bank\" path)", () => {
+describe('ACH capture → charge (failed-job "use a different bank" path)', () => {
   it("replaces the saved bank via PATCH and the retry charges the new account off-session", async () => {
     // A prior instant-terms attempt left the job failed (no invoice) and the
     // customer already had a bank on file — the job-detail flow uses PATCH.
-    h.store.set(jobsTable, [baseJob({ paymentStatus: "failed", paymentAttempts: 1 })]);
+    h.store.set(jobsTable, [
+      baseJob({ paymentStatus: "failed", paymentAttempts: 1 }),
+    ]);
     h.store.set(paymentMethodsTable, [
       {
         id: 500,
@@ -341,13 +366,19 @@ describe("ACH capture → charge (failed-job \"use a different bank\" path)", ()
     // Customer connects a different bank account on the failed job's panel.
     const update = await request(makeApp())
       .patch("/account/payment-method")
-      .send({ methodType: "ach", stripePaymentMethodId: "pm_bank_new", stripeSetupIntentId: "seti_bank_new" });
+      .send({
+        methodType: "ach",
+        stripePaymentMethodId: "pm_bank_new",
+        stripeSetupIntentId: "seti_bank_new",
+      });
 
     expect(update.status).toBe(200);
     expect(update.body.methodType).toBe("ach");
     expect(update.body.stripePaymentMethodId).toBe("pm_bank_new");
     expect(update.body.accountLast4).toBe("6789"); // the new account's last4
-    expect(stripe.paymentMethods.attach).toHaveBeenCalledWith("pm_bank_new", { customer: CUSTOMER_STRIPE_ID });
+    expect(stripe.paymentMethods.attach).toHaveBeenCalledWith("pm_bank_new", {
+      customer: CUSTOMER_STRIPE_ID,
+    });
 
     // The persisted instrument now points at the new bank.
     const pmUpdate = h.updates.find((u) => u.table === paymentMethodsTable);

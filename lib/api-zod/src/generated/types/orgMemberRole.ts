@@ -6,12 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type OrgMemberRole = typeof OrgMemberRole[keyof typeof OrgMemberRole];
-
+export type OrgMemberRole = (typeof OrgMemberRole)[keyof typeof OrgMemberRole];
 
 export const OrgMemberRole = {
-  customer: 'customer',
-  provider: 'provider',
-  driver: 'driver',
-  supervisor: 'supervisor',
+  customer: "customer",
+  provider: "provider",
+  driver: "driver",
+  supervisor: "supervisor",
 } as const;

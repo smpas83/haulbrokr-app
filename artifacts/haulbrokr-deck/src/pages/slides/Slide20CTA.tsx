@@ -81,7 +81,11 @@ export default function Slide20CTA() {
             lineHeight: 1.7,
           }}
         >
-          The dump truck industry has been running on handshakes and cell phones for sixty years. We are building the infrastructure layer it has never had. We are looking for the right partners — not just capital, but people with conviction in the trade industries who want equity in a platform that will define this category.
+          The dump truck industry has been running on handshakes and cell phones
+          for sixty years. We are building the infrastructure layer it has never
+          had. We are looking for the right partners — not just capital, but
+          people with conviction in the trade industries who want equity in a
+          platform that will define this category.
         </p>
 
         <div
@@ -92,17 +96,37 @@ export default function Slide20CTA() {
           }}
         >
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.85vw", color: "#A0785A", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "1vh" }}>
+            <div
+              style={{
+                fontSize: "0.85vw",
+                color: "#A0785A",
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+                marginBottom: "1vh",
+              }}
+            >
               Schedule a Call
             </div>
-            <div style={{ fontSize: "1.1vw", color: "#FFFFFF" }}>founders@haulbrokr.com</div>
+            <div style={{ fontSize: "1.1vw", color: "#FFFFFF" }}>
+              founders@haulbrokr.com
+            </div>
           </div>
           <div style={{ width: "0.1vh", backgroundColor: "#333333" }} />
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "0.85vw", color: "#888888", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "1vh" }}>
+            <div
+              style={{
+                fontSize: "0.85vw",
+                color: "#888888",
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+                marginBottom: "1vh",
+              }}
+            >
               Platform Demo
             </div>
-            <div style={{ fontSize: "1.1vw", color: "#888888" }}>haulbrokr.com/demo</div>
+            <div style={{ fontSize: "1.1vw", color: "#888888" }}>
+              haulbrokr.com/demo
+            </div>
           </div>
         </div>
       </div>

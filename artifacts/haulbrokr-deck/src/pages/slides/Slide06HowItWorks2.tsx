@@ -66,7 +66,14 @@ export default function Slide06HowItWorks2() {
           gap: "4vw",
         }}
       >
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "3vh" }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: "3vh",
+          }}
+        >
           <div
             style={{
               backgroundColor: "#1A1A1A",
@@ -74,11 +81,19 @@ export default function Slide06HowItWorks2() {
               borderLeft: "0.3vh solid #A0785A",
             }}
           >
-            <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "1vh" }}>
+            <div
+              style={{
+                fontSize: "1.2vw",
+                fontWeight: 500,
+                color: "#FFFFFF",
+                marginBottom: "1vh",
+              }}
+            >
               Real-Time GPS Tracking
             </div>
             <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-              Contractors watch every truck on a live map. ETAs auto-calculate. No more "where are you?" calls.
+              Contractors watch every truck on a live map. ETAs auto-calculate.
+              No more "where are you?" calls.
             </div>
           </div>
 
@@ -89,11 +104,19 @@ export default function Slide06HowItWorks2() {
               borderLeft: "0.3vh solid #333333",
             }}
           >
-            <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "1vh" }}>
+            <div
+              style={{
+                fontSize: "1.2vw",
+                fontWeight: 500,
+                color: "#FFFFFF",
+                marginBottom: "1vh",
+              }}
+            >
               Digital Load Tickets
             </div>
             <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-              Each dump cycle generates a geo-stamped ticket. Load counts are tamper-proof and dispute-free.
+              Each dump cycle generates a geo-stamped ticket. Load counts are
+              tamper-proof and dispute-free.
             </div>
           </div>
 
@@ -104,16 +127,31 @@ export default function Slide06HowItWorks2() {
               borderLeft: "0.3vh solid #333333",
             }}
           >
-            <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "1vh" }}>
+            <div
+              style={{
+                fontSize: "1.2vw",
+                fontWeight: 500,
+                color: "#FFFFFF",
+                marginBottom: "1vh",
+              }}
+            >
               Compliance Verification
             </div>
             <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-              Every operator is screened for DOT compliance, CDL status, and liability insurance before first dispatch.
+              Every operator is screened for DOT compliance, CDL status, and
+              liability insurance before first dispatch.
             </div>
           </div>
         </div>
 
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "3vh" }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: "3vh",
+          }}
+        >
           <div
             style={{
               backgroundColor: "#1A1A1A",
@@ -121,11 +159,19 @@ export default function Slide06HowItWorks2() {
               borderLeft: "0.3vh solid #333333",
             }}
           >
-            <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "1vh" }}>
+            <div
+              style={{
+                fontSize: "1.2vw",
+                fontWeight: 500,
+                color: "#FFFFFF",
+                marginBottom: "1vh",
+              }}
+            >
               Integrated Payments
             </div>
             <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-              In-app ACH and card processing. Operators receive same-day payouts. Contractors get consolidated billing.
+              In-app ACH and card processing. Operators receive same-day
+              payouts. Contractors get consolidated billing.
             </div>
           </div>
 
@@ -136,11 +182,19 @@ export default function Slide06HowItWorks2() {
               borderLeft: "0.3vh solid #333333",
             }}
           >
-            <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "1vh" }}>
+            <div
+              style={{
+                fontSize: "1.2vw",
+                fontWeight: 500,
+                color: "#FFFFFF",
+                marginBottom: "1vh",
+              }}
+            >
               Bid &amp; Quote Engine
             </div>
             <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-              Operators can submit competitive bids on jobs. Contractors compare rate, ETA, and rating in one view.
+              Operators can submit competitive bids on jobs. Contractors compare
+              rate, ETA, and rating in one view.
             </div>
           </div>
 
@@ -151,11 +205,19 @@ export default function Slide06HowItWorks2() {
               borderLeft: "0.3vh solid #333333",
             }}
           >
-            <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "1vh" }}>
+            <div
+              style={{
+                fontSize: "1.2vw",
+                fontWeight: 500,
+                color: "#FFFFFF",
+                marginBottom: "1vh",
+              }}
+            >
               Fleet SaaS Dashboard
             </div>
             <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-              Brokerage firms manage their own driver pools through a white-label dispatch layer built on our core stack.
+              Brokerage firms manage their own driver pools through a
+              white-label dispatch layer built on our core stack.
             </div>
           </div>
         </div>
@@ -177,7 +239,9 @@ export default function Slide06HowItWorks2() {
           letterSpacing: "0.2em",
         }}
       >
-        <span>HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026</span>
+        <span>
+          HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026
+        </span>
         <span style={{ color: "#A0785A" }}>06</span>
       </div>
     </div>

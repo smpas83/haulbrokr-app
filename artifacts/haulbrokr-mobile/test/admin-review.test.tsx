@@ -142,7 +142,8 @@ describe("AdminComplianceScreen (carrier review)", () => {
 
   it("shows pending carrier records to an admin with approve/reject actions", async () => {
     mockApi(({ path }) => {
-      if (path === "/admin/access") return { body: { isAdmin: true, permissions: ["compliance"] } };
+      if (path === "/admin/access")
+        return { body: { isAdmin: true, permissions: ["compliance"] } };
       if (path === "/admin/compliance") return { body: [complianceItem()] };
       return { body: null };
     });
@@ -160,7 +161,8 @@ describe("AdminComplianceScreen (carrier review)", () => {
   it("approves a carrier and refetches the list afterwards", async () => {
     let listCalls = 0;
     mockApi(({ path, method }) => {
-      if (path === "/admin/access") return { body: { isAdmin: true, permissions: ["compliance"] } };
+      if (path === "/admin/access")
+        return { body: { isAdmin: true, permissions: ["compliance"] } };
       if (path === "/admin/compliance" && method === "GET") {
         listCalls += 1;
         const status = listCalls === 1 ? "pending" : "verified";
@@ -174,20 +176,26 @@ describe("AdminComplianceScreen (carrier review)", () => {
 
     renderScreen(<AdminComplianceScreen />);
 
-    await waitFor(() => expect(screen.getByText("Approve Carrier")).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText("Approve Carrier")).toBeTruthy(),
+    );
 
     fireEvent.click(screen.getByText("Approve Carrier"));
 
     // PATCH approve is sent with the right action.
     await waitFor(() => {
-      const patch = calls.find((c) => c.path === "/admin/compliance/42" && c.method === "PATCH");
+      const patch = calls.find(
+        (c) => c.path === "/admin/compliance/42" && c.method === "PATCH",
+      );
       expect(patch).toBeTruthy();
       expect(patch!.body).toMatchObject({ action: "approve" });
     });
 
     // The list query is invalidated → refetched (GET called at least twice).
     await waitFor(() => {
-      const gets = calls.filter((c) => c.path === "/admin/compliance" && c.method === "GET");
+      const gets = calls.filter(
+        (c) => c.path === "/admin/compliance" && c.method === "GET",
+      );
       expect(gets.length).toBeGreaterThanOrEqual(2);
     });
 
@@ -197,10 +205,17 @@ describe("AdminComplianceScreen (carrier review)", () => {
 
   it("requires a reason before a rejection is submitted", async () => {
     mockApi(({ path, method }) => {
-      if (path === "/admin/access") return { body: { isAdmin: true, permissions: ["compliance"] } };
-      if (path === "/admin/compliance" && method === "GET") return { body: [complianceItem()] };
+      if (path === "/admin/access")
+        return { body: { isAdmin: true, permissions: ["compliance"] } };
+      if (path === "/admin/compliance" && method === "GET")
+        return { body: [complianceItem()] };
       if (path === "/admin/compliance/42" && method === "PATCH") {
-        return { body: complianceItem({ status: "rejected", reviewNote: "Insurance lapsed" }) };
+        return {
+          body: complianceItem({
+            status: "rejected",
+            reviewNote: "Insurance lapsed",
+          }),
+        };
       }
       return { body: null };
     });
@@ -223,9 +238,14 @@ describe("AdminComplianceScreen (carrier review)", () => {
     fireEvent.click(screen.getByText("Confirm"));
 
     await waitFor(() => {
-      const patch = calls.find((c) => c.path === "/admin/compliance/42" && c.method === "PATCH");
+      const patch = calls.find(
+        (c) => c.path === "/admin/compliance/42" && c.method === "PATCH",
+      );
       expect(patch).toBeTruthy();
-      expect(patch!.body).toMatchObject({ action: "reject", note: "Insurance lapsed" });
+      expect(patch!.body).toMatchObject({
+        action: "reject",
+        note: "Insurance lapsed",
+      });
     });
   });
 });
@@ -242,13 +262,17 @@ describe("AdminCreditScreen (credit review)", () => {
     await waitFor(() => {
       expect(screen.getByText("Access Restricted")).toBeTruthy();
     });
-    expect(calls.some((c) => c.path === "/admin/credit-applications")).toBe(false);
+    expect(calls.some((c) => c.path === "/admin/credit-applications")).toBe(
+      false,
+    );
   });
 
   it("shows pending credit applications to an admin", async () => {
     mockApi(({ path }) => {
-      if (path === "/admin/access") return { body: { isAdmin: true, permissions: ["credit"] } };
-      if (path === "/admin/credit-applications") return { body: [creditItem()] };
+      if (path === "/admin/access")
+        return { body: { isAdmin: true, permissions: ["credit"] } };
+      if (path === "/admin/credit-applications")
+        return { body: [creditItem()] };
       return { body: null };
     });
 
@@ -261,10 +285,17 @@ describe("AdminCreditScreen (credit review)", () => {
 
   it("rejects a credit application with a required reason", async () => {
     mockApi(({ path, method }) => {
-      if (path === "/admin/access") return { body: { isAdmin: true, permissions: ["credit"] } };
-      if (path === "/admin/credit-applications" && method === "GET") return { body: [creditItem()] };
+      if (path === "/admin/access")
+        return { body: { isAdmin: true, permissions: ["credit"] } };
+      if (path === "/admin/credit-applications" && method === "GET")
+        return { body: [creditItem()] };
       if (path === "/admin/credit-applications/77" && method === "PATCH") {
-        return { body: creditItem({ status: "rejected", reviewNote: "Thin references" }) };
+        return {
+          body: creditItem({
+            status: "rejected",
+            reviewNote: "Thin references",
+          }),
+        };
       }
       return { body: null };
     });
@@ -285,9 +316,15 @@ describe("AdminCreditScreen (credit review)", () => {
     fireEvent.click(screen.getByText("Confirm"));
 
     await waitFor(() => {
-      const patch = calls.find((c) => c.path === "/admin/credit-applications/77" && c.method === "PATCH");
+      const patch = calls.find(
+        (c) =>
+          c.path === "/admin/credit-applications/77" && c.method === "PATCH",
+      );
       expect(patch).toBeTruthy();
-      expect(patch!.body).toMatchObject({ action: "reject", note: "Thin references" });
+      expect(patch!.body).toMatchObject({
+        action: "reject",
+        note: "Thin references",
+      });
     });
   });
 });

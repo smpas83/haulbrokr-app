@@ -4,8 +4,13 @@ import fs from "node:fs";
 loadEnvFile(process.env.ENV_FILE ?? ".env");
 
 const TARGET_ENV = process.env.TARGET_ENV ?? "staging";
-const WEB_URL = (process.env.WEB_URL ?? "https://haulbrokr.com").replace(/\/$/, "");
-const API_DIRECT = (process.env.API_DIRECT ?? "https://haulbrokr-api.onrender.com").replace(/\/$/, "");
+const WEB_URL = (process.env.WEB_URL ?? "https://haulbrokr.com").replace(
+  /\/$/,
+  "",
+);
+const API_DIRECT = (
+  process.env.API_DIRECT ?? "https://haulbrokr-api.onrender.com"
+).replace(/\/$/, "");
 const VERIFY_LIVE_THIRD_PARTY = truthy(process.env.VERIFY_LIVE_THIRD_PARTY);
 const SKIP_ENDPOINT_CHECKS = truthy(process.env.SKIP_ENDPOINT_CHECKS);
 
@@ -98,7 +103,8 @@ function validateDatabaseUrl() {
   }
   try {
     const parsed = new URL(value.replace(/^postgres:/, "postgresql:"));
-    const ssl = parsed.searchParams.get("sslmode") ?? parsed.searchParams.get("ssl");
+    const ssl =
+      parsed.searchParams.get("sslmode") ?? parsed.searchParams.get("ssl");
     if (ssl !== "require" && ssl !== "true") {
       fail("DATABASE_URL", "must include sslmode=require or ssl=true.");
     }
@@ -174,7 +180,11 @@ async function fetchCheck(label, url, init, validate) {
     const res = await fetch(url, init);
     const text = await res.text();
     if (validate(res, text)) pass(label);
-    else fail(label, `unexpected HTTP ${res.status}: ${text.slice(0, 240).replace(/\s+/g, " ")}`);
+    else
+      fail(
+        label,
+        `unexpected HTTP ${res.status}: ${text.slice(0, 240).replace(/\s+/g, " ")}`,
+      );
   } catch (error) {
     fail(label, error instanceof Error ? error.message : String(error));
   }
@@ -186,47 +196,114 @@ async function validateEndpoints() {
     return;
   }
   await fetchCheck("web homepage", WEB_URL, {}, (res) => res.status === 200);
-  await fetchCheck("web admin login", `${WEB_URL}/admin/login`, {}, (res) => res.status === 200);
-  await fetchCheck("API direct health", `${API_DIRECT}/api/healthz`, {}, (res, text) => res.status === 200 && text.includes('"ok"'));
-  await fetchCheck("API direct readiness", `${API_DIRECT}/api/readyz`, {}, (res, text) => res.status === 200 && text.includes('"ok"'));
-  await fetchCheck("API proxied readiness", `${WEB_URL}/api/readyz`, {}, (res, text) => res.status === 200 && text.includes('"ok"'));
-  await fetchCheck("admin anonymous gate", `${WEB_URL}/api/admin/access`, {}, (res, text) => res.status === 200 && text.includes('"isAdmin":false'));
-  await fetchCheck("Stripe webhook unsigned rejection", `${WEB_URL}/api/webhooks/stripe`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: "{}",
-  }, (res) => res.status === 400);
+  await fetchCheck(
+    "web admin login",
+    `${WEB_URL}/admin/login`,
+    {},
+    (res) => res.status === 200,
+  );
+  await fetchCheck(
+    "API direct health",
+    `${API_DIRECT}/api/healthz`,
+    {},
+    (res, text) => res.status === 200 && text.includes('"ok"'),
+  );
+  await fetchCheck(
+    "API direct readiness",
+    `${API_DIRECT}/api/readyz`,
+    {},
+    (res, text) => res.status === 200 && text.includes('"ok"'),
+  );
+  await fetchCheck(
+    "API proxied readiness",
+    `${WEB_URL}/api/readyz`,
+    {},
+    (res, text) => res.status === 200 && text.includes('"ok"'),
+  );
+  await fetchCheck(
+    "admin anonymous gate",
+    `${WEB_URL}/api/admin/access`,
+    {},
+    (res, text) => res.status === 200 && text.includes('"isAdmin":false'),
+  );
+  await fetchCheck(
+    "Stripe webhook unsigned rejection",
+    `${WEB_URL}/api/webhooks/stripe`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    },
+    (res) => res.status === 400,
+  );
 }
 
 async function validateThirdParty() {
   if (!VERIFY_LIVE_THIRD_PARTY) {
-    warn("third-party live checks", "skipped; set VERIFY_LIVE_THIRD_PARTY=1 to call provider APIs");
+    warn(
+      "third-party live checks",
+      "skipped; set VERIFY_LIVE_THIRD_PARTY=1 to call provider APIs",
+    );
     return;
   }
 
-  await fetchCheck("Clerk API credentials", "https://api.clerk.com/v1/instance", {
-    headers: { Authorization: `Bearer ${env("CLERK_SECRET_KEY")}` },
-  }, (res) => res.status === 200);
+  await fetchCheck(
+    "Clerk API credentials",
+    "https://api.clerk.com/v1/instance",
+    {
+      headers: { Authorization: `Bearer ${env("CLERK_SECRET_KEY")}` },
+    },
+    (res) => res.status === 200,
+  );
 
-  await fetchCheck("Stripe API credentials", "https://api.stripe.com/v1/account", {
-    headers: { Authorization: `Bearer ${env("STRIPE_SECRET_KEY")}` },
-  }, (res) => res.status === 200);
+  await fetchCheck(
+    "Stripe API credentials",
+    "https://api.stripe.com/v1/account",
+    {
+      headers: { Authorization: `Bearer ${env("STRIPE_SECRET_KEY")}` },
+    },
+    (res) => res.status === 200,
+  );
 
-  await fetchCheck("Resend API credentials", "https://api.resend.com/domains", {
-    headers: { Authorization: `Bearer ${env("RESEND_API_KEY")}` },
-  }, (res) => res.status === 200);
+  await fetchCheck(
+    "Resend API credentials",
+    "https://api.resend.com/domains",
+    {
+      headers: { Authorization: `Bearer ${env("RESEND_API_KEY")}` },
+    },
+    (res) => res.status === 200,
+  );
 
-  await fetchCheck("Google Maps key", `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(env("GOOGLE_MAPS_API_KEY"))}`, {}, (_res, text) => {
-    return !text.includes("InvalidKeyMapError") && !text.includes("ApiNotActivatedMapError") && !text.includes("RefererNotAllowedMapError");
-  });
+  await fetchCheck(
+    "Google Maps key",
+    `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(env("GOOGLE_MAPS_API_KEY"))}`,
+    {},
+    (_res, text) => {
+      return (
+        !text.includes("InvalidKeyMapError") &&
+        !text.includes("ApiNotActivatedMapError") &&
+        !text.includes("RefererNotAllowedMapError")
+      );
+    },
+  );
 
-  await fetchCheck("R2 public URL", env("R2_PUBLIC_URL"), { method: "HEAD" }, (res) => res.status < 500);
+  await fetchCheck(
+    "R2 public URL",
+    env("R2_PUBLIC_URL"),
+    { method: "HEAD" },
+    (res) => res.status < 500,
+  );
 }
 
 function printSummary() {
   console.log(`HaulBrokr deployment readiness (${TARGET_ENV})`);
   for (const check of checks) {
-    const icon = check.status === "PASS" ? "OK" : check.status === "WARN" ? "WARN" : "FAIL";
+    const icon =
+      check.status === "PASS"
+        ? "OK"
+        : check.status === "WARN"
+          ? "WARN"
+          : "FAIL";
     console.log(`${icon} ${check.label}`);
   }
   if (warnings.length) {

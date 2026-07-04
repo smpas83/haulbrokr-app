@@ -26,7 +26,10 @@ export function ClerkAuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const nextUserId = userId ?? null;
-    if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== nextUserId) {
+    if (
+      prevUserIdRef.current !== undefined &&
+      prevUserIdRef.current !== nextUserId
+    ) {
       queryClient.clear();
     }
     prevUserIdRef.current = nextUserId;
@@ -41,7 +44,14 @@ export function ClerkAuthProvider({ children }: { children: React.ReactNode }) {
   }, [isSignedIn, getToken]);
 
   return (
-    <ClerkAuthContext.Provider value={{ isSignedIn: !!isSignedIn, isLoaded: !!isLoaded, userId: userId ?? null, getToken }}>
+    <ClerkAuthContext.Provider
+      value={{
+        isSignedIn: !!isSignedIn,
+        isLoaded: !!isLoaded,
+        userId: userId ?? null,
+        getToken,
+      }}
+    >
       {children}
     </ClerkAuthContext.Provider>
   );
