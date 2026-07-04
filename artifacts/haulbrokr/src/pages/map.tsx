@@ -73,8 +73,6 @@ async function fetchMarketplace(getToken: () => Promise<string | null>): Promise
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) {
-    const fallback = await fetch("/api/automation/demo-map");
-    if (fallback.ok) return fallback.json();
     throw new Error("Failed to load map data");
   }
   return res.json();
@@ -187,11 +185,6 @@ export default function MapPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {data?.demoMode && (
-            <Badge variant="outline" className="rounded-none border-2 border-blue-400/50 text-blue-600 bg-blue-50">
-              Demo Mode
-            </Badge>
-          )}
           <Button variant="outline" size="sm" className="rounded-none border-2" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             <span className="ml-2">Refresh</span>
@@ -234,6 +227,15 @@ export default function MapPage() {
               <p className="text-destructive font-semibold">Failed to load marketplace data</p>
               <Button variant="outline" onClick={() => refetch()}>Retry</Button>
             </div>
+          ) : data && data.loads.length === 0 && data.trucks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-3 text-muted-foreground px-6 text-center">
+              <MapPin className="h-10 w-10 opacity-40" />
+              <p className="font-semibold text-foreground">No loads available in your area yet</p>
+              <p className="text-sm max-w-md">
+                When contractors post haul requests or fleets register trucks, they will appear here on the live operations map.
+              </p>
+              <div ref={mapDivRef} className="hidden" />
+            </div>
           ) : (
             <>
               <div ref={mapDivRef} className={cn("w-full h-full min-h-[480px]", !mapReady && "opacity-0")} />
@@ -255,12 +257,16 @@ export default function MapPage() {
               <CardDescription>{data.loads.slice(0, 8).length} shown · {data.loads.length} total on map</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 max-h-64 overflow-y-auto">
-              {data.loads.slice(0, 8).map((load) => (
-                <div key={load.id} className="text-sm border-b border-border pb-2">
-                  <div className="font-semibold">{load.projectName}</div>
-                  <div className="text-muted-foreground text-xs">{load.material} · ${load.budgetPerHour}/hr · {load.bidsCount} bids</div>
-                </div>
-              ))}
+              {data.loads.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No open loads on the map yet.</p>
+              ) : (
+                data.loads.slice(0, 8).map((load) => (
+                  <div key={load.id} className="text-sm border-b border-border pb-2">
+                    <div className="font-semibold">{load.projectName}</div>
+                    <div className="text-muted-foreground text-xs">{load.material} · ${load.budgetPerHour}/hr · {load.bidsCount} bids</div>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
           <Card className="rounded-none border-2">
@@ -269,12 +275,16 @@ export default function MapPage() {
               <CardDescription>{data.stats.availableTrucks} available · {data.trucks.length} on map</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 max-h-64 overflow-y-auto">
-              {data.trucks.slice(0, 8).map((truck) => (
-                <div key={truck.id} className="text-sm border-b border-border pb-2 flex justify-between">
-                  <span className="font-semibold">{truck.label}</span>
-                  <Badge variant="outline" className="rounded-none text-xs">{truck.status}</Badge>
-                </div>
-              ))}
+              {data.trucks.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No fleet trucks registered yet.</p>
+              ) : (
+                data.trucks.slice(0, 8).map((truck) => (
+                  <div key={truck.id} className="text-sm border-b border-border pb-2 flex justify-between">
+                    <span className="font-semibold">{truck.label}</span>
+                    <Badge variant="outline" className="rounded-none text-xs">{truck.status}</Badge>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>

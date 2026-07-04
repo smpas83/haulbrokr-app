@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildDemoLoads, buildDemoMarketplace, buildDemoTrucks } from "./demoMarketplace";
+import { buildDemoLoads, buildDemoMarketplace, buildDemoTrucks, buildEmptyMarketplace } from "./demoMarketplace";
 
 describe("demoMarketplace", () => {
   it("generates 250 nationwide loads with coordinates", () => {
@@ -21,12 +21,12 @@ describe("demoMarketplace", () => {
     expect(trucks.some((t) => t.status === "en_route")).toBe(true);
   });
 
-  it("buildDemoMarketplace sets demoMode and stats", () => {
-    const payload = buildDemoMarketplace();
-    expect(payload.demoMode).toBe(true);
-    expect(payload.loads.length).toBe(250);
-    expect(payload.trucks.length).toBe(150);
-    expect(payload.heatZones.length).toBeGreaterThan(0);
-    expect(payload.stats.providers).toBe(50);
+  it("buildEmptyMarketplace returns production-safe empty payload", () => {
+    const payload = buildEmptyMarketplace();
+    expect(payload.demoMode).toBe(false);
+    expect(payload.loads).toEqual([]);
+    expect(payload.trucks).toEqual([]);
+    expect(payload.heatZones).toEqual([]);
+    expect(payload.stats.openLoads).toBe(0);
   });
 });

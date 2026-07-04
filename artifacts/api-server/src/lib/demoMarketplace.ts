@@ -211,6 +211,25 @@ export function buildDemoHeatZones(loads: MarketplaceLoad[]): MarketplaceHeatZon
     }));
 }
 
+/** Empty marketplace payload returned when no live data exists (production-safe). */
+export function buildEmptyMarketplace(): MarketplacePayload {
+  return {
+    demoMode: false,
+    generatedAt: new Date().toISOString(),
+    center: { latitude: 39.8283, longitude: -98.5795 },
+    loads: [],
+    trucks: [],
+    heatZones: [],
+    stats: {
+      openLoads: 0,
+      activeJobs: 0,
+      availableTrucks: 0,
+      providers: 0,
+    },
+  };
+}
+
+/** Synthetic nationwide demo data — seed scripts and unit tests only; never served to users. */
 export function buildDemoMarketplace(): MarketplacePayload {
   const loads = buildDemoLoads(250);
   const trucks = buildDemoTrucks(150);

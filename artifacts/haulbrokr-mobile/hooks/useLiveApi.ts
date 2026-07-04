@@ -389,7 +389,7 @@ export type MarketplaceMapData = {
   };
 };
 
-/** Nationwide map payload — auto demo mode when production has no live data. */
+/** Nationwide map payload from the production database. */
 export function useMarketplaceMap(opts?: { lat?: number; lng?: number; radiusMiles?: number }) {
   const { getToken, isSignedIn } = useAuth();
   const qs = new URLSearchParams();

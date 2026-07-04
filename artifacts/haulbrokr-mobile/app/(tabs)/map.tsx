@@ -28,19 +28,6 @@ import {
 } from "@/lib/marketplaceMap";
 import { distanceMiles } from "@/lib/geocode";
 
-// Demo fallback coords (legacy seed data only)
-const DEMO_JOB_COORDS: Record<string, { latitude: number; longitude: number }> = {
-  "1": { latitude: 32.7767, longitude: -96.7970 }, // Dallas — Industrial Blvd
-  "2": { latitude: 32.7555, longitude: -97.3308 }, // Fort Worth — Commerce St
-  "3": { latitude: 33.1976, longitude: -96.6397 }, // McKinney — US-75
-  "4": { latitude: 32.7357, longitude: -96.2750 }, // Terrell — quarry
-  "5": { latitude: 32.7814, longitude: -96.7950 }, // Dallas — Elm St
-  "6": { latitude: 33.1032, longitude: -96.6706 }, // Allen — delivery area
-  "7": { latitude: 32.3868, longitude: -96.8448 }, // Waxahachie — farm
-};
-
-const OPEN_STATUSES = new Set(["open", "bidding", "bid_received"]);
-
 // Nationwide view when marketplace data loads
 const US_REGION: Region = {
   latitude: 39.8283,
@@ -49,11 +36,7 @@ const US_REGION: Region = {
   longitudeDelta: 35,
 };
 
-// ── Surge heat zones (overridden by API heatZones when present) ─────
-const DEFAULT_SURGE_ZONES = [
-  { latitude: 32.7767, longitude: -96.7970, radius: 9000 },
-  { latitude: 32.7700, longitude: -97.2200, radius: 7000 },
-];
+const OPEN_STATUSES = new Set(["open", "bidding", "bid_received"]);
 
 const TRUCK_PIN_COLOR: Record<MarketplaceTruck["status"], string> = {
   available: "#16a34a",
@@ -152,8 +135,7 @@ export default function MapScreen() {
   const trucks = marketplace?.trucks ?? [];
   const heatZones = marketplace?.heatZones?.length
     ? marketplace.heatZones.map((z) => ({ latitude: z.latitude, longitude: z.longitude, radius: z.radius }))
-    : DEFAULT_SURGE_ZONES;
-  const demoMode = marketplace?.demoMode ?? false;
+    : [];
 
   const { coordsByJobId, loading: geocoding } = useJobCoordinates(
     marketplace?.loads?.length ? [] : jobs,
@@ -164,7 +146,7 @@ export default function MapScreen() {
       const load = marketplace.loads.find((l) => l.id === job.id);
       if (load) return coordFromMarketplace(load);
     }
-    return coordsByJobId[job.id] ?? DEMO_JOB_COORDS[job.id] ?? null;
+    return coordsByJobId[job.id] ?? null;
   }, [coordsByJobId, marketplace]);
 
   const [selectedPin,      setSelectedPin]      = useState<string | null>(null);
@@ -384,21 +366,7 @@ export default function MapScreen() {
       )}
 
       {/* ── Surge banner ──────────────────────────────────────────── */}
-      {!isFullscreen && demoMode && (
-        <Animated.View entering={FadeInDown.duration(300)}>
-          <View style={[styles.surgeBanner, {
-            backgroundColor:   "#1e3a54",
-            borderBottomColor: "#3b82f640",
-          }]}>
-            <Text style={styles.surgeEmoji}>🗺️</Text>
-            <Text style={[styles.surgeText, { fontFamily: "Inter_700Bold", color: "#93c5fd" }]}>
-              DEMO MODE — {marketplace?.loads.length ?? 0} loads · {marketplace?.trucks.length ?? 0} trucks nationwide
-            </Text>
-          </View>
-        </Animated.View>
-      )}
-
-      {!isFullscreen && isSurge && showSurge && !demoMode && (
+      {!isFullscreen && isSurge && showSurge && heatZones.length > 0 && (
         <Animated.View entering={FadeInDown.duration(300)}>
           <View style={[styles.surgeBanner, {
             backgroundColor:   "#78350f",
@@ -701,10 +669,8 @@ export default function MapScreen() {
                     fontFamily: "Inter_400Regular",
                   }]}>
                     {jobs.length === 0
-                      ? "Post a load from the Loads tab or check back soon"
-                      : demoMode
-                        ? "Pan the map — demo loads and trucks are active nationwide"
-                        : "Pan the map to the pickup location and tap \"Search this area\""}
+                      ? "No loads available in your area yet. Post a load from the Loads tab or check back soon."
+                      : "Pan the map to the pickup location and tap \"Search this area\""}
                   </Text>
                 </View>
               ) : (

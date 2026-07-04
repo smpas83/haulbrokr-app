@@ -1,12 +1,8 @@
 /**
- * Seed production marketplace with nationwide demo data:
- * - dump sites directory
- * - 50 provider (vendor) profiles
- * - 30 customer profiles
- * - 250 open load requests
- * - 150 fleet trucks
+ * Seed staging/dev marketplace with synthetic nationwide data.
+ * Refuses to run in production unless SEED_MARKETPLACE_FORCE=1 is set.
  *
- * Usage (Render shell or local with Neon DATABASE_URL):
+ * Usage (local/staging with Neon DATABASE_URL):
  *   DATABASE_URL="postgresql://..." pnpm --filter @workspace/api-server run seed-marketplace
  */
 import "../src/load-env.js";
@@ -146,6 +142,13 @@ async function seedTrucks(providers: { id: number }[]) {
 async function main() {
   if (!process.env.DATABASE_URL?.trim()) {
     throw new Error("DATABASE_URL is required.");
+  }
+  if (process.env.NODE_ENV === "production" && process.env.SEED_MARKETPLACE_FORCE !== "1") {
+    console.error(
+      "Refusing to seed marketplace demo data in production.\n" +
+      "Set SEED_MARKETPLACE_FORCE=1 only if you intentionally want synthetic rows in a production database.",
+    );
+    process.exit(1);
   }
   console.log("Seeding HaulBrokr marketplace demo data...");
   await seedDumpSitesIfEmpty();

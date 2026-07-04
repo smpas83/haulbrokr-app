@@ -14,11 +14,11 @@ import heroTruckSmWebp from "@/assets/hero-truck-sm.webp";
 import ctaTruck from "@/assets/cta-truck.png";
 import ctaTruckWebp from "@/assets/cta-truck.webp";
 
-const LIVE_STATS = [
-  { label: "Active Loads", value: "2,847", change: "+12%" },
-  { label: "Trucks Online", value: "14,203", change: "+8%" },
-  { label: "States Covered", value: "50", change: "" },
-  { label: "Avg Dispatch Time", value: "4.2 min", change: "-18%" },
+const PLATFORM_HIGHLIGHTS = [
+  { label: "Coverage", value: "Nationwide", detail: "All 50 states" },
+  { label: "Tracking", value: "Live GPS", detail: "On active hauls" },
+  { label: "Compliance", value: "Verified", detail: "Document gates" },
+  { label: "Dispatch", value: "AI-assisted", detail: "You stay in control" },
 ];
 
 const steps = [
@@ -72,10 +72,10 @@ const segments = [
   },
 ];
 
-const liveJobs = [
-  { job: "Rock and gravel load", location: "Houston, TX", eta: "12 min", price: "$850", status: "En route" },
-  { job: "Demo haul-off", location: "Denver, CO", eta: "28 min", price: "$1,270", status: "Loading" },
-  { job: "Asphalt transfer", location: "Chicago, IL", eta: "45 min", price: "$1,690", status: "Dispatched" },
+const DISPATCH_FEATURES = [
+  { title: "Post haul requests", desc: "Contractors publish pickup, material, truck count, and schedule." },
+  { title: "Match available trucks", desc: "Verified carriers browse open loads and submit bids." },
+  { title: "Track active jobs", desc: "Follow check-ins, route status, and completion in real time." },
 ];
 
 const PRICING = [
@@ -227,15 +227,15 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Live Stats */}
+        {/* Platform highlights */}
         <section className="border-y border-border/50 bg-card/30">
           <div className="container mx-auto grid grid-cols-2 gap-px bg-border/30 sm:grid-cols-4 px-4">
-            {LIVE_STATS.map((stat) => (
+            {PLATFORM_HIGHLIGHTS.map((stat) => (
               <div key={stat.label} className="bg-background py-8 px-6 text-center">
                 <p className="text-3xl font-bold stat-number text-foreground">{stat.value}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
-                {stat.change && (
-                  <p className="mt-1 text-xs font-medium text-emerald-400">{stat.change}</p>
+                {stat.detail && (
+                  <p className="mt-1 text-xs font-medium text-muted-foreground">{stat.detail}</p>
                 )}
               </div>
             ))}
@@ -246,35 +246,23 @@ export default function LandingPage() {
         <section id="platform" className="py-20 sm:py-28">
           <div className="container mx-auto px-4">
             <div className="mx-auto mb-14 max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Real-time platform</p>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Platform preview</p>
               <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Mission control for hauling</h2>
-              <p className="mt-4 text-muted-foreground text-lg">Live dispatch board and AI copilot working together to move your fleet faster.</p>
+              <p className="mt-4 text-muted-foreground text-lg">Dispatch board and AI copilot designed for contractors, fleets, and drivers.</p>
             </div>
             <div className="grid gap-6 lg:grid-cols-2">
               <SurfacePanel elevated className="p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-accent">Live dispatch board</p>
-                    <h3 className="text-xl font-bold mt-1">Today's Work</h3>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-400">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span className="font-medium">Updated now</span>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-accent">Dispatch workflow</p>
+                    <h3 className="text-xl font-bold mt-1">How it works</h3>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {liveJobs.map((job) => (
-                    <div key={job.job} className="rounded-xl border border-border/50 bg-muted/20 p-4 hover:border-primary/30 transition-colors">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="font-semibold">{job.job}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{job.location} · ETA {job.eta}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-accent">{job.price}</p>
-                          <p className="text-xs text-emerald-400 font-medium">{job.status}</p>
-                        </div>
-                      </div>
+                  {DISPATCH_FEATURES.map((item) => (
+                    <div key={item.title} className="rounded-xl border border-border/50 bg-muted/20 p-4 hover:border-primary/30 transition-colors">
+                      <p className="font-semibold">{item.title}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
                     </div>
                   ))}
                 </div>

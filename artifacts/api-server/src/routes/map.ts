@@ -11,7 +11,7 @@ import {
 } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
-  buildDemoMarketplace,
+  buildEmptyMarketplace,
   type MarketplaceLoad,
   type MarketplacePayload,
   type MarketplaceTruck,
@@ -151,9 +151,8 @@ async function buildLiveMarketplace(profile: { id: number; role: string }): Prom
   for (const row of allTrucks) {
     const owner = row.ownerCompany ?? "Carrier";
     const baseCity = owner.split(" ")[0] ?? "Dallas";
-    const coord =
-      (await geocodeAddressCached(`${baseCity}, TX, USA`)) ??
-      { latitude: 32.7767 + (row.truck.id % 10) * 0.05, longitude: -96.797 + (row.truck.id % 10) * 0.05 };
+    const coord = await geocodeAddressCached(`${baseCity}, TX, USA`);
+    if (!coord) continue;
     trucks.push({
       id: row.truck.id,
       label: row.truck.truckNumber ?? `Truck ${row.truck.id}`,
@@ -214,7 +213,7 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
   try {
     const liveCount = await countLiveMarketplaceRows();
     let payload: MarketplacePayload =
-      liveCount === 0 ? buildDemoMarketplace() : await buildLiveMarketplace(profile);
+      liveCount === 0 ? buildEmptyMarketplace() : await buildLiveMarketplace(profile);
 
     if (parsed.data.lat != null && parsed.data.lng != null && parsed.data.radiusMiles != null) {
       payload = filterByRadius(payload, parsed.data.lat, parsed.data.lng, parsed.data.radiusMiles);
@@ -223,7 +222,7 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
     res.json(payload);
   } catch (err) {
     console.error("[map/marketplace]", err);
-    res.json(buildDemoMarketplace());
+    res.status(500).json({ error: "Failed to load marketplace data" });
   }
 }
 
@@ -246,8 +245,8 @@ router.post("/maps/geocode", requireProfile, async (req, res): Promise<void> => 
 });
 
 /**
- * Nationwide marketplace map data — loads, trucks, heat zones.
- * Automatically returns demo data when production has zero live marketplace rows.
+ * Nationwide marketplace map data — loads, trucks, heat zones from the database.
+ * Returns an empty payload when no live marketplace rows exist.
  */
 router.get("/map/marketplace", requireProfile, (req, res) => handleMarketplace(req, res));
 router.get("/map", requireProfile, (req, res) => handleMarketplace(req, res));

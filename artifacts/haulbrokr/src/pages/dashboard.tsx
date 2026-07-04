@@ -5,7 +5,7 @@ import {
   ArrowRight, Activity, Plus, Truck, AlertCircle,
   CircleCheck, CheckCircle2, TrendingUp,
   ShieldAlert, ArrowUpRight, ClipboardList, Briefcase,
-  Cloud, Radio, Sparkles
+  Radio, Sparkles
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -121,13 +121,13 @@ export default function DashboardPage() {
         }
       />
 
-      {/* System status bar */}
+      {/* Account summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { icon: Radio, label: "Fleet Status", value: "Online", color: "text-emerald-400" },
-          { icon: Cloud, label: "Weather", value: "Clear", color: "text-primary" },
-          { icon: Activity, label: "Utilization", value: stats?.activeJobs ? `${Math.min(100, (stats.activeJobs ?? 0) * 12)}%` : "—", color: "text-accent" },
-          { icon: Sparkles, label: "AI Insights", value: "3 new", color: "text-primary" },
+          { icon: Activity, label: "Active Jobs", value: stats?.activeJobs != null ? String(stats.activeJobs) : "—", color: "text-accent" },
+          { icon: Radio, label: "Open Requests", value: isCustomer && stats?.openRequests != null ? String(stats.openRequests) : isProvider ? "—" : "—", color: "text-primary" },
+          { icon: TrendingUp, label: isProvider ? "Pending Bids" : "Completed", value: isProvider ? (stats?.pendingBids != null ? String(stats.pendingBids) : "—") : (stats?.completedJobs != null ? String(stats.completedJobs) : "—"), color: "text-emerald-400" },
+          { icon: Sparkles, label: isProvider ? "Est. Revenue" : "Total Spent", value: isProvider ? `$${(stats?.totalRevenue ?? 0).toLocaleString()}` : `$${(stats?.totalSpent ?? 0).toLocaleString()}`, color: "text-primary" },
         ].map((item) => (
           <div key={item.label} className="surface-panel rounded-xl px-4 py-3 flex items-center gap-3">
             <item.icon className={`h-4 w-4 ${item.color}`} />

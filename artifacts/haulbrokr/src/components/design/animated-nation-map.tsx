@@ -184,16 +184,9 @@ export function AnimatedNationMap({ className }: { className?: string }) {
         </button>
       ))}
 
-      {/* Live indicator */}
+      {/* Illustration indicator */}
       <div className="absolute top-4 left-4 flex items-center gap-2 surface-panel rounded-full px-3 py-1.5">
-        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-        <span className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">Live Network</span>
-      </div>
-
-      {/* Stats overlay */}
-      <div className="absolute bottom-4 right-4 surface-panel rounded-xl px-4 py-3 space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Active Loads</p>
-        <p className="text-2xl font-bold stat-number text-foreground">2,847</p>
+        <span className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">Platform illustration</span>
       </div>
     </div>
   );

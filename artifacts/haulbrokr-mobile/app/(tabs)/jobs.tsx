@@ -96,9 +96,6 @@ export default function JobsScreen() {
             .map(liveRequestToViewJob)
         : [];
       const combined = [...fromOpenRequests, ...fromJobs];
-      if (combined.length === 0 && marketplace?.demoMode && marketplace.loads.length) {
-        return marketplace.loads.slice(0, 50).map(marketplaceLoadToJob);
-      }
       return combined;
     }
     const fromRequests =
@@ -108,11 +105,8 @@ export default function JobsScreen() {
             .map(liveRequestToViewJob)
         : [];
     const combined = [...fromRequests, ...fromJobs];
-    if (combined.length === 0 && marketplace?.demoMode && marketplace.loads.length) {
-      return marketplace.loads.slice(0, 50).map(marketplaceLoadToJob);
-    }
     return combined;
-  }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider, marketplace]);
+  }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider]);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
