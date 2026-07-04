@@ -128,7 +128,7 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
           <AlertCircle className="h-4 w-4 flex-shrink-0" /> {initError}
         </p>
         <div className="flex items-center gap-2">
-          <Button type="button" className="rounded-none font-bold" onClick={start} disabled={setupIntent.isPending}>
+          <Button type="button" className="rounded-xl font-bold" onClick={start} disabled={setupIntent.isPending}>
             {setupIntent.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Try again
           </Button>
@@ -164,7 +164,7 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
         </p>
       )}
       <div className="flex items-center gap-2">
-        <Button type="button" onClick={handleConfirm} disabled={busy} className="rounded-none font-bold">
+        <Button type="button" onClick={handleConfirm} disabled={busy} className="rounded-xl font-bold">
           {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {saveLabel ?? "Connect bank account"}
         </Button>

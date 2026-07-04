@@ -6,16 +6,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Clock } from "lucide-react";
 
 type MicrodepositVerifyProps = {
-  /** Called after the bank account is successfully verified (e.g. to refetch). */
   onVerified?: () => void;
 };
 
-/**
- * Lets a customer finish ACH micro-deposit verification when their bank couldn't
- * be linked instantly. Stripe sends 1-2 tiny deposits to the account; the customer
- * either enters the two amounts (in cents/dollars) or the 6-character descriptor
- * code from a single deposit. On success the saved bank account becomes chargeable.
- */
 export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
   const verify = useVerifyPaymentMethodMicrodeposits();
   const [mode, setMode] = useState<"amounts" | "code">("amounts");
@@ -25,9 +18,6 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  // Amounts are entered in dollars exactly as they appear on the bank statement
-  // (e.g. "0.32"), and converted to the whole cents Stripe expects. Returns null
-  // for anything that isn't a valid, sub-dollar deposit amount.
   function toCents(raw: string): number | null {
     const trimmed = raw.trim().replace(/^\$/, "");
     if (!trimmed) return null;
@@ -67,19 +57,19 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
 
   if (done) {
     return (
-      <Alert className="rounded-none border-green-600/40 bg-green-50 dark:bg-green-950/20">
-        <AlertTitle className="text-green-700 dark:text-green-400">Bank account verified</AlertTitle>
-        <AlertDescription>Your bank account is now ready to use for payments.</AlertDescription>
+      <Alert className="rounded-xl border-emerald-500/30 bg-emerald-500/10">
+        <AlertTitle className="text-emerald-400">Bank account verified</AlertTitle>
+        <AlertDescription className="text-muted-foreground">Your bank account is now ready to use for payments.</AlertDescription>
       </Alert>
     );
   }
 
   return (
-    <Alert className="rounded-none border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 space-y-3">
+    <Alert className="rounded-xl border-warning/40 bg-warning/10 space-y-3">
       <Clock className="h-4 w-4" />
       <AlertTitle>Finish verifying your bank account</AlertTitle>
       <AlertDescription className="space-y-3">
-        <p className="text-sm">
+        <p className="text-sm text-muted-foreground">
           Stripe sent small deposits to your bank account (1-2 business days). Enter
           the two amounts in dollars exactly as they appear on your statement (e.g.
           $0.32) — or the descriptor code from a single deposit — to confirm
@@ -113,7 +103,7 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
                 placeholder="0.32"
                 value={amount1}
                 onChange={(e) => setAmount1(e.target.value)}
-                className="rounded-none pl-5"
+                className="rounded-lg pl-5"
               />
             </div>
             <div className="relative flex-1">
@@ -123,7 +113,7 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
                 placeholder="0.45"
                 value={amount2}
                 onChange={(e) => setAmount2(e.target.value)}
-                className="rounded-none pl-5"
+                className="rounded-lg pl-5"
               />
             </div>
           </div>
@@ -132,7 +122,7 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
             placeholder="SM11AA"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="rounded-none max-w-xs font-mono uppercase"
+            className="rounded-lg max-w-xs font-mono uppercase"
           />
         )}
 
@@ -142,7 +132,7 @@ export function MicrodepositVerify({ onVerified }: MicrodepositVerifyProps) {
           </p>
         )}
 
-        <Button type="button" onClick={submit} disabled={verify.isPending} className="rounded-none font-bold">
+        <Button type="button" onClick={submit} disabled={verify.isPending}>
           {verify.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           Verify bank account
         </Button>

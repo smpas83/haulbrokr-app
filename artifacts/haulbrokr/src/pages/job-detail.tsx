@@ -28,6 +28,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { getStatusColor, getPaymentStatusColor } from "@/lib/design-tokens";
+import { cn } from "@/lib/utils";
 import { StripeCardForm } from "@/components/stripe-card-form";
 import { loadStripe } from "@stripe/stripe-js";
 import { StripeBankForm } from "@/components/stripe-bank-form";
@@ -213,14 +215,7 @@ const PAYMENT_LABEL: Record<string, string> = {
 };
 
 function paymentBadgeClass(status?: string) {
-  switch (status) {
-    case "released": return "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300";
-    case "paid": return "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300";
-    case "invoiced": return "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300";
-    case "failed": return "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300";
-    case "requires_action": return "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300";
-    default: return "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300";
-  }
+  return getPaymentStatusColor(status);
 }
 
 const PM_METHOD_LABEL: Record<string, string> = {
@@ -934,7 +929,7 @@ function DriverFieldOpsPanel({ job }: { job: Job }) {
   if (!myTicket) {
     return (
       <div className="border-t-2 border-border p-6 md:p-8">
-        <Alert className="border-amber-500/80 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+        <Alert className="border-warning/40 bg-warning/10 text-foreground">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Driver assignment required before check-in</AlertTitle>
           <AlertDescription>
@@ -1087,7 +1082,7 @@ function AssignDriverPanel({ job }: { job: Job }) {
   return (
     <div className="border-t-2 border-border p-6 md:p-8 space-y-4">
       {needsAssignment ? (
-        <Alert className="border-amber-500/80 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+        <Alert className="border-warning/40 bg-warning/10 text-foreground">
           <AlertTriangle className="h-4 w-4 text-amber-600" />
           <AlertTitle>Assign a driver before field check-in</AlertTitle>
           <AlertDescription>
@@ -1095,7 +1090,7 @@ function AssignDriverPanel({ job }: { job: Job }) {
           </AlertDescription>
         </Alert>
       ) : (
-        <Alert className="border-green-600/40 bg-green-50 text-green-950 dark:bg-green-950/30 dark:text-green-100">
+        <Alert className="border-emerald-500/40 bg-emerald-500/10 text-foreground">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
           <AlertTitle>{assignedTickets.length} driver{assignedTickets.length === 1 ? "" : "s"} assigned</AlertTitle>
           <AlertDescription>Assigned drivers can check in and upload haul tickets from the field.</AlertDescription>
@@ -1180,11 +1175,7 @@ function CompletionReviewPanel({ job }: { job: Job }) {
         <h3 className="font-bold text-lg flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-muted-foreground" /> Completion Review
         </h3>
-        <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 ${
-          approval === "approved" ? "bg-green-100 text-green-800 border-green-300"
-          : approval === "flagged" ? "bg-red-100 text-red-800 border-red-300"
-          : "bg-amber-100 text-amber-800 border-amber-300"
-        }`}>
+        <Badge className={cn("rounded-xl border font-bold uppercase text-xs px-3 py-1", getStatusColor(approval))}>
           {approval}
         </Badge>
       </div>
@@ -1195,8 +1186,8 @@ function CompletionReviewPanel({ job }: { job: Job }) {
           Completion approved{job.completionApprovedAt ? ` on ${format(new Date(job.completionApprovedAt), "MMM d, yyyy h:mm a")}` : ""}.
         </p>
       ) : approval === "flagged" ? (
-        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 p-4 space-y-2">
-          <p className="text-sm font-bold text-red-700 dark:text-red-400 flex items-center gap-2">
+        <div className="bg-destructive/10 border-l-4 border-destructive/50 p-4 space-y-2 rounded-r-xl">
+          <p className="text-sm font-bold text-destructive flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" /> Completion flagged with an issue
           </p>
           {job.flagReason && <p className="text-sm">{job.flagReason}</p>}
@@ -1325,19 +1316,6 @@ export default function JobDetailPage() {
     );
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "awarded": return "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800";
-      case "accepted":
-      case "active": return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
-      case "declined":
-      case "cancelled": return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800";
-      case "in_progress": return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800";
-      case "completed": return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
-      default: return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
@@ -1372,7 +1350,7 @@ export default function JobDetailPage() {
               <h1 className="text-3xl font-bold tracking-tight uppercase">
                 JOB-{job.id.toString().padStart(4, '0')}
               </h1>
-              <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 ${getStatusColor(job.status)}`}>
+              <Badge className={cn("rounded-xl border font-bold uppercase text-xs px-3 py-1", getStatusColor(job.status))}>
                 {job.status.replace('_', ' ')}
               </Badge>
             </div>

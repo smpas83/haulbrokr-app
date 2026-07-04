@@ -53,10 +53,38 @@ export const STATUS_COLORS: Record<string, string> = {
   en_route: "bg-amber-500/15 text-amber-400 border-amber-500/30",
   loading: "bg-violet-500/15 text-violet-400 border-violet-500/30",
   dispatched: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  flagged: "bg-red-500/15 text-red-400 border-red-500/30",
+  paid: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  invoiced: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  failed: "bg-red-500/15 text-red-400 border-red-500/30",
+  requires_action: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  uploaded: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  missing: "bg-muted text-muted-foreground border-border",
+  expired: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  not_submitted: "bg-muted text-muted-foreground border-border",
+  not_set: "bg-muted text-muted-foreground border-border",
 };
 
 export function getStatusColor(status: string): string {
   return STATUS_COLORS[status] ?? "bg-muted text-muted-foreground border-border";
+}
+
+export function getPaymentStatusColor(status?: string): string {
+  return STATUS_COLORS[status ?? ""] ?? STATUS_COLORS.requires_action;
+}
+
+export function getDocStatusColor(status: string, expired?: boolean): string {
+  if (status === "verified" && expired) return STATUS_COLORS.expired;
+  return STATUS_COLORS[status] ?? STATUS_COLORS.missing;
+}
+
+export function getVerificationPanelColor(status?: string): string {
+  switch (status) {
+    case "verified": return "border-emerald-500/30 bg-emerald-500/10";
+    case "pending": return "border-amber-500/30 bg-amber-500/10";
+    case "rejected": return "border-destructive/30 bg-destructive/10";
+    default: return "border-border bg-muted/30";
+  }
 }
 
 /** Map marker and heat zone colors aligned with brand palette */

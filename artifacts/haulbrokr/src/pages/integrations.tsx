@@ -84,7 +84,7 @@ function QuickBooksCard() {
             </div>
 
             {qb.lastSyncStatus === "success" && (
-              <Alert className="rounded-xl border-green-200 bg-green-50">
+              <Alert className="rounded-xl border-emerald-500/30 bg-emerald-500/10">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-700 text-sm">Last sync successful</AlertDescription>
               </Alert>

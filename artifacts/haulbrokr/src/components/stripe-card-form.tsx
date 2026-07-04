@@ -71,7 +71,7 @@ function CardCaptureForm({
 
   return (
     <div className="space-y-3">
-      <div className="border-2 border-border bg-background p-3 rounded-none">
+      <div className="border border-border/60 bg-background p-3 rounded-xl">
         <CardElement options={CARD_ELEMENT_OPTIONS} onReady={() => setReady(true)} />
       </div>
       {error && (
@@ -84,7 +84,7 @@ function CardCaptureForm({
           type="button"
           onClick={handleConfirm}
           disabled={!stripe || !ready || busy}
-          className="rounded-none font-bold"
+          className="rounded-xl font-bold"
         >
           {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {saveLabel ?? "Save card"}
@@ -139,7 +139,7 @@ export function StripeCardForm({ onSaved, onCancel, saving, saveLabel }: StripeC
           <AlertCircle className="h-4 w-4 flex-shrink-0" /> {initError}
         </p>
         <div className="flex items-center gap-2">
-          <Button type="button" className="rounded-none font-bold" onClick={start} disabled={setupIntent.isPending}>
+          <Button type="button" className="rounded-xl font-bold" onClick={start} disabled={setupIntent.isPending}>
             {setupIntent.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Try again
           </Button>

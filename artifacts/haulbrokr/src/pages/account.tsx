@@ -38,18 +38,30 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StripeCardForm } from "@/components/stripe-card-form";
 import { StripeBankForm } from "@/components/stripe-bank-form";
 import { MicrodepositVerify } from "@/components/microdeposit-verify";
+import { getStatusColor, getVerificationPanelColor } from "@/lib/design-tokens";
+import { cn } from "@/lib/utils";
 
 function StatusBadge({ status, text }: { status: "not_submitted"|"not_set"|"pending"|"verified"|"rejected", text?: string }) {
-  if (status === "verified") {
-    return <Badge className="bg-green-500 hover:bg-green-600 rounded-xl"><CheckCircle2 className="w-3 h-3 mr-1"/> {text || "Verified"}</Badge>;
-  }
-  if (status === "pending") {
-    return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl"><Clock className="w-3 h-3 mr-1"/> {text || "Pending Review"}</Badge>;
-  }
-  if (status === "rejected") {
-    return <Badge variant="destructive" className="rounded-xl"><AlertCircle className="w-3 h-3 mr-1"/> {text || "Rejected"}</Badge>;
-  }
-  return <Badge variant="secondary" className="rounded-xl text-muted-foreground">{text || "Not Submitted"}</Badge>;
+  const icons = {
+    verified: CheckCircle2,
+    pending: Clock,
+    rejected: AlertCircle,
+    not_submitted: AlertCircle,
+    not_set: AlertCircle,
+  };
+  const Icon = icons[status] ?? AlertCircle;
+  const labels: Record<string, string> = {
+    verified: text || "Verified",
+    pending: text || "Pending Review",
+    rejected: text || "Rejected",
+    not_submitted: text || "Not Submitted",
+    not_set: text || "Not Set",
+  };
+  return (
+    <Badge variant="outline" className={cn("rounded-xl border font-semibold", getStatusColor(status))}>
+      <Icon className="w-3 h-3 mr-1" /> {labels[status]}
+    </Badge>
+  );
 }
 
 const profileSchema = z.object({
@@ -102,7 +114,7 @@ function ProfileTab() {
   }
 
   return (
-    <Card className="rounded-xl border-2">
+    <Card className="rounded-2xl border border-border/60">
       <CardHeader>
         <CardTitle>Company Profile</CardTitle>
         <CardDescription>Basic information about your business</CardDescription>
@@ -254,7 +266,7 @@ function W9Tab() {
   const isPending = submitW9.isPending || updateW9.isPending;
 
   return (
-    <Card className="rounded-xl border-2">
+    <Card className="rounded-2xl border border-border/60">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -571,7 +583,7 @@ function InsuranceTab() {
   const isPending = submitIns.isPending || updateIns.isPending;
 
   return (
-    <Card className="rounded-xl border-2">
+    <Card className="rounded-2xl border border-border/60">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -795,7 +807,7 @@ function PaymentMethodTab() {
   const isPending = setPm.isPending || updatePm.isPending;
 
   return (
-    <Card className="rounded-xl border-2">
+    <Card className="rounded-2xl border border-border/60">
       <CardHeader>
         <CardTitle>Billing & Payment Method</CardTitle>
         <CardDescription>Set up how you will pay for completed jobs.</CardDescription>
@@ -1049,7 +1061,7 @@ function PayoutAccountTab() {
   const isPending = setPayout.isPending || updatePayout.isPending;
 
   return (
-    <Card className="rounded-xl border-2">
+    <Card className="rounded-2xl border border-border/60">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -1087,7 +1099,7 @@ function PayoutAccountTab() {
 
           if (enabled) {
             return (
-              <Alert className="mb-6 rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+              <Alert className="mb-6 rounded-xl bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                 <CheckCircle2 className="h-4 w-4" />
                 <AlertTitle>Payouts enabled</AlertTitle>
                 <AlertDescription>You're all set — completed jobs pay out to your bank automatically.</AlertDescription>
@@ -1181,7 +1193,7 @@ function PayoutAccountTab() {
           );
         })()}
 
-        <Alert className="mb-6 rounded-xl bg-blue-50/50 text-blue-900 border-blue-200 dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-800">
+        <Alert className="mb-6 rounded-xl bg-primary/10 text-primary border-primary/20">
           <ShieldAlert className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <AlertTitle>Secure Storage</AlertTitle>
           <AlertDescription>Your bank information is encrypted and stored securely. We only display the last 4 digits after saving.</AlertDescription>
@@ -1250,7 +1262,7 @@ function ComplianceTab() {
   const isProvider = profile.role === "provider";
 
   return (
-    <Card className="rounded-xl border-2">
+    <Card className="rounded-2xl border border-border/60">
       <CardHeader>
         <CardTitle>Account Status</CardTitle>
         <CardDescription>Overview of your account verification and readiness.</CardDescription>
@@ -1393,13 +1405,10 @@ function DotCdlTab() {
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
 
-  const statusColor = !record ? "border-gray-200 bg-gray-50" :
-    record.status === "verified" ? "border-green-200 bg-green-50" :
-    record.status === "pending" ? "border-amber-200 bg-amber-50" :
-    record.status === "rejected" ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50";
+  const statusColor = getVerificationPanelColor(record?.status);
 
   return (
-    <Card className="rounded-xl border-2">
+    <Card className="rounded-2xl border border-border/60">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
@@ -1420,10 +1429,10 @@ function DotCdlTab() {
       </CardHeader>
       <CardContent className="space-y-6">
         {record?.status === "verified" && (
-          <Alert className="rounded-xl border-green-200 bg-green-50">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">Verified</AlertTitle>
-            <AlertDescription className="text-green-700">Your DOT number and CDL are verified. You can bid on all job types.</AlertDescription>
+          <Alert className="rounded-xl border-emerald-500/30 bg-emerald-500/10">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <AlertTitle className="text-emerald-400">Verified</AlertTitle>
+            <AlertDescription className="text-muted-foreground">Your DOT number and CDL are verified. You can bid on all job types.</AlertDescription>
           </Alert>
         )}
         {record?.status === "rejected" && (
@@ -1498,7 +1507,7 @@ function DotCdlTab() {
                 <div key={c.label} className="bg-background p-3 flex items-center justify-between gap-2">
                   <span className="text-sm">{c.label}</span>
                   {c.value === "verified" ? (
-                    <Badge className="bg-green-500 hover:bg-green-600 rounded-xl text-xs"><CheckCircle2 className="w-3 h-3 mr-1" />Verified</Badge>
+                    <Badge className={cn("rounded-xl border text-xs", getStatusColor("verified"))}><CheckCircle2 className="w-3 h-3 mr-1" />Verified</Badge>
                   ) : c.value === "failed" ? (
                     <Badge variant="destructive" className="rounded-xl text-xs"><AlertCircle className="w-3 h-3 mr-1" />Failed</Badge>
                   ) : (
@@ -1569,7 +1578,7 @@ function CreditApplicationTab() {
   });
 
   return (
-    <Card className="rounded-xl border-2">
+    <Card className="rounded-2xl border border-border/60">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
@@ -1586,14 +1595,14 @@ function CreditApplicationTab() {
       </CardHeader>
       <CardContent className="space-y-6">
         {record?.status === "approved" && (
-          <Alert className="rounded-xl border-green-200 bg-green-50">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-800">Credit Approved</AlertTitle>
+          <Alert className="rounded-xl border-emerald-500/30 bg-emerald-500/10">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <AlertTitle className="text-emerald-400">Credit Approved</AlertTitle>
             <AlertDescription className="text-green-700">You can select Net payment terms when paying for completed jobs.</AlertDescription>
           </Alert>
         )}
         {record?.status === "pending" && (
-          <Alert className="rounded-xl border-amber-200 bg-amber-50">
+          <Alert className="rounded-xl border-warning/30 bg-warning/10">
             <Clock className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-amber-800">Under Review</AlertTitle>
             <AlertDescription className="text-amber-700">Our team is reviewing your credit application (typically 1–3 business days).</AlertDescription>
@@ -1651,15 +1660,15 @@ export default function AccountPage() {
 
       <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="flex flex-wrap h-auto rounded-xl justify-start gap-2 bg-transparent p-0 mb-6">
-          <TabsTrigger value="status" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Status</TabsTrigger>
-          <TabsTrigger value="profile" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Profile</TabsTrigger>
-          {isProvider && <TabsTrigger value="w9" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">W-9 Form</TabsTrigger>}
-          {isProvider && <TabsTrigger value="insurance" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Insurance</TabsTrigger>}
-          {isProvider && <TabsTrigger value="payout" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payout Account</TabsTrigger>}
-          {isProvider && <TabsTrigger value="dotcdl" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">DOT / CDL</TabsTrigger>}
-          {(isProvider || isCustomer) && <TabsTrigger value="documents" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
-          {isCustomer && <TabsTrigger value="payment" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payment Method</TabsTrigger>}
-          {isCustomer && <TabsTrigger value="credit" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Credit Application</TabsTrigger>}
+          <TabsTrigger value="status" className="rounded-xl border border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Status</TabsTrigger>
+          <TabsTrigger value="profile" className="rounded-xl border border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Profile</TabsTrigger>
+          {isProvider && <TabsTrigger value="w9" className="rounded-xl border border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">W-9 Form</TabsTrigger>}
+          {isProvider && <TabsTrigger value="insurance" className="rounded-xl border border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Insurance</TabsTrigger>}
+          {isProvider && <TabsTrigger value="payout" className="rounded-xl border border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payout Account</TabsTrigger>}
+          {isProvider && <TabsTrigger value="dotcdl" className="rounded-xl border border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">DOT / CDL</TabsTrigger>}
+          {(isProvider || isCustomer) && <TabsTrigger value="documents" className="rounded-xl border border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
+          {isCustomer && <TabsTrigger value="payment" className="rounded-xl border border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payment Method</TabsTrigger>}
+          {isCustomer && <TabsTrigger value="credit" className="rounded-xl border border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Credit Application</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="status" className="mt-0"><ComplianceTab /></TabsContent>
