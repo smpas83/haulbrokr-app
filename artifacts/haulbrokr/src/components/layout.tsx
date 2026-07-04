@@ -59,7 +59,7 @@ function Sidebar({ navItems, profile, user, onSignOut, onCopilotOpen }: {
       </div>
 
       <div className="px-4 py-4 border-b border-sidebar-border/50">
-        <div className="glass-panel rounded-xl p-3">
+        <div className="surface-panel rounded-xl p-3">
           <div className="text-sm font-semibold text-sidebar-foreground truncate">
             {profile?.companyName || user?.fullName}
           </div>
@@ -86,7 +86,7 @@ function Sidebar({ navItems, profile, user, onSignOut, onCopilotOpen }: {
       </nav>
 
       <div className="p-4 border-t border-sidebar-border/50 space-y-2">
-        <div className="glass-panel rounded-xl p-3 flex items-center gap-2 cursor-pointer hover:border-primary/30 transition-colors" onClick={onCopilotOpen} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onCopilotOpen()}>
+        <div className="surface-panel rounded-xl p-3 flex items-center gap-2 cursor-pointer hover:border-primary/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onCopilotOpen} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onCopilotOpen()} aria-label="Open AI Copilot">
           <Sparkles className="h-4 w-4 text-primary shrink-0" />
           <div className="min-w-0">
             <p className="text-xs font-semibold text-sidebar-foreground truncate">AI Copilot</p>
@@ -157,6 +157,9 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-4 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
+        Skip to main content
+      </a>
       {/* Desktop Sidebar */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border hidden md:flex flex-col shrink-0">
         <Sidebar navItems={navItems} profile={profile} user={user} onSignOut={handleSignOut} onCopilotOpen={() => setCopilotOpen(true)} />
@@ -165,7 +168,7 @@ export function Layout({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Mobile Header */}
-        <header className="h-14 bg-sidebar/80 backdrop-blur-xl border-b border-sidebar-border flex items-center justify-between px-4 md:hidden sticky top-0 z-40">
+        <header className="h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 md:hidden sticky top-0 z-40">
           <div className="flex items-center gap-2">
             <img
               src={`${import.meta.env.BASE_URL}haulbrokr-logo.png`}
@@ -192,13 +195,13 @@ export function Layout({ children }: { children: ReactNode }) {
           </Sheet>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 md:p-8 pb-24 md:pb-8 page-enter">
+        <div id="main-content" className="flex-1 overflow-auto p-4 md:p-8 pb-24 md:pb-8 page-enter">
           <DocumentGateBanner />
           {children}
         </div>
 
         {/* Mobile Bottom Tab Bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-sidebar/90 backdrop-blur-xl border-t border-sidebar-border safe-area-bottom">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-sidebar border-t border-sidebar-border safe-area-bottom">
           <div className="flex items-stretch h-16">
             {visibleNav.slice(0, 5).map((item) => {
               const active = location === item.href || location.startsWith(`${item.href}/`);

@@ -29,9 +29,9 @@ export function AiCopilotPreview({ className }: { className?: string }) {
   const [activePrompt, setActivePrompt] = useState<number | null>(null);
 
   return (
-    <div className={cn("glass-panel-strong rounded-2xl overflow-hidden flex flex-col", className)}>
+    <div className={cn("surface-panel-elevated rounded-2xl overflow-hidden flex flex-col", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/6">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
             <Bot className="h-5 w-5 text-primary" />

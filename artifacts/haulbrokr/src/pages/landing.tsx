@@ -1,12 +1,11 @@
 import {
   ArrowRight, CheckCircle2, ClipboardCheck, DollarSign, FileText,
   HardHat, LayoutDashboard, MapPin, Navigation, Search, ShieldCheck,
-  Truck, Zap, Building2, Users, Sparkles, Globe, BarChart3, Clock
+  Truck, Zap, Building2, Users, Sparkles, Globe, BarChart3, Clock, Star, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AnimatedNationMap } from "@/components/design/animated-nation-map";
-import { AiCopilotPreview } from "@/components/design/ai-copilot-preview";
-import { GlassPanel } from "@/components/design/glass-panel";
+import { cn } from "@/lib/utils";
+import { SurfacePanel, AnimatedNationMap, AiCopilotPreview, FaqSection } from "@/components/design";
 import logo from "@/assets/haulbrokr-logo.png";
 import logoWebp from "@/assets/haulbrokr-logo.webp";
 import heroTruck from "@/assets/hero-truck.png";
@@ -79,11 +78,85 @@ const liveJobs = [
   { job: "Asphalt transfer", location: "Chicago, IL", eta: "45 min", price: "$1,690", status: "Dispatched" },
 ];
 
+const PRICING = [
+  {
+    name: "Starter",
+    price: "Free",
+    period: "to post loads",
+    desc: "For contractors exploring the network.",
+    features: ["Post haul requests", "Compare bids", "Live tracking", "Digital tickets"],
+    cta: "Get started",
+    highlighted: false,
+  },
+  {
+    name: "Pro Fleet",
+    price: "3%",
+    period: "per completed load",
+    desc: "For owner-operators and small fleets.",
+    features: ["Everything in Starter", "AI dispatch copilot", "Fleet dashboard", "Priority support"],
+    cta: "Join as vendor",
+    highlighted: true,
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    period: "volume pricing",
+    desc: "For GCs and multi-site operations.",
+    features: ["Dedicated CSM", "API access", "Custom workflows", "SLA & compliance"],
+    cta: "Contact sales",
+    highlighted: false,
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    quote: "We cut dispatch time from 45 minutes to under five. HaulBrokr is the operating system our field teams actually use.",
+    name: "Marcus Chen",
+    role: "VP Operations",
+    company: "Summit Earthworks",
+  },
+  {
+    quote: "Drivers love the app. One hand, big buttons, tickets upload in seconds. Compliance finally stays ahead of us.",
+    name: "Diana Reyes",
+    role: "Fleet Owner",
+    company: "Reyes Hauling LLC",
+  },
+  {
+    quote: "Fortune 500 audit-ready documentation on every load. That's why we standardized on HaulBrokr nationally.",
+    name: "James Whitfield",
+    role: "Procurement Director",
+    company: "Meridian Construction",
+  },
+];
+
+const FAQ = [
+  {
+    question: "How does HaulBrokr pricing work?",
+    answer: "Customers post loads for free. Vendors pay a transparent platform fee on completed loads. Enterprise teams receive custom volume pricing with dedicated support.",
+  },
+  {
+    question: "Is HaulBrokr available nationwide?",
+    answer: "Yes. The marketplace covers all 50 states with live load boards, verified haulers, and GPS tracking on active jobs.",
+  },
+  {
+    question: "How does AI dispatch work?",
+    answer: "The AI Copilot analyzes open loads, fleet location, and historical performance to recommend matches, route optimizations, and revenue opportunities — you stay in control of every dispatch decision.",
+  },
+  {
+    question: "What compliance documents are supported?",
+    answer: "W-9, insurance COI, DOT authority, vehicle registration, and custom document gates. Staff review queues keep your network verified.",
+  },
+  {
+    question: "Can drivers use the mobile app offline?",
+    answer: "Drivers can capture photos and complete check-ins with intermittent connectivity. Full sync resumes when the device reconnects.",
+  },
+];
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:h-[4.5rem]">
           <a href="/" aria-label="HaulBrokr home">
             <picture>
@@ -93,9 +166,10 @@ export default function LandingPage() {
           </a>
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
             <a href="#platform" className="hover:text-foreground transition-colors">Platform</a>
+            <a href="#ai" className="hover:text-foreground transition-colors">AI</a>
+            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
             <a href="#customers" className="hover:text-foreground transition-colors">Customers</a>
-            <a href="#drivers" className="hover:text-foreground transition-colors">Drivers</a>
-            <a href="#enterprise" className="hover:text-foreground transition-colors">Enterprise</a>
+            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
           </nav>
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" className="font-semibold text-muted-foreground hover:text-foreground">
@@ -145,9 +219,9 @@ export default function LandingPage() {
               </div>
 
               <div className="relative animate-fade-in">
-                <GlassPanel strong className="p-1 rounded-2xl">
+                <SurfacePanel elevated className="p-1">
                   <AnimatedNationMap className="h-[420px]" />
-                </GlassPanel>
+                </SurfacePanel>
               </div>
             </div>
           </div>
@@ -177,7 +251,7 @@ export default function LandingPage() {
               <p className="mt-4 text-muted-foreground text-lg">Live dispatch board and AI copilot working together to move your fleet faster.</p>
             </div>
             <div className="grid gap-6 lg:grid-cols-2">
-              <GlassPanel strong className="p-6 rounded-2xl">
+              <SurfacePanel elevated className="p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-accent">Live dispatch board</p>
@@ -204,7 +278,7 @@ export default function LandingPage() {
                     </div>
                   ))}
                 </div>
-              </GlassPanel>
+              </SurfacePanel>
               <AiCopilotPreview />
             </div>
           </div>
@@ -291,6 +365,110 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* AI */}
+        <section id="ai" className="py-20 sm:py-28 border-t border-border/50">
+          <div className="container mx-auto px-4">
+            <div className="grid gap-12 lg:grid-cols-2 items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wider text-primary">Fleet intelligence</p>
+                <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">AI that understands hauling</h2>
+                <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+                  Enterprise-grade copilot for dispatchers and fleet owners. Natural language commands, predictive insights, and actionable recommendations — without replacing your judgment.
+                </p>
+                <ul className="mt-8 space-y-4">
+                  {["Match loads to idle trucks in seconds", "Forecast revenue and utilization", "Flag compliance and maintenance risks", "Voice-ready for the jobsite"].map((item) => (
+                    <li key={item} className="flex items-start gap-3 text-sm">
+                      <Bot className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <AiCopilotPreview className="min-h-[420px]" />
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section id="pricing" className="py-20 sm:py-28 bg-card/20 border-y border-border/50">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto mb-14 max-w-2xl text-center">
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Transparent pricing</p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Built to scale with your fleet</h2>
+              <p className="mt-4 text-muted-foreground text-lg">No hidden fees. Pay when loads move.</p>
+            </div>
+            <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+              {PRICING.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={cn(
+                    "surface-panel rounded-2xl p-8 flex flex-col",
+                    plan.highlighted && "ring-2 ring-primary/40 border-primary/30",
+                  )}
+                >
+                  {plan.highlighted && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary mb-4">Most popular</span>
+                  )}
+                  <h3 className="text-xl font-bold">{plan.name}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{plan.desc}</p>
+                  <div className="mt-6 mb-6">
+                    <span className="text-4xl font-bold stat-number">{plan.price}</span>
+                    <span className="text-sm text-muted-foreground ml-2">{plan.period}</span>
+                  </div>
+                  <ul className="space-y-3 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button asChild variant={plan.highlighted ? "default" : "outline"} className="mt-8 w-full">
+                    <a href="/sign-up">{plan.cta}</a>
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="py-20 sm:py-28">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto mb-14 max-w-2xl text-center">
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Trusted nationwide</p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Built for the field, loved in the boardroom</h2>
+            </div>
+            <div className="grid gap-6 md:grid-cols-3">
+              {TESTIMONIALS.map((t) => (
+                <blockquote key={t.name} className="surface-panel rounded-2xl p-8 flex flex-col">
+                  <div className="flex gap-1 text-accent mb-4" aria-hidden>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-current" />
+                    ))}
+                  </div>
+                  <p className="text-foreground leading-relaxed flex-1">&ldquo;{t.quote}&rdquo;</p>
+                  <footer className="mt-6 pt-6 border-t border-border/50">
+                    <p className="font-semibold">{t.name}</p>
+                    <p className="text-sm text-muted-foreground">{t.role}, {t.company}</p>
+                  </footer>
+                </blockquote>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section id="faq" className="py-20 sm:py-28 border-t border-border/50 bg-card/20">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <div className="mb-12 text-center">
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">FAQ</p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight">Questions from the jobsite</h2>
+            </div>
+            <FaqSection items={FAQ} />
           </div>
         </section>
 
