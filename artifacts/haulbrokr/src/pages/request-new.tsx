@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/design";
 
 const USA_STATES = [
   { abbr: "AL", name: "Alabama" }, { abbr: "AK", name: "Alaska" }, { abbr: "AZ", name: "Arizona" },
@@ -362,16 +363,15 @@ export default function NewRequestPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 page-enter pb-12">
-      <div>
-        <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/requests")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Requests
-        </Button>
-        <h1 className="text-3xl font-bold tracking-tight">Post Job Request</h1>
-        <p className="text-muted-foreground">
-          Detail the haul requirements so truck fleets can place accurate bids.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Requests"
+        title="Post Job Request"
+        description="Detail the haul requirements so truck fleets can place accurate bids."
+        breadcrumb={[
+          { label: "Requests", href: "/requests" },
+          { label: "New Request" },
+        ]}
+      />
 
       <div className="bg-card border border-border/60 shadow-sm p-6 md:p-8">
         <Form {...form}>

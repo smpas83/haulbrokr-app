@@ -61,6 +61,7 @@ export default function RequestsPage() {
   return (
     <div className="space-y-6 page-enter max-w-6xl mx-auto">
       <PageHeader
+        eyebrow={isCustomer ? "Requests" : "Load Board"}
         title={isCustomer ? "My Job Requests" : "Load Board"}
         description={
           isCustomer

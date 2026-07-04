@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +39,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StripeCardForm } from "@/components/stripe-card-form";
 import { StripeBankForm } from "@/components/stripe-bank-form";
 import { MicrodepositVerify } from "@/components/microdeposit-verify";
+import { PageHeader } from "@/components/design";
 
 function StatusBadge({ status, text }: { status: "not_submitted"|"not_set"|"pending"|"verified"|"rejected", text?: string }) {
   if (status === "verified") {
@@ -1644,10 +1646,16 @@ export default function AccountPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto page-enter">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
-        <p className="text-muted-foreground">Manage your profile, compliance, and billing information.</p>
-      </div>
+      <PageHeader
+        eyebrow="Settings"
+        title="Account Settings"
+        description="Manage your profile, compliance, and billing information."
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/notifications">Notifications</Link>
+          </Button>
+        }
+      />
 
       <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="flex flex-wrap h-auto rounded-xl justify-start gap-2 bg-transparent p-0 mb-6">

@@ -14,6 +14,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/design";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -166,52 +167,50 @@ export default function RequestDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 page-enter pb-12">
-      <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/requests")}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
-
-      <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold tracking-tight uppercase">
-              JOB-{request.id.toString().padStart(4, '0')}
-            </h1>
-            <Badge variant="outline" className="border-2 font-bold uppercase text-xs px-3 py-1">
-              {request.status.replace('_', ' ')}
-            </Badge>
-          </div>
-          <p className="text-xl font-medium text-muted-foreground">
+      <PageHeader
+        eyebrow="Requests"
+        title={`REQ-${request.id.toString().padStart(4, "0")}`}
+        description={
+          <>
             {request.quantityTons} Tons of <span className="capitalize">{request.materialType}</span>
             {" · "}{formatTruckType(request.truckType)}
-          </p>
-        </div>
-
-        {canBid && (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="lg" className="font-bold rounded-xl h-12 px-8 shadow-md border-2 border-transparent hover:border-foreground" data-testid="btn-place-bid">
-                Place a Bid
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] border-2 rounded-xl p-0">
-              <div className="bg-primary/10 border-b-2 border-border p-6">
-                <DialogTitle className="text-2xl font-bold">Submit Bid</DialogTitle>
-                <DialogDescription className="text-foreground/80 mt-2 font-medium space-y-2">
-                  <p>You are bidding on {request.quantityTons} tons of {request.materialType} for {request.customerCompany}.</p>
-                  <div className="text-sm bg-muted/50 border border-border p-3 space-y-1 not-italic">
-                    <p><strong>Truck:</strong> {formatTruckType(request.truckType)} · <strong>Trucks needed:</strong> {request.trucksNeeded}</p>
-                    <p><strong>When:</strong> {format(new Date(request.scheduledDate), "MMM d, yyyy")} at {formatStartTime(request.startTime)} · ~{request.estimatedHours}h</p>
-                    <p><strong>Pickup:</strong> {request.pickupAddress}</p>
-                    <p><strong>Drop-off:</strong> {request.deliveryAddress}</p>
-                    {request.notes && <p><strong>Notes:</strong> {request.notes}</p>}
-                  </div>
-                </DialogDescription>
-              </div>
-              <div className="p-6">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onBidSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
+          </>
+        }
+        breadcrumb={[
+          { label: "Requests", href: "/requests" },
+          { label: `Request #${request.id}` },
+        ]}
+        badge={
+          <Badge variant="outline" className="border-2 font-bold uppercase text-xs px-3 py-1 mb-2">
+            {request.status.replace("_", " ")}
+          </Badge>
+        }
+        actions={
+          canBid ? (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="lg" className="font-bold rounded-xl h-12 px-8 shadow-md border-2 border-transparent hover:border-foreground" data-testid="btn-place-bid">
+                  Place a Bid
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px] border-2 rounded-xl p-0">
+                <div className="bg-primary/10 border-b-2 border-border p-6">
+                  <DialogTitle className="text-2xl font-bold">Submit Bid</DialogTitle>
+                  <DialogDescription className="text-foreground/80 mt-2 font-medium space-y-2">
+                    <p>You are bidding on {request.quantityTons} tons of {request.materialType} for {request.customerCompany}.</p>
+                    <div className="text-sm bg-muted/50 border border-border p-3 space-y-1 not-italic">
+                      <p><strong>Truck:</strong> {formatTruckType(request.truckType)} · <strong>Trucks needed:</strong> {request.trucksNeeded}</p>
+                      <p><strong>When:</strong> {format(new Date(request.scheduledDate), "MMM d, yyyy")} at {formatStartTime(request.startTime)} · ~{request.estimatedHours}h</p>
+                      <p><strong>Pickup:</strong> {request.pickupAddress}</p>
+                      <p><strong>Drop-off:</strong> {request.deliveryAddress}</p>
+                      {request.notes && <p><strong>Notes:</strong> {request.notes}</p>}
+                    </div>
+                  </DialogDescription>
+                </div>
+                <div className="p-6">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onBidSubmit)} className="space-y-6">
+                      <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="ratePerHour"
@@ -274,8 +273,9 @@ export default function RequestDetailPage() {
               </div>
             </DialogContent>
           </Dialog>
-        )}
-      </div>
+          ) : undefined
+        }
+      />
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main Details */}

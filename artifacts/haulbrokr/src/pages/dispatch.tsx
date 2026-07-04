@@ -47,6 +47,7 @@ export default function DispatchPage() {
   return (
     <div className="space-y-6 page-enter max-w-7xl mx-auto">
       <PageHeader
+        eyebrow="Operations"
         title="Digital Twin"
         description="Live fleet dispatch overview — active jobs, truck positions, and fleet availability."
         actions={

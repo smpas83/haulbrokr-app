@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGetMyProfile, useListJobs } from "@workspace/api-client-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { apiFetch } from "@/lib/apiFetch";
+import { PageHeader } from "@/components/design";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200",
@@ -66,10 +67,11 @@ export default function FactoringPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 page-enter pb-12">
-      <div>
-        <h1 className="text-3xl font-black uppercase tracking-tight">Invoice Factoring</h1>
-        <p className="text-muted-foreground mt-1">Get paid same-day on completed jobs — no waiting for net-30 invoices</p>
-      </div>
+      <PageHeader
+        eyebrow="Payments"
+        title="Invoice Factoring"
+        description="Get paid same-day on completed jobs — no waiting for net-30 invoices."
+      />
 
       <Alert className="rounded-xl border-2 border-primary/30 bg-primary/5">
         <Zap className="h-4 w-4" />

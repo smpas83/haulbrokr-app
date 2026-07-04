@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CheckCircle2, Link2, Link2Off, RefreshCw, Loader2, Plug, BookOpen, FileText, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/design";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -153,10 +154,11 @@ function ComingSoonCard({ name, description, icon: Icon, color }: { name: string
 export default function IntegrationsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 page-enter pb-12">
-      <div>
-        <h1 className="text-3xl font-black uppercase tracking-tight">Integrations</h1>
-        <p className="text-muted-foreground mt-1">Connect your HaulBrokr account with the tools you already use</p>
-      </div>
+      <PageHeader
+        eyebrow="Connected Accounts"
+        title="Integrations"
+        description="Connect your HaulBrokr account with the tools you already use."
+      />
 
       <div className="space-y-4">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Accounting</p>

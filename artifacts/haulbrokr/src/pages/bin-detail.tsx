@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/design";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -150,44 +151,36 @@ export default function BinDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 page-enter pb-12">
-      {/* Back */}
-      <Link href="/bins" className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft className="h-4 w-4" />
-        Back to Bin Rental
-      </Link>
-
-      {/* Header card */}
-      <div className="bg-card border border-border/60 p-6">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div className="space-y-2 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap">
-              <Trash2 className="h-7 w-7 text-primary flex-shrink-0" />
-              <h1 className="text-2xl font-bold tracking-tight">{sizeLabel}</h1>
-              <span className="text-muted-foreground text-sm">× {order.quantity}</span>
-            </div>
-            <Badge
-              variant="outline"
-              className={cn(
-                "rounded-xl border text-[10px] uppercase tracking-wider font-bold",
-                STATUS_STYLE[order.status] || "",
-              )}
-            >
-              {STATUS_LABEL[order.status] ?? order.status}
-            </Badge>
-          </div>
-          {order.estimatedCost && (
-            <div className="text-right flex-shrink-0">
+      <PageHeader
+        eyebrow="Facilities"
+        title={sizeLabel}
+        description={`Quantity: ${order.quantity} · ${order.serviceType === "temporary" ? "Temporary rental" : "Permanent service"}`}
+        breadcrumb={[
+          { label: "Bin Rental", href: "/bins" },
+          { label: sizeLabel },
+        ]}
+        badge={
+          <Badge
+            variant="outline"
+            className={cn(
+              "rounded-xl border text-[10px] uppercase tracking-wider font-bold mb-2",
+              STATUS_STYLE[order.status] || "",
+            )}
+          >
+            {STATUS_LABEL[order.status] ?? order.status}
+          </Badge>
+        }
+        actions={
+          order.estimatedCost ? (
+            <div className="text-right">
               <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
                 Estimated Cost
               </div>
               <div className="text-2xl font-black text-primary">{order.estimatedCost}</div>
-              <div className="text-xs text-muted-foreground">
-                {order.serviceType === "temporary" ? "per rental" : "per month"}
-              </div>
             </div>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       {/* Status timeline */}
       <div className="bg-card border border-border/60 p-6">

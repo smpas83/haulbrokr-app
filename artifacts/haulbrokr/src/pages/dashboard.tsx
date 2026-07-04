@@ -95,6 +95,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       <PageHeader
+        eyebrow="Overview"
         title="Mission Control"
         description={
           <>Welcome back, <span className="font-semibold text-foreground">{profile?.contactName || profile?.companyName}</span>. Here's your operations overview.</>

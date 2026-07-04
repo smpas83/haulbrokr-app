@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/design";
 import { cn } from "@/lib/utils";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -284,24 +285,19 @@ export default function BinsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 page-enter pb-12">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Trash2 className="h-8 w-8 text-primary" />
-            Bin & Dumpster Rental
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Order temporary roll-offs or set up permanent bin service from top providers.
-          </p>
-        </div>
-        {!showForm && (
-          <Button className="font-bold rounded-xl h-10 px-5" onClick={() => setShowForm(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Order Bin Service
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        eyebrow="Facilities"
+        title="Bin & Dumpster Rental"
+        description="Order temporary roll-offs or set up permanent bin service from top providers."
+        actions={
+          !showForm ? (
+            <Button className="font-bold rounded-xl h-10 px-5" onClick={() => setShowForm(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Order Bin Service
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Order Form */}
       {showForm && (
