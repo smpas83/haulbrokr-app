@@ -175,7 +175,6 @@ export default defineConfig(async ({ command }) => {
         support: path.resolve(import.meta.dirname, "support.html"),
         privacy: path.resolve(import.meta.dirname, "privacy.html"),
         terms: path.resolve(import.meta.dirname, "terms.html"),
-        terms: path.resolve(import.meta.dirname, "terms.html"),
         notFound: path.resolve(import.meta.dirname, "404.html"),
       },
       output: {
