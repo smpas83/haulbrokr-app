@@ -15,7 +15,7 @@ import {
   type MarketplaceLoad,
   type MarketplacePayload,
   type MarketplaceTruck,
-  buildDemoHeatZones,
+  buildHeatZonesFromLoads,
 } from "../lib/demoMarketplace";
 import { geocodeAddressCached } from "../lib/geocodeCache";
 
@@ -183,7 +183,7 @@ async function buildLiveMarketplace(profile: { id: number; role: string }): Prom
     center,
     loads,
     trucks,
-    heatZones: buildDemoHeatZones(loads),
+    heatZones: buildHeatZonesFromLoads(loads),
     stats: {
       openLoads: loads.filter((l) => OPEN_STATUSES.includes(l.status as typeof OPEN_STATUSES[number])).length,
       activeJobs: loads.filter((l) => ACTIVE_JOB_STATUSES.includes(l.status as typeof ACTIVE_JOB_STATUSES[number]) || l.status === "accepted" || l.status === "in_progress").length,

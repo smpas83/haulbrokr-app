@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { Radio, Truck, MapPin, RefreshCw } from "lucide-react";
+import { Crosshair, Navigation, Radio, Truck, MapPin, RefreshCw } from "lucide-react";
 import { apiFetch } from "@/lib/apiFetch";
 import { PageHeader } from "@/components/design";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusChip } from "@/components/design";
+import { useFindMyLocation } from "@/hooks/useFindMyLocation";
 
 interface DispatchJob {
   id: number;
@@ -27,6 +28,8 @@ export default function DispatchPage() {
   const [data, setData] = useState<DispatchOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { coords, error: locationError, following, locating, findLocation, recenter, stopFollowing } = useFindMyLocation();
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -43,6 +46,17 @@ export default function DispatchPage() {
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (following && coords) {
+      setMapCenter({ lat: coords.latitude, lng: coords.longitude });
+    }
+  }, [coords, following]);
+
+  const handleFindMe = async () => {
+    const found = await findLocation({ follow: true });
+    if (found) setMapCenter({ lat: found.latitude, lng: found.longitude });
+  };
 
   return (
     <div className="space-y-6 page-enter max-w-7xl mx-auto">
@@ -88,6 +102,16 @@ export default function DispatchPage() {
 
           <div className="surface-panel rounded-xl p-6 min-h-[320px] relative overflow-hidden">
             <div className="absolute inset-0 opacity-20">
+              {mapCenter && (
+                <div
+                  className="absolute h-4 w-4 rounded-full bg-blue-500 animate-pulse ring-4 ring-blue-400/30"
+                  style={{
+                    left: `${((mapCenter.lng + 125) / 60) * 100}%`,
+                    top: `${((50 - mapCenter.lat) / 25) * 100}%`,
+                  }}
+                  title="Your location"
+                />
+              )}
               {data.jobs.filter((j) => j.position).map((j) => (
                 <div
                   key={j.id}
@@ -100,14 +124,41 @@ export default function DispatchPage() {
                 />
               ))}
             </div>
-            <div className="relative z-10">
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-2">
-                <Radio className="h-4 w-4 animate-pulse" /> Live Fleet Map
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {data.jobs.filter((j) => j.position).length} truck(s) reporting GPS.
-                Updated {new Date(data.updatedAt).toLocaleTimeString()}.
-              </p>
+            <div className="relative z-10 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-2">
+                  <Radio className="h-4 w-4 animate-pulse" /> Live Fleet Map
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {data.jobs.filter((j) => j.position).length} truck(s) reporting GPS.
+                  Updated {new Date(data.updatedAt).toLocaleTimeString()}.
+                </p>
+                {locationError && (
+                  <p className="text-sm text-destructive mt-2">{locationError}</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                {following && coords && (
+                  <Button variant="outline" size="sm" onClick={() => recenter()} disabled={locating}>
+                    <Crosshair className="h-4 w-4 mr-1" /> Re-center
+                  </Button>
+                )}
+                <Button
+                  variant={following ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    if (following) {
+                      stopFollowing();
+                      return;
+                    }
+                    void handleFindMe();
+                  }}
+                  disabled={locating}
+                >
+                  <Navigation className="h-4 w-4 mr-1" />
+                  {following ? "Following" : "Find My Location"}
+                </Button>
+              </div>
             </div>
           </div>
 

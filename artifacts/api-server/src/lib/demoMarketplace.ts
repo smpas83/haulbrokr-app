@@ -191,7 +191,7 @@ export function buildDemoTrucks(count = 150): MarketplaceTruck[] {
 }
 
 /** Surge heat zones anchored to high open-load density metros. */
-export function buildDemoHeatZones(loads: MarketplaceLoad[]): MarketplaceHeatZone[] {
+export function buildHeatZonesFromLoads(loads: MarketplaceLoad[]): MarketplaceHeatZone[] {
   const openByCity = new Map<string, { lat: number; lng: number; count: number }>();
   for (const load of loads) {
     if (!["open", "bidding", "bid_received"].includes(load.status)) continue;
@@ -241,7 +241,7 @@ export function buildDemoMarketplace(): MarketplacePayload {
     center: { latitude: 39.8283, longitude: -98.5795 },
     loads,
     trucks,
-    heatZones: buildDemoHeatZones(loads),
+    heatZones: buildHeatZonesFromLoads(loads),
     stats: {
       openLoads,
       activeJobs,

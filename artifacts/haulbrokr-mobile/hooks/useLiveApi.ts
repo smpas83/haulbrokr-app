@@ -406,6 +406,24 @@ export function useMarketplaceMap(opts?: { lat?: number; lng?: number; radiusMil
   });
 }
 
+export type JobTrackingData = {
+  jobId: number;
+  status: string;
+  latest: { lat: number; lng: number; at: string; source?: string; status?: string } | null;
+  trail: Array<{ lat: number; lng: number; at?: string; createdAt?: string; source?: string; status?: string }>;
+};
+
+/** Live vehicle GPS trail for an active job. */
+export function useJobTracking(jobId: number | null, enabled = true) {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery<JobTrackingData>({
+    queryKey: ["jobs", jobId, "tracking"],
+    queryFn: () => apiFetch(getToken, "GET", `/jobs/${jobId}/tracking`),
+    enabled: !!isSignedIn && jobId != null && enabled,
+    refetchInterval: 15_000,
+  });
+}
+
 // ── Load requests (customer-posted loads) ──────────────────────────────────
 export function useLiveRequests(opts?: { mine?: boolean; enabled?: boolean }) {
   const { getToken, isSignedIn } = useAuth();

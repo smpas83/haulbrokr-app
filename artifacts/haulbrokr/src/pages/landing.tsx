@@ -423,12 +423,13 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Testimonials */}
+        {/* Testimonials (illustrative marketing copy — not live customer data) */}
         <section className="py-20 sm:py-28">
           <div className="container mx-auto px-4">
             <div className="mx-auto mb-14 max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Trusted nationwide</p>
+              <p className="text-sm font-semibold uppercase tracking-wider text-primary">Illustrative customer stories</p>
               <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Built for the field, loved in the boardroom</h2>
+              <p className="mt-3 text-sm text-muted-foreground">Representative examples for marketing — not pulled from live production accounts.</p>
             </div>
             <div className="grid gap-6 md:grid-cols-3">
               {TESTIMONIALS.map((t) => (

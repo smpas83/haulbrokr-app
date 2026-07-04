@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/react";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, RefreshCw, Truck, Layers, Loader2 } from "lucide-react";
+import { Crosshair, Loader2, MapPin, Navigation, RefreshCw, Truck, Layers } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useFindMyLocation } from "@/hooks/useFindMyLocation";
 
 type MarketplaceMapData = {
   demoMode: boolean;
@@ -83,8 +84,19 @@ export default function MapPage() {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const overlaysRef = useRef<any[]>([]);
+  const userMarkerRef = useRef<any>(null);
+  const userPulseRef = useRef<any>(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  const {
+    coords: userCoords,
+    error: locationError,
+    following,
+    locating,
+    findLocation,
+    recenter,
+    stopFollowing,
+  } = useFindMyLocation();
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["map", "marketplace"],
@@ -113,6 +125,40 @@ export default function MapPage() {
       })
       .catch((err) => setMapError(err instanceof Error ? err.message : "Map failed"));
   }, []);
+
+  const renderUserLocation = useCallback(() => {
+    if (!mapReady || !mapRef.current || !userCoords || !window.google?.maps) return;
+
+    userMarkerRef.current?.setMap(null);
+    userPulseRef.current?.setMap(null);
+
+    userMarkerRef.current = new window.google.maps.Marker({
+      map: mapRef.current,
+      position: { lat: userCoords.latitude, lng: userCoords.longitude },
+      title: "Your location",
+      icon: {
+        path: window.google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: "#2563eb",
+        fillOpacity: 1,
+        strokeColor: "#ffffff",
+        strokeWeight: 3,
+      },
+      zIndex: 999,
+    });
+
+    userPulseRef.current = new window.google.maps.Circle({
+      map: mapRef.current,
+      center: { lat: userCoords.latitude, lng: userCoords.longitude },
+      radius: 120,
+      fillColor: "#2563eb",
+      fillOpacity: 0.18,
+      strokeColor: "#2563eb",
+      strokeOpacity: 0.45,
+      strokeWeight: 1,
+      zIndex: 998,
+    });
+  }, [mapReady, userCoords]);
 
   const renderMarkers = useCallback(() => {
     if (!mapReady || !mapRef.current || !data || !window.google?.maps) return;
@@ -166,11 +212,37 @@ export default function MapPage() {
       });
       overlaysRef.current.push(circle);
     }
-  }, [mapReady, data]);
+
+    renderUserLocation();
+  }, [mapReady, data, renderUserLocation]);
 
   useEffect(() => {
     renderMarkers();
   }, [renderMarkers]);
+
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !userCoords) return;
+    if (following) {
+      mapRef.current.panTo({ lat: userCoords.latitude, lng: userCoords.longitude });
+    }
+  }, [mapReady, userCoords, following]);
+
+  const handleFindMe = async () => {
+    const found = await findLocation({ follow: true });
+    if (found && mapRef.current) {
+      mapRef.current.panTo({ lat: found.latitude, lng: found.longitude });
+      mapRef.current.setZoom(11);
+    }
+  };
+
+  const handleRecenter = async () => {
+    const found = await recenter();
+    if (found && mapRef.current) {
+      mapRef.current.panTo({ lat: found.latitude, lng: found.longitude });
+    }
+  };
+
+  const isEmpty = data && data.loads.length === 0 && data.trucks.length === 0;
 
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6 h-full">
@@ -181,7 +253,7 @@ export default function MapPage() {
             Live Operations Map
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Nationwide loads, fleet trucks, and demand heat zones
+            Nationwide loads, fleet trucks, and demand heat zones from production data
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -227,15 +299,6 @@ export default function MapPage() {
               <p className="text-destructive font-semibold">Failed to load marketplace data</p>
               <Button variant="outline" onClick={() => refetch()}>Retry</Button>
             </div>
-          ) : data && data.loads.length === 0 && data.trucks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-3 text-muted-foreground px-6 text-center">
-              <MapPin className="h-10 w-10 opacity-40" />
-              <p className="font-semibold text-foreground">No loads available in your area yet</p>
-              <p className="text-sm max-w-md">
-                When contractors post haul requests or fleets register trucks, they will appear here on the live operations map.
-              </p>
-              <div ref={mapDivRef} className="hidden" />
-            </div>
           ) : (
             <>
               <div ref={mapDivRef} className={cn("w-full h-full min-h-[480px]", !mapReady && "opacity-0")} />
@@ -244,6 +307,55 @@ export default function MapPage() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               )}
+
+              {isEmpty && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 max-w-md rounded-none border-2 border-border bg-background/95 px-4 py-3 text-center shadow-lg">
+                  <p className="font-semibold text-foreground">No loads available in your area yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Use Find My Location to center the map, or check back when new haul requests are posted.
+                  </p>
+                </div>
+              )}
+
+              {locationError && (
+                <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 max-w-sm rounded-none border-2 border-destructive/40 bg-background/95 px-4 py-3 text-center shadow-lg">
+                  <p className="text-sm text-destructive font-medium">{locationError}</p>
+                  <Button variant="outline" size="sm" className="mt-2 rounded-none border-2" onClick={() => findLocation({ follow: following })}>
+                    Retry
+                  </Button>
+                </div>
+              )}
+
+              <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
+                {following && userCoords && (
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-11 w-11 rounded-full border-2 shadow-lg"
+                    onClick={handleRecenter}
+                    disabled={locating}
+                    title="Re-center on my location"
+                  >
+                    {locating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Crosshair className="h-5 w-5" />}
+                  </Button>
+                )}
+                <Button
+                  size="icon"
+                  variant={following ? "default" : "secondary"}
+                  className={cn("h-11 w-11 rounded-full border-2 shadow-lg", following && "ring-2 ring-blue-400/60")}
+                  onClick={async () => {
+                    if (following) {
+                      stopFollowing();
+                      return;
+                    }
+                    await handleFindMe();
+                  }}
+                  disabled={locating}
+                  title={following ? "Stop following my location" : "Find my location"}
+                >
+                  {locating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Navigation className="h-5 w-5" />}
+                </Button>
+              </div>
             </>
           )}
         </CardContent>
@@ -254,7 +366,7 @@ export default function MapPage() {
           <Card className="rounded-none border-2">
             <CardHeader>
               <CardTitle className="text-base">Nearby Loads</CardTitle>
-              <CardDescription>{data.loads.slice(0, 8).length} shown · {data.loads.length} total on map</CardDescription>
+              <CardDescription>{Math.min(data.loads.length, 8)} shown · {data.loads.length} total on map</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 max-h-64 overflow-y-auto">
               {data.loads.length === 0 ? (
