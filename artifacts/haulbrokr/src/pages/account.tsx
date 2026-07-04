@@ -1110,7 +1110,7 @@ function PayoutAccountTab() {
           if (!connected) {
             // No Stripe Connect account yet — kick off hosted onboarding.
             return (
-              <div className="mb-6 border-2 border-amber-500/30 bg-amber-500/5 p-4 space-y-4">
+              <div className="mb-6 border border-amber-500/30 bg-amber-500/5 rounded-xl p-4 space-y-4">
                 <div className="flex items-center gap-2">
                   <Banknote className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                   <p className="font-bold text-amber-700 dark:text-amber-400">Set up payouts</p>
@@ -1133,7 +1133,7 @@ function PayoutAccountTab() {
 
           // Connected but not yet enabled: show what Stripe still needs.
           return (
-            <div className="mb-6 border-2 border-amber-500/30 bg-amber-500/5 p-4 space-y-4">
+            <div className="mb-6 border border-amber-500/30 bg-amber-500/5 rounded-xl p-4 space-y-4">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <p className="font-bold text-amber-700 dark:text-amber-400">Finish payout setup</p>
