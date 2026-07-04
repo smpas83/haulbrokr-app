@@ -16,15 +16,15 @@ const STATUS_CONFIG: Record<
   Status,
   { label: string; bg: string; text: string }
 > = {
-  open: { label: "Open", bg: "#e9a60020", text: "#e9a600" },
-  bidding: { label: "Bidding", bg: "#7c3aed20", text: "#7c3aed" },
-  accepted: { label: "Accepted", bg: "#0891b220", text: "#0891b2" },
-  in_progress: { label: "In Progress", bg: "#2563eb20", text: "#2563eb" },
-  completed: { label: "Completed", bg: "#16a34a20", text: "#16a34a" },
-  cancelled: { label: "Cancelled", bg: "#dc262620", text: "#dc2626" },
-  pending: { label: "Pending", bg: "#e9a60020", text: "#e9a600" },
-  confirmed: { label: "Confirmed", bg: "#0891b220", text: "#0891b2" },
-  active: { label: "Active", bg: "#2563eb20", text: "#2563eb" },
+  open: { label: "Open", bg: "#3b82f620", text: "#60a5fa" },
+  bidding: { label: "Bidding", bg: "#f59e0b20", text: "#fbbf24" },
+  accepted: { label: "Accepted", bg: "#10b98120", text: "#34d399" },
+  in_progress: { label: "In Progress", bg: "#8b5cf620", text: "#a78bfa" },
+  completed: { label: "Completed", bg: "#6b728020", text: "#9ca3af" },
+  cancelled: { label: "Cancelled", bg: "#ef444420", text: "#f87171" },
+  pending: { label: "Pending", bg: "#f59e0b20", text: "#fbbf24" },
+  confirmed: { label: "Confirmed", bg: "#10b98120", text: "#34d399" },
+  active: { label: "Active", bg: "#3b82f620", text: "#60a5fa" },
 };
 
 interface Props {
@@ -62,6 +62,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     alignSelf: "flex-start",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "transparent",
   },
   badgeSm: {
     paddingHorizontal: 6,
