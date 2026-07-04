@@ -116,7 +116,12 @@ export function AnimatedNationMap({ className }: { className?: string }) {
   }, []);
 
   return (
-    <div className={cn("relative w-full h-full min-h-[400px] overflow-hidden rounded-2xl", className)}>
+    <div
+      className={cn(
+        "relative w-full h-full min-h-[400px] overflow-hidden rounded-2xl",
+        className,
+      )}
+    >
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
       {/* USA outline silhouette */}
@@ -153,7 +158,11 @@ export function AnimatedNationMap({ className }: { className?: string }) {
           key={pin.id}
           type="button"
           className="absolute group cursor-pointer"
-          style={{ left: `${pin.x}%`, top: `${pin.y}%`, transform: "translate(-50%, -50%)" }}
+          style={{
+            left: `${pin.x}%`,
+            top: `${pin.y}%`,
+            transform: "translate(-50%, -50%)",
+          }}
           onMouseEnter={() => setActivePin(pin.id)}
           onMouseLeave={() => setActivePin(null)}
           onFocus={() => setActivePin(pin.id)}
@@ -163,21 +172,23 @@ export function AnimatedNationMap({ className }: { className?: string }) {
           <div
             className={cn(
               "relative flex items-center justify-center transition-transform duration-200",
-              activePin === pin.id ? "scale-125" : "animate-pin-pulse"
+              activePin === pin.id ? "scale-125" : "animate-pin-pulse",
             )}
             style={{ animationDelay: `${pin.delay}s` }}
           >
             <MapPin
               className={cn(
                 "h-5 w-5 transition-colors",
-                activePin === pin.id ? "text-accent" : "text-primary"
+                activePin === pin.id ? "text-accent" : "text-primary",
               )}
             />
             <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
           </div>
           {activePin === pin.id && (
             <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 surface-panel rounded-lg px-3 py-2 whitespace-nowrap z-10 animate-fade-in">
-              <p className="text-xs font-semibold text-foreground">{pin.label}</p>
+              <p className="text-xs font-semibold text-foreground">
+                {pin.label}
+              </p>
               <p className="text-sm font-bold text-accent">{pin.value}</p>
             </div>
           )}
@@ -187,12 +198,16 @@ export function AnimatedNationMap({ className }: { className?: string }) {
       {/* Live indicator */}
       <div className="absolute top-4 left-4 flex items-center gap-2 surface-panel rounded-full px-3 py-1.5">
         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-        <span className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">Live Network</span>
+        <span className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">
+          Live Network
+        </span>
       </div>
 
       {/* Stats overlay */}
       <div className="absolute bottom-4 right-4 surface-panel rounded-xl px-4 py-3 space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Active Loads</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Active Loads
+        </p>
         <p className="text-2xl font-bold stat-number text-foreground">2,847</p>
       </div>
     </div>

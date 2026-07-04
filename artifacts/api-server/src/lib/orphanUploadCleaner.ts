@@ -13,7 +13,9 @@ async function purgeExpiredUploads(): Promise<void> {
     return;
   }
 
-  const entityDirPrefix = privateObjectDir.replace(/^\//, "").replace(/\/$/, "");
+  const entityDirPrefix = privateObjectDir
+    .replace(/^\//, "")
+    .replace(/\/$/, "");
   const uploadsPrefix = `${entityDirPrefix}/uploads/`;
 
   const files = await listPrivateUploadObjects(uploadsPrefix);
@@ -48,7 +50,10 @@ async function purgeExpiredUploads(): Promise<void> {
   }
 
   if (deleted > 0 || errors > 0) {
-    logger.info({ deleted, errors, prefix: uploadsPrefix }, "Orphan upload cleanup complete");
+    logger.info(
+      { deleted, errors, prefix: uploadsPrefix },
+      "Orphan upload cleanup complete",
+    );
   }
 }
 

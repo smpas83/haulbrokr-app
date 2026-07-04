@@ -33,11 +33,11 @@ function getDeviceLocale(): string {
 
 function interpolate(
   str: string,
-  params: Record<string, string | number>
+  params: Record<string, string | number>,
 ): string {
   return Object.entries(params).reduce(
     (acc, [k, v]) => acc.replace(`{{${k}}}`, String(v)),
-    str
+    str,
   );
 }
 
@@ -60,7 +60,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       const str = dict[key] ?? translations.en[key] ?? key;
       return params ? interpolate(str, params) : str;
     },
-    [locale]
+    [locale],
   );
 
   const setLocale = useCallback(async (code: string) => {

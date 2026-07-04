@@ -36,7 +36,9 @@ function configuredCorsOrigins(): Set<string> {
 function isLocalDevelopmentOrigin(origin: string): boolean {
   try {
     const { hostname } = new URL(origin);
-    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+    return (
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
+    );
   } catch {
     return false;
   }
@@ -53,7 +55,10 @@ const corsOptions: CorsOptions = {
       callback(null, true);
       return;
     }
-    if (process.env.NODE_ENV !== "production" && isLocalDevelopmentOrigin(origin)) {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      isLocalDevelopmentOrigin(origin)
+    ) {
       callback(null, true);
       return;
     }
@@ -65,9 +70,15 @@ app.use((_req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()",
+  );
   if (process.env.NODE_ENV === "production") {
-    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    res.setHeader(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains",
+    );
   }
   next();
 });

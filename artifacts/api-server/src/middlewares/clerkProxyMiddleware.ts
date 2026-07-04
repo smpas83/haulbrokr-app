@@ -60,7 +60,9 @@ export function getClerkProxyHost(req: {
   );
 }
 
-function hostFromUrlHeader(value: string | string[] | undefined): string | undefined {
+function hostFromUrlHeader(
+  value: string | string[] | undefined,
+): string | undefined {
   const raw = Array.isArray(value) ? value[0] : value;
   if (!raw) return undefined;
 

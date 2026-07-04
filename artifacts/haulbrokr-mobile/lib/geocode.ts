@@ -4,7 +4,9 @@ const cache = new Map<string, GeoCoord | null>();
 let lastRequestAt = 0;
 
 /** Forward-geocode a US street address via OpenStreetMap Nominatim (free, no API key). */
-export async function geocodeAddress(address: string): Promise<GeoCoord | null> {
+export async function geocodeAddress(
+  address: string,
+): Promise<GeoCoord | null> {
   const key = address.trim().toLowerCase();
   if (!key) return null;
   if (cache.has(key)) return cache.get(key) ?? null;
@@ -16,7 +18,9 @@ export async function geocodeAddress(address: string): Promise<GeoCoord | null> 
 
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=us`;
-    const res = await fetch(url, { headers: { "User-Agent": "HaulBrokr/1.0 (jobs-map)" } });
+    const res = await fetch(url, {
+      headers: { "User-Agent": "HaulBrokr/1.0 (jobs-map)" },
+    });
     if (!res.ok) {
       cache.set(key, null);
       return null;
@@ -41,10 +45,7 @@ export async function geocodeAddress(address: string): Promise<GeoCoord | null> 
 }
 
 /** Haversine distance in miles between two coordinates. */
-export function distanceMiles(
-  a: GeoCoord,
-  b: GeoCoord,
-): number {
+export function distanceMiles(a: GeoCoord, b: GeoCoord): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const R = 3958.8;
   const dLat = toRad(b.latitude - a.latitude);
@@ -52,7 +53,7 @@ export function distanceMiles(
   const lat1 = toRad(a.latitude);
   const lat2 = toRad(b.latitude);
   const h =
-    Math.sin(dLat / 2) ** 2
-    + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }

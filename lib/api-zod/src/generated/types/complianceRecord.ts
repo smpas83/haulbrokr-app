@@ -5,10 +5,10 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { ComplianceRecordDotOperatingStatus } from './complianceRecordDotOperatingStatus';
-import type { ComplianceRecordFmcsaAuthority } from './complianceRecordFmcsaAuthority';
-import type { ComplianceRecordInsuranceActive } from './complianceRecordInsuranceActive';
-import type { ComplianceRecordNotSuspended } from './complianceRecordNotSuspended';
+import type { ComplianceRecordDotOperatingStatus } from "./complianceRecordDotOperatingStatus";
+import type { ComplianceRecordFmcsaAuthority } from "./complianceRecordFmcsaAuthority";
+import type { ComplianceRecordInsuranceActive } from "./complianceRecordInsuranceActive";
+import type { ComplianceRecordNotSuspended } from "./complianceRecordNotSuspended";
 
 export interface ComplianceRecord {
   id: number;

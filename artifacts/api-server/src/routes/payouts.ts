@@ -9,100 +9,119 @@ import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 const router: IRouter = Router();
 
 /** POST /payouts/connect-link — create/get Connect Express account, return onboarding URL. */
-router.post("/payouts/connect-link", requireProfile, async (req, res): Promise<void> => {
-  const profile = getRequestProfile(req);
-  try {
-    const stripe = await getUncachableStripeClient();
-    const [existing] = await db.select().from(payoutAccountsTable)
-      .where(eq(payoutAccountsTable.profileId, profile.id));
+router.post(
+  "/payouts/connect-link",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const profile = getRequestProfile(req);
+    try {
+      const stripe = await getUncachableStripeClient();
+      const [existing] = await db
+        .select()
+        .from(payoutAccountsTable)
+        .where(eq(payoutAccountsTable.profileId, profile.id));
 
-    let stripeAccountId = existing?.stripeAccountId ?? null;
-    if (!stripeAccountId) {
-      const acct = await stripe.accounts.create(
-        {
-          type: "express",
-          email: profile.email ?? undefined,
-          capabilities: {
-            transfers: { requested: true },
-            card_payments: { requested: true },
+      let stripeAccountId = existing?.stripeAccountId ?? null;
+      if (!stripeAccountId) {
+        const acct = await stripe.accounts.create(
+          {
+            type: "express",
+            email: profile.email ?? undefined,
+            capabilities: {
+              transfers: { requested: true },
+              card_payments: { requested: true },
+            },
+            business_type: "individual",
+            metadata: { profileId: String(profile.id) },
           },
-          business_type: "individual",
-          metadata: { profileId: String(profile.id) },
-        },
-        // Idempotency: a double-click or retry returns the SAME account instead
-        // of creating a duplicate Express account for the same profile.
-        { idempotencyKey: `payouts:acct-create:${profile.id}` },
-      );
-      stripeAccountId = acct.id;
-      if (existing) {
-        await db.update(payoutAccountsTable)
-          .set({ stripeAccountId })
-          .where(eq(payoutAccountsTable.id, existing.id));
-      } else {
-        await db.insert(payoutAccountsTable).values({
-          profileId: profile.id,
-          stripeAccountId,
-        });
+          // Idempotency: a double-click or retry returns the SAME account instead
+          // of creating a duplicate Express account for the same profile.
+          { idempotencyKey: `payouts:acct-create:${profile.id}` },
+        );
+        stripeAccountId = acct.id;
+        if (existing) {
+          await db
+            .update(payoutAccountsTable)
+            .set({ stripeAccountId })
+            .where(eq(payoutAccountsTable.id, existing.id));
+        } else {
+          await db.insert(payoutAccountsTable).values({
+            profileId: profile.id,
+            stripeAccountId,
+          });
+        }
       }
+
+      const base = returnUrlBase(req);
+      // The mobile app passes the deep link it wants Stripe to return to. We
+      // embed it in our HTTPS return page (Stripe requires https URLs), which
+      // then bounces the in-app browser back into the app via this deep link.
+      const rawReturnTo =
+        typeof req.body?.returnTo === "string" ? req.body.returnTo : "";
+      const returnTo =
+        rawReturnTo && isAllowedReturnTo(rawReturnTo) ? rawReturnTo : "";
+      const returnToParam = returnTo
+        ? `&returnTo=${encodeURIComponent(returnTo)}`
+        : "";
+      const link = await stripe.accountLinks.create({
+        account: stripeAccountId,
+        refresh_url: `${base}/api/payouts/return?status=refresh${returnToParam}`,
+        return_url: `${base}/api/payouts/return?status=done${returnToParam}`,
+        type: "account_onboarding",
+      });
+
+      res.json({ url: link.url, stripeAccountId });
+    } catch (err: any) {
+      req.log.error({ err }, "Stripe connect-link failed");
+      res.status(500).json({ error: err?.message ?? "Stripe error" });
     }
-
-    const base = returnUrlBase(req);
-    // The mobile app passes the deep link it wants Stripe to return to. We
-    // embed it in our HTTPS return page (Stripe requires https URLs), which
-    // then bounces the in-app browser back into the app via this deep link.
-    const rawReturnTo = typeof req.body?.returnTo === "string" ? req.body.returnTo : "";
-    const returnTo = rawReturnTo && isAllowedReturnTo(rawReturnTo) ? rawReturnTo : "";
-    const returnToParam = returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : "";
-    const link = await stripe.accountLinks.create({
-      account: stripeAccountId,
-      refresh_url: `${base}/api/payouts/return?status=refresh${returnToParam}`,
-      return_url: `${base}/api/payouts/return?status=done${returnToParam}`,
-      type: "account_onboarding",
-    });
-
-    res.json({ url: link.url, stripeAccountId });
-  } catch (err: any) {
-    req.log.error({ err }, "Stripe connect-link failed");
-    res.status(500).json({ error: err?.message ?? "Stripe error" });
-  }
-});
+  },
+);
 
 /** GET /payouts/status — refresh from Stripe and return current capability flags. */
-router.get("/payouts/status", requireProfile, async (req, res): Promise<void> => {
-  const profile = getRequestProfile(req);
-  const [row] = await db.select().from(payoutAccountsTable)
-    .where(eq(payoutAccountsTable.profileId, profile.id));
-  if (!row?.stripeAccountId) {
-    res.json({
-      connected: false,
-      chargesEnabled: false,
-      payoutsEnabled: false,
-      detailsSubmitted: false,
-    });
-    return;
-  }
-  try {
-    const acct = await syncStripeStatus(row.stripeAccountId, profile.id);
-    res.json({
-      connected: true,
-      stripeAccountId: row.stripeAccountId,
-      chargesEnabled: !!acct.charges_enabled,
-      payoutsEnabled: !!acct.payouts_enabled,
-      detailsSubmitted: !!acct.details_submitted,
-      requirements: buildPayoutRequirements(acct),
-    });
-  } catch (err: any) {
-    req.log.error({ err }, "Stripe status fetch failed");
-    res.status(500).json({ error: err?.message ?? "Stripe error" });
-  }
-});
+router.get(
+  "/payouts/status",
+  requireProfile,
+  async (req, res): Promise<void> => {
+    const profile = getRequestProfile(req);
+    const [row] = await db
+      .select()
+      .from(payoutAccountsTable)
+      .where(eq(payoutAccountsTable.profileId, profile.id));
+    if (!row?.stripeAccountId) {
+      res.json({
+        connected: false,
+        chargesEnabled: false,
+        payoutsEnabled: false,
+        detailsSubmitted: false,
+      });
+      return;
+    }
+    try {
+      const acct = await syncStripeStatus(row.stripeAccountId, profile.id);
+      res.json({
+        connected: true,
+        stripeAccountId: row.stripeAccountId,
+        chargesEnabled: !!acct.charges_enabled,
+        payoutsEnabled: !!acct.payouts_enabled,
+        detailsSubmitted: !!acct.details_submitted,
+        requirements: buildPayoutRequirements(acct),
+      });
+    } catch (err: any) {
+      req.log.error({ err }, "Stripe status fetch failed");
+      res.status(500).json({ error: err?.message ?? "Stripe error" });
+    }
+  },
+);
 
 /** GET /payouts/return — landing page Stripe redirects to after onboarding.
  * If the app supplied a whitelisted deep link, bounce the browser back into the
  * app so the in-app browser closes and payout status auto-refreshes. */
 router.get("/payouts/return", (req, res): void => {
-  const rawReturnTo = typeof req.query.returnTo === "string" ? req.query.returnTo : "";
-  const returnTo = rawReturnTo && isAllowedReturnTo(rawReturnTo) ? rawReturnTo : "";
+  const rawReturnTo =
+    typeof req.query.returnTo === "string" ? req.query.returnTo : "";
+  const returnTo =
+    rawReturnTo && isAllowedReturnTo(rawReturnTo) ? rawReturnTo : "";
   // Append a marker so the app knows it arrived from the payout return flow.
   let deepLink = "";
   if (returnTo) {

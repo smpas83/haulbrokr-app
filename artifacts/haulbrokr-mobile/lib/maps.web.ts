@@ -8,7 +8,13 @@ export type Region = {
   longitudeDelta: number;
 };
 
-export type MapType = "standard" | "satellite" | "hybrid" | "terrain" | "none" | "mutedStandard";
+export type MapType =
+  | "standard"
+  | "satellite"
+  | "hybrid"
+  | "terrain"
+  | "none"
+  | "mutedStandard";
 
 type LatLng = { latitude: number; longitude: number };
 
@@ -79,11 +85,21 @@ function MapView({
     loadGoogleMapsScript()
       .then(() => {
         if (cancelled || !containerRef.current || !window.google?.maps) return;
-        const center = initialRegion ?? { latitude: 39.8283, longitude: -98.5795, latitudeDelta: 35, longitudeDelta: 35 };
+        const center = initialRegion ?? {
+          latitude: 39.8283,
+          longitude: -98.5795,
+          latitudeDelta: 35,
+          longitudeDelta: 35,
+        };
         mapRef.current = new window.google.maps.Map(containerRef.current, {
           center: { lat: center.latitude, lng: center.longitude },
           zoom: regionToZoom(center.latitudeDelta),
-          mapTypeId: mapType === "satellite" ? "satellite" : mapType === "hybrid" ? "hybrid" : "roadmap",
+          mapTypeId:
+            mapType === "satellite"
+              ? "satellite"
+              : mapType === "hybrid"
+                ? "hybrid"
+                : "roadmap",
           styles: customMapStyle,
           disableDefaultUI: false,
           zoomControl: true,
@@ -108,8 +124,12 @@ function MapView({
         });
         setReady(true);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Map failed to load"));
-    return () => { cancelled = true; };
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Map failed to load"),
+      );
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -122,7 +142,8 @@ function MapView({
     React.Children.forEach(children, (child) => {
       if (!React.isValidElement(child)) return;
       if (child.type === Marker) {
-        const { coordinate, pinColor, title, description } = child.props as MarkerProps;
+        const { coordinate, pinColor, title, description } =
+          child.props as MarkerProps;
         if (!coordinate) return;
         const marker = new window.google.maps.Marker({
           map: mapRef.current,
@@ -142,7 +163,8 @@ function MapView({
         markersRef.current.push(marker);
       }
       if (child.type === Circle) {
-        const { center, radius, fillColor, strokeColor, strokeWidth } = child.props as CircleProps;
+        const { center, radius, fillColor, strokeColor, strokeWidth } =
+          child.props as CircleProps;
         const circle = new window.google.maps.Circle({
           map: mapRef.current,
           center: { lat: center.latitude, lng: center.longitude },
@@ -164,8 +186,16 @@ function MapView({
       React.createElement(
         View,
         { style: webStyles.placeholder },
-        React.createElement(Text, { style: webStyles.label }, `Map unavailable: ${error}`),
-        React.createElement(Text, { style: webStyles.sub }, "Set GOOGLE_MAPS_API_KEY in EAS secrets for web maps."),
+        React.createElement(
+          Text,
+          { style: webStyles.label },
+          `Map unavailable: ${error}`,
+        ),
+        React.createElement(
+          Text,
+          { style: webStyles.sub },
+          "Set GOOGLE_MAPS_API_KEY in EAS secrets for web maps.",
+        ),
       ),
     );
   }
@@ -188,7 +218,9 @@ type MarkerProps = {
   onPress?: () => void;
 };
 
-export function Marker(_props: MarkerProps) { return null; }
+export function Marker(_props: MarkerProps) {
+  return null;
+}
 
 type CircleProps = {
   center: LatLng;
@@ -198,13 +230,31 @@ type CircleProps = {
   strokeWidth?: number;
 };
 
-export function Circle(_props: CircleProps) { return null; }
+export function Circle(_props: CircleProps) {
+  return null;
+}
 
 const webStyles = StyleSheet.create({
-  map:         { flex: 1, backgroundColor: "#0f172a", overflow: "hidden" },
-  placeholder: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", padding: 24 },
-  label:       { color: "#93c5fd", fontSize: 14, fontFamily: "Inter_600SemiBold", textAlign: "center" },
-  sub:         { color: "#4b6080", fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 8 },
+  map: { flex: 1, backgroundColor: "#0f172a", overflow: "hidden" },
+  placeholder: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  label: {
+    color: "#93c5fd",
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    textAlign: "center",
+  },
+  sub: {
+    color: "#4b6080",
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    marginTop: 8,
+  },
 });
 
 export default MapView;

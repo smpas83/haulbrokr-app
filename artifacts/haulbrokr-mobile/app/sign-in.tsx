@@ -20,7 +20,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
+import {
+  resetAllClerkLocalState,
+  markClerkActiveSession,
+} from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
 type Step = "credentials" | "verify";
@@ -28,7 +31,9 @@ type VerifyReason = "signup" | "trust";
 
 WebBrowser.maybeCompleteAuthSession();
 
-function clerkErrorMessage(error: { message?: string; longMessage?: string } | null | undefined): string {
+function clerkErrorMessage(
+  error: { message?: string; longMessage?: string } | null | undefined,
+): string {
   if (!error) return "";
   return error.longMessage ?? error.message ?? "";
 }
@@ -37,8 +42,16 @@ export default function SignInScreen() {
   const insets = useSafeAreaInsets();
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const clerk = useClerk();
-  const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
-  const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
+  const {
+    signIn,
+    errors: signInErrors,
+    fetchStatus: signInFetchStatus,
+  } = useSignIn();
+  const {
+    signUp,
+    errors: signUpErrors,
+    fetchStatus: signUpFetchStatus,
+  } = useSignUp();
   const { startSSOFlow } = useSSO();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
@@ -46,7 +59,9 @@ export default function SignInScreen() {
   useEffect(() => {
     if (Platform.OS !== "android") return;
     void WebBrowser.warmUpAsync();
-    return () => { void WebBrowser.coolDownAsync(); };
+    return () => {
+      void WebBrowser.coolDownAsync();
+    };
   }, []);
 
   useEffect(() => {
@@ -74,9 +89,19 @@ export default function SignInScreen() {
         setError(`Sign-in with ${which} couldn't complete. Please try again.`);
       }
     } catch (err: any) {
-      const msg = err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? err?.message ?? "";
-      if (/not enabled|provider.*not.*configured|strategy.*not.*allowed/i.test(msg)) {
-        setError(`Sign in with ${which === "google" ? "Google" : "Apple"} isn't enabled yet — turn it on in the Auth pane.`);
+      const msg =
+        err?.errors?.[0]?.longMessage ??
+        err?.errors?.[0]?.message ??
+        err?.message ??
+        "";
+      if (
+        /not enabled|provider.*not.*configured|strategy.*not.*allowed/i.test(
+          msg,
+        )
+      ) {
+        setError(
+          `Sign in with ${which === "google" ? "Google" : "Apple"} isn't enabled yet — turn it on in the Auth pane.`,
+        );
       } else if (msg) {
         setError(msg);
       }
@@ -100,7 +125,10 @@ export default function SignInScreen() {
 
   const clerkReady = authLoaded && !!signIn && !!signUp;
   const authStuck = authLoaded && (!signIn || !signUp);
-  const busy = loading || signInFetchStatus === "fetching" || signUpFetchStatus === "fetching";
+  const busy =
+    loading ||
+    signInFetchStatus === "fetching" ||
+    signUpFetchStatus === "fetching";
   const activeFieldError =
     signInErrors?.fields?.identifier?.message ??
     signInErrors?.fields?.password?.message ??
@@ -143,7 +171,8 @@ export default function SignInScreen() {
   const finalizeSignIn = async (): Promise<boolean> => {
     if (!signIn) return false;
 
-    const sessionId = signIn.createdSessionId ?? signIn.existingSession?.sessionId ?? null;
+    const sessionId =
+      signIn.createdSessionId ?? signIn.existingSession?.sessionId ?? null;
     const { error } = await signIn.finalize({
       navigate: async ({ session }) => {
         await markClerkActiveSession();
@@ -178,13 +207,21 @@ export default function SignInScreen() {
   };
 
   useEffect(() => {
-    if (!authLoaded || isSignedIn || !signIn || recoveryAttemptedRef.current) return;
-    const pendingSessionId = signIn.createdSessionId ?? signIn.existingSession?.sessionId;
+    if (!authLoaded || isSignedIn || !signIn || recoveryAttemptedRef.current)
+      return;
+    const pendingSessionId =
+      signIn.createdSessionId ?? signIn.existingSession?.sessionId;
     if (signIn.status === "complete" && pendingSessionId) {
       recoveryAttemptedRef.current = true;
       void finalizeSignIn();
     }
-  }, [authLoaded, isSignedIn, signIn?.status, signIn?.createdSessionId, signIn?.existingSession?.sessionId]);
+  }, [
+    authLoaded,
+    isSignedIn,
+    signIn?.status,
+    signIn?.createdSessionId,
+    signIn?.existingSession?.sessionId,
+  ]);
 
   const finalizeSignUp = async () => {
     if (!signUp) return;
@@ -198,7 +235,9 @@ export default function SignInScreen() {
 
   const beginSecondFactorEmail = async (): Promise<boolean> => {
     if (!signIn) return false;
-    const hasEmailCode = signIn.supportedSecondFactors?.some((factor) => factor.strategy === "email_code");
+    const hasEmailCode = signIn.supportedSecondFactors?.some(
+      (factor) => factor.strategy === "email_code",
+    );
     if (!hasEmailCode) return false;
 
     const { error: sendError } = await signIn.mfa.sendEmailCode();
@@ -231,7 +270,10 @@ export default function SignInScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLoading(true);
     try {
-      const { error: passwordError } = await signIn.password({ identifier: id, password });
+      const { error: passwordError } = await signIn.password({
+        identifier: id,
+        password,
+      });
       if (passwordError) {
         const msg = clerkErrorMessage(passwordError);
         if (/already signed in/i.test(msg)) {
@@ -247,13 +289,16 @@ export default function SignInScreen() {
         return;
       }
 
-      if (signIn.status === "needs_client_trust" || signIn.status === "needs_second_factor") {
+      if (
+        signIn.status === "needs_client_trust" ||
+        signIn.status === "needs_second_factor"
+      ) {
         const started = await beginSecondFactorEmail();
         if (!started) {
           setError(
             signIn.status === "needs_second_factor"
               ? "Two-factor authentication is required for this account."
-              : "Additional verification is required. Check your email for a code."
+              : "Additional verification is required. Check your email for a code.",
           );
         }
         return;
@@ -355,7 +400,9 @@ export default function SignInScreen() {
           setError("Authentication is initialising. Please wait a moment.");
           return;
         }
-        const { error: verifyError } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
+        const { error: verifyError } = await signIn.mfa.verifyEmailCode({
+          code: code.trim(),
+        });
         if (verifyError) {
           setError(clerkErrorMessage(verifyError));
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -373,7 +420,9 @@ export default function SignInScreen() {
         setError("Authentication is initialising. Please wait a moment.");
         return;
       }
-      const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code: code.trim() });
+      const { error: verifyError } = await signUp.verifications.verifyEmailCode(
+        { code: code.trim() },
+      );
       if (verifyError) {
         setError(clerkErrorMessage(verifyError));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -415,7 +464,10 @@ export default function SignInScreen() {
       keyboardVerticalOffset={0}
     >
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 32 },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -431,17 +483,33 @@ export default function SignInScreen() {
           <View style={styles.modeRow}>
             <Pressable
               onPress={() => resetFormForMode("signin")}
-              style={[styles.modeTab, mode === "signin" && styles.modeTabActive]}
+              style={[
+                styles.modeTab,
+                mode === "signin" && styles.modeTabActive,
+              ]}
             >
-              <Text style={[styles.modeTabText, mode === "signin" && styles.modeTabTextActive]}>
+              <Text
+                style={[
+                  styles.modeTabText,
+                  mode === "signin" && styles.modeTabTextActive,
+                ]}
+              >
                 Sign In
               </Text>
             </Pressable>
             <Pressable
               onPress={() => resetFormForMode("signup")}
-              style={[styles.modeTab, mode === "signup" && styles.modeTabActive]}
+              style={[
+                styles.modeTab,
+                mode === "signup" && styles.modeTabActive,
+              ]}
             >
-              <Text style={[styles.modeTabText, mode === "signup" && styles.modeTabTextActive]}>
+              <Text
+                style={[
+                  styles.modeTabText,
+                  mode === "signup" && styles.modeTabTextActive,
+                ]}
+              >
                 Sign Up
               </Text>
             </Pressable>
@@ -461,7 +529,11 @@ export default function SignInScreen() {
         {step === "credentials" ? (
           <>
             <Pressable
-              style={[styles.ssoBtn, styles.ssoGoogle, (ssoBusy !== null || !clerkReady) && styles.btnDisabled]}
+              style={[
+                styles.ssoBtn,
+                styles.ssoGoogle,
+                (ssoBusy !== null || !clerkReady) && styles.btnDisabled,
+              ]}
               onPress={() => handleSSO("oauth_google")}
               disabled={ssoBusy !== null || !clerkReady}
             >
@@ -475,7 +547,11 @@ export default function SignInScreen() {
               )}
             </Pressable>
             <Pressable
-              style={[styles.ssoBtn, styles.ssoApple, (ssoBusy !== null || !clerkReady) && styles.btnDisabled]}
+              style={[
+                styles.ssoBtn,
+                styles.ssoApple,
+                (ssoBusy !== null || !clerkReady) && styles.btnDisabled,
+              ]}
               onPress={() => handleSSO("oauth_apple")}
               disabled={ssoBusy !== null || !clerkReady}
             >
@@ -496,14 +572,24 @@ export default function SignInScreen() {
             </View>
 
             {mode === "signin" ? (
-              <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-                <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
+              <View
+                style={[styles.inputRow, !clerkReady && styles.inputDisabled]}
+              >
+                <Feather
+                  name="user"
+                  size={16}
+                  color="#8ba0b8"
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.input}
                   placeholder="Username or email"
                   placeholderTextColor="#4a5568"
                   value={identifier}
-                  onChangeText={(t) => { setIdentifier(t); setError(""); }}
+                  onChangeText={(t) => {
+                    setIdentifier(t);
+                    setError("");
+                  }}
                   autoCapitalize="none"
                   autoComplete="username"
                   returnKeyType="next"
@@ -512,28 +598,48 @@ export default function SignInScreen() {
               </View>
             ) : (
               <>
-                <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-                  <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
+                <View
+                  style={[styles.inputRow, !clerkReady && styles.inputDisabled]}
+                >
+                  <Feather
+                    name="user"
+                    size={16}
+                    color="#8ba0b8"
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     style={styles.input}
                     placeholder="Username"
                     placeholderTextColor="#4a5568"
                     value={username}
-                    onChangeText={(t) => { setUsername(t); setError(""); }}
+                    onChangeText={(t) => {
+                      setUsername(t);
+                      setError("");
+                    }}
                     autoCapitalize="none"
                     autoComplete="username"
                     returnKeyType="next"
                     editable={clerkReady}
                   />
                 </View>
-                <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-                  <Feather name="mail" size={16} color="#8ba0b8" style={styles.inputIcon} />
+                <View
+                  style={[styles.inputRow, !clerkReady && styles.inputDisabled]}
+                >
+                  <Feather
+                    name="mail"
+                    size={16}
+                    color="#8ba0b8"
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     style={styles.input}
                     placeholder="your@email.com"
                     placeholderTextColor="#4a5568"
                     value={email}
-                    onChangeText={(t) => { setEmail(t); setError(""); }}
+                    onChangeText={(t) => {
+                      setEmail(t);
+                      setError("");
+                    }}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -544,14 +650,24 @@ export default function SignInScreen() {
               </>
             )}
 
-            <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-              <Feather name="lock" size={16} color="#8ba0b8" style={styles.inputIcon} />
+            <View
+              style={[styles.inputRow, !clerkReady && styles.inputDisabled]}
+            >
+              <Feather
+                name="lock"
+                size={16}
+                color="#8ba0b8"
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
                 placeholderTextColor="#4a5568"
                 value={password}
-                onChangeText={(t) => { setPassword(t); setError(""); }}
+                onChangeText={(t) => {
+                  setPassword(t);
+                  setError("");
+                }}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoComplete={mode === "signin" ? "password" : "new-password"}
@@ -564,7 +680,11 @@ export default function SignInScreen() {
                 hitSlop={8}
                 disabled={!clerkReady}
               >
-                <Feather name={showPassword ? "eye-off" : "eye"} size={16} color="#8ba0b8" />
+                <Feather
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={16}
+                  color="#8ba0b8"
+                />
               </Pressable>
             </View>
 
@@ -587,7 +707,10 @@ export default function SignInScreen() {
             ) : null}
 
             <Pressable
-              style={[styles.btn, (busy || !clerkReady || ssoBusy !== null) && styles.btnDisabled]}
+              style={[
+                styles.btn,
+                (busy || !clerkReady || ssoBusy !== null) && styles.btnDisabled,
+              ]}
               onPress={handleSubmit}
               disabled={busy || !clerkReady || ssoBusy !== null}
             >
@@ -633,13 +756,21 @@ export default function SignInScreen() {
             </View>
 
             <View style={styles.inputRow}>
-              <Feather name="hash" size={16} color="#8ba0b8" style={styles.inputIcon} />
+              <Feather
+                name="hash"
+                size={16}
+                color="#8ba0b8"
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={[styles.input, styles.codeInput]}
                 placeholder="000000"
                 placeholderTextColor="#4a5568"
                 value={code}
-                onChangeText={(t) => { setCode(t.replace(/\D/g, "").slice(0, 6)); setError(""); }}
+                onChangeText={(t) => {
+                  setCode(t.replace(/\D/g, "").slice(0, 6));
+                  setError("");
+                }}
                 keyboardType="number-pad"
                 maxLength={6}
                 returnKeyType="go"
@@ -651,7 +782,10 @@ export default function SignInScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <Pressable
-              style={[styles.btn, (busy || code.length < 6) && styles.btnDisabled]}
+              style={[
+                styles.btn,
+                (busy || code.length < 6) && styles.btnDisabled,
+              ]}
               onPress={handleVerifyCode}
               disabled={busy || code.length < 6}
             >
@@ -672,7 +806,8 @@ export default function SignInScreen() {
         )}
 
         <Text style={styles.footerNote}>
-          By continuing you agree to HaulBrokr's Terms of Service and Privacy Policy
+          By continuing you agree to HaulBrokr's Terms of Service and Privacy
+          Policy
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -697,13 +832,18 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   modeTab: {
-    flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: "center",
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 9,
+    alignItems: "center",
   },
   modeTabActive: {
     backgroundColor: "#e9a600",
   },
   modeTabText: {
-    fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#8ba0b8",
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#8ba0b8",
   },
   modeTabTextActive: {
     color: "#1e2235",
@@ -717,47 +857,89 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   inputRow: {
-    width: "100%", flexDirection: "row", alignItems: "center",
-    backgroundColor: "#2a3352", borderRadius: 12, borderWidth: 1, borderColor: "#3a4565",
-    paddingHorizontal: 14, marginBottom: 14,
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2a3352",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#3a4565",
+    paddingHorizontal: 14,
+    marginBottom: 14,
   },
   inputDisabled: { opacity: 0.6 },
   inputIcon: { marginRight: 10 },
   input: {
-    flex: 1, height: 52, color: "#f0f6ff",
-    fontFamily: "Inter_400Regular", fontSize: 15,
+    flex: 1,
+    height: 52,
+    color: "#f0f6ff",
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
   },
   codeInput: {
-    fontSize: 22, fontFamily: "Inter_700Bold", letterSpacing: 6, textAlign: "center",
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 6,
+    textAlign: "center",
   },
   btn: {
-    width: "100%", backgroundColor: "#e9a600", borderRadius: 12,
-    height: 52, alignItems: "center", justifyContent: "center", marginBottom: 14,
+    width: "100%",
+    backgroundColor: "#e9a600",
+    borderRadius: 12,
+    height: 52,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
   },
   btnDisabled: { opacity: 0.55 },
   btnText: { color: "#1e2235", fontFamily: "Inter_700Bold", fontSize: 16 },
   ssoBtn: {
-    width: "100%", height: 50, borderRadius: 12, flexDirection: "row",
-    alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 10,
+    width: "100%",
+    height: 50,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    marginBottom: 10,
     borderWidth: 1,
   },
   ssoGoogle: { backgroundColor: "#f0f6ff", borderColor: "#f0f6ff" },
-  ssoGoogleText: { color: "#1e2235", fontFamily: "Inter_700Bold", fontSize: 15 },
+  ssoGoogleText: {
+    color: "#1e2235",
+    fontFamily: "Inter_700Bold",
+    fontSize: 15,
+  },
   ssoApple: { backgroundColor: "#0a0a0a", borderColor: "#2a3352" },
   ssoAppleText: { color: "#f0f6ff", fontFamily: "Inter_700Bold", fontSize: 15 },
   dividerRow: {
-    flexDirection: "row", alignItems: "center", width: "100%",
-    marginVertical: 12, gap: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    marginVertical: 12,
+    gap: 10,
   },
   dividerLine: { flex: 1, height: 1, backgroundColor: "#3a4565" },
-  dividerText: { color: "#6b7280", fontFamily: "Inter_500Medium", fontSize: 11, letterSpacing: 1 },
+  dividerText: {
+    color: "#6b7280",
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
+    letterSpacing: 1,
+  },
   errorText: {
-    color: "#f87171", fontFamily: "Inter_400Regular", fontSize: 13,
-    textAlign: "center", marginBottom: 12, lineHeight: 18,
+    color: "#f87171",
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    textAlign: "center",
+    marginBottom: 12,
+    lineHeight: 18,
   },
   initText: {
-    color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 12,
-    textAlign: "center", marginTop: -4,
+    color: "#8ba0b8",
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: -4,
   },
   resetBtn: {
     marginTop: 10,
@@ -765,25 +947,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   resetText: {
-    color: "#e9a600", fontFamily: "Inter_600SemiBold", fontSize: 12,
+    color: "#e9a600",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
     textAlign: "center",
   },
   codeHint: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#e9a60012", borderWidth: 1, borderColor: "#e9a60030",
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
-    marginBottom: 16, width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#e9a60012",
+    borderWidth: 1,
+    borderColor: "#e9a60030",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 16,
+    width: "100%",
   },
   codeHintText: {
-    color: "#e9a600", fontFamily: "Inter_400Regular", fontSize: 13,
+    color: "#e9a600",
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
   },
   resendRow: {
-    flexDirection: "row", alignItems: "center", marginBottom: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
   },
-  resendLabel: { color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 13 },
-  resendLink: { color: "#e9a600", fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  resendLabel: {
+    color: "#8ba0b8",
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+  },
+  resendLink: {
+    color: "#e9a600",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+  },
   footerNote: {
-    color: "#3a4565", fontFamily: "Inter_400Regular",
-    fontSize: 11, textAlign: "center", lineHeight: 16, marginTop: 8,
+    color: "#3a4565",
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    textAlign: "center",
+    lineHeight: 16,
+    marginTop: 8,
   },
 });

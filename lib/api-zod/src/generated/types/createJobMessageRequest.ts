@@ -8,8 +8,8 @@
 
 export interface CreateJobMessageRequest {
   /**
-     * @minLength 1
-     * @maxLength 2000
-     */
+   * @minLength 1
+   * @maxLength 2000
+   */
   body: string;
 }

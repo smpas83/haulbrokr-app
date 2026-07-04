@@ -12,9 +12,9 @@ export interface RatingResponse {
   raterProfileId: number;
   rateeProfileId: number;
   /**
-     * @minimum 1
-     * @maximum 5
-     */
+   * @minimum 1
+   * @maximum 5
+   */
   stars: number;
   /** @nullable */
   comment?: string | null;

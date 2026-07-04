@@ -118,7 +118,8 @@ export default function Slide03Problem2() {
               margin: 0,
             }}
           >
-            Foremen leave job sites to make calls. Projects stall. Deadlines slip. General contractors pass penalties downstream.
+            Foremen leave job sites to make calls. Projects stall. Deadlines
+            slip. General contractors pass penalties downstream.
           </p>
         </div>
 
@@ -174,7 +175,8 @@ export default function Slide03Problem2() {
               margin: 0,
             }}
           >
-            Owner-operators rely on word-of-mouth. When a relationship ends, cash flow collapses overnight with no backup pipeline.
+            Owner-operators rely on word-of-mouth. When a relationship ends,
+            cash flow collapses overnight with no backup pipeline.
           </p>
         </div>
 
@@ -230,7 +232,8 @@ export default function Slide03Problem2() {
               margin: 0,
             }}
           >
-            No incumbent has built a scalable two-sided marketplace. The space is ripe for a modern platform with real network effects.
+            No incumbent has built a scalable two-sided marketplace. The space
+            is ripe for a modern platform with real network effects.
           </p>
         </div>
       </div>
@@ -251,7 +254,9 @@ export default function Slide03Problem2() {
           letterSpacing: "0.2em",
         }}
       >
-        <span>HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026</span>
+        <span>
+          HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026
+        </span>
         <span style={{ color: "#A0785A" }}>03</span>
       </div>
     </div>

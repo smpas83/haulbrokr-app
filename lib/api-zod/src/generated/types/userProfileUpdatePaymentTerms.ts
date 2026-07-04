@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type UserProfileUpdatePaymentTerms = typeof UserProfileUpdatePaymentTerms[keyof typeof UserProfileUpdatePaymentTerms];
-
+export type UserProfileUpdatePaymentTerms =
+  (typeof UserProfileUpdatePaymentTerms)[keyof typeof UserProfileUpdatePaymentTerms];
 
 export const UserProfileUpdatePaymentTerms = {
-  due_on_receipt: 'due_on_receipt',
-  net_15: 'net_15',
-  net_30: 'net_30',
-  prepaid: 'prepaid',
+  due_on_receipt: "due_on_receipt",
+  net_15: "net_15",
+  net_30: "net_30",
+  prepaid: "prepaid",
 } as const;

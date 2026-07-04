@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type W9SubmissionStatus = typeof W9SubmissionStatus[keyof typeof W9SubmissionStatus];
-
+export type W9SubmissionStatus =
+  (typeof W9SubmissionStatus)[keyof typeof W9SubmissionStatus];
 
 export const W9SubmissionStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;

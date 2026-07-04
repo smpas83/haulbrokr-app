@@ -68,9 +68,7 @@
         "staff_users_username_unique": {
           "name": "staff_users_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         }
       },
       "policies": {},
@@ -275,9 +273,7 @@
         "profiles_clerk_id_unique": {
           "name": "profiles_clerk_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "clerk_id"
-          ]
+          "columns": ["clerk_id"]
         }
       },
       "policies": {},
@@ -341,9 +337,7 @@
         "organizations_invite_code_unique": {
           "name": "organizations_invite_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "invite_code"
-          ]
+          "columns": ["invite_code"]
         }
       },
       "policies": {},
@@ -469,12 +463,8 @@
           "name": "trucks_owner_id_profiles_id_fk",
           "tableFrom": "trucks",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -482,12 +472,8 @@
           "name": "trucks_assigned_driver_id_profiles_id_fk",
           "tableFrom": "trucks",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "assigned_driver_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_driver_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -618,12 +604,8 @@
           "name": "requests_customer_id_profiles_id_fk",
           "tableFrom": "requests",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -631,12 +613,8 @@
           "name": "requests_project_id_projects_id_fk",
           "tableFrom": "requests",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -723,12 +701,8 @@
           "name": "bids_request_id_requests_id_fk",
           "tableFrom": "bids",
           "tableTo": "requests",
-          "columnsFrom": [
-            "request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["request_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -736,12 +710,8 @@
           "name": "bids_provider_id_profiles_id_fk",
           "tableFrom": "bids",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1024,12 +994,8 @@
           "name": "jobs_request_id_requests_id_fk",
           "tableFrom": "jobs",
           "tableTo": "requests",
-          "columnsFrom": [
-            "request_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["request_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1037,12 +1003,8 @@
           "name": "jobs_bid_id_bids_id_fk",
           "tableFrom": "jobs",
           "tableTo": "bids",
-          "columnsFrom": [
-            "bid_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["bid_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1050,12 +1012,8 @@
           "name": "jobs_customer_id_profiles_id_fk",
           "tableFrom": "jobs",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1063,12 +1021,8 @@
           "name": "jobs_provider_id_profiles_id_fk",
           "tableFrom": "jobs",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1076,12 +1030,8 @@
           "name": "jobs_project_id_projects_id_fk",
           "tableFrom": "jobs",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1089,12 +1039,8 @@
           "name": "jobs_approved_by_profile_id_profiles_id_fk",
           "tableFrom": "jobs",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "approved_by_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["approved_by_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1160,12 +1106,8 @@
           "name": "activity_profile_id_profiles_id_fk",
           "tableFrom": "activity",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1295,12 +1237,8 @@
           "name": "w9_submissions_profile_id_profiles_id_fk",
           "tableFrom": "w9_submissions",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1310,9 +1248,7 @@
         "w9_submissions_profile_id_unique": {
           "name": "w9_submissions_profile_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "profile_id"
-          ]
+          "columns": ["profile_id"]
         }
       },
       "policies": {},
@@ -1460,12 +1396,8 @@
           "name": "insurance_submissions_profile_id_profiles_id_fk",
           "tableFrom": "insurance_submissions",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1475,9 +1407,7 @@
         "insurance_submissions_profile_id_unique": {
           "name": "insurance_submissions_profile_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "profile_id"
-          ]
+          "columns": ["profile_id"]
         }
       },
       "policies": {},
@@ -1618,12 +1548,8 @@
           "name": "payment_methods_profile_id_profiles_id_fk",
           "tableFrom": "payment_methods",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1633,9 +1559,7 @@
         "payment_methods_profile_id_unique": {
           "name": "payment_methods_profile_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "profile_id"
-          ]
+          "columns": ["profile_id"]
         }
       },
       "policies": {},
@@ -1750,12 +1674,8 @@
           "name": "payout_accounts_profile_id_profiles_id_fk",
           "tableFrom": "payout_accounts",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1765,9 +1685,7 @@
         "payout_accounts_profile_id_unique": {
           "name": "payout_accounts_profile_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "profile_id"
-          ]
+          "columns": ["profile_id"]
         }
       },
       "policies": {},
@@ -2077,12 +1995,8 @@
           "name": "projects_customer_id_profiles_id_fk",
           "tableFrom": "projects",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2194,12 +2108,8 @@
           "name": "factoring_requests_job_id_jobs_id_fk",
           "tableFrom": "factoring_requests",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2207,12 +2117,8 @@
           "name": "factoring_requests_provider_id_profiles_id_fk",
           "tableFrom": "factoring_requests",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2284,12 +2190,8 @@
           "name": "delivery_evidence_job_id_jobs_id_fk",
           "tableFrom": "delivery_evidence",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2297,12 +2199,8 @@
           "name": "delivery_evidence_uploaded_by_profile_id_profiles_id_fk",
           "tableFrom": "delivery_evidence",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "uploaded_by_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uploaded_by_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2471,12 +2369,8 @@
           "name": "dot_cdl_compliance_profile_id_profiles_id_fk",
           "tableFrom": "dot_cdl_compliance",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2486,9 +2380,7 @@
         "dot_cdl_compliance_profile_id_unique": {
           "name": "dot_cdl_compliance_profile_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "profile_id"
-          ]
+          "columns": ["profile_id"]
         }
       },
       "policies": {},
@@ -2570,12 +2462,8 @@
           "name": "quickbooks_connections_profile_id_profiles_id_fk",
           "tableFrom": "quickbooks_connections",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2585,9 +2473,7 @@
         "quickbooks_connections_profile_id_unique": {
           "name": "quickbooks_connections_profile_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "profile_id"
-          ]
+          "columns": ["profile_id"]
         }
       },
       "policies": {},
@@ -2717,12 +2603,8 @@
           "name": "tickets_job_id_jobs_id_fk",
           "tableFrom": "tickets",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2730,12 +2612,8 @@
           "name": "tickets_driver_profile_id_profiles_id_fk",
           "tableFrom": "tickets",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "driver_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["driver_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2743,12 +2621,8 @@
           "name": "tickets_truck_id_trucks_id_fk",
           "tableFrom": "tickets",
           "tableTo": "trucks",
-          "columnsFrom": [
-            "truck_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["truck_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2756,12 +2630,8 @@
           "name": "tickets_verified_by_profile_id_profiles_id_fk",
           "tableFrom": "tickets",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "verified_by_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["verified_by_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2882,12 +2752,8 @@
           "name": "driver_documents_profile_id_profiles_id_fk",
           "tableFrom": "driver_documents",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2974,12 +2840,8 @@
           "name": "credit_applications_profile_id_profiles_id_fk",
           "tableFrom": "credit_applications",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2989,9 +2851,7 @@
         "credit_applications_profile_id_unique": {
           "name": "credit_applications_profile_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "profile_id"
-          ]
+          "columns": ["profile_id"]
         }
       },
       "policies": {},
@@ -3053,12 +2913,8 @@
           "name": "job_status_updates_job_id_jobs_id_fk",
           "tableFrom": "job_status_updates",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3066,12 +2922,8 @@
           "name": "job_status_updates_ticket_id_tickets_id_fk",
           "tableFrom": "job_status_updates",
           "tableTo": "tickets",
-          "columnsFrom": [
-            "ticket_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ticket_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3079,12 +2931,8 @@
           "name": "job_status_updates_actor_profile_id_profiles_id_fk",
           "tableFrom": "job_status_updates",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "actor_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3137,12 +2985,8 @@
           "name": "project_assignments_project_id_projects_id_fk",
           "tableFrom": "project_assignments",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3150,12 +2994,8 @@
           "name": "project_assignments_supervisor_profile_id_profiles_id_fk",
           "tableFrom": "project_assignments",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "supervisor_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["supervisor_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3163,12 +3003,8 @@
           "name": "project_assignments_assigned_by_profile_id_profiles_id_fk",
           "tableFrom": "project_assignments",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "assigned_by_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_by_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3233,12 +3069,8 @@
           "name": "ratings_job_id_jobs_id_fk",
           "tableFrom": "ratings",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3246,12 +3078,8 @@
           "name": "ratings_rater_profile_id_profiles_id_fk",
           "tableFrom": "ratings",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "rater_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["rater_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3259,12 +3087,8 @@
           "name": "ratings_ratee_profile_id_profiles_id_fk",
           "tableFrom": "ratings",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "ratee_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ratee_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3274,10 +3098,7 @@
         "ratings_job_rater_unique": {
           "name": "ratings_job_rater_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "job_id",
-            "rater_profile_id"
-          ]
+          "columns": ["job_id", "rater_profile_id"]
         }
       },
       "policies": {},
@@ -3326,12 +3147,8 @@
           "name": "job_messages_job_id_jobs_id_fk",
           "tableFrom": "job_messages",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3339,12 +3156,8 @@
           "name": "job_messages_sender_profile_id_profiles_id_fk",
           "tableFrom": "job_messages",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "sender_profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sender_profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3415,12 +3228,8 @@
           "name": "upload_sessions_profile_id_profiles_id_fk",
           "tableFrom": "upload_sessions",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3436,21 +3245,12 @@
     "public.org_role": {
       "name": "org_role",
       "schema": "public",
-      "values": [
-        "owner",
-        "admin",
-        "member"
-      ]
+      "values": ["owner", "admin", "member"]
     },
     "public.payment_terms": {
       "name": "payment_terms",
       "schema": "public",
-      "values": [
-        "due_on_receipt",
-        "net_15",
-        "net_30",
-        "prepaid"
-      ]
+      "values": ["due_on_receipt", "net_15", "net_30", "prepaid"]
     },
     "public.staff_role": {
       "name": "staff_role",
@@ -3470,30 +3270,17 @@
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": [
-        "customer",
-        "provider",
-        "driver",
-        "supervisor"
-      ]
+      "values": ["customer", "provider", "driver", "supervisor"]
     },
     "public.org_type": {
       "name": "org_type",
       "schema": "public",
-      "values": [
-        "customer",
-        "provider"
-      ]
+      "values": ["customer", "provider"]
     },
     "public.coi_status": {
       "name": "coi_status",
       "schema": "public",
-      "values": [
-        "none",
-        "pending",
-        "active",
-        "expired"
-      ]
+      "values": ["none", "pending", "active", "expired"]
     },
     "public.truck_type": {
       "name": "truck_type",
@@ -3547,22 +3334,12 @@
     "public.bid_status": {
       "name": "bid_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "awarded",
-        "accepted",
-        "rejected",
-        "withdrawn"
-      ]
+      "values": ["pending", "awarded", "accepted", "rejected", "withdrawn"]
     },
     "public.job_completion_approval": {
       "name": "job_completion_approval",
       "schema": "public",
-      "values": [
-        "pending",
-        "approved",
-        "flagged"
-      ]
+      "values": ["pending", "approved", "flagged"]
     },
     "public.job_payment_status": {
       "name": "job_payment_status",
@@ -3631,31 +3408,17 @@
     "public.verification_status": {
       "name": "verification_status",
       "schema": "public",
-      "values": [
-        "not_submitted",
-        "pending",
-        "verified",
-        "rejected"
-      ]
+      "values": ["not_submitted", "pending", "verified", "rejected"]
     },
     "public.payment_method_type": {
       "name": "payment_method_type",
       "schema": "public",
-      "values": [
-        "credit_card",
-        "ach",
-        "net_15",
-        "net_30",
-        "net_45"
-      ]
+      "values": ["credit_card", "ach", "net_15", "net_30", "net_45"]
     },
     "public.bank_account_type": {
       "name": "bank_account_type",
       "schema": "public",
-      "values": [
-        "checking",
-        "savings"
-      ]
+      "values": ["checking", "savings"]
     },
     "public.dump_site_type": {
       "name": "dump_site_type",
@@ -3672,43 +3435,22 @@
     "public.project_status": {
       "name": "project_status",
       "schema": "public",
-      "values": [
-        "active",
-        "on_hold",
-        "completed",
-        "cancelled"
-      ]
+      "values": ["active", "on_hold", "completed", "cancelled"]
     },
     "public.factoring_status": {
       "name": "factoring_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "approved",
-        "funded",
-        "settled",
-        "denied"
-      ]
+      "values": ["pending", "approved", "funded", "settled", "denied"]
     },
     "public.ticket_status": {
       "name": "ticket_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "in_progress",
-        "completed",
-        "verified"
-      ]
+      "values": ["pending", "in_progress", "completed", "verified"]
     },
     "public.credit_app_status": {
       "name": "credit_app_status",
       "schema": "public",
-      "values": [
-        "not_submitted",
-        "pending",
-        "approved",
-        "rejected"
-      ]
+      "values": ["not_submitted", "pending", "approved", "rejected"]
     },
     "public.job_status_update_type": {
       "name": "job_status_update_type",

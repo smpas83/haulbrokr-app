@@ -2,15 +2,15 @@
 
 This is the **recommended production stack** for HaulBrokr:
 
-| Layer | Provider | URL |
-|-------|----------|-----|
-| Web app | **Vercel** | `https://haulbrokr.com` |
-| API | **Render** (Docker) | `https://haulbrokr-api.onrender.com` (proxied via Vercel `/api`) |
-| Database | **Neon** | Serverless Postgres |
-| Mobile | **EAS** | App Store + Play Store |
-| Auth | **Clerk** | — |
-| Payments | **Stripe Connect** | — |
-| Email | **Resend** | — |
+| Layer    | Provider            | URL                                                              |
+| -------- | ------------------- | ---------------------------------------------------------------- |
+| Web app  | **Vercel**          | `https://haulbrokr.com`                                          |
+| API      | **Render** (Docker) | `https://haulbrokr-api.onrender.com` (proxied via Vercel `/api`) |
+| Database | **Neon**            | Serverless Postgres                                              |
+| Mobile   | **EAS**             | App Store + Play Store                                           |
+| Auth     | **Clerk**           | —                                                                |
+| Payments | **Stripe Connect**  | —                                                                |
+| Email    | **Resend**          | —                                                                |
 
 **Why this split:** Vercel is best for the static React app (CDN, custom domain). Render runs the long-lived Express API. Neon gives managed Postgres with a generous free tier and pairs well with serverless-style deploys.
 
@@ -63,6 +63,7 @@ Optional later: [Cloudflare R2](https://www.cloudflare.com/products/r2/) for fil
    postgres://user:pass@ep-xxx-pooler.us-east-2.aws.neon.tech/haulbrokr?sslmode=require
    ```
 5. From your laptop (with `DATABASE_URL` set), push schema:
+
    ```bash
    export DATABASE_URL="postgres://..."
    pnpm --filter @workspace/db run push
@@ -86,26 +87,26 @@ Optional later: [Cloudflare R2](https://www.cloudflare.com/products/r2/) for fil
 3. Render reads `render.yaml` (API-only blueprint)
 4. Set these **secret** env vars in the Render dashboard:
 
-| Variable | Value |
-|----------|-------|
-| `DATABASE_URL` | Neon pooled connection string |
-| `CLERK_SECRET_KEY` | From Clerk dashboard |
-| `CLERK_PUBLISHABLE_KEY` | From Clerk dashboard |
-| `STRIPE_SECRET_KEY` | `sk_live_...` from Stripe |
-| `STRIPE_PUBLISHABLE_KEY` | `pk_live_...` from Stripe |
-| `STRIPE_WEBHOOK_SECRET` | `whsec_...` from the Stripe webhook endpoint |
-| `RESEND_API_KEY` | From Resend |
-| `RESEND_FROM_EMAIL` | `noreply@haulbrokr.com` (verified domain) |
-| `ADMIN_USER_IDS` | Your Clerk user ID (comma-separated) |
-| `R2_ACCOUNT_ID` | Cloudflare account ID |
-| `R2_ACCESS_KEY_ID` | R2 access key ID |
-| `R2_SECRET_ACCESS_KEY` | R2 secret access key |
-| `R2_BUCKET` | R2 bucket name |
-| `R2_PUBLIC_URL` | Public R2/custom CDN base URL |
-| `PRIVATE_OBJECT_DIR` | `/haulbrokr/private` |
-| `PUBLIC_OBJECT_SEARCH_PATHS` | `/haulbrokr/public` |
-| `CORS_ALLOWED_ORIGINS` | `https://haulbrokr.com,https://www.haulbrokr.com` |
-| `AUTOMATION_KEY` | Optional; set only if `/api/automation/*` jobs are enabled |
+| Variable                     | Value                                                      |
+| ---------------------------- | ---------------------------------------------------------- |
+| `DATABASE_URL`               | Neon pooled connection string                              |
+| `CLERK_SECRET_KEY`           | From Clerk dashboard                                       |
+| `CLERK_PUBLISHABLE_KEY`      | From Clerk dashboard                                       |
+| `STRIPE_SECRET_KEY`          | `sk_live_...` from Stripe                                  |
+| `STRIPE_PUBLISHABLE_KEY`     | `pk_live_...` from Stripe                                  |
+| `STRIPE_WEBHOOK_SECRET`      | `whsec_...` from the Stripe webhook endpoint               |
+| `RESEND_API_KEY`             | From Resend                                                |
+| `RESEND_FROM_EMAIL`          | `noreply@haulbrokr.com` (verified domain)                  |
+| `ADMIN_USER_IDS`             | Your Clerk user ID (comma-separated)                       |
+| `R2_ACCOUNT_ID`              | Cloudflare account ID                                      |
+| `R2_ACCESS_KEY_ID`           | R2 access key ID                                           |
+| `R2_SECRET_ACCESS_KEY`       | R2 secret access key                                       |
+| `R2_BUCKET`                  | R2 bucket name                                             |
+| `R2_PUBLIC_URL`              | Public R2/custom CDN base URL                              |
+| `PRIVATE_OBJECT_DIR`         | `/haulbrokr/private`                                       |
+| `PUBLIC_OBJECT_SEARCH_PATHS` | `/haulbrokr/public`                                        |
+| `CORS_ALLOWED_ORIGINS`       | `https://haulbrokr.com,https://www.haulbrokr.com`          |
+| `AUTOMATION_KEY`             | Optional; set only if `/api/automation/*` jobs are enabled |
 
 `UPLOAD_TOKEN_SECRET`, `TICKET_QR_SECRET`, and `STAFF_AUTH_SECRET` are auto-generated by Render (staff session cookies).
 
@@ -115,6 +116,7 @@ Optional later: [Cloudflare R2](https://www.cloudflare.com/products/r2/) for fil
    - Events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `checkout.session.completed`, `account.updated`
    - Copy the signing secret to Render as `STRIPE_WEBHOOK_SECRET`
 7. Wait for deploy → verify:
+
    ```bash
    curl https://haulbrokr-api.onrender.com/api/readyz
    # → {"status":"ok"}
@@ -131,10 +133,10 @@ Optional later: [Cloudflare R2](https://www.cloudflare.com/products/r2/) for fil
 3. Vercel auto-detects `vercel.json` — no manual build settings needed
 4. **Environment Variables** (Production):
 
-| Variable | Value |
-|----------|-------|
+| Variable                     | Value                      |
+| ---------------------------- | -------------------------- |
 | `VITE_CLERK_PUBLISHABLE_KEY` | Same Clerk publishable key |
-| `VITE_CLERK_PROXY_URL` | `/api/__clerk` |
+| `VITE_CLERK_PROXY_URL`       | `/api/__clerk`             |
 
 5. Deploy
 6. **Domains** → add `haulbrokr.com` and `www.haulbrokr.com`
@@ -182,11 +184,11 @@ cd artifacts/haulbrokr-mobile
 
 Set EAS secrets (or `.env` for local):
 
-| Secret | Value |
-|--------|-------|
-| `EXPO_PUBLIC_DOMAIN` | `haulbrokr.com` |
-| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
-| `GOOGLE_MAPS_API_KEY` | Android Google Maps SDK key |
+| Secret                              | Value                       |
+| ----------------------------------- | --------------------------- |
+| `EXPO_PUBLIC_DOMAIN`                | `haulbrokr.com`             |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key       |
+| `GOOGLE_MAPS_API_KEY`               | Android Google Maps SDK key |
 
 ```bash
 eas secret:create --scope project --name EXPO_PUBLIC_DOMAIN --value haulbrokr.com
@@ -227,32 +229,32 @@ Run through on production:
 
 ## Environment variable map (all services)
 
-| Variable | Render (API) | Vercel (web) | EAS (mobile) |
-|----------|:------------:|:------------:|:------------:|
-| `DATABASE_URL` | ✅ | — | — |
-| `CLERK_SECRET_KEY` | ✅ | — | — |
-| `CLERK_PUBLISHABLE_KEY` | ✅ | — | — |
-| `VITE_CLERK_PUBLISHABLE_KEY` | — | ✅ | — |
-| `VITE_CLERK_PROXY_URL` | — | ✅ (`/api/__clerk`) | — |
-| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | — | — | ✅ |
-| `EXPO_PUBLIC_DOMAIN` | — | — | ✅ (`haulbrokr.com`) |
-| `STRIPE_SECRET_KEY` | ✅ | — | — |
-| `STRIPE_PUBLISHABLE_KEY` | ✅ | — | — |
-| `STRIPE_WEBHOOK_SECRET` | ✅ | — | — |
-| `RESEND_API_KEY` | ✅ | — | — |
-| `RESEND_FROM_EMAIL` | ✅ | — | — |
-| `ADMIN_USER_IDS` | ✅ | — | — |
-| `R2_ACCOUNT_ID` | ✅ | — | — |
-| `R2_ACCESS_KEY_ID` | ✅ | — | — |
-| `R2_SECRET_ACCESS_KEY` | ✅ | — | — |
-| `R2_BUCKET` | ✅ | — | — |
-| `R2_PUBLIC_URL` | ✅ | — | — |
-| `STAFF_AUTH_SECRET` | ✅ auto | — | — |
-| `UPLOAD_TOKEN_SECRET` | ✅ auto | — | — |
-| `TICKET_QR_SECRET` | ✅ auto | — | — |
-| `PRIVATE_OBJECT_DIR` | ✅ | — | — |
-| `PUBLIC_OBJECT_SEARCH_PATHS` | ✅ | — | — |
-| `GOOGLE_MAPS_API_KEY` | — | — | ✅ |
+| Variable                            | Render (API) |    Vercel (web)     |     EAS (mobile)     |
+| ----------------------------------- | :----------: | :-----------------: | :------------------: |
+| `DATABASE_URL`                      |      ✅      |          —          |          —           |
+| `CLERK_SECRET_KEY`                  |      ✅      |          —          |          —           |
+| `CLERK_PUBLISHABLE_KEY`             |      ✅      |          —          |          —           |
+| `VITE_CLERK_PUBLISHABLE_KEY`        |      —       |         ✅          |          —           |
+| `VITE_CLERK_PROXY_URL`              |      —       | ✅ (`/api/__clerk`) |          —           |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` |      —       |          —          |          ✅          |
+| `EXPO_PUBLIC_DOMAIN`                |      —       |          —          | ✅ (`haulbrokr.com`) |
+| `STRIPE_SECRET_KEY`                 |      ✅      |          —          |          —           |
+| `STRIPE_PUBLISHABLE_KEY`            |      ✅      |          —          |          —           |
+| `STRIPE_WEBHOOK_SECRET`             |      ✅      |          —          |          —           |
+| `RESEND_API_KEY`                    |      ✅      |          —          |          —           |
+| `RESEND_FROM_EMAIL`                 |      ✅      |          —          |          —           |
+| `ADMIN_USER_IDS`                    |      ✅      |          —          |          —           |
+| `R2_ACCOUNT_ID`                     |      ✅      |          —          |          —           |
+| `R2_ACCESS_KEY_ID`                  |      ✅      |          —          |          —           |
+| `R2_SECRET_ACCESS_KEY`              |      ✅      |          —          |          —           |
+| `R2_BUCKET`                         |      ✅      |          —          |          —           |
+| `R2_PUBLIC_URL`                     |      ✅      |          —          |          —           |
+| `STAFF_AUTH_SECRET`                 |   ✅ auto    |          —          |          —           |
+| `UPLOAD_TOKEN_SECRET`               |   ✅ auto    |          —          |          —           |
+| `TICKET_QR_SECRET`                  |   ✅ auto    |          —          |          —           |
+| `PRIVATE_OBJECT_DIR`                |      ✅      |          —          |          —           |
+| `PUBLIC_OBJECT_SEARCH_PATHS`        |      ✅      |          —          |          —           |
+| `GOOGLE_MAPS_API_KEY`               |      —       |          —          |          ✅          |
 
 ---
 
@@ -271,30 +273,30 @@ The default setup (everything through `haulbrokr.com`) is simpler for Clerk cook
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
+| Problem                     | Fix                                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------------------- |
 | `/api/readyz` 502 on Vercel | Render API not running or database unavailable — check Render logs and Neon connectivity |
-| Clerk sign-in fails | Add `haulbrokr.com` to Clerk domains; verify `VITE_CLERK_PROXY_URL=/api/__clerk` |
-| DB connection errors | Use Neon **pooled** URL with `sslmode=require` |
-| Stripe charges fail | Confirm live keys on Render; unset `PAYMENTS_MOCK_MODE` |
-| Mobile can't reach API | `EXPO_PUBLIC_DOMAIN` must be `haulbrokr.com` (no `https://`) |
-| Admin page denies access | Seed staff users + set `STAFF_AUTH_SECRET` on Render; login at `/admin/login` |
-| Staff login loops / 401 | Same-origin cookies: use `haulbrokr.com` (not raw Render URL for admin UI) |
-| Render cold starts | Starter plan spins down after idle — first request may be slow (~30s) |
+| Clerk sign-in fails         | Add `haulbrokr.com` to Clerk domains; verify `VITE_CLERK_PROXY_URL=/api/__clerk`         |
+| DB connection errors        | Use Neon **pooled** URL with `sslmode=require`                                           |
+| Stripe charges fail         | Confirm live keys on Render; unset `PAYMENTS_MOCK_MODE`                                  |
+| Mobile can't reach API      | `EXPO_PUBLIC_DOMAIN` must be `haulbrokr.com` (no `https://`)                             |
+| Admin page denies access    | Seed staff users + set `STAFF_AUTH_SECRET` on Render; login at `/admin/login`            |
+| Staff login loops / 401     | Same-origin cookies: use `haulbrokr.com` (not raw Render URL for admin UI)               |
+| Render cold starts          | Starter plan spins down after idle — first request may be slow (~30s)                    |
 
 ---
 
 ## Cost estimate (starter)
 
-| Service | Free tier | Paid starter |
-|---------|-----------|--------------|
-| Neon | 0.5 GB storage | ~$19/mo |
-| Render API | — | ~$7/mo |
-| Vercel | Hobby free | Pro $20/mo if needed |
-| Clerk | 10k MAU free | — |
-| Stripe | Per transaction | 2.9% + 30¢ |
-| Resend | 3k emails/mo | — |
-| EAS | Limited free builds | ~$29/mo for teams |
+| Service    | Free tier           | Paid starter         |
+| ---------- | ------------------- | -------------------- |
+| Neon       | 0.5 GB storage      | ~$19/mo              |
+| Render API | —                   | ~$7/mo               |
+| Vercel     | Hobby free          | Pro $20/mo if needed |
+| Clerk      | 10k MAU free        | —                    |
+| Stripe     | Per transaction     | 2.9% + 30¢           |
+| Resend     | 3k emails/mo        | —                    |
+| EAS        | Limited free builds | ~$29/mo for teams    |
 
 **~$7–30/mo** infrastructure before transaction fees, depending on traffic.
 
@@ -302,12 +304,12 @@ The default setup (everything through `haulbrokr.com`) is simpler for Clerk cook
 
 ## Files in this repo
 
-| File | Purpose |
-|------|---------|
-| `render.yaml` | Render API blueprint (Neon DB) |
+| File                              | Purpose                               |
+| --------------------------------- | ------------------------------------- |
+| `render.yaml`                     | Render API blueprint (Neon DB)        |
 | `artifacts/haulbrokr/vercel.json` | Vercel build + `/api` proxy to Render |
-| `Dockerfile` | API production image |
-| `scripts/bootstrap.sh` | Local dev setup |
-| `scripts/pre-launch.sh` | Full local CI + build verification |
-| `scripts/verify-production.sh` | Post-deploy smoke tests |
-| `.github/workflows/ci.yml` | CI on every push |
+| `Dockerfile`                      | API production image                  |
+| `scripts/bootstrap.sh`            | Local dev setup                       |
+| `scripts/pre-launch.sh`           | Full local CI + build verification    |
+| `scripts/verify-production.sh`    | Post-deploy smoke tests               |
+| `.github/workflows/ci.yml`        | CI on every push                      |

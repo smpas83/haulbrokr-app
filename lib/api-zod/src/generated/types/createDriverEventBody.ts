@@ -5,9 +5,9 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { CreateDriverEventBodyEventType } from './createDriverEventBodyEventType';
-import type { CreateDriverEventBodyFilesItem } from './createDriverEventBodyFilesItem';
-import type { CreateDriverEventBodyGps } from './createDriverEventBodyGps';
+import type { CreateDriverEventBodyEventType } from "./createDriverEventBodyEventType";
+import type { CreateDriverEventBodyFilesItem } from "./createDriverEventBodyFilesItem";
+import type { CreateDriverEventBodyGps } from "./createDriverEventBodyGps";
 
 export type CreateDriverEventBody = {
   eventType: CreateDriverEventBodyEventType;

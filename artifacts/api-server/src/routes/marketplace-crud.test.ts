@@ -3,7 +3,10 @@ import express, { type Express } from "express";
 import request from "supertest";
 
 const h = vi.hoisted(() => ({
-  profile: { id: 1, role: "customer", companyName: "Test Co" } as Record<string, unknown>,
+  profile: { id: 1, role: "customer", companyName: "Test Co" } as Record<
+    string,
+    unknown
+  >,
   trucks: [] as Record<string, unknown>[],
   requests: [] as Record<string, unknown>[],
   bids: [] as Record<string, unknown>[],
@@ -29,7 +32,8 @@ vi.mock("@workspace/db", () => {
           if (table === trucksTable) return Promise.resolve(h.trucks);
           if (table === requestsTable) return Promise.resolve(h.requests);
           if (table === bidsTable) return Promise.resolve(h.bids);
-          if (table === profilesTable) return Promise.resolve([{ companyName: "Test Co" }]);
+          if (table === profilesTable)
+            return Promise.resolve([{ companyName: "Test Co" }]);
           return Promise.resolve([]);
         },
         orderBy: (..._args: unknown[]) => {
@@ -104,7 +108,9 @@ vi.mock("@workspace/db", () => {
         },
       }),
     }),
-    selectDistinct: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
+    selectDistinct: () => ({
+      from: () => ({ where: () => Promise.resolve([]) }),
+    }),
   };
 
   return {
@@ -171,9 +177,12 @@ describe("POST /trucks", () => {
 
   it("creates a truck for providers", async () => {
     h.profile = { id: 2, role: "provider", companyName: "Haul Co" };
-    const res = await request(makeApp(trucksRouter))
-      .post("/trucks")
-      .send({ truckType: "dump_truck", capacityTons: 22, ratePerHour: 175, licensePlate: "TX-123" });
+    const res = await request(makeApp(trucksRouter)).post("/trucks").send({
+      truckType: "dump_truck",
+      capacityTons: 22,
+      ratePerHour: 175,
+      licensePlate: "TX-123",
+    });
     expect(res.status).toBe(201);
     expect(res.body.capacityTons).toBe(22);
     expect(res.body.ratePerHour).toBe(175);
@@ -182,19 +191,17 @@ describe("POST /trucks", () => {
 
 describe("POST /requests", () => {
   it("creates a load request for customers", async () => {
-    const res = await request(makeApp(requestsRouter))
-      .post("/requests")
-      .send({
-        materialType: "gravel",
-        truckType: "dump_truck",
-        quantityTons: 40,
-        pickupAddress: "123 Quarry Rd",
-        deliveryAddress: "456 Site Ln",
-        scheduledDate: "2026-07-01T12:00:00.000Z",
-        startTime: "07:00",
-        estimatedHours: 6,
-        trucksNeeded: 2,
-      });
+    const res = await request(makeApp(requestsRouter)).post("/requests").send({
+      materialType: "gravel",
+      truckType: "dump_truck",
+      quantityTons: 40,
+      pickupAddress: "123 Quarry Rd",
+      deliveryAddress: "456 Site Ln",
+      scheduledDate: "2026-07-01T12:00:00.000Z",
+      startTime: "07:00",
+      estimatedHours: 6,
+      trucksNeeded: 2,
+    });
     expect(res.status).toBe(201);
     expect(res.body.materialType).toBe("gravel");
     expect(h.requests.length).toBe(1);
@@ -202,15 +209,13 @@ describe("POST /requests", () => {
 
   it("rejects providers posting requests", async () => {
     h.profile = { id: 2, role: "provider", companyName: "Haul Co" };
-    const res = await request(makeApp(requestsRouter))
-      .post("/requests")
-      .send({
-        materialType: "gravel",
-        quantityTons: 10,
-        pickupAddress: "A",
-        deliveryAddress: "B",
-        scheduledDate: "2026-07-01",
-      });
+    const res = await request(makeApp(requestsRouter)).post("/requests").send({
+      materialType: "gravel",
+      quantityTons: 10,
+      pickupAddress: "A",
+      deliveryAddress: "B",
+      scheduledDate: "2026-07-01",
+    });
     expect(res.status).toBe(403);
   });
 });

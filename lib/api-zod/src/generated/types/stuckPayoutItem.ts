@@ -19,9 +19,9 @@ export interface StuckPayoutItem {
   /** Consecutive failed transfer attempts for this payout. */
   payoutRetryFailures: number;
   /**
-     * When admins were alerted that this payout crossed the failure threshold, if ever.
-     * @nullable
-     */
+   * When admins were alerted that this payout crossed the failure threshold, if ever.
+   * @nullable
+   */
   payoutAlertSentAt?: Date | null;
   /** @nullable */
   completedAt?: Date | null;

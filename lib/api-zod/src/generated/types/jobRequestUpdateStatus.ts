@@ -6,16 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type JobRequestUpdateStatus = typeof JobRequestUpdateStatus[keyof typeof JobRequestUpdateStatus];
-
+export type JobRequestUpdateStatus =
+  (typeof JobRequestUpdateStatus)[keyof typeof JobRequestUpdateStatus];
 
 export const JobRequestUpdateStatus = {
-  open: 'open',
-  bid_received: 'bid_received',
-  bidding: 'bidding',
-  awarded: 'awarded',
-  accepted: 'accepted',
-  in_progress: 'in_progress',
-  completed: 'completed',
-  cancelled: 'cancelled',
+  open: "open",
+  bid_received: "bid_received",
+  bidding: "bidding",
+  awarded: "awarded",
+  accepted: "accepted",
+  in_progress: "in_progress",
+  completed: "completed",
+  cancelled: "cancelled",
 } as const;

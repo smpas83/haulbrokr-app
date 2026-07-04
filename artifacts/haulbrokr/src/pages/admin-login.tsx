@@ -4,7 +4,13 @@ import { Loader2, Lock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
 const STAFF_ROLES = [
@@ -46,7 +52,10 @@ export default function AdminLoginPage() {
     } catch (err) {
       toast({
         title: "Could not sign in",
-        description: err instanceof Error ? err.message : "Check your username and password.",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Check your username and password.",
         variant: "destructive",
       });
     } finally {
@@ -57,64 +66,77 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="surface-panel rounded-2xl w-full max-w-md p-1">
-      <Card className="w-full border-0 shadow-none bg-transparent">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-            <CardTitle className="text-xl font-bold">Staff Command Center</CardTitle>
-          </div>
-          <CardDescription>
-            HaulBrokr internal admin login. Use your staff username and password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                className="rounded-xl border-2"
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. ceo, cfo, it"
-                required
-              />
+        <Card className="w-full border-0 shadow-none bg-transparent">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-6 w-6 text-primary" />
+              <CardTitle className="text-xl font-bold">
+                Staff Command Center
+              </CardTitle>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                className="rounded-xl border-2"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+            <CardDescription>
+              HaulBrokr internal admin login. Use your staff username and
+              password.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  className="rounded-xl border-2"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. ceo, cfo, it"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  className="rounded-xl border-2"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full rounded-xl"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Lock className="h-4 w-4 mr-2" />
+                )}
+                Sign in
+              </Button>
+            </form>
+            <div className="mt-6 border-t pt-4">
+              <p className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">
+                Staff roles
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {STAFF_ROLES.map((r) => (
+                  <button
+                    key={r.username}
+                    type="button"
+                    className="text-xs px-2 py-1 border border-border rounded-xl hover:bg-muted"
+                    onClick={() => setUsername(r.username)}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <Button type="submit" className="w-full rounded-xl" disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Lock className="h-4 w-4 mr-2" />}
-              Sign in
-            </Button>
-          </form>
-          <div className="mt-6 border-t pt-4">
-            <p className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">Staff roles</p>
-            <div className="flex flex-wrap gap-1">
-              {STAFF_ROLES.map((r) => (
-                <button
-                  key={r.username}
-                  type="button"
-                  className="text-xs px-2 py-1 border border-border rounded-xl hover:bg-muted"
-                  onClick={() => setUsername(r.username)}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

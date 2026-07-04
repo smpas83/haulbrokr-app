@@ -1,6 +1,11 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, jobsTable, factoringRequestsTable, payoutAccountsTable } from "@workspace/db";
+import {
+  db,
+  jobsTable,
+  factoringRequestsTable,
+  payoutAccountsTable,
+} from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { GetWalletResponse } from "@workspace/api-zod";
 
@@ -17,15 +22,23 @@ const PENDING_STATUSES = new Set(["unpaid", "invoiced", "requires_action"]);
 router.get("/wallet", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
   if (!PROVIDER_ROLES.has(profile.role)) {
-    res.status(403).json({ error: "Only providers and drivers have a wallet." });
+    res
+      .status(403)
+      .json({ error: "Only providers and drivers have a wallet." });
     return;
   }
 
-  const jobs = await db.select().from(jobsTable)
+  const jobs = await db
+    .select()
+    .from(jobsTable)
     .where(eq(jobsTable.providerId, profile.id));
-  const factoringRows = await db.select().from(factoringRequestsTable)
+  const factoringRows = await db
+    .select()
+    .from(factoringRequestsTable)
     .where(eq(factoringRequestsTable.providerId, profile.id));
-  const [payoutRow] = await db.select().from(payoutAccountsTable)
+  const [payoutRow] = await db
+    .select()
+    .from(payoutAccountsTable)
     .where(eq(payoutAccountsTable.profileId, profile.id));
 
   let availableBalance = 0;
@@ -40,10 +53,14 @@ router.get("/wallet", requireProfile, async (req, res): Promise<void> => {
   }> = [];
 
   for (const job of jobs) {
-    const net = job.providerNetAmount != null ? parseFloat(job.providerNetAmount) : 0;
+    const net =
+      job.providerNetAmount != null ? parseFloat(job.providerNetAmount) : 0;
     if (AVAILABLE_STATUSES.has(job.paymentStatus)) {
       availableBalance += net;
-    } else if (job.status === "completed" && PENDING_STATUSES.has(job.paymentStatus)) {
+    } else if (
+      job.status === "completed" &&
+      PENDING_STATUSES.has(job.paymentStatus)
+    ) {
       pendingBalance += net;
     }
     // A completed job with a net amount is an earning line on the ledger.
@@ -76,17 +93,19 @@ router.get("/wallet", requireProfile, async (req, res): Promise<void> => {
 
   const lifetimeEarnings = availableBalance + pendingBalance;
 
-  res.json(GetWalletResponse.parse({
-    availableBalance,
-    pendingBalance,
-    lifetimeEarnings,
-    payoutAccount: {
-      connected: !!payoutRow?.stripeAccountId,
-      payoutsEnabled: (payoutRow?.payoutsEnabled ?? 0) === 1,
-      bankLast4: payoutRow?.accountLast4 ? payoutRow.accountLast4 : null,
-    },
-    transactions,
-  }));
+  res.json(
+    GetWalletResponse.parse({
+      availableBalance,
+      pendingBalance,
+      lifetimeEarnings,
+      payoutAccount: {
+        connected: !!payoutRow?.stripeAccountId,
+        payoutsEnabled: (payoutRow?.payoutsEnabled ?? 0) === 1,
+        bankLast4: payoutRow?.accountLast4 ? payoutRow.accountLast4 : null,
+      },
+      transactions,
+    }),
+  );
 });
 
 export default router;

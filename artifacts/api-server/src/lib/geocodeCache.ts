@@ -16,7 +16,9 @@ async function geocodeGoogle(address: string): Promise<GeoResult | null> {
   url.searchParams.set("key", key);
   const res = await fetch(url.toString());
   if (!res.ok) return null;
-  const data = (await res.json()) as { results?: { geometry?: { location?: { lat: number; lng: number } } }[] };
+  const data = (await res.json()) as {
+    results?: { geometry?: { location?: { lat: number; lng: number } } }[];
+  };
   const loc = data.results?.[0]?.geometry?.location;
   if (!loc) return null;
   return { latitude: loc.lat, longitude: loc.lng };
@@ -38,7 +40,9 @@ async function geocodeNominatim(address: string): Promise<GeoResult | null> {
   return { latitude: parseFloat(hit.lat), longitude: parseFloat(hit.lon) };
 }
 
-export async function geocodeAddressCached(address: string): Promise<GeoResult | null> {
+export async function geocodeAddressCached(
+  address: string,
+): Promise<GeoResult | null> {
   const key = address.trim().toLowerCase();
   if (!key) return null;
   const hit = cache.get(key);
@@ -48,7 +52,7 @@ export async function geocodeAddressCached(address: string): Promise<GeoResult |
   if (!pending) {
     pending = (async () => {
       const google = await geocodeGoogle(address);
-      const result = google ?? await geocodeNominatim(address);
+      const result = google ?? (await geocodeNominatim(address));
       if (result) cache.set(key, result);
       inflight.delete(key);
       return result;

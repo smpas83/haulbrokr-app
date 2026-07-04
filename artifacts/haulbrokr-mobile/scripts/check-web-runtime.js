@@ -84,14 +84,23 @@ const WEB_RUNTIME_ROUTES = [
   { name: "Guide tab (/guide)", path: "/guide" },
   { name: "Account tab (/account)", path: "/account" },
   { name: "Job detail (/job/[id])", path: "/job/preview" },
-  { name: "Live tracking (/tracking/[id]) — react-native-maps", path: "/tracking/preview" },
+  {
+    name: "Live tracking (/tracking/[id]) — react-native-maps",
+    path: "/tracking/preview",
+  },
   { name: "Invoice (/invoice/[id])", path: "/invoice/preview" },
   { name: "Bin detail (/bin/[id])", path: "/bin/preview" },
   { name: "Wallet (/wallet)", path: "/wallet" },
   { name: "Notifications (/notifications)", path: "/notifications" },
   { name: "Fleet (/fleet)", path: "/fleet" },
-  { name: "Driver jobs (/driver-jobs) — expo-image-picker", path: "/driver-jobs" },
-  { name: "Driver docs (/driver-docs) — expo-image-picker", path: "/driver-docs" },
+  {
+    name: "Driver jobs (/driver-jobs) — expo-image-picker",
+    path: "/driver-jobs",
+  },
+  {
+    name: "Driver docs (/driver-docs) — expo-image-picker",
+    path: "/driver-docs",
+  },
   { name: "Foreman (/foreman)", path: "/foreman" },
   { name: "Team (/team)", path: "/team" },
   { name: "Dump sites (/dump-sites)", path: "/dump-sites" },
@@ -125,7 +134,12 @@ function resolveChromiumExecutable(env = process.env) {
     }
   }
 
-  for (const name of ["chromium", "chromium-browser", "google-chrome", "chrome"]) {
+  for (const name of [
+    "chromium",
+    "chromium-browser",
+    "google-chrome",
+    "chrome",
+  ]) {
     try {
       const resolved = execFileSync("which", [name], {
         encoding: "utf-8",
@@ -158,9 +172,7 @@ function createStaticServer(rootDir) {
       pathname = "/";
     }
 
-    const safePath = path
-      .normalize(pathname)
-      .replace(/^(\.\.(\/|\\|$))+/, "");
+    const safePath = path.normalize(pathname).replace(/^(\.\.(\/|\\|$))+/, "");
     let filePath = path.join(rootDir, safePath);
 
     if (!filePath.startsWith(rootDir)) {
@@ -169,8 +181,7 @@ function createStaticServer(rootDir) {
       return;
     }
 
-    const isFile =
-      fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+    const isFile = fs.existsSync(filePath) && fs.statSync(filePath).isFile();
 
     // SPA fallback: any path that isn't a real file serves index.html so the
     // client router can take over.
@@ -225,8 +236,8 @@ function analyzeRuntime({ pageErrors = [], consoleErrors = [], dom }) {
       ok: false,
       reason: "error-boundary",
       message:
-        "The web app rendered its ErrorBoundary fallback (\"Something went " +
-        "wrong\") on first render — a component threw while rendering.\n\n" +
+        'The web app rendered its ErrorBoundary fallback ("Something went ' +
+        'wrong") on first render — a component threw while rendering.\n\n' +
         (reactErrors.length
           ? "Browser console errors (look for the throwing module/screen):\n" +
             reactErrors.map((line) => `  ${line}`).join("\n")
@@ -235,14 +246,13 @@ function analyzeRuntime({ pageErrors = [], consoleErrors = [], dom }) {
     };
   }
 
-  const rendered =
-    safeDom.rootChildren > 0 || bodyText.trim().length > 0;
+  const rendered = safeDom.rootChildren > 0 || bodyText.trim().length > 0;
   if (!rendered) {
     return {
       ok: false,
       reason: "no-render",
       message:
-        "The web app mounted nothing on first render (empty <div id=\"root\">)." +
+        'The web app mounted nothing on first render (empty <div id="root">).' +
         " The bundle likely failed to evaluate." +
         (consoleErrors.length
           ? "\n\nBrowser console errors:\n" +
@@ -312,8 +322,7 @@ async function pollForRenderOutcome(page, { timeoutMs, pollMs, pageErrors }) {
     });
 
     const settled =
-      dom.rootChildren > 0 ||
-      ERROR_FALLBACK_SIGNATURE.test(dom.bodyText);
+      dom.rootChildren > 0 || ERROR_FALLBACK_SIGNATURE.test(dom.bodyText);
     if (settled) {
       return dom;
     }

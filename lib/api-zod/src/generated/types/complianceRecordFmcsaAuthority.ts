@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type ComplianceRecordFmcsaAuthority = typeof ComplianceRecordFmcsaAuthority[keyof typeof ComplianceRecordFmcsaAuthority];
-
+export type ComplianceRecordFmcsaAuthority =
+  (typeof ComplianceRecordFmcsaAuthority)[keyof typeof ComplianceRecordFmcsaAuthority];
 
 export const ComplianceRecordFmcsaAuthority = {
-  unknown: 'unknown',
-  verified: 'verified',
-  failed: 'failed',
+  unknown: "unknown",
+  verified: "verified",
+  failed: "failed",
 } as const;

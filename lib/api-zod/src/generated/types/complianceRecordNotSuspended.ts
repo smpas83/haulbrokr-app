@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type ComplianceRecordNotSuspended = typeof ComplianceRecordNotSuspended[keyof typeof ComplianceRecordNotSuspended];
-
+export type ComplianceRecordNotSuspended =
+  (typeof ComplianceRecordNotSuspended)[keyof typeof ComplianceRecordNotSuspended];
 
 export const ComplianceRecordNotSuspended = {
-  unknown: 'unknown',
-  verified: 'verified',
-  failed: 'failed',
+  unknown: "unknown",
+  verified: "verified",
+  failed: "failed",
 } as const;

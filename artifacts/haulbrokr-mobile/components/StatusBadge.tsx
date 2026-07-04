@@ -45,11 +45,7 @@ export function StatusBadge({ status, size = "md" }: Props) {
       ]}
     >
       <Text
-        style={[
-          styles.text,
-          { color: config.text },
-          isSmall && styles.textSm,
-        ]}
+        style={[styles.text, { color: config.text }, isSmall && styles.textSm]}
       >
         {config.label}
       </Text>

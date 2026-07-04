@@ -5,1172 +5,1743 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import * as zod from 'zod';
-
+import * as zod from "zod";
 
 /**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
-  "status": zod.string()
-})
-
+  status: zod.string(),
+});
 
 /**
  * @summary Get authenticated user's profile
  */
 export const GetMyProfileResponse = zod.object({
-  "id": zod.number(),
-  "clerkId": zod.string(),
-  "role": zod.enum(['customer', 'provider', 'driver', 'supervisor']),
-  "companyName": zod.string(),
-  "contactName": zod.string().nullish(),
-  "phone": zod.string().nullish(),
-  "email": zod.string().nullish(),
-  "address": zod.string().nullish(),
-  "city": zod.string().nullish(),
-  "state": zod.string().nullish(),
-  "zip": zod.string().nullish(),
-  "organizationId": zod.number().nullish(),
-  "dba": zod.string().nullish(),
-  "website": zod.string().nullish(),
-  "mcNumber": zod.string().nullish(),
-  "capacityTons": zod.number().nullish(),
-  "capacityYards": zod.number().nullish(),
-  "countiesServed": zod.string().nullish(),
-  "hourlyRate": zod.number().nullish(),
-  "minimumHours": zod.number().nullish(),
-  "equipmentTypes": zod.string().nullish(),
-  "billingEinLast4": zod.string().nullish(),
-  "apContactName": zod.string().nullish(),
-  "apEmail": zod.string().nullish(),
-  "paymentTerms": zod.union([zod.literal('due_on_receipt'),zod.literal('net_15'),zod.literal('net_30'),zod.literal('prepaid'),zod.literal(null)]).nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  clerkId: zod.string(),
+  role: zod.enum(["customer", "provider", "driver", "supervisor"]),
+  companyName: zod.string(),
+  contactName: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  email: zod.string().nullish(),
+  address: zod.string().nullish(),
+  city: zod.string().nullish(),
+  state: zod.string().nullish(),
+  zip: zod.string().nullish(),
+  organizationId: zod.number().nullish(),
+  dba: zod.string().nullish(),
+  website: zod.string().nullish(),
+  mcNumber: zod.string().nullish(),
+  capacityTons: zod.number().nullish(),
+  capacityYards: zod.number().nullish(),
+  countiesServed: zod.string().nullish(),
+  hourlyRate: zod.number().nullish(),
+  minimumHours: zod.number().nullish(),
+  equipmentTypes: zod.string().nullish(),
+  billingEinLast4: zod.string().nullish(),
+  apContactName: zod.string().nullish(),
+  apEmail: zod.string().nullish(),
+  paymentTerms: zod
+    .union([
+      zod.literal("due_on_receipt"),
+      zod.literal("net_15"),
+      zod.literal("net_30"),
+      zod.literal("prepaid"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Update authenticated user's profile
  */
 export const UpdateMyProfileBody = zod.object({
-  "companyName": zod.string().optional(),
-  "contactName": zod.string().optional(),
-  "phone": zod.string().optional(),
-  "email": zod.string().optional(),
-  "address": zod.string().optional(),
-  "city": zod.string().optional(),
-  "state": zod.string().optional(),
-  "zip": zod.string().optional(),
-  "dba": zod.string().optional(),
-  "website": zod.string().optional(),
-  "mcNumber": zod.string().optional(),
-  "capacityTons": zod.number().optional(),
-  "capacityYards": zod.number().optional(),
-  "countiesServed": zod.string().optional(),
-  "hourlyRate": zod.number().optional(),
-  "minimumHours": zod.number().optional(),
-  "equipmentTypes": zod.string().optional(),
-  "billingEinLast4": zod.string().optional(),
-  "apContactName": zod.string().optional(),
-  "apEmail": zod.string().optional(),
-  "paymentTerms": zod.enum(['due_on_receipt', 'net_15', 'net_30', 'prepaid']).optional()
-})
+  companyName: zod.string().optional(),
+  contactName: zod.string().optional(),
+  phone: zod.string().optional(),
+  email: zod.string().optional(),
+  address: zod.string().optional(),
+  city: zod.string().optional(),
+  state: zod.string().optional(),
+  zip: zod.string().optional(),
+  dba: zod.string().optional(),
+  website: zod.string().optional(),
+  mcNumber: zod.string().optional(),
+  capacityTons: zod.number().optional(),
+  capacityYards: zod.number().optional(),
+  countiesServed: zod.string().optional(),
+  hourlyRate: zod.number().optional(),
+  minimumHours: zod.number().optional(),
+  equipmentTypes: zod.string().optional(),
+  billingEinLast4: zod.string().optional(),
+  apContactName: zod.string().optional(),
+  apEmail: zod.string().optional(),
+  paymentTerms: zod
+    .enum(["due_on_receipt", "net_15", "net_30", "prepaid"])
+    .optional(),
+});
 
 export const UpdateMyProfileResponse = zod.object({
-  "id": zod.number(),
-  "clerkId": zod.string(),
-  "role": zod.enum(['customer', 'provider', 'driver', 'supervisor']),
-  "companyName": zod.string(),
-  "contactName": zod.string().nullish(),
-  "phone": zod.string().nullish(),
-  "email": zod.string().nullish(),
-  "address": zod.string().nullish(),
-  "city": zod.string().nullish(),
-  "state": zod.string().nullish(),
-  "zip": zod.string().nullish(),
-  "organizationId": zod.number().nullish(),
-  "dba": zod.string().nullish(),
-  "website": zod.string().nullish(),
-  "mcNumber": zod.string().nullish(),
-  "capacityTons": zod.number().nullish(),
-  "capacityYards": zod.number().nullish(),
-  "countiesServed": zod.string().nullish(),
-  "hourlyRate": zod.number().nullish(),
-  "minimumHours": zod.number().nullish(),
-  "equipmentTypes": zod.string().nullish(),
-  "billingEinLast4": zod.string().nullish(),
-  "apContactName": zod.string().nullish(),
-  "apEmail": zod.string().nullish(),
-  "paymentTerms": zod.union([zod.literal('due_on_receipt'),zod.literal('net_15'),zod.literal('net_30'),zod.literal('prepaid'),zod.literal(null)]).nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  clerkId: zod.string(),
+  role: zod.enum(["customer", "provider", "driver", "supervisor"]),
+  companyName: zod.string(),
+  contactName: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  email: zod.string().nullish(),
+  address: zod.string().nullish(),
+  city: zod.string().nullish(),
+  state: zod.string().nullish(),
+  zip: zod.string().nullish(),
+  organizationId: zod.number().nullish(),
+  dba: zod.string().nullish(),
+  website: zod.string().nullish(),
+  mcNumber: zod.string().nullish(),
+  capacityTons: zod.number().nullish(),
+  capacityYards: zod.number().nullish(),
+  countiesServed: zod.string().nullish(),
+  hourlyRate: zod.number().nullish(),
+  minimumHours: zod.number().nullish(),
+  equipmentTypes: zod.string().nullish(),
+  billingEinLast4: zod.string().nullish(),
+  apContactName: zod.string().nullish(),
+  apEmail: zod.string().nullish(),
+  paymentTerms: zod
+    .union([
+      zod.literal("due_on_receipt"),
+      zod.literal("net_15"),
+      zod.literal("net_30"),
+      zod.literal("prepaid"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Create a new profile for the authenticated user
  */
 export const CreateProfileBody = zod.object({
-  "role": zod.enum(['customer', 'provider', 'driver', 'supervisor']),
-  "companyName": zod.string(),
-  "contactName": zod.string().optional(),
-  "phone": zod.string().optional(),
-  "email": zod.string().optional(),
-  "address": zod.string().optional(),
-  "city": zod.string().optional(),
-  "state": zod.string().optional(),
-  "zip": zod.string().optional(),
-  "inviteCode": zod.string().optional(),
-  "dba": zod.string().optional(),
-  "website": zod.string().optional(),
-  "mcNumber": zod.string().optional(),
-  "capacityTons": zod.number().optional(),
-  "capacityYards": zod.number().optional(),
-  "countiesServed": zod.string().optional(),
-  "hourlyRate": zod.number().optional(),
-  "minimumHours": zod.number().optional(),
-  "equipmentTypes": zod.string().optional(),
-  "billingEinLast4": zod.string().optional(),
-  "apContactName": zod.string().optional(),
-  "apEmail": zod.string().optional(),
-  "paymentTerms": zod.enum(['due_on_receipt', 'net_15', 'net_30', 'prepaid']).optional()
-})
-
+  role: zod.enum(["customer", "provider", "driver", "supervisor"]),
+  companyName: zod.string(),
+  contactName: zod.string().optional(),
+  phone: zod.string().optional(),
+  email: zod.string().optional(),
+  address: zod.string().optional(),
+  city: zod.string().optional(),
+  state: zod.string().optional(),
+  zip: zod.string().optional(),
+  inviteCode: zod.string().optional(),
+  dba: zod.string().optional(),
+  website: zod.string().optional(),
+  mcNumber: zod.string().optional(),
+  capacityTons: zod.number().optional(),
+  capacityYards: zod.number().optional(),
+  countiesServed: zod.string().optional(),
+  hourlyRate: zod.number().optional(),
+  minimumHours: zod.number().optional(),
+  equipmentTypes: zod.string().optional(),
+  billingEinLast4: zod.string().optional(),
+  apContactName: zod.string().optional(),
+  apEmail: zod.string().optional(),
+  paymentTerms: zod
+    .enum(["due_on_receipt", "net_15", "net_30", "prepaid"])
+    .optional(),
+});
 
 /**
  * @summary List trucks (own fleet for providers, available for customers)
  */
 export const ListTrucksQueryParams = zod.object({
-  "available": zod.coerce.boolean().optional()
-})
+  available: zod.coerce.boolean().optional(),
+});
 
 export const ListTrucksResponseItem = zod.object({
-  "id": zod.number(),
-  "ownerId": zod.number(),
-  "ownerCompany": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "capacityTons": zod.number(),
-  "ratePerHour": zod.number(),
-  "licensePlate": zod.string().nullish(),
-  "year": zod.number().nullish(),
-  "make": zod.string().nullish(),
-  "model": zod.string().nullish(),
-  "truckNumber": zod.string().nullish(),
-  "vin": zod.string().nullish(),
-  "coiStatus": zod.enum(['none', 'pending', 'active', 'expired']).optional(),
-  "assignedDriverId": zod.number().nullish(),
-  "isAvailable": zod.boolean(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-export const ListTrucksResponse = zod.array(ListTrucksResponseItem)
-
+  id: zod.number(),
+  ownerId: zod.number(),
+  ownerCompany: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  capacityTons: zod.number(),
+  ratePerHour: zod.number(),
+  licensePlate: zod.string().nullish(),
+  year: zod.number().nullish(),
+  make: zod.string().nullish(),
+  model: zod.string().nullish(),
+  truckNumber: zod.string().nullish(),
+  vin: zod.string().nullish(),
+  coiStatus: zod.enum(["none", "pending", "active", "expired"]).optional(),
+  assignedDriverId: zod.number().nullish(),
+  isAvailable: zod.boolean(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListTrucksResponse = zod.array(ListTrucksResponseItem);
 
 /**
  * @summary Add a truck to the fleet
  */
 export const CreateTruckBody = zod.object({
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "capacityTons": zod.number(),
-  "ratePerHour": zod.number(),
-  "licensePlate": zod.string().optional(),
-  "year": zod.number().optional(),
-  "make": zod.string().optional(),
-  "model": zod.string().optional(),
-  "truckNumber": zod.string().optional(),
-  "vin": zod.string().optional(),
-  "coiStatus": zod.enum(['none', 'pending', 'active', 'expired']).optional(),
-  "assignedDriverId": zod.number().optional(),
-  "isAvailable": zod.boolean().optional(),
-  "notes": zod.string().optional()
-})
-
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  capacityTons: zod.number(),
+  ratePerHour: zod.number(),
+  licensePlate: zod.string().optional(),
+  year: zod.number().optional(),
+  make: zod.string().optional(),
+  model: zod.string().optional(),
+  truckNumber: zod.string().optional(),
+  vin: zod.string().optional(),
+  coiStatus: zod.enum(["none", "pending", "active", "expired"]).optional(),
+  assignedDriverId: zod.number().optional(),
+  isAvailable: zod.boolean().optional(),
+  notes: zod.string().optional(),
+});
 
 /**
  * @summary Get a truck by ID
  */
 export const GetTruckParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const GetTruckResponse = zod.object({
-  "id": zod.number(),
-  "ownerId": zod.number(),
-  "ownerCompany": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "capacityTons": zod.number(),
-  "ratePerHour": zod.number(),
-  "licensePlate": zod.string().nullish(),
-  "year": zod.number().nullish(),
-  "make": zod.string().nullish(),
-  "model": zod.string().nullish(),
-  "truckNumber": zod.string().nullish(),
-  "vin": zod.string().nullish(),
-  "coiStatus": zod.enum(['none', 'pending', 'active', 'expired']).optional(),
-  "assignedDriverId": zod.number().nullish(),
-  "isAvailable": zod.boolean(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  ownerId: zod.number(),
+  ownerCompany: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  capacityTons: zod.number(),
+  ratePerHour: zod.number(),
+  licensePlate: zod.string().nullish(),
+  year: zod.number().nullish(),
+  make: zod.string().nullish(),
+  model: zod.string().nullish(),
+  truckNumber: zod.string().nullish(),
+  vin: zod.string().nullish(),
+  coiStatus: zod.enum(["none", "pending", "active", "expired"]).optional(),
+  assignedDriverId: zod.number().nullish(),
+  isAvailable: zod.boolean(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Update a truck
  */
 export const UpdateTruckParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const UpdateTruckBody = zod.object({
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']).optional(),
-  "capacityTons": zod.number().optional(),
-  "ratePerHour": zod.number().optional(),
-  "licensePlate": zod.string().optional(),
-  "year": zod.number().optional(),
-  "make": zod.string().optional(),
-  "model": zod.string().optional(),
-  "truckNumber": zod.string().optional(),
-  "vin": zod.string().optional(),
-  "coiStatus": zod.enum(['none', 'pending', 'active', 'expired']).optional(),
-  "assignedDriverId": zod.number().optional(),
-  "isAvailable": zod.boolean().optional(),
-  "notes": zod.string().optional()
-})
+  truckType: zod
+    .enum([
+      "standard",
+      "articulated",
+      "side_dump",
+      "bottom_dump",
+      "transfer",
+      "dump_truck",
+      "super_10",
+      "end_dump",
+      "belly_dump",
+      "lowboy",
+      "water_truck",
+      "excavator",
+      "dozer",
+      "skid_steer",
+    ])
+    .optional(),
+  capacityTons: zod.number().optional(),
+  ratePerHour: zod.number().optional(),
+  licensePlate: zod.string().optional(),
+  year: zod.number().optional(),
+  make: zod.string().optional(),
+  model: zod.string().optional(),
+  truckNumber: zod.string().optional(),
+  vin: zod.string().optional(),
+  coiStatus: zod.enum(["none", "pending", "active", "expired"]).optional(),
+  assignedDriverId: zod.number().optional(),
+  isAvailable: zod.boolean().optional(),
+  notes: zod.string().optional(),
+});
 
 export const UpdateTruckResponse = zod.object({
-  "id": zod.number(),
-  "ownerId": zod.number(),
-  "ownerCompany": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "capacityTons": zod.number(),
-  "ratePerHour": zod.number(),
-  "licensePlate": zod.string().nullish(),
-  "year": zod.number().nullish(),
-  "make": zod.string().nullish(),
-  "model": zod.string().nullish(),
-  "truckNumber": zod.string().nullish(),
-  "vin": zod.string().nullish(),
-  "coiStatus": zod.enum(['none', 'pending', 'active', 'expired']).optional(),
-  "assignedDriverId": zod.number().nullish(),
-  "isAvailable": zod.boolean(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  ownerId: zod.number(),
+  ownerCompany: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  capacityTons: zod.number(),
+  ratePerHour: zod.number(),
+  licensePlate: zod.string().nullish(),
+  year: zod.number().nullish(),
+  make: zod.string().nullish(),
+  model: zod.string().nullish(),
+  truckNumber: zod.string().nullish(),
+  vin: zod.string().nullish(),
+  coiStatus: zod.enum(["none", "pending", "active", "expired"]).optional(),
+  assignedDriverId: zod.number().nullish(),
+  isAvailable: zod.boolean(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Remove a truck from the fleet
  */
 export const DeleteTruckParams = zod.object({
-  "id": zod.coerce.number()
-})
-
+  id: zod.coerce.number(),
+});
 
 /**
  * @summary List job requests
  */
 export const ListRequestsQueryParams = zod.object({
-  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']).optional(),
-  "mine": zod.coerce.boolean().optional()
-})
+  status: zod
+    .enum([
+      "open",
+      "bid_received",
+      "bidding",
+      "awarded",
+      "accepted",
+      "in_progress",
+      "completed",
+      "cancelled",
+    ])
+    .optional(),
+  mine: zod.coerce.boolean().optional(),
+});
 
 export const ListRequestsResponseItem = zod.object({
-  "id": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "materialType": zod.enum(['dirt', 'gravel', 'sand', 'concrete', 'asphalt', 'demolition', 'topsoil', 'fill', 'other']),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "quantityTons": zod.number(),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string().describe('Local start time in HH:mm (24-hour) format'),
-  "estimatedHours": zod.number(),
-  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']),
-  "trucksNeeded": zod.number(),
-  "budgetPerHour": zod.number().nullish(),
-  "notes": zod.string().nullish(),
-  "bidCount": zod.number().optional(),
-  "createdAt": zod.coerce.date()
-})
-export const ListRequestsResponse = zod.array(ListRequestsResponseItem)
-
+  id: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  materialType: zod.enum([
+    "dirt",
+    "gravel",
+    "sand",
+    "concrete",
+    "asphalt",
+    "demolition",
+    "topsoil",
+    "fill",
+    "other",
+  ]),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  quantityTons: zod.number(),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod
+    .string()
+    .describe("Local start time in HH:mm (24-hour) format"),
+  estimatedHours: zod.number(),
+  status: zod.enum([
+    "open",
+    "bid_received",
+    "bidding",
+    "awarded",
+    "accepted",
+    "in_progress",
+    "completed",
+    "cancelled",
+  ]),
+  trucksNeeded: zod.number(),
+  budgetPerHour: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  bidCount: zod.number().optional(),
+  createdAt: zod.coerce.date(),
+});
+export const ListRequestsResponse = zod.array(ListRequestsResponseItem);
 
 /**
  * @summary Post a new job request
  */
-export const createRequestBodyStartTimeRegExp = new RegExp('^([01]\\d|2[0-3]):[0-5]\\d$');
+export const createRequestBodyStartTimeRegExp = new RegExp(
+  "^([01]\\d|2[0-3]):[0-5]\\d$",
+);
 export const createRequestBodyEstimatedHoursMin = 0.5;
 
-
-
 export const CreateRequestBody = zod.object({
-  "materialType": zod.enum(['dirt', 'gravel', 'sand', 'concrete', 'asphalt', 'demolition', 'topsoil', 'fill', 'other']),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "quantityTons": zod.number(),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string().regex(createRequestBodyStartTimeRegExp).describe('Local start time in HH:mm (24-hour) format'),
-  "estimatedHours": zod.number().min(createRequestBodyEstimatedHoursMin),
-  "trucksNeeded": zod.number(),
-  "budgetPerHour": zod.number().optional(),
-  "notes": zod.string().optional()
-})
-
+  materialType: zod.enum([
+    "dirt",
+    "gravel",
+    "sand",
+    "concrete",
+    "asphalt",
+    "demolition",
+    "topsoil",
+    "fill",
+    "other",
+  ]),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  quantityTons: zod.number(),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod
+    .string()
+    .regex(createRequestBodyStartTimeRegExp)
+    .describe("Local start time in HH:mm (24-hour) format"),
+  estimatedHours: zod.number().min(createRequestBodyEstimatedHoursMin),
+  trucksNeeded: zod.number(),
+  budgetPerHour: zod.number().optional(),
+  notes: zod.string().optional(),
+});
 
 /**
  * @summary Get a job request by ID
  */
 export const GetRequestParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const GetRequestResponse = zod.object({
-  "id": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "materialType": zod.enum(['dirt', 'gravel', 'sand', 'concrete', 'asphalt', 'demolition', 'topsoil', 'fill', 'other']),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "quantityTons": zod.number(),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string().describe('Local start time in HH:mm (24-hour) format'),
-  "estimatedHours": zod.number(),
-  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']),
-  "trucksNeeded": zod.number(),
-  "budgetPerHour": zod.number().nullish(),
-  "notes": zod.string().nullish(),
-  "bidCount": zod.number().optional(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  materialType: zod.enum([
+    "dirt",
+    "gravel",
+    "sand",
+    "concrete",
+    "asphalt",
+    "demolition",
+    "topsoil",
+    "fill",
+    "other",
+  ]),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  quantityTons: zod.number(),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod
+    .string()
+    .describe("Local start time in HH:mm (24-hour) format"),
+  estimatedHours: zod.number(),
+  status: zod.enum([
+    "open",
+    "bid_received",
+    "bidding",
+    "awarded",
+    "accepted",
+    "in_progress",
+    "completed",
+    "cancelled",
+  ]),
+  trucksNeeded: zod.number(),
+  budgetPerHour: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  bidCount: zod.number().optional(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Update a job request
  */
 export const UpdateRequestParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
-export const updateRequestBodyStartTimeRegExp = new RegExp('^([01]\\d|2[0-3]):[0-5]\\d$');
-
+export const updateRequestBodyStartTimeRegExp = new RegExp(
+  "^([01]\\d|2[0-3]):[0-5]\\d$",
+);
 
 export const UpdateRequestBody = zod.object({
-  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']).optional(),
-  "materialType": zod.enum(['dirt', 'gravel', 'sand', 'concrete', 'asphalt', 'demolition', 'topsoil', 'fill', 'other']).optional(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']).optional(),
-  "quantityTons": zod.number().optional(),
-  "pickupAddress": zod.string().optional(),
-  "deliveryAddress": zod.string().optional(),
-  "scheduledDate": zod.coerce.date().optional(),
-  "startTime": zod.string().regex(updateRequestBodyStartTimeRegExp).optional(),
-  "estimatedHours": zod.number().optional(),
-  "trucksNeeded": zod.number().optional(),
-  "budgetPerHour": zod.number().optional(),
-  "notes": zod.string().optional()
-})
+  status: zod
+    .enum([
+      "open",
+      "bid_received",
+      "bidding",
+      "awarded",
+      "accepted",
+      "in_progress",
+      "completed",
+      "cancelled",
+    ])
+    .optional(),
+  materialType: zod
+    .enum([
+      "dirt",
+      "gravel",
+      "sand",
+      "concrete",
+      "asphalt",
+      "demolition",
+      "topsoil",
+      "fill",
+      "other",
+    ])
+    .optional(),
+  truckType: zod
+    .enum([
+      "standard",
+      "articulated",
+      "side_dump",
+      "bottom_dump",
+      "transfer",
+      "dump_truck",
+      "super_10",
+      "end_dump",
+      "belly_dump",
+      "lowboy",
+      "water_truck",
+      "excavator",
+      "dozer",
+      "skid_steer",
+    ])
+    .optional(),
+  quantityTons: zod.number().optional(),
+  pickupAddress: zod.string().optional(),
+  deliveryAddress: zod.string().optional(),
+  scheduledDate: zod.coerce.date().optional(),
+  startTime: zod.string().regex(updateRequestBodyStartTimeRegExp).optional(),
+  estimatedHours: zod.number().optional(),
+  trucksNeeded: zod.number().optional(),
+  budgetPerHour: zod.number().optional(),
+  notes: zod.string().optional(),
+});
 
 export const UpdateRequestResponse = zod.object({
-  "id": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "materialType": zod.enum(['dirt', 'gravel', 'sand', 'concrete', 'asphalt', 'demolition', 'topsoil', 'fill', 'other']),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "quantityTons": zod.number(),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string().describe('Local start time in HH:mm (24-hour) format'),
-  "estimatedHours": zod.number(),
-  "status": zod.enum(['open', 'bid_received', 'bidding', 'awarded', 'accepted', 'in_progress', 'completed', 'cancelled']),
-  "trucksNeeded": zod.number(),
-  "budgetPerHour": zod.number().nullish(),
-  "notes": zod.string().nullish(),
-  "bidCount": zod.number().optional(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  materialType: zod.enum([
+    "dirt",
+    "gravel",
+    "sand",
+    "concrete",
+    "asphalt",
+    "demolition",
+    "topsoil",
+    "fill",
+    "other",
+  ]),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  quantityTons: zod.number(),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod
+    .string()
+    .describe("Local start time in HH:mm (24-hour) format"),
+  estimatedHours: zod.number(),
+  status: zod.enum([
+    "open",
+    "bid_received",
+    "bidding",
+    "awarded",
+    "accepted",
+    "in_progress",
+    "completed",
+    "cancelled",
+  ]),
+  trucksNeeded: zod.number(),
+  budgetPerHour: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  bidCount: zod.number().optional(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Cancel a job request
  */
 export const DeleteRequestParams = zod.object({
-  "id": zod.coerce.number()
-})
-
+  id: zod.coerce.number(),
+});
 
 /**
  * @summary List bids on a job request
  */
 export const ListBidsParams = zod.object({
-  "requestId": zod.coerce.number()
-})
+  requestId: zod.coerce.number(),
+});
 
 export const ListBidsResponseItem = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksOffered": zod.number(),
-  "estimatedHours": zod.number().nullish(),
-  "message": zod.string().nullish(),
-  "status": zod.enum(['pending', 'awarded', 'accepted', 'rejected', 'withdrawn']),
-  "createdAt": zod.coerce.date()
-})
-export const ListBidsResponse = zod.array(ListBidsResponseItem)
-
+  id: zod.number(),
+  requestId: zod.number(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksOffered: zod.number(),
+  estimatedHours: zod.number().nullish(),
+  message: zod.string().nullish(),
+  status: zod.enum(["pending", "awarded", "accepted", "rejected", "withdrawn"]),
+  createdAt: zod.coerce.date(),
+});
+export const ListBidsResponse = zod.array(ListBidsResponseItem);
 
 /**
  * @summary Place a bid on a job request
  */
 export const CreateBidParams = zod.object({
-  "requestId": zod.coerce.number()
-})
+  requestId: zod.coerce.number(),
+});
 
 export const CreateBidBody = zod.object({
-  "ratePerHour": zod.number(),
-  "trucksOffered": zod.number(),
-  "estimatedHours": zod.number().optional(),
-  "message": zod.string().optional()
-})
-
+  ratePerHour: zod.number(),
+  trucksOffered: zod.number(),
+  estimatedHours: zod.number().optional(),
+  message: zod.string().optional(),
+});
 
 /**
  * @summary Get a bid by ID
  */
 export const GetBidParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const GetBidResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksOffered": zod.number(),
-  "estimatedHours": zod.number().nullish(),
-  "message": zod.string().nullish(),
-  "status": zod.enum(['pending', 'awarded', 'accepted', 'rejected', 'withdrawn']),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksOffered: zod.number(),
+  estimatedHours: zod.number().nullish(),
+  message: zod.string().nullish(),
+  status: zod.enum(["pending", "awarded", "accepted", "rejected", "withdrawn"]),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Accept or reject a bid
  */
 export const UpdateBidParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const UpdateBidBody = zod.object({
-  "status": zod.enum(['accepted', 'rejected', 'withdrawn'])
-})
+  status: zod.enum(["accepted", "rejected", "withdrawn"]),
+});
 
 export const UpdateBidResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksOffered": zod.number(),
-  "estimatedHours": zod.number().nullish(),
-  "message": zod.string().nullish(),
-  "status": zod.enum(['pending', 'awarded', 'accepted', 'rejected', 'withdrawn']),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksOffered: zod.number(),
+  estimatedHours: zod.number().nullish(),
+  message: zod.string().nullish(),
+  status: zod.enum(["pending", "awarded", "accepted", "rejected", "withdrawn"]),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary List active and completed jobs for the current user
  */
 export const ListJobsQueryParams = zod.object({
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']).optional()
-})
+  status: zod
+    .enum([
+      "active",
+      "awarded",
+      "accepted",
+      "declined",
+      "cancelled",
+      "in_progress",
+      "completed",
+    ])
+    .optional(),
+});
 
 export const ListJobsResponseItem = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-export const ListJobsResponse = zod.array(ListJobsResponseItem)
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListJobsResponse = zod.array(ListJobsResponseItem);
 
 /**
  * @summary Get a job by ID
  */
 export const GetJobParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const GetJobResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Update job status (start, complete)
  */
 export const UpdateJobParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const UpdateJobBody = zod.object({
-  "status": zod.enum(['in_progress', 'completed']),
-  "totalHours": zod.number().optional(),
-  "notes": zod.string().optional()
-})
+  status: zod.enum(["in_progress", "completed"]),
+  totalHours: zod.number().optional(),
+  notes: zod.string().optional(),
+});
 
 export const UpdateJobResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Provider accepts an awarded job
  */
 export const AcceptJobParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const AcceptJobResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Provider declines an awarded job
  */
 export const DeclineJobParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const DeclineJobResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Get the caller's given and received rating for a job
  */
 export const GetJobRatingParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const getJobRatingResponseMineOneStarsMax = 5;
 
 export const getJobRatingResponseTheirsOneStarsMax = 5;
 
-
-
 export const GetJobRatingResponse = zod.object({
-  "mine": zod.union([zod.object({
-  "id": zod.number(),
-  "jobId": zod.number(),
-  "raterProfileId": zod.number(),
-  "rateeProfileId": zod.number(),
-  "stars": zod.number().min(1).max(getJobRatingResponseMineOneStarsMax),
-  "comment": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-}),zod.null()]),
-  "theirs": zod.union([zod.object({
-  "id": zod.number(),
-  "jobId": zod.number(),
-  "raterProfileId": zod.number(),
-  "rateeProfileId": zod.number(),
-  "stars": zod.number().min(1).max(getJobRatingResponseTheirsOneStarsMax),
-  "comment": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-}),zod.null()])
-})
-
+  mine: zod.union([
+    zod.object({
+      id: zod.number(),
+      jobId: zod.number(),
+      raterProfileId: zod.number(),
+      rateeProfileId: zod.number(),
+      stars: zod.number().min(1).max(getJobRatingResponseMineOneStarsMax),
+      comment: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+    zod.null(),
+  ]),
+  theirs: zod.union([
+    zod.object({
+      id: zod.number(),
+      jobId: zod.number(),
+      raterProfileId: zod.number(),
+      rateeProfileId: zod.number(),
+      stars: zod.number().min(1).max(getJobRatingResponseTheirsOneStarsMax),
+      comment: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+    zod.null(),
+  ]),
+});
 
 /**
  * @summary Rate the counterparty on a completed job
  */
 export const CreateJobRatingParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const createJobRatingBodyStarsMax = 5;
 
-
-
 export const CreateJobRatingBody = zod.object({
-  "stars": zod.number().min(1).max(createJobRatingBodyStarsMax),
-  "comment": zod.string().optional()
-})
+  stars: zod.number().min(1).max(createJobRatingBodyStarsMax),
+  comment: zod.string().optional(),
+});
 
 export const createJobRatingResponseStarsMax = 5;
 
-
-
 export const CreateJobRatingResponse = zod.object({
-  "id": zod.number(),
-  "jobId": zod.number(),
-  "raterProfileId": zod.number(),
-  "rateeProfileId": zod.number(),
-  "stars": zod.number().min(1).max(createJobRatingResponseStarsMax),
-  "comment": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  jobId: zod.number(),
+  raterProfileId: zod.number(),
+  rateeProfileId: zod.number(),
+  stars: zod.number().min(1).max(createJobRatingResponseStarsMax),
+  comment: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Get dashboard summary stats
  */
 export const GetDashboardStatsResponse = zod.object({
-  "openRequests": zod.number(),
-  "activeJobs": zod.number(),
-  "completedJobs": zod.number(),
-  "totalBids": zod.number(),
-  "pendingBids": zod.number(),
-  "totalRevenue": zod.number(),
-  "totalSpent": zod.number()
-})
-
+  openRequests: zod.number(),
+  activeJobs: zod.number(),
+  completedJobs: zod.number(),
+  totalBids: zod.number(),
+  pendingBids: zod.number(),
+  totalRevenue: zod.number(),
+  totalSpent: zod.number(),
+});
 
 /**
  * @summary Get recent activity feed
  */
 export const GetDashboardActivityResponseItem = zod.object({
-  "id": zod.number(),
-  "type": zod.enum(['request_posted', 'bid_placed', 'bid_awarded', 'bid_accepted', 'job_accepted', 'job_declined', 'job_started', 'job_completed', 'payment_failed', 'payment_requires_action', 'application_approved', 'application_rejected', 'payout_delayed', 'payout_stuck_alert', 'bin_confirmed', 'bin_delivered', 'bin_picked_up', 'bin_cancelled']),
-  "description": zod.string(),
-  "relatedId": zod.number().nullish(),
-  "relatedBinOrderId": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-export const GetDashboardActivityResponse = zod.array(GetDashboardActivityResponseItem)
-
+  id: zod.number(),
+  type: zod.enum([
+    "request_posted",
+    "bid_placed",
+    "bid_awarded",
+    "bid_accepted",
+    "job_accepted",
+    "job_declined",
+    "job_started",
+    "job_completed",
+    "payment_failed",
+    "payment_requires_action",
+    "application_approved",
+    "application_rejected",
+    "payout_delayed",
+    "payout_stuck_alert",
+    "bin_confirmed",
+    "bin_delivered",
+    "bin_picked_up",
+    "bin_cancelled",
+  ]),
+  description: zod.string(),
+  relatedId: zod.number().nullish(),
+  relatedBinOrderId: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const GetDashboardActivityResponse = zod.array(
+  GetDashboardActivityResponseItem,
+);
 
 /**
  * @summary Get provider wallet balances and transactions
  */
 export const GetWalletResponse = zod.object({
-  "availableBalance": zod.number(),
-  "pendingBalance": zod.number(),
-  "lifetimeEarnings": zod.number(),
-  "payoutAccount": zod.object({
-  "connected": zod.boolean(),
-  "payoutsEnabled": zod.boolean(),
-  "bankLast4": zod.string().nullable()
-}),
-  "transactions": zod.array(zod.object({
-  "id": zod.string(),
-  "type": zod.enum(['payout', 'factoring', 'earning']),
-  "description": zod.string(),
-  "amount": zod.number(),
-  "status": zod.string(),
-  "createdAt": zod.coerce.date()
-}))
-})
-
+  availableBalance: zod.number(),
+  pendingBalance: zod.number(),
+  lifetimeEarnings: zod.number(),
+  payoutAccount: zod.object({
+    connected: zod.boolean(),
+    payoutsEnabled: zod.boolean(),
+    bankLast4: zod.string().nullable(),
+  }),
+  transactions: zod.array(
+    zod.object({
+      id: zod.string(),
+      type: zod.enum(["payout", "factoring", "earning"]),
+      description: zod.string(),
+      amount: zod.number(),
+      status: zod.string(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
 
 /**
  * @summary List dump sites, optionally filtered by state or type
  */
 export const ListDumpSitesQueryParams = zod.object({
-  "state": zod.coerce.string().optional(),
-  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost']).optional()
-})
+  state: zod.coerce.string().optional(),
+  type: zod
+    .enum([
+      "landfill",
+      "transfer_station",
+      "recycling_center",
+      "construction_debris",
+      "hazardous_waste",
+      "compost",
+    ])
+    .optional(),
+});
 
 export const ListDumpSitesResponseItem = zod.object({
-  "id": zod.number(),
-  "name": zod.string(),
-  "address": zod.string(),
-  "city": zod.string(),
-  "state": zod.string(),
-  "zip": zod.string(),
-  "type": zod.enum(['landfill', 'transfer_station', 'recycling_center', 'construction_debris', 'hazardous_waste', 'compost']),
-  "phone": zod.string().nullish(),
-  "isActive": zod.boolean(),
-  "fullAddress": zod.string().optional()
-})
-export const ListDumpSitesResponse = zod.array(ListDumpSitesResponseItem)
-
+  id: zod.number(),
+  name: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  state: zod.string(),
+  zip: zod.string(),
+  type: zod.enum([
+    "landfill",
+    "transfer_station",
+    "recycling_center",
+    "construction_debris",
+    "hazardous_waste",
+    "compost",
+  ]),
+  phone: zod.string().nullish(),
+  isActive: zod.boolean(),
+  fullAddress: zod.string().optional(),
+});
+export const ListDumpSitesResponse = zod.array(ListDumpSitesResponseItem);
 
 /**
  * @summary List all states that have registered dump sites
  */
-export const ListDumpSiteStatesResponseItem = zod.string()
-export const ListDumpSiteStatesResponse = zod.array(ListDumpSiteStatesResponseItem)
-
+export const ListDumpSiteStatesResponseItem = zod.string();
+export const ListDumpSiteStatesResponse = zod.array(
+  ListDumpSiteStatesResponseItem,
+);
 
 /**
  * @summary Get overall account compliance status
  */
 export const GetAccountStatusResponse = zod.object({
-  "profileComplete": zod.boolean(),
-  "w9Status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "insuranceStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "dotCdlStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "paymentStatus": zod.enum(['not_set', 'set']),
-  "payoutStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "canBid": zod.boolean(),
-  "canPost": zod.boolean()
-})
-
+  profileComplete: zod.boolean(),
+  w9Status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  insuranceStatus: zod.enum([
+    "not_submitted",
+    "pending",
+    "verified",
+    "rejected",
+  ]),
+  dotCdlStatus: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  paymentStatus: zod.enum(["not_set", "set"]),
+  payoutStatus: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  canBid: zod.boolean(),
+  canPost: zod.boolean(),
+});
 
 /**
  * @summary Get W-9 submission
  */
 export const GetW9Response = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "legalName": zod.string(),
-  "businessName": zod.string().nullish(),
-  "businessType": zod.enum(['sole_proprietor', 'single_member_llc', 'multi_member_llc', 'partnership', 'c_corporation', 's_corporation', 'other']),
-  "taxIdType": zod.enum(['ein', 'ssn']),
-  "taxIdLast4": zod.string(),
-  "address": zod.string(),
-  "city": zod.string(),
-  "state": zod.string(),
-  "zip": zod.string(),
-  "signatureFullName": zod.string(),
-  "agreedToTerms": zod.string(),
-  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  legalName: zod.string(),
+  businessName: zod.string().nullish(),
+  businessType: zod.enum([
+    "sole_proprietor",
+    "single_member_llc",
+    "multi_member_llc",
+    "partnership",
+    "c_corporation",
+    "s_corporation",
+    "other",
+  ]),
+  taxIdType: zod.enum(["ein", "ssn"]),
+  taxIdLast4: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  state: zod.string(),
+  zip: zod.string(),
+  signatureFullName: zod.string(),
+  agreedToTerms: zod.string(),
+  status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  reviewNote: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Submit W-9 form
  */
 export const SubmitW9Body = zod.object({
-  "legalName": zod.string(),
-  "businessName": zod.string().optional(),
-  "businessType": zod.enum(['sole_proprietor', 'single_member_llc', 'multi_member_llc', 'partnership', 'c_corporation', 's_corporation', 'other']),
-  "taxIdType": zod.enum(['ein', 'ssn']),
-  "taxIdLast4": zod.string(),
-  "address": zod.string(),
-  "city": zod.string(),
-  "state": zod.string(),
-  "zip": zod.string(),
-  "signatureFullName": zod.string(),
-  "agreedToTerms": zod.string()
-})
-
+  legalName: zod.string(),
+  businessName: zod.string().optional(),
+  businessType: zod.enum([
+    "sole_proprietor",
+    "single_member_llc",
+    "multi_member_llc",
+    "partnership",
+    "c_corporation",
+    "s_corporation",
+    "other",
+  ]),
+  taxIdType: zod.enum(["ein", "ssn"]),
+  taxIdLast4: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  state: zod.string(),
+  zip: zod.string(),
+  signatureFullName: zod.string(),
+  agreedToTerms: zod.string(),
+});
 
 /**
  * @summary Update W-9 submission
  */
 export const UpdateW9Body = zod.object({
-  "legalName": zod.string(),
-  "businessName": zod.string().optional(),
-  "businessType": zod.enum(['sole_proprietor', 'single_member_llc', 'multi_member_llc', 'partnership', 'c_corporation', 's_corporation', 'other']),
-  "taxIdType": zod.enum(['ein', 'ssn']),
-  "taxIdLast4": zod.string(),
-  "address": zod.string(),
-  "city": zod.string(),
-  "state": zod.string(),
-  "zip": zod.string(),
-  "signatureFullName": zod.string(),
-  "agreedToTerms": zod.string()
-})
+  legalName: zod.string(),
+  businessName: zod.string().optional(),
+  businessType: zod.enum([
+    "sole_proprietor",
+    "single_member_llc",
+    "multi_member_llc",
+    "partnership",
+    "c_corporation",
+    "s_corporation",
+    "other",
+  ]),
+  taxIdType: zod.enum(["ein", "ssn"]),
+  taxIdLast4: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  state: zod.string(),
+  zip: zod.string(),
+  signatureFullName: zod.string(),
+  agreedToTerms: zod.string(),
+});
 
 export const UpdateW9Response = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "legalName": zod.string(),
-  "businessName": zod.string().nullish(),
-  "businessType": zod.enum(['sole_proprietor', 'single_member_llc', 'multi_member_llc', 'partnership', 'c_corporation', 's_corporation', 'other']),
-  "taxIdType": zod.enum(['ein', 'ssn']),
-  "taxIdLast4": zod.string(),
-  "address": zod.string(),
-  "city": zod.string(),
-  "state": zod.string(),
-  "zip": zod.string(),
-  "signatureFullName": zod.string(),
-  "agreedToTerms": zod.string(),
-  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  legalName: zod.string(),
+  businessName: zod.string().nullish(),
+  businessType: zod.enum([
+    "sole_proprietor",
+    "single_member_llc",
+    "multi_member_llc",
+    "partnership",
+    "c_corporation",
+    "s_corporation",
+    "other",
+  ]),
+  taxIdType: zod.enum(["ein", "ssn"]),
+  taxIdLast4: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  state: zod.string(),
+  zip: zod.string(),
+  signatureFullName: zod.string(),
+  agreedToTerms: zod.string(),
+  status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  reviewNote: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Get insurance submission
  */
 export const GetInsuranceResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "glCarrier": zod.string(),
-  "glPolicyNumber": zod.string(),
-  "glCoverageAmount": zod.number(),
-  "glExpirationDate": zod.coerce.date(),
-  "autoCarrier": zod.string().nullish(),
-  "autoPolicyNumber": zod.string().nullish(),
-  "autoCoverageAmount": zod.number().nullish(),
-  "autoExpirationDate": zod.coerce.date().nullish(),
-  "wcCarrier": zod.string().nullish(),
-  "wcPolicyNumber": zod.string().nullish(),
-  "wcExpirationDate": zod.coerce.date().nullish(),
-  "bondCompany": zod.string().nullish(),
-  "bondAmount": zod.number().nullish(),
-  "bondExpirationDate": zod.coerce.date().nullish(),
-  "certificateHolderName": zod.string().nullish(),
-  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  glCarrier: zod.string(),
+  glPolicyNumber: zod.string(),
+  glCoverageAmount: zod.number(),
+  glExpirationDate: zod.coerce.date(),
+  autoCarrier: zod.string().nullish(),
+  autoPolicyNumber: zod.string().nullish(),
+  autoCoverageAmount: zod.number().nullish(),
+  autoExpirationDate: zod.coerce.date().nullish(),
+  wcCarrier: zod.string().nullish(),
+  wcPolicyNumber: zod.string().nullish(),
+  wcExpirationDate: zod.coerce.date().nullish(),
+  bondCompany: zod.string().nullish(),
+  bondAmount: zod.number().nullish(),
+  bondExpirationDate: zod.coerce.date().nullish(),
+  certificateHolderName: zod.string().nullish(),
+  status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  reviewNote: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Submit insurance and bonding information
  */
 export const SubmitInsuranceBody = zod.object({
-  "glCarrier": zod.string(),
-  "glPolicyNumber": zod.string(),
-  "glCoverageAmount": zod.number(),
-  "glExpirationDate": zod.coerce.date(),
-  "autoCarrier": zod.string().optional(),
-  "autoPolicyNumber": zod.string().optional(),
-  "autoCoverageAmount": zod.number().optional(),
-  "autoExpirationDate": zod.coerce.date().optional(),
-  "wcCarrier": zod.string().optional(),
-  "wcPolicyNumber": zod.string().optional(),
-  "wcExpirationDate": zod.coerce.date().optional(),
-  "bondCompany": zod.string().optional(),
-  "bondAmount": zod.number().optional(),
-  "bondExpirationDate": zod.coerce.date().optional(),
-  "certificateHolderName": zod.string().optional()
-})
-
+  glCarrier: zod.string(),
+  glPolicyNumber: zod.string(),
+  glCoverageAmount: zod.number(),
+  glExpirationDate: zod.coerce.date(),
+  autoCarrier: zod.string().optional(),
+  autoPolicyNumber: zod.string().optional(),
+  autoCoverageAmount: zod.number().optional(),
+  autoExpirationDate: zod.coerce.date().optional(),
+  wcCarrier: zod.string().optional(),
+  wcPolicyNumber: zod.string().optional(),
+  wcExpirationDate: zod.coerce.date().optional(),
+  bondCompany: zod.string().optional(),
+  bondAmount: zod.number().optional(),
+  bondExpirationDate: zod.coerce.date().optional(),
+  certificateHolderName: zod.string().optional(),
+});
 
 /**
  * @summary Update insurance submission
  */
 export const UpdateInsuranceBody = zod.object({
-  "glCarrier": zod.string(),
-  "glPolicyNumber": zod.string(),
-  "glCoverageAmount": zod.number(),
-  "glExpirationDate": zod.coerce.date(),
-  "autoCarrier": zod.string().optional(),
-  "autoPolicyNumber": zod.string().optional(),
-  "autoCoverageAmount": zod.number().optional(),
-  "autoExpirationDate": zod.coerce.date().optional(),
-  "wcCarrier": zod.string().optional(),
-  "wcPolicyNumber": zod.string().optional(),
-  "wcExpirationDate": zod.coerce.date().optional(),
-  "bondCompany": zod.string().optional(),
-  "bondAmount": zod.number().optional(),
-  "bondExpirationDate": zod.coerce.date().optional(),
-  "certificateHolderName": zod.string().optional()
-})
+  glCarrier: zod.string(),
+  glPolicyNumber: zod.string(),
+  glCoverageAmount: zod.number(),
+  glExpirationDate: zod.coerce.date(),
+  autoCarrier: zod.string().optional(),
+  autoPolicyNumber: zod.string().optional(),
+  autoCoverageAmount: zod.number().optional(),
+  autoExpirationDate: zod.coerce.date().optional(),
+  wcCarrier: zod.string().optional(),
+  wcPolicyNumber: zod.string().optional(),
+  wcExpirationDate: zod.coerce.date().optional(),
+  bondCompany: zod.string().optional(),
+  bondAmount: zod.number().optional(),
+  bondExpirationDate: zod.coerce.date().optional(),
+  certificateHolderName: zod.string().optional(),
+});
 
 export const UpdateInsuranceResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "glCarrier": zod.string(),
-  "glPolicyNumber": zod.string(),
-  "glCoverageAmount": zod.number(),
-  "glExpirationDate": zod.coerce.date(),
-  "autoCarrier": zod.string().nullish(),
-  "autoPolicyNumber": zod.string().nullish(),
-  "autoCoverageAmount": zod.number().nullish(),
-  "autoExpirationDate": zod.coerce.date().nullish(),
-  "wcCarrier": zod.string().nullish(),
-  "wcPolicyNumber": zod.string().nullish(),
-  "wcExpirationDate": zod.coerce.date().nullish(),
-  "bondCompany": zod.string().nullish(),
-  "bondAmount": zod.number().nullish(),
-  "bondExpirationDate": zod.coerce.date().nullish(),
-  "certificateHolderName": zod.string().nullish(),
-  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  glCarrier: zod.string(),
+  glPolicyNumber: zod.string(),
+  glCoverageAmount: zod.number(),
+  glExpirationDate: zod.coerce.date(),
+  autoCarrier: zod.string().nullish(),
+  autoPolicyNumber: zod.string().nullish(),
+  autoCoverageAmount: zod.number().nullish(),
+  autoExpirationDate: zod.coerce.date().nullish(),
+  wcCarrier: zod.string().nullish(),
+  wcPolicyNumber: zod.string().nullish(),
+  wcExpirationDate: zod.coerce.date().nullish(),
+  bondCompany: zod.string().nullish(),
+  bondAmount: zod.number().nullish(),
+  bondExpirationDate: zod.coerce.date().nullish(),
+  certificateHolderName: zod.string().nullish(),
+  status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  reviewNote: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Get billing payment method (customer)
  */
 export const GetPaymentMethodResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "methodType": zod.enum(['credit_card', 'ach', 'net_15', 'net_30', 'net_45']),
-  "cardBrand": zod.string().nullish(),
-  "stripePaymentMethodId": zod.string().nullish(),
-  "verificationStatus": zod.string().nullish().describe('null when nothing needs verifying (cards, net terms, instantly-verified ACH); \"pending\" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); \"verified\" once confirmed.'),
-  "cardLast4": zod.string().nullish(),
-  "cardExpMonth": zod.string().nullish(),
-  "cardExpYear": zod.string().nullish(),
-  "cardholderName": zod.string().nullish(),
-  "bankName": zod.string().nullish(),
-  "accountLast4": zod.string().nullish(),
-  "routingLast4": zod.string().nullish(),
-  "billingAddress": zod.string().nullish(),
-  "billingCity": zod.string().nullish(),
-  "billingState": zod.string().nullish(),
-  "billingZip": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  methodType: zod.enum(["credit_card", "ach", "net_15", "net_30", "net_45"]),
+  cardBrand: zod.string().nullish(),
+  stripePaymentMethodId: zod.string().nullish(),
+  verificationStatus: zod
+    .string()
+    .nullish()
+    .describe(
+      'null when nothing needs verifying (cards, net terms, instantly-verified ACH); \"pending\" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); \"verified\" once confirmed.',
+    ),
+  cardLast4: zod.string().nullish(),
+  cardExpMonth: zod.string().nullish(),
+  cardExpYear: zod.string().nullish(),
+  cardholderName: zod.string().nullish(),
+  bankName: zod.string().nullish(),
+  accountLast4: zod.string().nullish(),
+  routingLast4: zod.string().nullish(),
+  billingAddress: zod.string().nullish(),
+  billingCity: zod.string().nullish(),
+  billingState: zod.string().nullish(),
+  billingZip: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Set billing payment method
  */
 export const SetPaymentMethodBody = zod.object({
-  "methodType": zod.enum(['credit_card', 'ach', 'net_15', 'net_30', 'net_45']),
-  "stripePaymentMethodId": zod.string().optional().describe('Stripe PaymentMethod id (pm_…) returned after confirming a SetupIntent with Stripe Elements. When provided, the server stores it as the real chargeable instrument and mirrors the card metadata from Stripe.'),
-  "stripeSetupIntentId": zod.string().optional().describe('Stripe SetupIntent id (seti_…) the PaymentMethod was created from. For ACH, the server reads its status to mark the instrument \"pending\" (micro-deposits) or \"verified\", and retains it so the customer can finish micro-deposit verification later.'),
-  "cardBrand": zod.string().optional(),
-  "cardLast4": zod.string().optional(),
-  "cardExpMonth": zod.string().optional(),
-  "cardExpYear": zod.string().optional(),
-  "cardholderName": zod.string().optional(),
-  "bankName": zod.string().optional(),
-  "accountLast4": zod.string().optional(),
-  "routingLast4": zod.string().optional(),
-  "billingAddress": zod.string().optional(),
-  "billingCity": zod.string().optional(),
-  "billingState": zod.string().optional(),
-  "billingZip": zod.string().optional()
-})
-
+  methodType: zod.enum(["credit_card", "ach", "net_15", "net_30", "net_45"]),
+  stripePaymentMethodId: zod
+    .string()
+    .optional()
+    .describe(
+      "Stripe PaymentMethod id (pm_…) returned after confirming a SetupIntent with Stripe Elements. When provided, the server stores it as the real chargeable instrument and mirrors the card metadata from Stripe.",
+    ),
+  stripeSetupIntentId: zod
+    .string()
+    .optional()
+    .describe(
+      'Stripe SetupIntent id (seti_…) the PaymentMethod was created from. For ACH, the server reads its status to mark the instrument \"pending\" (micro-deposits) or \"verified\", and retains it so the customer can finish micro-deposit verification later.',
+    ),
+  cardBrand: zod.string().optional(),
+  cardLast4: zod.string().optional(),
+  cardExpMonth: zod.string().optional(),
+  cardExpYear: zod.string().optional(),
+  cardholderName: zod.string().optional(),
+  bankName: zod.string().optional(),
+  accountLast4: zod.string().optional(),
+  routingLast4: zod.string().optional(),
+  billingAddress: zod.string().optional(),
+  billingCity: zod.string().optional(),
+  billingState: zod.string().optional(),
+  billingZip: zod.string().optional(),
+});
 
 /**
  * @summary Update payment method
  */
 export const UpdatePaymentMethodBody = zod.object({
-  "methodType": zod.enum(['credit_card', 'ach', 'net_15', 'net_30', 'net_45']),
-  "stripePaymentMethodId": zod.string().optional().describe('Stripe PaymentMethod id (pm_…) returned after confirming a SetupIntent with Stripe Elements. When provided, the server stores it as the real chargeable instrument and mirrors the card metadata from Stripe.'),
-  "stripeSetupIntentId": zod.string().optional().describe('Stripe SetupIntent id (seti_…) the PaymentMethod was created from. For ACH, the server reads its status to mark the instrument \"pending\" (micro-deposits) or \"verified\", and retains it so the customer can finish micro-deposit verification later.'),
-  "cardBrand": zod.string().optional(),
-  "cardLast4": zod.string().optional(),
-  "cardExpMonth": zod.string().optional(),
-  "cardExpYear": zod.string().optional(),
-  "cardholderName": zod.string().optional(),
-  "bankName": zod.string().optional(),
-  "accountLast4": zod.string().optional(),
-  "routingLast4": zod.string().optional(),
-  "billingAddress": zod.string().optional(),
-  "billingCity": zod.string().optional(),
-  "billingState": zod.string().optional(),
-  "billingZip": zod.string().optional()
-})
+  methodType: zod.enum(["credit_card", "ach", "net_15", "net_30", "net_45"]),
+  stripePaymentMethodId: zod
+    .string()
+    .optional()
+    .describe(
+      "Stripe PaymentMethod id (pm_…) returned after confirming a SetupIntent with Stripe Elements. When provided, the server stores it as the real chargeable instrument and mirrors the card metadata from Stripe.",
+    ),
+  stripeSetupIntentId: zod
+    .string()
+    .optional()
+    .describe(
+      'Stripe SetupIntent id (seti_…) the PaymentMethod was created from. For ACH, the server reads its status to mark the instrument \"pending\" (micro-deposits) or \"verified\", and retains it so the customer can finish micro-deposit verification later.',
+    ),
+  cardBrand: zod.string().optional(),
+  cardLast4: zod.string().optional(),
+  cardExpMonth: zod.string().optional(),
+  cardExpYear: zod.string().optional(),
+  cardholderName: zod.string().optional(),
+  bankName: zod.string().optional(),
+  accountLast4: zod.string().optional(),
+  routingLast4: zod.string().optional(),
+  billingAddress: zod.string().optional(),
+  billingCity: zod.string().optional(),
+  billingState: zod.string().optional(),
+  billingZip: zod.string().optional(),
+});
 
 export const UpdatePaymentMethodResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "methodType": zod.enum(['credit_card', 'ach', 'net_15', 'net_30', 'net_45']),
-  "cardBrand": zod.string().nullish(),
-  "stripePaymentMethodId": zod.string().nullish(),
-  "verificationStatus": zod.string().nullish().describe('null when nothing needs verifying (cards, net terms, instantly-verified ACH); \"pending\" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); \"verified\" once confirmed.'),
-  "cardLast4": zod.string().nullish(),
-  "cardExpMonth": zod.string().nullish(),
-  "cardExpYear": zod.string().nullish(),
-  "cardholderName": zod.string().nullish(),
-  "bankName": zod.string().nullish(),
-  "accountLast4": zod.string().nullish(),
-  "routingLast4": zod.string().nullish(),
-  "billingAddress": zod.string().nullish(),
-  "billingCity": zod.string().nullish(),
-  "billingState": zod.string().nullish(),
-  "billingZip": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  methodType: zod.enum(["credit_card", "ach", "net_15", "net_30", "net_45"]),
+  cardBrand: zod.string().nullish(),
+  stripePaymentMethodId: zod.string().nullish(),
+  verificationStatus: zod
+    .string()
+    .nullish()
+    .describe(
+      'null when nothing needs verifying (cards, net terms, instantly-verified ACH); \"pending\" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); \"verified\" once confirmed.',
+    ),
+  cardLast4: zod.string().nullish(),
+  cardExpMonth: zod.string().nullish(),
+  cardExpYear: zod.string().nullish(),
+  cardholderName: zod.string().nullish(),
+  bankName: zod.string().nullish(),
+  accountLast4: zod.string().nullish(),
+  routingLast4: zod.string().nullish(),
+  billingAddress: zod.string().nullish(),
+  billingCity: zod.string().nullish(),
+  billingState: zod.string().nullish(),
+  billingZip: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Create a Stripe SetupIntent to securely capture a customer card
  */
 export const CreatePaymentMethodSetupIntentResponse = zod.object({
-  "clientSecret": zod.string().describe('SetupIntent client secret used to confirm the card with Stripe Elements.'),
-  "publishableKey": zod.string().describe('Stripe publishable key for initialising Stripe.js on the client.')
-})
-
+  clientSecret: zod
+    .string()
+    .describe(
+      "SetupIntent client secret used to confirm the card with Stripe Elements.",
+    ),
+  publishableKey: zod
+    .string()
+    .describe(
+      "Stripe publishable key for initialising Stripe.js on the client.",
+    ),
+});
 
 /**
  * @summary Create a Stripe SetupIntent to securely capture a customer US bank account (ACH)
  */
 export const CreatePaymentMethodBankSetupIntentResponse = zod.object({
-  "clientSecret": zod.string().describe('SetupIntent client secret used to confirm the card with Stripe Elements.'),
-  "publishableKey": zod.string().describe('Stripe publishable key for initialising Stripe.js on the client.')
-})
-
+  clientSecret: zod
+    .string()
+    .describe(
+      "SetupIntent client secret used to confirm the card with Stripe Elements.",
+    ),
+  publishableKey: zod
+    .string()
+    .describe(
+      "Stripe publishable key for initialising Stripe.js on the client.",
+    ),
+});
 
 /**
  * @summary Finish ACH micro-deposit verification for the saved bank account
@@ -1178,1515 +1749,1902 @@ export const CreatePaymentMethodBankSetupIntentResponse = zod.object({
 export const verifyPaymentMethodMicrodepositsBodyAmountsMin = 2;
 export const verifyPaymentMethodMicrodepositsBodyAmountsMax = 2;
 
-
-
-export const VerifyPaymentMethodMicrodepositsBody = zod.object({
-  "amounts": zod.array(zod.number()).min(verifyPaymentMethodMicrodepositsBodyAmountsMin).max(verifyPaymentMethodMicrodepositsBodyAmountsMax).optional().describe('The two micro-deposit amounts in cents, e.g. [32, 45].'),
-  "descriptorCode": zod.string().optional().describe('The descriptor code (e.g. \"SM11AA\") from the verification deposit.')
-}).describe('Provide EITHER the two micro-deposit amounts (in cents, as they appear on the customer\'s bank statement) OR the 6-character descriptor code Stripe included with a single verification deposit.')
+export const VerifyPaymentMethodMicrodepositsBody = zod
+  .object({
+    amounts: zod
+      .array(zod.number())
+      .min(verifyPaymentMethodMicrodepositsBodyAmountsMin)
+      .max(verifyPaymentMethodMicrodepositsBodyAmountsMax)
+      .optional()
+      .describe("The two micro-deposit amounts in cents, e.g. [32, 45]."),
+    descriptorCode: zod
+      .string()
+      .optional()
+      .describe(
+        'The descriptor code (e.g. \"SM11AA\") from the verification deposit.',
+      ),
+  })
+  .describe(
+    "Provide EITHER the two micro-deposit amounts (in cents, as they appear on the customer's bank statement) OR the 6-character descriptor code Stripe included with a single verification deposit.",
+  );
 
 export const VerifyPaymentMethodMicrodepositsResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "methodType": zod.enum(['credit_card', 'ach', 'net_15', 'net_30', 'net_45']),
-  "cardBrand": zod.string().nullish(),
-  "stripePaymentMethodId": zod.string().nullish(),
-  "verificationStatus": zod.string().nullish().describe('null when nothing needs verifying (cards, net terms, instantly-verified ACH); \"pending\" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); \"verified\" once confirmed.'),
-  "cardLast4": zod.string().nullish(),
-  "cardExpMonth": zod.string().nullish(),
-  "cardExpYear": zod.string().nullish(),
-  "cardholderName": zod.string().nullish(),
-  "bankName": zod.string().nullish(),
-  "accountLast4": zod.string().nullish(),
-  "routingLast4": zod.string().nullish(),
-  "billingAddress": zod.string().nullish(),
-  "billingCity": zod.string().nullish(),
-  "billingState": zod.string().nullish(),
-  "billingZip": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  methodType: zod.enum(["credit_card", "ach", "net_15", "net_30", "net_45"]),
+  cardBrand: zod.string().nullish(),
+  stripePaymentMethodId: zod.string().nullish(),
+  verificationStatus: zod
+    .string()
+    .nullish()
+    .describe(
+      'null when nothing needs verifying (cards, net terms, instantly-verified ACH); \"pending\" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); \"verified\" once confirmed.',
+    ),
+  cardLast4: zod.string().nullish(),
+  cardExpMonth: zod.string().nullish(),
+  cardExpYear: zod.string().nullish(),
+  cardholderName: zod.string().nullish(),
+  bankName: zod.string().nullish(),
+  accountLast4: zod.string().nullish(),
+  routingLast4: zod.string().nullish(),
+  billingAddress: zod.string().nullish(),
+  billingCity: zod.string().nullish(),
+  billingState: zod.string().nullish(),
+  billingZip: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Get payout bank account (provider)
  */
 export const GetPayoutAccountResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "bankName": zod.string(),
-  "accountHolderName": zod.string(),
-  "accountType": zod.enum(['checking', 'savings']),
-  "routingLast4": zod.string(),
-  "accountLast4": zod.string(),
-  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  bankName: zod.string(),
+  accountHolderName: zod.string(),
+  accountType: zod.enum(["checking", "savings"]),
+  routingLast4: zod.string(),
+  accountLast4: zod.string(),
+  status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Set payout bank account
  */
 export const SetPayoutAccountBody = zod.object({
-  "bankName": zod.string(),
-  "accountHolderName": zod.string(),
-  "accountType": zod.enum(['checking', 'savings']),
-  "routingNumber": zod.string(),
-  "accountNumber": zod.string()
-})
-
+  bankName: zod.string(),
+  accountHolderName: zod.string(),
+  accountType: zod.enum(["checking", "savings"]),
+  routingNumber: zod.string(),
+  accountNumber: zod.string(),
+});
 
 /**
  * @summary Update payout bank account
  */
 export const UpdatePayoutAccountBody = zod.object({
-  "bankName": zod.string(),
-  "accountHolderName": zod.string(),
-  "accountType": zod.enum(['checking', 'savings']),
-  "routingNumber": zod.string(),
-  "accountNumber": zod.string()
-})
+  bankName: zod.string(),
+  accountHolderName: zod.string(),
+  accountType: zod.enum(["checking", "savings"]),
+  routingNumber: zod.string(),
+  accountNumber: zod.string(),
+});
 
 export const UpdatePayoutAccountResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "bankName": zod.string(),
-  "accountHolderName": zod.string(),
-  "accountType": zod.enum(['checking', 'savings']),
-  "routingLast4": zod.string(),
-  "accountLast4": zod.string(),
-  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  bankName: zod.string(),
+  accountHolderName: zod.string(),
+  accountType: zod.enum(["checking", "savings"]),
+  routingLast4: zod.string(),
+  accountLast4: zod.string(),
+  status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Get provider Stripe Connect payout status and outstanding requirements
  */
 export const GetPayoutStatusResponse = zod.object({
-  "connected": zod.boolean(),
-  "stripeAccountId": zod.string().optional(),
-  "chargesEnabled": zod.boolean(),
-  "payoutsEnabled": zod.boolean(),
-  "detailsSubmitted": zod.boolean(),
-  "requirements": zod.object({
-  "currentlyDue": zod.array(zod.object({
-  "code": zod.string().describe('The raw Stripe requirement key, e.g. \"external_account\".'),
-  "label": zod.string().describe('A short, human-readable description of what the provider must do.')
-})).describe('Steps the provider must complete now to keep payouts flowing.'),
-  "pendingVerification": zod.array(zod.object({
-  "code": zod.string().describe('The raw Stripe requirement key, e.g. \"external_account\".'),
-  "label": zod.string().describe('A short, human-readable description of what the provider must do.')
-})).describe('Items Stripe is actively reviewing — nothing for the provider to do.'),
-  "disabledReason": zod.string().nullable().describe('Stripe\'s machine reason payouts are disabled, if any.'),
-  "currentDeadline": zod.number().nullable().describe('Unix seconds by which currentlyDue items must be resolved, if Stripe set a deadline.')
-}).optional()
-})
-
+  connected: zod.boolean(),
+  stripeAccountId: zod.string().optional(),
+  chargesEnabled: zod.boolean(),
+  payoutsEnabled: zod.boolean(),
+  detailsSubmitted: zod.boolean(),
+  requirements: zod
+    .object({
+      currentlyDue: zod
+        .array(
+          zod.object({
+            code: zod
+              .string()
+              .describe(
+                'The raw Stripe requirement key, e.g. \"external_account\".',
+              ),
+            label: zod
+              .string()
+              .describe(
+                "A short, human-readable description of what the provider must do.",
+              ),
+          }),
+        )
+        .describe(
+          "Steps the provider must complete now to keep payouts flowing.",
+        ),
+      pendingVerification: zod
+        .array(
+          zod.object({
+            code: zod
+              .string()
+              .describe(
+                'The raw Stripe requirement key, e.g. \"external_account\".',
+              ),
+            label: zod
+              .string()
+              .describe(
+                "A short, human-readable description of what the provider must do.",
+              ),
+          }),
+        )
+        .describe(
+          "Items Stripe is actively reviewing — nothing for the provider to do.",
+        ),
+      disabledReason: zod
+        .string()
+        .nullable()
+        .describe("Stripe's machine reason payouts are disabled, if any."),
+      currentDeadline: zod
+        .number()
+        .nullable()
+        .describe(
+          "Unix seconds by which currentlyDue items must be resolved, if Stripe set a deadline.",
+        ),
+    })
+    .optional(),
+});
 
 /**
  * @summary Create or fetch the provider's Stripe Connect account and return a hosted onboarding URL
  */
 export const ConnectPayoutLinkBody = zod.object({
-  "returnTo": zod.string().optional().describe('Optional deep link the hosted onboarding return page should bounce back to (mobile only).')
-})
+  returnTo: zod
+    .string()
+    .optional()
+    .describe(
+      "Optional deep link the hosted onboarding return page should bounce back to (mobile only).",
+    ),
+});
 
 export const ConnectPayoutLinkResponse = zod.object({
-  "url": zod.string().describe('Stripe-hosted onboarding URL to redirect the provider to.'),
-  "stripeAccountId": zod.string().describe('The provider\'s Stripe Connect account id.')
-})
-
+  url: zod
+    .string()
+    .describe("Stripe-hosted onboarding URL to redirect the provider to."),
+  stripeAccountId: zod
+    .string()
+    .describe("The provider's Stripe Connect account id."),
+});
 
 /**
  * @summary Get DOT/CDL & FMCSA compliance record
  */
-export const GetComplianceResponse = zod.union([zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "dotNumber": zod.string().nullish(),
-  "mcNumber": zod.string().nullish(),
-  "dotVerified": zod.boolean().optional(),
-  "cdlNumber": zod.string().nullish(),
-  "cdlState": zod.string().nullish(),
-  "cdlClass": zod.string().nullish(),
-  "cdlExpiry": zod.coerce.date().nullish(),
-  "cdlVerified": zod.boolean().optional(),
-  "fmcsaAuthority": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "insuranceActive": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "dotOperatingStatus": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "safetyRating": zod.string().nullish(),
-  "notSuspended": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "complianceCheckedAt": zod.coerce.date().nullish(),
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish()
-}),zod.null()])
-
+export const GetComplianceResponse = zod.union([
+  zod.object({
+    id: zod.number(),
+    profileId: zod.number(),
+    dotNumber: zod.string().nullish(),
+    mcNumber: zod.string().nullish(),
+    dotVerified: zod.boolean().optional(),
+    cdlNumber: zod.string().nullish(),
+    cdlState: zod.string().nullish(),
+    cdlClass: zod.string().nullish(),
+    cdlExpiry: zod.coerce.date().nullish(),
+    cdlVerified: zod.boolean().optional(),
+    fmcsaAuthority: zod.enum(["unknown", "verified", "failed"]).optional(),
+    insuranceActive: zod.enum(["unknown", "verified", "failed"]).optional(),
+    dotOperatingStatus: zod.enum(["unknown", "verified", "failed"]).optional(),
+    safetyRating: zod.string().nullish(),
+    notSuspended: zod.enum(["unknown", "verified", "failed"]).optional(),
+    complianceCheckedAt: zod.coerce.date().nullish(),
+    status: zod.string(),
+    reviewNote: zod.string().nullish(),
+  }),
+  zod.null(),
+]);
 
 /**
  * @summary Submit or update DOT/CDL/MC details
  */
 export const SubmitComplianceBody = zod.object({
-  "dotNumber": zod.string().optional(),
-  "mcNumber": zod.string().optional(),
-  "cdlNumber": zod.string().optional(),
-  "cdlState": zod.string().optional(),
-  "cdlClass": zod.string().optional(),
-  "cdlExpiry": zod.coerce.date().optional()
-})
+  dotNumber: zod.string().optional(),
+  mcNumber: zod.string().optional(),
+  cdlNumber: zod.string().optional(),
+  cdlState: zod.string().optional(),
+  cdlClass: zod.string().optional(),
+  cdlExpiry: zod.coerce.date().optional(),
+});
 
 export const SubmitComplianceResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "dotNumber": zod.string().nullish(),
-  "mcNumber": zod.string().nullish(),
-  "dotVerified": zod.boolean().optional(),
-  "cdlNumber": zod.string().nullish(),
-  "cdlState": zod.string().nullish(),
-  "cdlClass": zod.string().nullish(),
-  "cdlExpiry": zod.coerce.date().nullish(),
-  "cdlVerified": zod.boolean().optional(),
-  "fmcsaAuthority": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "insuranceActive": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "dotOperatingStatus": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "safetyRating": zod.string().nullish(),
-  "notSuspended": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "complianceCheckedAt": zod.coerce.date().nullish(),
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  dotNumber: zod.string().nullish(),
+  mcNumber: zod.string().nullish(),
+  dotVerified: zod.boolean().optional(),
+  cdlNumber: zod.string().nullish(),
+  cdlState: zod.string().nullish(),
+  cdlClass: zod.string().nullish(),
+  cdlExpiry: zod.coerce.date().nullish(),
+  cdlVerified: zod.boolean().optional(),
+  fmcsaAuthority: zod.enum(["unknown", "verified", "failed"]).optional(),
+  insuranceActive: zod.enum(["unknown", "verified", "failed"]).optional(),
+  dotOperatingStatus: zod.enum(["unknown", "verified", "failed"]).optional(),
+  safetyRating: zod.string().nullish(),
+  notSuspended: zod.enum(["unknown", "verified", "failed"]).optional(),
+  complianceCheckedAt: zod.coerce.date().nullish(),
+  status: zod.string(),
+  reviewNote: zod.string().nullish(),
+});
 
 /**
  * @summary Manually mark compliance checks as verified (admin/demo)
  */
 export const VerifyComplianceBody = zod.object({
-  "profileId": zod.number().optional().describe('Staff-only — verify this carrier\'s compliance record. Defaults to the caller\'s own record.')
-})
+  profileId: zod
+    .number()
+    .optional()
+    .describe(
+      "Staff-only — verify this carrier's compliance record. Defaults to the caller's own record.",
+    ),
+});
 
 export const VerifyComplianceResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "dotNumber": zod.string().nullish(),
-  "mcNumber": zod.string().nullish(),
-  "dotVerified": zod.boolean().optional(),
-  "cdlNumber": zod.string().nullish(),
-  "cdlState": zod.string().nullish(),
-  "cdlClass": zod.string().nullish(),
-  "cdlExpiry": zod.coerce.date().nullish(),
-  "cdlVerified": zod.boolean().optional(),
-  "fmcsaAuthority": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "insuranceActive": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "dotOperatingStatus": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "safetyRating": zod.string().nullish(),
-  "notSuspended": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "complianceCheckedAt": zod.coerce.date().nullish(),
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  dotNumber: zod.string().nullish(),
+  mcNumber: zod.string().nullish(),
+  dotVerified: zod.boolean().optional(),
+  cdlNumber: zod.string().nullish(),
+  cdlState: zod.string().nullish(),
+  cdlClass: zod.string().nullish(),
+  cdlExpiry: zod.coerce.date().nullish(),
+  cdlVerified: zod.boolean().optional(),
+  fmcsaAuthority: zod.enum(["unknown", "verified", "failed"]).optional(),
+  insuranceActive: zod.enum(["unknown", "verified", "failed"]).optional(),
+  dotOperatingStatus: zod.enum(["unknown", "verified", "failed"]).optional(),
+  safetyRating: zod.string().nullish(),
+  notSuspended: zod.enum(["unknown", "verified", "failed"]).optional(),
+  complianceCheckedAt: zod.coerce.date().nullish(),
+  status: zod.string(),
+  reviewNote: zod.string().nullish(),
+});
 
 /**
  * @summary Get the customer's credit application for invoicing terms
  */
-export const GetCreditApplicationResponse = zod.union([zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "wantsInvoicing": zod.boolean(),
-  "tradeReferences": zod.string().nullish(),
-  "bankReference": zod.string().nullish(),
-  "estimatedMonthlySpend": zod.number().nullish(),
-  "status": zod.enum(['not_submitted', 'pending', 'approved', 'rejected']),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-}),zod.null()])
-
+export const GetCreditApplicationResponse = zod.union([
+  zod.object({
+    id: zod.number(),
+    profileId: zod.number(),
+    wantsInvoicing: zod.boolean(),
+    tradeReferences: zod.string().nullish(),
+    bankReference: zod.string().nullish(),
+    estimatedMonthlySpend: zod.number().nullish(),
+    status: zod.enum(["not_submitted", "pending", "approved", "rejected"]),
+    reviewNote: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+  }),
+  zod.null(),
+]);
 
 /**
  * @summary Submit or update a credit application for Net invoicing terms
  */
 export const SubmitCreditApplicationBody = zod.object({
-  "wantsInvoicing": zod.boolean().optional(),
-  "tradeReferences": zod.string().optional(),
-  "bankReference": zod.string().optional(),
-  "estimatedMonthlySpend": zod.number().optional()
-})
+  wantsInvoicing: zod.boolean().optional(),
+  tradeReferences: zod.string().optional(),
+  bankReference: zod.string().optional(),
+  estimatedMonthlySpend: zod.number().optional(),
+});
 
 export const SubmitCreditApplicationResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "wantsInvoicing": zod.boolean(),
-  "tradeReferences": zod.string().nullish(),
-  "bankReference": zod.string().nullish(),
-  "estimatedMonthlySpend": zod.number().nullish(),
-  "status": zod.enum(['not_submitted', 'pending', 'approved', 'rejected']),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  wantsInvoicing: zod.boolean(),
+  tradeReferences: zod.string().nullish(),
+  bankReference: zod.string().nullish(),
+  estimatedMonthlySpend: zod.number().nullish(),
+  status: zod.enum(["not_submitted", "pending", "approved", "rejected"]),
+  reviewNote: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Whether the current user is a HaulBrokr admin
  */
 export const GetAdminAccessResponse = zod.object({
-  "isAdmin": zod.boolean().describe('True when the caller has any staff role (at least one permission).'),
-  "staffRole": zod.union([zod.literal('ap'),zod.literal('ar'),zod.literal('cfo'),zod.literal('cto'),zod.literal('ceo'),zod.literal('accounting'),zod.literal('it'),zod.literal(null)]).nullish().describe('The caller\'s resolved HaulBrokr staff role, or null if not staff.'),
-  "permissions": zod.array(zod.enum(['overview', 'payouts', 'credit', 'compliance', 'bins', 'view_staff', 'manage_staff'])).describe('The exact capabilities this staff role unlocks.')
-})
-
+  isAdmin: zod
+    .boolean()
+    .describe(
+      "True when the caller has any staff role (at least one permission).",
+    ),
+  staffRole: zod
+    .union([
+      zod.literal("ap"),
+      zod.literal("ar"),
+      zod.literal("cfo"),
+      zod.literal("cto"),
+      zod.literal("ceo"),
+      zod.literal("accounting"),
+      zod.literal("it"),
+      zod.literal(null),
+    ])
+    .nullish()
+    .describe(
+      "The caller's resolved HaulBrokr staff role, or null if not staff.",
+    ),
+  permissions: zod
+    .array(
+      zod.enum([
+        "overview",
+        "payouts",
+        "credit",
+        "compliance",
+        "bins",
+        "view_staff",
+        "manage_staff",
+      ]),
+    )
+    .describe("The exact capabilities this staff role unlocks."),
+});
 
 /**
  * @summary Platform-wide command-center KPIs (overview permission)
  */
 export const GetAdminOverviewResponse = zod.object({
-  "totalJobs": zod.number().describe('Total number of jobs ever brokered on the platform.'),
-  "gmv": zod.number().describe('Gross merchandise value — total customer-billed across all jobs.'),
-  "brokerFees": zod.number().describe('Total broker (platform) fees earned across all jobs.'),
-  "activeJobs": zod.number().describe('Jobs currently active or in progress.'),
-  "completedJobs": zod.number().describe('Jobs that have been completed.'),
-  "newCarriers": zod.number().describe('Count of carrier (provider) accounts.'),
-  "newCustomers": zod.number().describe('Count of customer accounts.'),
-  "stuckPayouts": zod.number().describe('Provider payouts stuck awaiting a transfer retry.'),
-  "pendingCompliance": zod.number().describe('Carrier compliance records awaiting review.'),
-  "pendingCredit": zod.number().describe('Customer credit applications awaiting review.'),
-  "openBinOrders": zod.number().describe('Bin orders not yet picked up or cancelled.')
-})
-
+  totalJobs: zod
+    .number()
+    .describe("Total number of jobs ever brokered on the platform."),
+  gmv: zod
+    .number()
+    .describe(
+      "Gross merchandise value — total customer-billed across all jobs.",
+    ),
+  brokerFees: zod
+    .number()
+    .describe("Total broker (platform) fees earned across all jobs."),
+  activeJobs: zod.number().describe("Jobs currently active or in progress."),
+  completedJobs: zod.number().describe("Jobs that have been completed."),
+  newCarriers: zod.number().describe("Count of carrier (provider) accounts."),
+  newCustomers: zod.number().describe("Count of customer accounts."),
+  stuckPayouts: zod
+    .number()
+    .describe("Provider payouts stuck awaiting a transfer retry."),
+  pendingCompliance: zod
+    .number()
+    .describe("Carrier compliance records awaiting review."),
+  pendingCredit: zod
+    .number()
+    .describe("Customer credit applications awaiting review."),
+  openBinOrders: zod
+    .number()
+    .describe("Bin orders not yet picked up or cancelled."),
+});
 
 /**
  * @summary List carrier compliance records for admin review
  */
 export const ListAdminComplianceResponseItem = zod.object({
-  "profileId": zod.number(),
-  "profile": zod.object({
-  "id": zod.number(),
-  "companyName": zod.string(),
-  "contactName": zod.string().nullish(),
-  "email": zod.string().nullish(),
-  "phone": zod.string().nullish(),
-  "city": zod.string().nullish(),
-  "state": zod.string().nullish(),
-  "role": zod.string()
-}),
-  "canBid": zod.boolean(),
-  "hasPendingReview": zod.boolean(),
-  "payoutStatus": zod.string(),
-  "w9": zod.union([zod.object({
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish(),
-  "submittedAt": zod.coerce.date().optional(),
-  "legalName": zod.string().optional(),
-  "businessName": zod.string().nullish(),
-  "taxIdType": zod.string().optional(),
-  "taxIdLast4": zod.string().optional()
-}),zod.null()]).optional(),
-  "insurance": zod.union([zod.object({
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish(),
-  "submittedAt": zod.coerce.date().optional(),
-  "glCarrier": zod.string(),
-  "glPolicyNumber": zod.string(),
-  "glCoverageAmount": zod.number(),
-  "glExpirationDate": zod.coerce.date()
-}),zod.null()]).optional(),
-  "dotCdl": zod.union([zod.object({
-  "id": zod.number(),
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish(),
-  "submittedAt": zod.coerce.date().nullish(),
-  "dotNumber": zod.string().nullish(),
-  "mcNumber": zod.string().nullish(),
-  "cdlNumber": zod.string().nullish(),
-  "cdlState": zod.string().nullish(),
-  "cdlClass": zod.string().nullish(),
-  "cdlExpiry": zod.coerce.date().nullish(),
-  "dotVerified": zod.boolean(),
-  "cdlVerified": zod.boolean(),
-  "fmcsaAuthority": zod.string().optional(),
-  "insuranceActive": zod.string().optional(),
-  "dotOperatingStatus": zod.string().optional(),
-  "notSuspended": zod.string().optional(),
-  "safetyRating": zod.string().nullish()
-}),zod.null()]).optional(),
-  "uploadedDocuments": zod.array(zod.object({
-  "docType": zod.string(),
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish(),
-  "fileName": zod.string().nullish(),
-  "objectPath": zod.string().nullish(),
-  "mimeType": zod.string().nullish(),
-  "uploadedAt": zod.coerce.date().nullish()
-}))
-})
-export const ListAdminComplianceResponse = zod.array(ListAdminComplianceResponseItem)
-
+  profileId: zod.number(),
+  profile: zod.object({
+    id: zod.number(),
+    companyName: zod.string(),
+    contactName: zod.string().nullish(),
+    email: zod.string().nullish(),
+    phone: zod.string().nullish(),
+    city: zod.string().nullish(),
+    state: zod.string().nullish(),
+    role: zod.string(),
+  }),
+  canBid: zod.boolean(),
+  hasPendingReview: zod.boolean(),
+  payoutStatus: zod.string(),
+  w9: zod
+    .union([
+      zod.object({
+        status: zod.string(),
+        reviewNote: zod.string().nullish(),
+        submittedAt: zod.coerce.date().optional(),
+        legalName: zod.string().optional(),
+        businessName: zod.string().nullish(),
+        taxIdType: zod.string().optional(),
+        taxIdLast4: zod.string().optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  insurance: zod
+    .union([
+      zod.object({
+        status: zod.string(),
+        reviewNote: zod.string().nullish(),
+        submittedAt: zod.coerce.date().optional(),
+        glCarrier: zod.string(),
+        glPolicyNumber: zod.string(),
+        glCoverageAmount: zod.number(),
+        glExpirationDate: zod.coerce.date(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  dotCdl: zod
+    .union([
+      zod.object({
+        id: zod.number(),
+        status: zod.string(),
+        reviewNote: zod.string().nullish(),
+        submittedAt: zod.coerce.date().nullish(),
+        dotNumber: zod.string().nullish(),
+        mcNumber: zod.string().nullish(),
+        cdlNumber: zod.string().nullish(),
+        cdlState: zod.string().nullish(),
+        cdlClass: zod.string().nullish(),
+        cdlExpiry: zod.coerce.date().nullish(),
+        dotVerified: zod.boolean(),
+        cdlVerified: zod.boolean(),
+        fmcsaAuthority: zod.string().optional(),
+        insuranceActive: zod.string().optional(),
+        dotOperatingStatus: zod.string().optional(),
+        notSuspended: zod.string().optional(),
+        safetyRating: zod.string().nullish(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+  uploadedDocuments: zod.array(
+    zod.object({
+      docType: zod.string(),
+      status: zod.string(),
+      reviewNote: zod.string().nullish(),
+      fileName: zod.string().nullish(),
+      objectPath: zod.string().nullish(),
+      mimeType: zod.string().nullish(),
+      uploadedAt: zod.coerce.date().nullish(),
+    }),
+  ),
+});
+export const ListAdminComplianceResponse = zod.array(
+  ListAdminComplianceResponseItem,
+);
 
 /**
  * @summary Approve or reject a carrier's W-9 submission
  */
 export const ReviewProviderW9Params = zod.object({
-  "profileId": zod.coerce.number()
-})
+  profileId: zod.coerce.number(),
+});
 
 export const ReviewProviderW9Body = zod.object({
-  "action": zod.enum(['approve', 'reject']),
-  "note": zod.string().optional().describe('Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.')
-})
+  action: zod.enum(["approve", "reject"]),
+  note: zod
+    .string()
+    .optional()
+    .describe(
+      "Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.",
+    ),
+});
 
 export const ReviewProviderW9Response = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "legalName": zod.string(),
-  "businessName": zod.string().nullish(),
-  "businessType": zod.enum(['sole_proprietor', 'single_member_llc', 'multi_member_llc', 'partnership', 'c_corporation', 's_corporation', 'other']),
-  "taxIdType": zod.enum(['ein', 'ssn']),
-  "taxIdLast4": zod.string(),
-  "address": zod.string(),
-  "city": zod.string(),
-  "state": zod.string(),
-  "zip": zod.string(),
-  "signatureFullName": zod.string(),
-  "agreedToTerms": zod.string(),
-  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  legalName: zod.string(),
+  businessName: zod.string().nullish(),
+  businessType: zod.enum([
+    "sole_proprietor",
+    "single_member_llc",
+    "multi_member_llc",
+    "partnership",
+    "c_corporation",
+    "s_corporation",
+    "other",
+  ]),
+  taxIdType: zod.enum(["ein", "ssn"]),
+  taxIdLast4: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  state: zod.string(),
+  zip: zod.string(),
+  signatureFullName: zod.string(),
+  agreedToTerms: zod.string(),
+  status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  reviewNote: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Approve or reject a carrier's insurance / COI submission
  */
 export const ReviewProviderInsuranceParams = zod.object({
-  "profileId": zod.coerce.number()
-})
+  profileId: zod.coerce.number(),
+});
 
 export const ReviewProviderInsuranceBody = zod.object({
-  "action": zod.enum(['approve', 'reject']),
-  "note": zod.string().optional().describe('Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.')
-})
+  action: zod.enum(["approve", "reject"]),
+  note: zod
+    .string()
+    .optional()
+    .describe(
+      "Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.",
+    ),
+});
 
 export const ReviewProviderInsuranceResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "glCarrier": zod.string(),
-  "glPolicyNumber": zod.string(),
-  "glCoverageAmount": zod.number(),
-  "glExpirationDate": zod.coerce.date(),
-  "autoCarrier": zod.string().nullish(),
-  "autoPolicyNumber": zod.string().nullish(),
-  "autoCoverageAmount": zod.number().nullish(),
-  "autoExpirationDate": zod.coerce.date().nullish(),
-  "wcCarrier": zod.string().nullish(),
-  "wcPolicyNumber": zod.string().nullish(),
-  "wcExpirationDate": zod.coerce.date().nullish(),
-  "bondCompany": zod.string().nullish(),
-  "bondAmount": zod.number().nullish(),
-  "bondExpirationDate": zod.coerce.date().nullish(),
-  "certificateHolderName": zod.string().nullish(),
-  "status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  glCarrier: zod.string(),
+  glPolicyNumber: zod.string(),
+  glCoverageAmount: zod.number(),
+  glExpirationDate: zod.coerce.date(),
+  autoCarrier: zod.string().nullish(),
+  autoPolicyNumber: zod.string().nullish(),
+  autoCoverageAmount: zod.number().nullish(),
+  autoExpirationDate: zod.coerce.date().nullish(),
+  wcCarrier: zod.string().nullish(),
+  wcPolicyNumber: zod.string().nullish(),
+  wcExpirationDate: zod.coerce.date().nullish(),
+  bondCompany: zod.string().nullish(),
+  bondAmount: zod.number().nullish(),
+  bondExpirationDate: zod.coerce.date().nullish(),
+  certificateHolderName: zod.string().nullish(),
+  status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  reviewNote: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Approve or reject an uploaded compliance document
  */
 export const ReviewProviderComplianceDocumentParams = zod.object({
-  "profileId": zod.coerce.number(),
-  "docType": zod.coerce.string()
-})
+  profileId: zod.coerce.number(),
+  docType: zod.coerce.string(),
+});
 
 export const ReviewProviderComplianceDocumentBody = zod.object({
-  "action": zod.enum(['approve', 'reject']),
-  "note": zod.string().optional().describe('Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.')
-})
+  action: zod.enum(["approve", "reject"]),
+  note: zod
+    .string()
+    .optional()
+    .describe(
+      "Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.",
+    ),
+});
 
 export const ReviewProviderComplianceDocumentResponse = zod.object({
-  "docType": zod.string(),
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish(),
-  "fileName": zod.string().nullish(),
-  "objectPath": zod.string().nullish(),
-  "mimeType": zod.string().nullish(),
-  "uploadedAt": zod.coerce.date().nullish()
-})
-
+  docType: zod.string(),
+  status: zod.string(),
+  reviewNote: zod.string().nullish(),
+  fileName: zod.string().nullish(),
+  objectPath: zod.string().nullish(),
+  mimeType: zod.string().nullish(),
+  uploadedAt: zod.coerce.date().nullish(),
+});
 
 /**
  * @summary Approve or reject a carrier's DOT/CDL compliance record
  */
 export const ReviewComplianceParams = zod.object({
-  "profileId": zod.coerce.number()
-})
+  profileId: zod.coerce.number(),
+});
 
 export const ReviewComplianceBody = zod.object({
-  "action": zod.enum(['approve', 'reject']),
-  "note": zod.string().optional().describe('Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.')
-})
+  action: zod.enum(["approve", "reject"]),
+  note: zod
+    .string()
+    .optional()
+    .describe(
+      "Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.",
+    ),
+});
 
 export const ReviewComplianceResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "dotNumber": zod.string().nullish(),
-  "mcNumber": zod.string().nullish(),
-  "dotVerified": zod.boolean().optional(),
-  "cdlNumber": zod.string().nullish(),
-  "cdlState": zod.string().nullish(),
-  "cdlClass": zod.string().nullish(),
-  "cdlExpiry": zod.coerce.date().nullish(),
-  "cdlVerified": zod.boolean().optional(),
-  "fmcsaAuthority": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "insuranceActive": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "dotOperatingStatus": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "safetyRating": zod.string().nullish(),
-  "notSuspended": zod.enum(['unknown', 'verified', 'failed']).optional(),
-  "complianceCheckedAt": zod.coerce.date().nullish(),
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  dotNumber: zod.string().nullish(),
+  mcNumber: zod.string().nullish(),
+  dotVerified: zod.boolean().optional(),
+  cdlNumber: zod.string().nullish(),
+  cdlState: zod.string().nullish(),
+  cdlClass: zod.string().nullish(),
+  cdlExpiry: zod.coerce.date().nullish(),
+  cdlVerified: zod.boolean().optional(),
+  fmcsaAuthority: zod.enum(["unknown", "verified", "failed"]).optional(),
+  insuranceActive: zod.enum(["unknown", "verified", "failed"]).optional(),
+  dotOperatingStatus: zod.enum(["unknown", "verified", "failed"]).optional(),
+  safetyRating: zod.string().nullish(),
+  notSuspended: zod.enum(["unknown", "verified", "failed"]).optional(),
+  complianceCheckedAt: zod.coerce.date().nullish(),
+  status: zod.string(),
+  reviewNote: zod.string().nullish(),
+});
 
 /**
  * @summary List credit applications for admin review
  */
 export const ListAdminCreditApplicationsResponseItem = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "wantsInvoicing": zod.boolean(),
-  "tradeReferences": zod.string().nullish(),
-  "bankReference": zod.string().nullish(),
-  "estimatedMonthlySpend": zod.number().nullish(),
-  "status": zod.string(),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date().optional(),
-  "profile": zod.object({
-  "id": zod.number(),
-  "companyName": zod.string(),
-  "contactName": zod.string().nullish(),
-  "email": zod.string().nullish(),
-  "phone": zod.string().nullish(),
-  "city": zod.string().nullish(),
-  "state": zod.string().nullish(),
-  "role": zod.string()
-})
-})
-export const ListAdminCreditApplicationsResponse = zod.array(ListAdminCreditApplicationsResponseItem)
-
+  id: zod.number(),
+  profileId: zod.number(),
+  wantsInvoicing: zod.boolean(),
+  tradeReferences: zod.string().nullish(),
+  bankReference: zod.string().nullish(),
+  estimatedMonthlySpend: zod.number().nullish(),
+  status: zod.string(),
+  reviewNote: zod.string().nullish(),
+  createdAt: zod.coerce.date().optional(),
+  profile: zod.object({
+    id: zod.number(),
+    companyName: zod.string(),
+    contactName: zod.string().nullish(),
+    email: zod.string().nullish(),
+    phone: zod.string().nullish(),
+    city: zod.string().nullish(),
+    state: zod.string().nullish(),
+    role: zod.string(),
+  }),
+});
+export const ListAdminCreditApplicationsResponse = zod.array(
+  ListAdminCreditApplicationsResponseItem,
+);
 
 /**
  * @summary List provider payouts stuck in requires_action with a succeeded charge
  */
 export const ListStuckPayoutsResponseItem = zod.object({
-  "id": zod.number(),
-  "materialType": zod.string(),
-  "customerCompany": zod.string(),
-  "providerCompany": zod.string(),
-  "providerNetAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "paymentAttempts": zod.number(),
-  "payoutRetryFailures": zod.number().describe('Consecutive failed transfer attempts for this payout.'),
-  "payoutAlertSentAt": zod.coerce.date().nullish().describe('When admins were alerted that this payout crossed the failure threshold, if ever.'),
-  "completedAt": zod.coerce.date().nullish(),
-  "createdAt": zod.coerce.date().optional()
-})
-export const ListStuckPayoutsResponse = zod.array(ListStuckPayoutsResponseItem)
-
+  id: zod.number(),
+  materialType: zod.string(),
+  customerCompany: zod.string(),
+  providerCompany: zod.string(),
+  providerNetAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  paymentAttempts: zod.number(),
+  payoutRetryFailures: zod
+    .number()
+    .describe("Consecutive failed transfer attempts for this payout."),
+  payoutAlertSentAt: zod.coerce
+    .date()
+    .nullish()
+    .describe(
+      "When admins were alerted that this payout crossed the failure threshold, if ever.",
+    ),
+  completedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date().optional(),
+});
+export const ListStuckPayoutsResponse = zod.array(ListStuckPayoutsResponseItem);
 
 /**
  * @summary Retry only the provider transfer for a stuck payout (never re-charges)
  */
 export const RetryStuckPayoutParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const RetryStuckPayoutResponse = zod.object({
-  "jobId": zod.number(),
-  "outcome": zod.enum(['released', 'skipped', 'failed']),
-  "message": zod.string()
-})
-
+  jobId: zod.number(),
+  outcome: zod.enum(["released", "skipped", "failed"]),
+  message: zod.string(),
+});
 
 /**
  * @summary Clear a stuck payout's consecutive failure count and alert flag (does not retry)
  */
 export const ResetStuckPayoutFailuresParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const ResetStuckPayoutFailuresResponse = zod.object({
-  "id": zod.number(),
-  "payoutRetryFailures": zod.number().describe('Always 0 after a reset.'),
-  "payoutAlertSentAt": zod.coerce.date().nullable().describe('Always null after a reset.')
-})
-
+  id: zod.number(),
+  payoutRetryFailures: zod.number().describe("Always 0 after a reset."),
+  payoutAlertSentAt: zod.coerce
+    .date()
+    .nullable()
+    .describe("Always null after a reset."),
+});
 
 /**
  * @summary Approve or reject a customer's credit application
  */
 export const ReviewCreditApplicationParams = zod.object({
-  "profileId": zod.coerce.number()
-})
+  profileId: zod.coerce.number(),
+});
 
 export const ReviewCreditApplicationBody = zod.object({
-  "action": zod.enum(['approve', 'reject']),
-  "note": zod.string().optional().describe('Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.')
-})
+  action: zod.enum(["approve", "reject"]),
+  note: zod
+    .string()
+    .optional()
+    .describe(
+      "Optional reviewer note (e.g. the reason for a rejection). Shown to the applicant.",
+    ),
+});
 
 export const ReviewCreditApplicationResponse = zod.object({
-  "id": zod.number(),
-  "profileId": zod.number(),
-  "wantsInvoicing": zod.boolean(),
-  "tradeReferences": zod.string().nullish(),
-  "bankReference": zod.string().nullish(),
-  "estimatedMonthlySpend": zod.number().nullish(),
-  "status": zod.enum(['not_submitted', 'pending', 'approved', 'rejected']),
-  "reviewNote": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  profileId: zod.number(),
+  wantsInvoicing: zod.boolean(),
+  tradeReferences: zod.string().nullish(),
+  bankReference: zod.string().nullish(),
+  estimatedMonthlySpend: zod.number().nullish(),
+  status: zod.enum(["not_submitted", "pending", "approved", "rejected"]),
+  reviewNote: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary List HaulBrokr staff members and their roles (manage_staff only)
  */
 export const ListAdminStaffResponseItem = zod.object({
-  "id": zod.number(),
-  "companyName": zod.string(),
-  "contactName": zod.string().nullish(),
-  "email": zod.string().nullish(),
-  "phone": zod.string().nullish(),
-  "city": zod.string().nullish(),
-  "state": zod.string().nullish(),
-  "role": zod.string(),
-  "staffRole": zod.union([zod.literal('ap'),zod.literal('ar'),zod.literal('cfo'),zod.literal('cto'),zod.literal('ceo'),zod.literal('accounting'),zod.literal('it'),zod.literal(null)]).nullable()
-})
-export const ListAdminStaffResponse = zod.array(ListAdminStaffResponseItem)
-
+  id: zod.number(),
+  companyName: zod.string(),
+  contactName: zod.string().nullish(),
+  email: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  city: zod.string().nullish(),
+  state: zod.string().nullish(),
+  role: zod.string(),
+  staffRole: zod
+    .union([
+      zod.literal("ap"),
+      zod.literal("ar"),
+      zod.literal("cfo"),
+      zod.literal("cto"),
+      zod.literal("ceo"),
+      zod.literal("accounting"),
+      zod.literal("it"),
+      zod.literal(null),
+    ])
+    .nullable(),
+});
+export const ListAdminStaffResponse = zod.array(ListAdminStaffResponseItem);
 
 /**
  * @summary Assign or clear a profile's staff role (manage_staff only)
  */
 export const UpdateStaffRoleParams = zod.object({
-  "profileId": zod.coerce.number()
-})
+  profileId: zod.coerce.number(),
+});
 
 export const UpdateStaffRoleBody = zod.object({
-  "staffRole": zod.union([zod.literal('ceo'),zod.literal('cto'),zod.literal('cfo'),zod.literal('accounting'),zod.literal('it'),zod.literal(null)]).nullable().describe('The staff role to assign, or null to remove staff access.')
-})
+  staffRole: zod
+    .union([
+      zod.literal("ceo"),
+      zod.literal("cto"),
+      zod.literal("cfo"),
+      zod.literal("accounting"),
+      zod.literal("it"),
+      zod.literal(null),
+    ])
+    .nullable()
+    .describe("The staff role to assign, or null to remove staff access."),
+});
 
 export const UpdateStaffRoleResponse = zod.object({
-  "id": zod.number(),
-  "companyName": zod.string(),
-  "contactName": zod.string().nullish(),
-  "email": zod.string().nullish(),
-  "phone": zod.string().nullish(),
-  "city": zod.string().nullish(),
-  "state": zod.string().nullish(),
-  "role": zod.string(),
-  "staffRole": zod.union([zod.literal('ap'),zod.literal('ar'),zod.literal('cfo'),zod.literal('cto'),zod.literal('ceo'),zod.literal('accounting'),zod.literal('it'),zod.literal(null)]).nullable()
-})
-
+  id: zod.number(),
+  companyName: zod.string(),
+  contactName: zod.string().nullish(),
+  email: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  city: zod.string().nullish(),
+  state: zod.string().nullish(),
+  role: zod.string(),
+  staffRole: zod
+    .union([
+      zod.literal("ap"),
+      zod.literal("ar"),
+      zod.literal("cfo"),
+      zod.literal("cto"),
+      zod.literal("ceo"),
+      zod.literal("accounting"),
+      zod.literal("it"),
+      zod.literal(null),
+    ])
+    .nullable(),
+});
 
 /**
  * @summary List every customer's bin orders for staff fulfilment
  */
 export const ListAdminBinOrdersResponseItem = zod.object({
-  "id": zod.string(),
-  "customerId": zod.string(),
-  "customerCompany": zod.string().nullish(),
-  "serviceType": zod.string(),
-  "binSize": zod.string(),
-  "binType": zod.string(),
-  "quantity": zod.number(),
-  "deliveryAddress": zod.string(),
-  "deliveryLat": zod.string().nullish(),
-  "deliveryLng": zod.string().nullish(),
-  "deliveryDate": zod.coerce.date(),
-  "pickupDate": zod.coerce.date().nullish(),
-  "wasteType": zod.string(),
-  "preferredProvider": zod.string().nullish(),
-  "status": zod.string(),
-  "estimatedCostCents": zod.number().nullish(),
-  "notes": zod.string().nullish(),
-  "binSizeLabel": zod.string(),
-  "binTypeLabel": zod.string(),
-  "priceRange": zod.string().nullish(),
-  "priceUnit": zod.string().nullish(),
-  "estimatedCost": zod.string(),
-  "displayStatus": zod.string(),
-  "createdAt": zod.coerce.date(),
-  "updatedAt": zod.coerce.date()
-})
-export const ListAdminBinOrdersResponse = zod.array(ListAdminBinOrdersResponseItem)
-
+  id: zod.string(),
+  customerId: zod.string(),
+  customerCompany: zod.string().nullish(),
+  serviceType: zod.string(),
+  binSize: zod.string(),
+  binType: zod.string(),
+  quantity: zod.number(),
+  deliveryAddress: zod.string(),
+  deliveryLat: zod.string().nullish(),
+  deliveryLng: zod.string().nullish(),
+  deliveryDate: zod.coerce.date(),
+  pickupDate: zod.coerce.date().nullish(),
+  wasteType: zod.string(),
+  preferredProvider: zod.string().nullish(),
+  status: zod.string(),
+  estimatedCostCents: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  binSizeLabel: zod.string(),
+  binTypeLabel: zod.string(),
+  priceRange: zod.string().nullish(),
+  priceUnit: zod.string().nullish(),
+  estimatedCost: zod.string(),
+  displayStatus: zod.string(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListAdminBinOrdersResponse = zod.array(
+  ListAdminBinOrdersResponseItem,
+);
 
 /**
  * @summary Advance a bin order through its fulfilment lifecycle (staff only)
  */
 export const AdvanceBinOrderStatusParams = zod.object({
-  "id": zod.coerce.string()
-})
+  id: zod.coerce.string(),
+});
 
 export const AdvanceBinOrderStatusBody = zod.object({
-  "status": zod.enum(['confirmed', 'delivered', 'picked_up']).describe('The next lifecycle status to move the bin order to.')
-})
+  status: zod
+    .enum(["confirmed", "delivered", "picked_up"])
+    .describe("The next lifecycle status to move the bin order to."),
+});
 
 export const AdvanceBinOrderStatusResponse = zod.object({
-  "id": zod.string(),
-  "customerId": zod.string(),
-  "customerCompany": zod.string().nullish(),
-  "serviceType": zod.string(),
-  "binSize": zod.string(),
-  "binType": zod.string(),
-  "quantity": zod.number(),
-  "deliveryAddress": zod.string(),
-  "deliveryLat": zod.string().nullish(),
-  "deliveryLng": zod.string().nullish(),
-  "deliveryDate": zod.coerce.date(),
-  "pickupDate": zod.coerce.date().nullish(),
-  "wasteType": zod.string(),
-  "preferredProvider": zod.string().nullish(),
-  "status": zod.string(),
-  "estimatedCostCents": zod.number().nullish(),
-  "notes": zod.string().nullish(),
-  "binSizeLabel": zod.string(),
-  "binTypeLabel": zod.string(),
-  "priceRange": zod.string().nullish(),
-  "priceUnit": zod.string().nullish(),
-  "estimatedCost": zod.string(),
-  "displayStatus": zod.string(),
-  "createdAt": zod.coerce.date(),
-  "updatedAt": zod.coerce.date()
-})
-
+  id: zod.string(),
+  customerId: zod.string(),
+  customerCompany: zod.string().nullish(),
+  serviceType: zod.string(),
+  binSize: zod.string(),
+  binType: zod.string(),
+  quantity: zod.number(),
+  deliveryAddress: zod.string(),
+  deliveryLat: zod.string().nullish(),
+  deliveryLng: zod.string().nullish(),
+  deliveryDate: zod.coerce.date(),
+  pickupDate: zod.coerce.date().nullish(),
+  wasteType: zod.string(),
+  preferredProvider: zod.string().nullish(),
+  status: zod.string(),
+  estimatedCostCents: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  binSizeLabel: zod.string(),
+  binTypeLabel: zod.string(),
+  priceRange: zod.string().nullish(),
+  priceUnit: zod.string().nullish(),
+  estimatedCost: zod.string(),
+  displayStatus: zod.string(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
 
 /**
  * @summary Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
  */
 export const ChargeJobParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const ChargeJobResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
  */
 export const ReleaseJobPaymentParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const ReleaseJobPaymentResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Get the client secret needed to confirm a payment that the bank flagged as requiring customer authentication (3-D Secure).
  */
 export const GetJobPaymentConfirmationParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const GetJobPaymentConfirmationResponse = zod.object({
-  "clientSecret": zod.string().describe('PaymentIntent client secret used with stripe.confirmCardPayment to complete bank authentication on-session.'),
-  "publishableKey": zod.string().describe('Stripe publishable key for initialising Stripe.js on the client.'),
-  "paymentIntentId": zod.string().describe('The PaymentIntent awaiting customer authentication.')
-})
-
+  clientSecret: zod
+    .string()
+    .describe(
+      "PaymentIntent client secret used with stripe.confirmCardPayment to complete bank authentication on-session.",
+    ),
+  publishableKey: zod
+    .string()
+    .describe(
+      "Stripe publishable key for initialising Stripe.js on the client.",
+    ),
+  paymentIntentId: zod
+    .string()
+    .describe("The PaymentIntent awaiting customer authentication."),
+});
 
 /**
  * @summary Finalize a payment after the customer re-authenticated the card on-session (transfers the net payout and marks the job released).
  */
 export const ConfirmJobPaymentParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const ConfirmJobPaymentResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
  */
 export const CreateJobCheckoutSessionParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const CreateJobCheckoutSessionBody = zod.object({
-  "returnTo": zod.string().optional().describe('Optional URL\/deep link the hosted Checkout return page should bounce back to (a web page URL or a mobile deep link).')
-})
+  returnTo: zod
+    .string()
+    .optional()
+    .describe(
+      "Optional URL\/deep link the hosted Checkout return page should bounce back to (a web page URL or a mobile deep link).",
+    ),
+});
 
 export const CreateJobCheckoutSessionResponse = zod.object({
-  "url": zod.string().describe('Stripe-hosted Checkout URL to redirect the customer to.')
-})
-
+  url: zod
+    .string()
+    .describe("Stripe-hosted Checkout URL to redirect the customer to."),
+});
 
 /**
  * @summary Verify a returned Stripe Checkout Session and finalize the job — records the PaymentIntent and marks it released once payment_status is paid. Idempotent.
  */
 export const VerifyJobCheckoutParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const VerifyJobCheckoutBody = zod.object({
-  "sessionId": zod.string().describe('The Stripe Checkout Session id handed back to the app on return from Checkout.')
-})
+  sessionId: zod
+    .string()
+    .describe(
+      "The Stripe Checkout Session id handed back to the app on return from Checkout.",
+    ),
+});
 
 export const VerifyJobCheckoutResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary List members of the current user's company
  */
 export const ListOrgMembersResponse = zod.object({
-  "members": zod.array(zod.object({
-  "id": zod.number(),
-  "role": zod.enum(['customer', 'provider', 'driver', 'supervisor']),
-  "orgRole": zod.string().nullish(),
-  "contactName": zod.string().nullish(),
-  "companyName": zod.string(),
-  "phone": zod.string().nullish(),
-  "email": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-}))
-})
-
+  members: zod.array(
+    zod.object({
+      id: zod.number(),
+      role: zod.enum(["customer", "provider", "driver", "supervisor"]),
+      orgRole: zod.string().nullish(),
+      contactName: zod.string().nullish(),
+      companyName: zod.string(),
+      phone: zod.string().nullish(),
+      email: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
 
 /**
  * @summary Promote or demote a company member (owner/admin only)
  */
 export const UpdateOrgMemberRoleParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const UpdateOrgMemberRoleBody = zod.object({
-  "orgRole": zod.enum(['admin', 'member'])
-})
+  orgRole: zod.enum(["admin", "member"]),
+});
 
 export const UpdateOrgMemberRoleResponse = zod.object({
-  "id": zod.number(),
-  "role": zod.enum(['customer', 'provider', 'driver', 'supervisor']),
-  "orgRole": zod.string().nullish(),
-  "contactName": zod.string().nullish(),
-  "companyName": zod.string(),
-  "phone": zod.string().nullish(),
-  "email": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  role: zod.enum(["customer", "provider", "driver", "supervisor"]),
+  orgRole: zod.string().nullish(),
+  contactName: zod.string().nullish(),
+  companyName: zod.string(),
+  phone: zod.string().nullish(),
+  email: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Remove a member from the company (owner/admin only)
  */
 export const RemoveOrgMemberParams = zod.object({
-  "id": zod.coerce.number()
-})
-
+  id: zod.coerce.number(),
+});
 
 /**
  * @summary Assign a driver and truck to a job (creates a load ticket)
  */
 export const AssignJobParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const AssignJobBody = zod.object({
-  "driverProfileId": zod.number(),
-  "truckId": zod.number().optional()
-})
-
+  driverProfileId: zod.number(),
+  truckId: zod.number().optional(),
+});
 
 /**
  * @summary Timeline of driver-reported status updates for a job
  */
 export const ListJobStatusUpdatesParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const ListJobStatusUpdatesResponseItem = zod.object({
-  "id": zod.number(),
-  "jobId": zod.number(),
-  "ticketId": zod.number().nullish(),
-  "actorProfileId": zod.number(),
-  "actorName": zod.string().nullish(),
-  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'checked_in', 'started', 'ticket_uploaded', 'photo_uploaded', 'completed']),
-  "note": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-export const ListJobStatusUpdatesResponse = zod.array(ListJobStatusUpdatesResponseItem)
-
+  id: zod.number(),
+  jobId: zod.number(),
+  ticketId: zod.number().nullish(),
+  actorProfileId: zod.number(),
+  actorName: zod.string().nullish(),
+  status: zod.enum([
+    "en_route",
+    "arrived",
+    "loading",
+    "loaded",
+    "dumping",
+    "checked_in",
+    "started",
+    "ticket_uploaded",
+    "photo_uploaded",
+    "completed",
+  ]),
+  note: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListJobStatusUpdatesResponse = zod.array(
+  ListJobStatusUpdatesResponseItem,
+);
 
 /**
  * @summary Driver reports a status update (en route, arrived, loading, etc.)
  */
 export const CreateJobStatusUpdateParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const CreateJobStatusUpdateBody = zod.object({
-  "status": zod.enum(['en_route', 'arrived', 'loading', 'loaded', 'dumping', 'checked_in', 'started', 'ticket_uploaded', 'photo_uploaded', 'completed']),
-  "ticketId": zod.number().optional(),
-  "note": zod.string().optional()
-})
-
+  status: zod.enum([
+    "en_route",
+    "arrived",
+    "loading",
+    "loaded",
+    "dumping",
+    "checked_in",
+    "started",
+    "ticket_uploaded",
+    "photo_uploaded",
+    "completed",
+  ]),
+  ticketId: zod.number().optional(),
+  note: zod.string().optional(),
+});
 
 /**
  * @summary Foreman/customer approves a completed job
  */
 export const ApproveJobCompletionParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const ApproveJobCompletionResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Foreman/customer flags a completed job with an issue
  */
 export const FlagJobCompletionParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const FlagJobCompletionBody = zod.object({
-  "reason": zod.string()
-})
+  reason: zod.string(),
+});
 
 export const FlagJobCompletionResponse = zod.object({
-  "id": zod.number(),
-  "requestId": zod.number(),
-  "bidId": zod.number(),
-  "customerId": zod.number(),
-  "customerCompany": zod.string(),
-  "providerId": zod.number(),
-  "providerCompany": zod.string(),
-  "ratePerHour": zod.number(),
-  "trucksAssigned": zod.number(),
-  "status": zod.enum(['active', 'awarded', 'accepted', 'declined', 'cancelled', 'in_progress', 'completed']),
-  "materialType": zod.string(),
-  "truckType": zod.enum(['standard', 'articulated', 'side_dump', 'bottom_dump', 'transfer', 'dump_truck', 'super_10', 'end_dump', 'belly_dump', 'lowboy', 'water_truck', 'excavator', 'dozer', 'skid_steer']),
-  "pickupAddress": zod.string(),
-  "deliveryAddress": zod.string(),
-  "scheduledDate": zod.coerce.date(),
-  "startTime": zod.string(),
-  "estimatedHours": zod.number(),
-  "startedAt": zod.coerce.date().nullish(),
-  "completedAt": zod.coerce.date().nullish(),
-  "totalHours": zod.number().nullish(),
-  "totalAmount": zod.number().nullish(),
-  "platformFeeRate": zod.number().nullish(),
-  "platformFeeAmount": zod.number().nullish(),
-  "customerTotalAmount": zod.number().nullish(),
-  "providerNetAmount": zod.number().nullish(),
-  "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
-  "paymentDueDate": zod.coerce.date().nullish(),
-  "invoicedAt": zod.coerce.date().nullish(),
-  "paidAt": zod.coerce.date().nullish(),
-  "releasedAt": zod.coerce.date().nullish(),
-  "projectId": zod.number().nullish(),
-  "completionApproval": zod.union([zod.literal('pending'),zod.literal('approved'),zod.literal('flagged'),zod.literal(null)]).nullish(),
-  "approvedByProfileId": zod.number().nullish(),
-  "completionApprovedAt": zod.coerce.date().nullish(),
-  "flagReason": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
-})
-
+  id: zod.number(),
+  requestId: zod.number(),
+  bidId: zod.number(),
+  customerId: zod.number(),
+  customerCompany: zod.string(),
+  providerId: zod.number(),
+  providerCompany: zod.string(),
+  ratePerHour: zod.number(),
+  trucksAssigned: zod.number(),
+  status: zod.enum([
+    "active",
+    "awarded",
+    "accepted",
+    "declined",
+    "cancelled",
+    "in_progress",
+    "completed",
+  ]),
+  materialType: zod.string(),
+  truckType: zod.enum([
+    "standard",
+    "articulated",
+    "side_dump",
+    "bottom_dump",
+    "transfer",
+    "dump_truck",
+    "super_10",
+    "end_dump",
+    "belly_dump",
+    "lowboy",
+    "water_truck",
+    "excavator",
+    "dozer",
+    "skid_steer",
+  ]),
+  pickupAddress: zod.string(),
+  deliveryAddress: zod.string(),
+  scheduledDate: zod.coerce.date(),
+  startTime: zod.string(),
+  estimatedHours: zod.number(),
+  startedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  totalHours: zod.number().nullish(),
+  totalAmount: zod.number().nullish(),
+  platformFeeRate: zod.number().nullish(),
+  platformFeeAmount: zod.number().nullish(),
+  customerTotalAmount: zod.number().nullish(),
+  providerNetAmount: zod.number().nullish(),
+  paymentStatus: zod
+    .enum([
+      "unpaid",
+      "invoiced",
+      "paid",
+      "released",
+      "failed",
+      "requires_action",
+    ])
+    .optional(),
+  paymentDueDate: zod.coerce.date().nullish(),
+  invoicedAt: zod.coerce.date().nullish(),
+  paidAt: zod.coerce.date().nullish(),
+  releasedAt: zod.coerce.date().nullish(),
+  projectId: zod.number().nullish(),
+  completionApproval: zod
+    .union([
+      zod.literal("pending"),
+      zod.literal("approved"),
+      zod.literal("flagged"),
+      zod.literal(null),
+    ])
+    .nullish(),
+  approvedByProfileId: zod.number().nullish(),
+  completionApprovedAt: zod.coerce.date().nullish(),
+  flagReason: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary List chat messages for a job (members only)
  */
 export const GetJobMessagesParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const GetJobMessagesResponseItem = zod.object({
-  "id": zod.number(),
-  "jobId": zod.number(),
-  "senderProfileId": zod.number(),
-  "senderName": zod.string(),
-  "body": zod.string(),
-  "createdAt": zod.coerce.date()
-})
-export const GetJobMessagesResponse = zod.array(GetJobMessagesResponseItem)
-
+  id: zod.number(),
+  jobId: zod.number(),
+  senderProfileId: zod.number(),
+  senderName: zod.string(),
+  body: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const GetJobMessagesResponse = zod.array(GetJobMessagesResponseItem);
 
 /**
  * @summary Post a chat message to a job (members only)
  */
 export const CreateJobMessageParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const createJobMessageBodyBodyMax = 2000;
 
-
-
 export const CreateJobMessageBody = zod.object({
-  "body": zod.string().min(1).max(createJobMessageBodyBodyMax)
-})
-
+  body: zod.string().min(1).max(createJobMessageBodyBodyMax),
+});
 
 /**
  * @summary List foremen assigned to a job site
  */
 export const ListProjectAssignmentsParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const ListProjectAssignmentsResponseItem = zod.object({
-  "id": zod.number(),
-  "projectId": zod.number(),
-  "supervisorProfileId": zod.number(),
-  "supervisorName": zod.string().nullish(),
-  "assignedByProfileId": zod.number().nullish(),
-  "createdAt": zod.coerce.date()
-})
-export const ListProjectAssignmentsResponse = zod.array(ListProjectAssignmentsResponseItem)
-
+  id: zod.number(),
+  projectId: zod.number(),
+  supervisorProfileId: zod.number(),
+  supervisorName: zod.string().nullish(),
+  assignedByProfileId: zod.number().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListProjectAssignmentsResponse = zod.array(
+  ListProjectAssignmentsResponseItem,
+);
 
 /**
  * @summary Assign a foreman to a job site
  */
 export const CreateProjectAssignmentParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
 export const CreateProjectAssignmentBody = zod.object({
-  "supervisorProfileId": zod.number()
-})
-
+  supervisorProfileId: zod.number(),
+});
 
 /**
  * @summary Unassign a foreman from a job site
  */
 export const RemoveProjectAssignmentParams = zod.object({
-  "id": zod.coerce.number(),
-  "profileId": zod.coerce.number()
-})
-
+  id: zod.coerce.number(),
+  profileId: zod.coerce.number(),
+});
 
 /**
  * @summary Get the authenticated user's organization
  */
-export const GetMyOrganizationResponse = zod.object({
-
-}).passthrough()
-
+export const GetMyOrganizationResponse = zod.object({}).passthrough();
 
 /**
  * @summary Get hauling company compliance status for org members
  */
 export const GetOrganizationComplianceStatusResponse = zod.object({
-  "w9Status": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "insuranceStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "dotCdlStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "payoutStatus": zod.enum(['not_submitted', 'pending', 'verified', 'rejected']),
-  "canBid": zod.boolean(),
-  "w9ReviewNote": zod.string().nullish(),
-  "insuranceReviewNote": zod.string().nullish(),
-  "dotCdlReviewNote": zod.string().nullish()
-})
-
+  w9Status: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  insuranceStatus: zod.enum([
+    "not_submitted",
+    "pending",
+    "verified",
+    "rejected",
+  ]),
+  dotCdlStatus: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  payoutStatus: zod.enum(["not_submitted", "pending", "verified", "rejected"]),
+  canBid: zod.boolean(),
+  w9ReviewNote: zod.string().nullish(),
+  insuranceReviewNote: zod.string().nullish(),
+  dotCdlReviewNote: zod.string().nullish(),
+});
 
 /**
  * @summary Rotate organization invite code (owner only)
  */
 export const RotateOrganizationInviteCodeResponse = zod.object({
-  "inviteCode": zod.string().optional()
-})
-
+  inviteCode: zod.string().optional(),
+});
 
 /**
  * @summary List customer projects
  */
-export const ListProjectsResponseItem = zod.object({
-
-}).passthrough()
-export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
-
+export const ListProjectsResponseItem = zod.object({}).passthrough();
+export const ListProjectsResponse = zod.array(ListProjectsResponseItem);
 
 /**
  * @summary Create a project
  */
 export const CreateProjectBody = zod.object({
-  "name": zod.string(),
-  "description": zod.string().optional(),
-  "siteAddress": zod.string().optional(),
-  "totalBudget": zod.number().optional()
-})
-
+  name: zod.string(),
+  description: zod.string().optional(),
+  siteAddress: zod.string().optional(),
+  totalBudget: zod.number().optional(),
+});
 
 /**
  * @summary Get project by id
  */
 export const GetProjectParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
-export const GetProjectResponse = zod.object({
-
-}).passthrough()
-
+export const GetProjectResponse = zod.object({}).passthrough();
 
 /**
  * @summary Update project
  */
 export const UpdateProjectParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
-export const UpdateProjectBody = zod.object({
+export const UpdateProjectBody = zod.object({}).passthrough();
 
-}).passthrough()
-
-export const UpdateProjectResponse = zod.object({
-
-}).passthrough()
-
+export const UpdateProjectResponse = zod.object({}).passthrough();
 
 /**
  * @summary Delete project
  */
 export const DeleteProjectParams = zod.object({
-  "id": zod.coerce.number()
-})
-
+  id: zod.coerce.number(),
+});
 
 /**
  * @summary List provider factoring requests
  */
-export const ListFactoringRequestsResponseItem = zod.object({
-
-}).passthrough()
-export const ListFactoringRequestsResponse = zod.array(ListFactoringRequestsResponseItem)
-
+export const ListFactoringRequestsResponseItem = zod.object({}).passthrough();
+export const ListFactoringRequestsResponse = zod.array(
+  ListFactoringRequestsResponseItem,
+);
 
 /**
  * @summary Request invoice factoring advance
  */
 export const CreateFactoringRequestBody = zod.object({
-  "jobId": zod.number()
-})
-
+  jobId: zod.number(),
+});
 
 /**
  * @summary Staff approve and fund factoring request
  */
 export const ApproveFactoringRequestParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
-export const ApproveFactoringRequestResponse = zod.object({
-
-}).passthrough()
-
+export const ApproveFactoringRequestResponse = zod.object({}).passthrough();
 
 /**
  * @summary QuickBooks connection status
  */
-export const GetQuickBooksStatusResponse = zod.object({
-
-}).passthrough()
-
+export const GetQuickBooksStatusResponse = zod.object({}).passthrough();
 
 /**
  * @summary Connect QuickBooks (simulated)
  */
 export const ConnectQuickBooksBody = zod.object({
-  "companyName": zod.string()
-})
+  companyName: zod.string(),
+});
 
-export const ConnectQuickBooksResponse = zod.object({
-
-}).passthrough()
-
+export const ConnectQuickBooksResponse = zod.object({}).passthrough();
 
 /**
  * @summary Disconnect QuickBooks
  */
-export const DisconnectQuickBooksResponse = zod.object({
-
-}).passthrough()
-
+export const DisconnectQuickBooksResponse = zod.object({}).passthrough();
 
 /**
  * @summary Sync invoices to QuickBooks (simulated)
  */
-export const SyncQuickBooksResponse = zod.object({
-
-}).passthrough()
-
+export const SyncQuickBooksResponse = zod.object({}).passthrough();
 
 /**
  * @summary List load tickets for a job
  */
 export const ListJobTicketsParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
-export const ListJobTicketsResponse = zod.object({
-
-}).passthrough()
-
+export const ListJobTicketsResponse = zod.object({}).passthrough();
 
 /**
  * @summary Create a load ticket
  */
 export const CreateJobTicketParams = zod.object({
-  "id": zod.coerce.number()
-})
-
+  id: zod.coerce.number(),
+});
 
 /**
  * @summary Clock in on a ticket
  */
 export const ClockInTicketParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
-export const ClockInTicketResponse = zod.object({
-
-}).passthrough()
-
+export const ClockInTicketResponse = zod.object({}).passthrough();
 
 /**
  * @summary Clock out on a ticket
  */
 export const ClockOutTicketParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
-export const ClockOutTicketResponse = zod.object({
-
-}).passthrough()
-
+export const ClockOutTicketResponse = zod.object({}).passthrough();
 
 /**
  * @summary Issue QR verification token for ticket
  */
 export const IssueTicketQrParams = zod.object({
-  "id": zod.coerce.number()
-})
+  id: zod.coerce.number(),
+});
 
-export const IssueTicketQrResponse = zod.object({
-
-}).passthrough()
-
+export const IssueTicketQrResponse = zod.object({}).passthrough();
 
 /**
  * @summary Verify ticket via QR token
  */
 export const VerifyTicketQrBody = zod.object({
-  "token": zod.string()
-})
+  token: zod.string(),
+});
 
-export const VerifyTicketQrResponse = zod.object({
-
-}).passthrough()
-
+export const VerifyTicketQrResponse = zod.object({}).passthrough();
 
 /**
  * @summary List delivery evidence for a job
  */
 export const ListJobEvidenceParams = zod.object({
-  "jobId": zod.coerce.number()
-})
+  jobId: zod.coerce.number(),
+});
 
-export const ListJobEvidenceResponseItem = zod.object({
-
-}).passthrough()
-export const ListJobEvidenceResponse = zod.array(ListJobEvidenceResponseItem)
-
+export const ListJobEvidenceResponseItem = zod.object({}).passthrough();
+export const ListJobEvidenceResponse = zod.array(ListJobEvidenceResponseItem);
 
 /**
  * @summary Upload delivery evidence
  */
 export const CreateJobEvidenceParams = zod.object({
-  "jobId": zod.coerce.number()
-})
+  jobId: zod.coerce.number(),
+});
 
-export const CreateJobEvidenceBody = zod.object({
-
-}).passthrough()
-
+export const CreateJobEvidenceBody = zod.object({}).passthrough();
 
 /**
  * @summary Bin catalog and pricing
  */
-export const ListBinCatalogResponse = zod.object({
-
-}).passthrough()
-
+export const ListBinCatalogResponse = zod.object({}).passthrough();
 
 /**
  * @summary List user's bin orders
  */
-export const ListBinOrdersResponseItem = zod.object({
-
-}).passthrough()
-export const ListBinOrdersResponse = zod.array(ListBinOrdersResponseItem)
-
+export const ListBinOrdersResponseItem = zod.object({}).passthrough();
+export const ListBinOrdersResponse = zod.array(ListBinOrdersResponseItem);
 
 /**
  * @summary Create bin order
  */
-export const CreateBinOrderBody = zod.object({
-
-}).passthrough()
-
+export const CreateBinOrderBody = zod.object({}).passthrough();
 
 /**
  * @summary Get bin order
  */
 export const GetBinOrderParams = zod.object({
-  "id": zod.coerce.string()
-})
+  id: zod.coerce.string(),
+});
 
-export const GetBinOrderResponse = zod.object({
-
-}).passthrough()
-
+export const GetBinOrderResponse = zod.object({}).passthrough();
 
 /**
  * @summary List driver documents
  */
-export const ListDriverDocsResponseItem = zod.object({
-
-}).passthrough()
-export const ListDriverDocsResponse = zod.array(ListDriverDocsResponseItem)
-
+export const ListDriverDocsResponseItem = zod.object({}).passthrough();
+export const ListDriverDocsResponse = zod.array(ListDriverDocsResponseItem);
 
 /**
  * @summary Upsert a driver document
  */
 export const UpsertDriverDocParams = zod.object({
-  "docType": zod.coerce.string()
-})
+  docType: zod.coerce.string(),
+});
 
-export const UpsertDriverDocBody = zod.object({
+export const UpsertDriverDocBody = zod.object({}).passthrough();
 
-}).passthrough()
-
-export const UpsertDriverDocResponse = zod.object({
-
-}).passthrough()
-
+export const UpsertDriverDocResponse = zod.object({}).passthrough();
 
 /**
  * @summary Delete a driver document
  */
 export const DeleteDriverDocParams = zod.object({
-  "docType": zod.coerce.string()
-})
-
+  docType: zod.coerce.string(),
+});
 
 /**
  * @summary Submit a driver check-in, check-out, pickup, or delivery event
  */
 export const CreateDriverEventParams = zod.object({
-  "jobId": zod.coerce.number()
-})
+  jobId: zod.coerce.number(),
+});
 
 export const CreateDriverEventBody = zod.object({
-  "eventType": zod.enum(['checkin', 'checkout', 'pickup', 'delivery']),
-  "gps": zod.object({
-  "lat": zod.number().optional(),
-  "long": zod.number().optional()
-}).optional(),
-  "gpsConfirmed": zod.boolean().optional(),
-  "weightTons": zod.number().optional(),
-  "loadNumber": zod.number().optional(),
-  "files": zod.array(zod.object({
-  "role": zod.string(),
-  "url": zod.string()
-})).optional()
-})
-
-
+  eventType: zod.enum(["checkin", "checkout", "pickup", "delivery"]),
+  gps: zod
+    .object({
+      lat: zod.number().optional(),
+      long: zod.number().optional(),
+    })
+    .optional(),
+  gpsConfirmed: zod.boolean().optional(),
+  weightTons: zod.number().optional(),
+  loadNumber: zod.number().optional(),
+  files: zod
+    .array(
+      zod.object({
+        role: zod.string(),
+        url: zod.string(),
+      }),
+    )
+    .optional(),
+});

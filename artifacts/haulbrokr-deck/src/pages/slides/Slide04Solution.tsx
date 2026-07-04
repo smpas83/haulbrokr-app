@@ -85,7 +85,9 @@ export default function Slide04Solution() {
               maxWidth: "34vw",
             }}
           >
-            HaulBrokr is the real-time dispatch and marketplace layer that connects contractors with licensed dump truck operators — the way Uber connects riders to drivers.
+            HaulBrokr is the real-time dispatch and marketplace layer that
+            connects contractors with licensed dump truck operators — the way
+            Uber connects riders to drivers.
           </p>
 
           <p
@@ -97,7 +99,10 @@ export default function Slide04Solution() {
               maxWidth: "32vw",
             }}
           >
-            Contractors post a hauling job in under 60 seconds. Our platform matches them with the nearest available, fully vetted operator. Dispatch, tracking, ticketing, and invoicing all happen inside a single app.
+            Contractors post a hauling job in under 60 seconds. Our platform
+            matches them with the nearest available, fully vetted operator.
+            Dispatch, tracking, ticketing, and invoicing all happen inside a
+            single app.
           </p>
 
           <div
@@ -117,7 +122,13 @@ export default function Slide04Solution() {
               >
                 60s
               </div>
-              <div style={{ fontSize: "0.9vw", color: "#666666", marginTop: "0.5vh" }}>
+              <div
+                style={{
+                  fontSize: "0.9vw",
+                  color: "#666666",
+                  marginTop: "0.5vh",
+                }}
+              >
                 Time to book a truck
               </div>
             </div>
@@ -131,7 +142,13 @@ export default function Slide04Solution() {
               >
                 100%
               </div>
-              <div style={{ fontSize: "0.9vw", color: "#666666", marginTop: "0.5vh" }}>
+              <div
+                style={{
+                  fontSize: "0.9vw",
+                  color: "#666666",
+                  marginTop: "0.5vh",
+                }}
+              >
                 Compliance verified
               </div>
             </div>
@@ -145,7 +162,13 @@ export default function Slide04Solution() {
               >
                 Auto
               </div>
-              <div style={{ fontSize: "0.9vw", color: "#666666", marginTop: "0.5vh" }}>
+              <div
+                style={{
+                  fontSize: "0.9vw",
+                  color: "#666666",
+                  marginTop: "0.5vh",
+                }}
+              >
                 Digital invoicing
               </div>
             </div>
@@ -163,7 +186,9 @@ export default function Slide04Solution() {
             gap: "3.5vh",
           }}
         >
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "1.8vw" }}>
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "1.8vw" }}
+          >
             <div
               style={{
                 fontSize: "1.2vw",
@@ -176,16 +201,28 @@ export default function Slide04Solution() {
               01
             </div>
             <div>
-              <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "0.5vh" }}>
+              <div
+                style={{
+                  fontSize: "1.2vw",
+                  fontWeight: 500,
+                  color: "#FFFFFF",
+                  marginBottom: "0.5vh",
+                }}
+              >
                 Contractor App
               </div>
-              <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-                Post jobs, track trucks in real time, receive digital load tickets, and pay — all in one place.
+              <div
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Post jobs, track trucks in real time, receive digital load
+                tickets, and pay — all in one place.
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "1.8vw" }}>
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "1.8vw" }}
+          >
             <div
               style={{
                 fontSize: "1.2vw",
@@ -198,16 +235,28 @@ export default function Slide04Solution() {
               02
             </div>
             <div>
-              <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "0.5vh" }}>
+              <div
+                style={{
+                  fontSize: "1.2vw",
+                  fontWeight: 500,
+                  color: "#FFFFFF",
+                  marginBottom: "0.5vh",
+                }}
+              >
                 Operator App
               </div>
-              <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-                Receive job alerts, accept or decline, navigate to sites, and get paid same-day via direct deposit.
+              <div
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Receive job alerts, accept or decline, navigate to sites, and
+                get paid same-day via direct deposit.
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "1.8vw" }}>
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "1.8vw" }}
+          >
             <div
               style={{
                 fontSize: "1.2vw",
@@ -220,16 +269,28 @@ export default function Slide04Solution() {
               03
             </div>
             <div>
-              <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "0.5vh" }}>
+              <div
+                style={{
+                  fontSize: "1.2vw",
+                  fontWeight: 500,
+                  color: "#FFFFFF",
+                  marginBottom: "0.5vh",
+                }}
+              >
                 Admin Platform
               </div>
-              <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-                Broker dashboard for managing fleets, verifying credentials, and monitoring jobs across all accounts.
+              <div
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Broker dashboard for managing fleets, verifying credentials, and
+                monitoring jobs across all accounts.
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "1.8vw" }}>
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "1.8vw" }}
+          >
             <div
               style={{
                 fontSize: "1.2vw",
@@ -242,11 +303,21 @@ export default function Slide04Solution() {
               04
             </div>
             <div>
-              <div style={{ fontSize: "1.2vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "0.5vh" }}>
+              <div
+                style={{
+                  fontSize: "1.2vw",
+                  fontWeight: 500,
+                  color: "#FFFFFF",
+                  marginBottom: "0.5vh",
+                }}
+              >
                 Fleet SaaS Layer
               </div>
-              <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>
-                White-label dispatch tools for regional brokerage firms managing their own driver networks.
+              <div
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                White-label dispatch tools for regional brokerage firms managing
+                their own driver networks.
               </div>
             </div>
           </div>
@@ -269,7 +340,9 @@ export default function Slide04Solution() {
           letterSpacing: "0.2em",
         }}
       >
-        <span>HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026</span>
+        <span>
+          HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026
+        </span>
         <span style={{ color: "#A0785A" }}>04</span>
       </div>
     </div>

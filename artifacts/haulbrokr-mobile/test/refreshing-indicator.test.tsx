@@ -95,10 +95,18 @@ describe("RefreshingIndicator gating convention", () => {
     // Idle: nothing in flight, so the pill must never appear regardless of the
     // other flags.
     expect(
-      isRefreshingPillVisible({ isFetching: false, isLoading: false, refreshing: false }),
+      isRefreshingPillVisible({
+        isFetching: false,
+        isLoading: false,
+        refreshing: false,
+      }),
     ).toBe(false);
     expect(
-      isRefreshingPillVisible({ isFetching: false, isLoading: true, refreshing: true }),
+      isRefreshingPillVisible({
+        isFetching: false,
+        isLoading: true,
+        refreshing: true,
+      }),
     ).toBe(false);
   });
 });

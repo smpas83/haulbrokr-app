@@ -14,14 +14,20 @@ function getSecret(): string {
   const s = process.env.STAFF_AUTH_SECRET ?? process.env.TICKET_QR_SECRET;
   if (s && s.length >= 32) return s;
   if (process.env.NODE_ENV === "production") {
-    throw new Error("STAFF_AUTH_SECRET (or TICKET_QR_SECRET) must be set in production");
+    throw new Error(
+      "STAFF_AUTH_SECRET (or TICKET_QR_SECRET) must be set in production",
+    );
   }
   return "haulbrokr-staff-dev-secret-32chars-min";
 }
 
 function b64url(buf: Buffer | string): string {
   const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf, "utf8");
-  return b.toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+  return b
+    .toString("base64")
+    .replace(/=+$/, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
 }
 
 function b64urlDecode(s: string): Buffer {
@@ -30,7 +36,11 @@ function b64urlDecode(s: string): Buffer {
 }
 
 export function signStaffSession(uid: number, role: StaffRole): string {
-  const payload: StaffSessionPayload = { uid, role, exp: Date.now() + STAFF_SESSION_TTL_MS };
+  const payload: StaffSessionPayload = {
+    uid,
+    role,
+    exp: Date.now() + STAFF_SESSION_TTL_MS,
+  };
   const json = JSON.stringify(payload);
   const sig = crypto.createHmac("sha256", getSecret()).update(json).digest();
   return `${b64url(json)}.${b64url(sig)}`;
@@ -45,9 +55,15 @@ export function verifyStaffSession(token: string): StaffSessionPayload | null {
   } catch {
     return null;
   }
-  const expectedSig = crypto.createHmac("sha256", getSecret()).update(json).digest();
+  const expectedSig = crypto
+    .createHmac("sha256", getSecret())
+    .update(json)
+    .digest();
   const actualSig = b64urlDecode(parts[1]);
-  if (expectedSig.length !== actualSig.length || !crypto.timingSafeEqual(expectedSig, actualSig)) {
+  if (
+    expectedSig.length !== actualSig.length ||
+    !crypto.timingSafeEqual(expectedSig, actualSig)
+  ) {
     return null;
   }
   let payload: StaffSessionPayload;
@@ -56,7 +72,11 @@ export function verifyStaffSession(token: string): StaffSessionPayload | null {
   } catch {
     return null;
   }
-  if (typeof payload.uid !== "number" || typeof payload.role !== "string" || typeof payload.exp !== "number") {
+  if (
+    typeof payload.uid !== "number" ||
+    typeof payload.role !== "string" ||
+    typeof payload.exp !== "number"
+  ) {
     return null;
   }
   if (Date.now() > payload.exp) return null;

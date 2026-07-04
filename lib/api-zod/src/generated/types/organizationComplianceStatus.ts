@@ -5,10 +5,10 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { OrganizationComplianceStatusDotCdlStatus } from './organizationComplianceStatusDotCdlStatus';
-import type { OrganizationComplianceStatusInsuranceStatus } from './organizationComplianceStatusInsuranceStatus';
-import type { OrganizationComplianceStatusPayoutStatus } from './organizationComplianceStatusPayoutStatus';
-import type { OrganizationComplianceStatusW9Status } from './organizationComplianceStatusW9Status';
+import type { OrganizationComplianceStatusDotCdlStatus } from "./organizationComplianceStatusDotCdlStatus";
+import type { OrganizationComplianceStatusInsuranceStatus } from "./organizationComplianceStatusInsuranceStatus";
+import type { OrganizationComplianceStatusPayoutStatus } from "./organizationComplianceStatusPayoutStatus";
+import type { OrganizationComplianceStatusW9Status } from "./organizationComplianceStatusW9Status";
 
 export interface OrganizationComplianceStatus {
   w9Status: OrganizationComplianceStatusW9Status;

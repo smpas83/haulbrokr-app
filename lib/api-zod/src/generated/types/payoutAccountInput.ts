@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { PayoutAccountInputAccountType } from './payoutAccountInputAccountType';
+import type { PayoutAccountInputAccountType } from "./payoutAccountInputAccountType";
 
 export interface PayoutAccountInput {
   bankName: string;

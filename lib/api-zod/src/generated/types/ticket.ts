@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { TicketStatus } from './ticketStatus';
+import type { TicketStatus } from "./ticketStatus";
 
 export interface Ticket {
   id: number;

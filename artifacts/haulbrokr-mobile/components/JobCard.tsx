@@ -46,22 +46,39 @@ export function JobCard({ job, onPress, showBidButton, onBid, isLive }: Props) {
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+        style={[
+          styles.card,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
       >
         {/* Header row */}
         <View style={styles.header}>
-          <View style={[styles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
+          <View
+            style={[
+              styles.iconWrap,
+              { backgroundColor: colors.primary + "18" },
+            ]}
+          >
             <Feather name={iconName as any} size={18} color={colors.primary} />
           </View>
           <View style={styles.headerText}>
             <Text
-              style={[styles.projectName, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}
+              style={[
+                styles.projectName,
+                { color: colors.foreground, fontFamily: "Inter_700Bold" },
+              ]}
               numberOfLines={1}
             >
               {job.projectName}
             </Text>
             <Text
-              style={[styles.material, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}
+              style={[
+                styles.material,
+                {
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                },
+              ]}
               numberOfLines={1}
             >
               {job.material}
@@ -72,16 +89,39 @@ export function JobCard({ job, onPress, showBidButton, onBid, isLive }: Props) {
 
         {/* Project type + rate row */}
         <View style={styles.typeRow}>
-          <View style={[styles.typeBadge, { backgroundColor: typeColor + "18", borderColor: typeColor + "40" }]}>
-            <Text style={[styles.typeText, { color: typeColor, fontFamily: "Inter_600SemiBold" }]}>
+          <View
+            style={[
+              styles.typeBadge,
+              {
+                backgroundColor: typeColor + "18",
+                borderColor: typeColor + "40",
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.typeText,
+                { color: typeColor, fontFamily: "Inter_600SemiBold" },
+              ]}
+            >
               {job.projectType}
             </Text>
           </View>
           <View style={{ flex: 1 }} />
-          <Text style={[styles.rateLabel, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+          <Text
+            style={[
+              styles.rateLabel,
+              { color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
+            ]}
+          >
             Rate{" "}
           </Text>
-          <Text style={[styles.rate, { color: colors.primary, fontFamily: "Inter_700Bold" }]}>
+          <Text
+            style={[
+              styles.rate,
+              { color: colors.primary, fontFamily: "Inter_700Bold" },
+            ]}
+          >
             ${job.budgetPerHour}/hr
           </Text>
         </View>
@@ -91,28 +131,67 @@ export function JobCard({ job, onPress, showBidButton, onBid, isLive }: Props) {
         {/* Material info row */}
         <View style={styles.materialInfoRow}>
           <View style={styles.infoItem}>
-            <Text style={[styles.infoLabel, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+            <Text
+              style={[
+                styles.infoLabel,
+                {
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                },
+              ]}
+            >
               Material
             </Text>
-            <Text style={[styles.infoValue, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+            <Text
+              style={[
+                styles.infoValue,
+                { color: colors.foreground, fontFamily: "Inter_600SemiBold" },
+              ]}
+            >
               {job.material}
             </Text>
           </View>
           {!isLive && (
             <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+              <Text
+                style={[
+                  styles.infoLabel,
+                  {
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                  },
+                ]}
+              >
                 Quantity
               </Text>
-              <Text style={[styles.infoValue, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+              <Text
+                style={[
+                  styles.infoValue,
+                  { color: colors.foreground, fontFamily: "Inter_600SemiBold" },
+                ]}
+              >
                 {job.quantity.toLocaleString()} {job.quantityUnit}
               </Text>
             </View>
           )}
           <View style={styles.infoItem}>
-            <Text style={[styles.infoLabel, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+            <Text
+              style={[
+                styles.infoLabel,
+                {
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                },
+              ]}
+            >
               Trucks
             </Text>
-            <Text style={[styles.infoValue, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+            <Text
+              style={[
+                styles.infoValue,
+                { color: colors.foreground, fontFamily: "Inter_600SemiBold" },
+              ]}
+            >
               {job.trucksNeeded}
             </Text>
           </View>
@@ -121,19 +200,37 @@ export function JobCard({ job, onPress, showBidButton, onBid, isLive }: Props) {
         {/* Locations */}
         <View style={styles.locations}>
           <View style={styles.locationRow}>
-            <View style={[styles.locationDot, { backgroundColor: colors.primary }]} />
+            <View
+              style={[styles.locationDot, { backgroundColor: colors.primary }]}
+            />
             <Text
-              style={[styles.address, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}
+              style={[
+                styles.address,
+                {
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                },
+              ]}
               numberOfLines={1}
             >
               {job.pickupAddress}
             </Text>
           </View>
-          <View style={[styles.locationLine, { backgroundColor: colors.border }]} />
+          <View
+            style={[styles.locationLine, { backgroundColor: colors.border }]}
+          />
           <View style={styles.locationRow}>
-            <View style={[styles.locationDot, { backgroundColor: "#16a34a" }]} />
+            <View
+              style={[styles.locationDot, { backgroundColor: "#16a34a" }]}
+            />
             <Text
-              style={[styles.address, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}
+              style={[
+                styles.address,
+                {
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                },
+              ]}
               numberOfLines={1}
             >
               {job.deliveryAddress}
@@ -146,14 +243,38 @@ export function JobCard({ job, onPress, showBidButton, onBid, isLive }: Props) {
           {!isLive && (
             <>
               <View style={styles.footerItem}>
-                <Feather name="map-pin" size={11} color={colors.mutedForeground} />
-                <Text style={[styles.footerText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+                <Feather
+                  name="map-pin"
+                  size={11}
+                  color={colors.mutedForeground}
+                />
+                <Text
+                  style={[
+                    styles.footerText,
+                    {
+                      color: colors.mutedForeground,
+                      fontFamily: "Inter_400Regular",
+                    },
+                  ]}
+                >
                   {job.distanceToStart} mi to start
                 </Text>
               </View>
               <View style={styles.footerItem}>
-                <Feather name="navigation" size={11} color={colors.mutedForeground} />
-                <Text style={[styles.footerText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+                <Feather
+                  name="navigation"
+                  size={11}
+                  color={colors.mutedForeground}
+                />
+                <Text
+                  style={[
+                    styles.footerText,
+                    {
+                      color: colors.mutedForeground,
+                      fontFamily: "Inter_400Regular",
+                    },
+                  ]}
+                >
                   {job.distanceToEnd} mi to end
                 </Text>
               </View>
@@ -161,8 +282,20 @@ export function JobCard({ job, onPress, showBidButton, onBid, isLive }: Props) {
           )}
           {!!job.scheduledDate && (
             <View style={styles.footerItem}>
-              <Feather name="calendar" size={11} color={colors.mutedForeground} />
-              <Text style={[styles.footerText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+              <Feather
+                name="calendar"
+                size={11}
+                color={colors.mutedForeground}
+              />
+              <Text
+                style={[
+                  styles.footerText,
+                  {
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                  },
+                ]}
+              >
                 {job.scheduledDate}
               </Text>
             </View>
@@ -175,16 +308,41 @@ export function JobCard({ job, onPress, showBidButton, onBid, isLive }: Props) {
             <View style={styles.bidsInfo}>
               {job.bidsCount > 0 && (
                 <>
-                  <View style={[styles.bidCountBadge, { backgroundColor: colors.primary + "18" }]}>
-                    <Feather name="trending-up" size={11} color={colors.primary} />
-                    <Text style={[styles.bidCountText, { color: colors.primary, fontFamily: "Inter_600SemiBold" }]}>
+                  <View
+                    style={[
+                      styles.bidCountBadge,
+                      { backgroundColor: colors.primary + "18" },
+                    ]}
+                  >
+                    <Feather
+                      name="trending-up"
+                      size={11}
+                      color={colors.primary}
+                    />
+                    <Text
+                      style={[
+                        styles.bidCountText,
+                        {
+                          color: colors.primary,
+                          fontFamily: "Inter_600SemiBold",
+                        },
+                      ]}
+                    >
                       {job.bidsCount} bid{job.bidsCount !== 1 ? "s" : ""}
                     </Text>
                   </View>
                 </>
               )}
               {job.bidsCount === 0 && (
-                <Text style={[styles.noBids, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+                <Text
+                  style={[
+                    styles.noBids,
+                    {
+                      color: colors.mutedForeground,
+                      fontFamily: "Inter_400Regular",
+                    },
+                  ]}
+                >
                   Be the first to bid
                 </Text>
               )}
@@ -197,7 +355,15 @@ export function JobCard({ job, onPress, showBidButton, onBid, isLive }: Props) {
                 }}
                 style={[styles.bidBtn, { backgroundColor: colors.primary }]}
               >
-                <Text style={[styles.bidBtnText, { color: colors.primaryForeground, fontFamily: "Inter_700Bold" }]}>
+                <Text
+                  style={[
+                    styles.bidBtnText,
+                    {
+                      color: colors.primaryForeground,
+                      fontFamily: "Inter_700Bold",
+                    },
+                  ]}
+                >
                   Bid Project
                 </Text>
               </Pressable>

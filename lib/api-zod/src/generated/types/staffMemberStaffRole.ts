@@ -9,15 +9,16 @@
 /**
  * @nullable
  */
-export type StaffMemberStaffRole = typeof StaffMemberStaffRole[keyof typeof StaffMemberStaffRole] | null;
-
+export type StaffMemberStaffRole =
+  | (typeof StaffMemberStaffRole)[keyof typeof StaffMemberStaffRole]
+  | null;
 
 export const StaffMemberStaffRole = {
-  ap: 'ap',
-  ar: 'ar',
-  cfo: 'cfo',
-  cto: 'cto',
-  ceo: 'ceo',
-  accounting: 'accounting',
-  it: 'it',
+  ap: "ap",
+  ar: "ar",
+  cfo: "cfo",
+  cto: "cto",
+  ceo: "ceo",
+  accounting: "accounting",
+  it: "it",
 } as const;

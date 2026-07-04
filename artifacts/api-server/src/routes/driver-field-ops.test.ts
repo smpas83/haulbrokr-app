@@ -3,7 +3,12 @@ import express, { type Express } from "express";
 import request from "supertest";
 
 const h = vi.hoisted(() => ({
-  profile: { id: 30, role: "driver", companyName: "Haul Co", contactName: "Dave" } as Record<string, unknown>,
+  profile: {
+    id: 30,
+    role: "driver",
+    companyName: "Haul Co",
+    contactName: "Dave",
+  } as Record<string, unknown>,
   jobs: [] as Record<string, unknown>[],
   tickets: [] as Record<string, unknown>[],
   evidence: [] as Record<string, unknown>[],
@@ -26,15 +31,24 @@ vi.mock("@workspace/db", () => {
   const profilesTable = makeTable("profiles");
 
   const thenable = (rows: unknown[], tableRef: unknown) => ({
-    orderBy: () => Promise.resolve(tableRef === ticketsTable ? h.tickets : rows),
+    orderBy: () =>
+      Promise.resolve(tableRef === ticketsTable ? h.tickets : rows),
     leftJoin: () => ({
       where: () => ({
-        orderBy: () => Promise.resolve(
-          h.timeline.map((t) => ({ ...t, actorName: "Dave", actorCompany: "Haul Co" })),
-        ),
+        orderBy: () =>
+          Promise.resolve(
+            h.timeline.map((t) => ({
+              ...t,
+              actorName: "Dave",
+              actorCompany: "Haul Co",
+            })),
+          ),
       }),
     }),
-    then(onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) {
+    then(
+      onFulfilled: (v: unknown) => unknown,
+      onRejected?: (e: unknown) => unknown,
+    ) {
       return Promise.resolve(rows).then(onFulfilled, onRejected);
     },
   });
@@ -43,11 +57,14 @@ vi.mock("@workspace/db", () => {
     select: () => ({
       from: (table: unknown) => ({
         where: (..._args: unknown[]) => {
-          if (table === deliveryEvidenceTable) return thenable(h.evidence, table);
+          if (table === deliveryEvidenceTable)
+            return thenable(h.evidence, table);
           if (table === ticketsTable) return thenable(h.tickets, table);
           if (table === jobsTable) return thenable(h.jobs, table);
-          if (table === jobStatusUpdatesTable) return thenable(h.timeline, table);
-          if (table === profilesTable) return thenable([{ companyName: "Co" }], table);
+          if (table === jobStatusUpdatesTable)
+            return thenable(h.timeline, table);
+          if (table === profilesTable)
+            return thenable([{ companyName: "Co" }], table);
           return thenable([], table);
         },
         orderBy: () => Promise.resolve(table === ticketsTable ? h.tickets : []),
@@ -120,7 +137,8 @@ vi.mock("../middlewares/requireAuth", () => ({
 }));
 
 vi.mock("../lib/access", () => ({
-  loadJobIfMember: async (jobId: number) => h.jobs.find((j) => j.id === jobId) ?? null,
+  loadJobIfMember: async (jobId: number) =>
+    h.jobs.find((j) => j.id === jobId) ?? null,
   isDriverAssignedToJob: async (jobId: number, profileId: number) =>
     h.tickets.some((t) => t.jobId === jobId && t.driverProfileId === profileId),
   orgScopedActorIds: async () => [h.profile.id],
@@ -169,17 +187,24 @@ function sampleJob(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
-  h.profile = { id: 30, role: "driver", companyName: "Haul Co", contactName: "Dave" };
+  h.profile = {
+    id: 30,
+    role: "driver",
+    companyName: "Haul Co",
+    contactName: "Dave",
+  };
   h.jobs = [sampleJob()];
-  h.tickets = [{
-    id: 1,
-    jobId: 9,
-    driverProfileId: 30,
-    loadNumber: 1,
-    status: "pending",
-    clockedInAt: null,
-    clockedOutAt: null,
-  }];
+  h.tickets = [
+    {
+      id: 1,
+      jobId: 9,
+      driverProfileId: 30,
+      loadNumber: 1,
+      status: "pending",
+      clockedInAt: null,
+      clockedOutAt: null,
+    },
+  ];
   h.evidence = [];
   h.timeline = [];
   h.nextTicketId = 2;
@@ -195,7 +220,9 @@ describe("Driver field operations workflow", () => {
     expect(checkIn.status).toBe(200);
     expect(h.timeline.some((t) => t.status === "checked_in")).toBe(true);
 
-    const start = await request(app).patch("/jobs/9").send({ status: "in_progress" });
+    const start = await request(app)
+      .patch("/jobs/9")
+      .send({ status: "in_progress" });
     expect(start.status).toBe(200);
     expect(h.timeline.some((t) => t.status === "started")).toBe(true);
 
@@ -214,7 +241,9 @@ describe("Driver field operations workflow", () => {
     expect(h.timeline.some((t) => t.status === "photo_uploaded")).toBe(true);
 
     h.jobs[0].status = "in_progress";
-    const complete = await request(app).patch("/jobs/9").send({ status: "completed" });
+    const complete = await request(app)
+      .patch("/jobs/9")
+      .send({ status: "completed" });
     expect(complete.status).toBe(200);
     expect(h.timeline.some((t) => t.status === "completed")).toBe(true);
   });
@@ -236,20 +265,37 @@ describe("Driver field operations workflow", () => {
     const provEvidence = await request(app).get("/jobs/9/evidence");
     expect(provEvidence.status).toBe(200);
 
-    h.profile = { id: 99, role: "customer", staffRole: "ceo", companyName: "Staff" };
+    h.profile = {
+      id: 99,
+      role: "customer",
+      staffRole: "ceo",
+      companyName: "Staff",
+    };
     const adminEvidence = await request(app).get("/jobs/9/evidence");
     expect(adminEvidence.status).toBe(200);
   });
 
   it("unassigned driver cannot upload evidence or update job status", async () => {
-    h.tickets = [{ id: 1, jobId: 9, driverProfileId: 31, loadNumber: 1, status: "pending" }];
+    h.tickets = [
+      {
+        id: 1,
+        jobId: 9,
+        driverProfileId: 31,
+        loadNumber: 1,
+        status: "pending",
+      },
+    ];
     h.profile = { id: 30, role: "driver", companyName: "Haul Co" };
     const app = makeApp();
 
-    const evidence = await request(app).post("/jobs/9/evidence").send({ photoUrl: "https://example.com/x.jpg" });
+    const evidence = await request(app)
+      .post("/jobs/9/evidence")
+      .send({ photoUrl: "https://example.com/x.jpg" });
     expect(evidence.status).toBe(403);
 
-    const complete = await request(app).patch("/jobs/9").send({ status: "completed" });
+    const complete = await request(app)
+      .patch("/jobs/9")
+      .send({ status: "completed" });
     expect(complete.status).toBe(403);
   });
 });

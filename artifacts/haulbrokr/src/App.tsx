@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Switch, Route, Router as WouterRouter } from 'wouter';
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { Loader2 } from "lucide-react";
 
 import SupportPage from "./pages/support";

@@ -10,13 +10,14 @@
  * The staff role to assign, or null to remove staff access.
  * @nullable
  */
-export type UpdateStaffRoleInputStaffRole = typeof UpdateStaffRoleInputStaffRole[keyof typeof UpdateStaffRoleInputStaffRole] | null;
-
+export type UpdateStaffRoleInputStaffRole =
+  | (typeof UpdateStaffRoleInputStaffRole)[keyof typeof UpdateStaffRoleInputStaffRole]
+  | null;
 
 export const UpdateStaffRoleInputStaffRole = {
-  ceo: 'ceo',
-  cto: 'cto',
-  cfo: 'cfo',
-  accounting: 'accounting',
-  it: 'it',
+  ceo: "ceo",
+  cto: "cto",
+  cfo: "cfo",
+  accounting: "accounting",
+  it: "it",
 } as const;

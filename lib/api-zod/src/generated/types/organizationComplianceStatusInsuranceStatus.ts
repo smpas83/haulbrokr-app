@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type OrganizationComplianceStatusInsuranceStatus = typeof OrganizationComplianceStatusInsuranceStatus[keyof typeof OrganizationComplianceStatusInsuranceStatus];
-
+export type OrganizationComplianceStatusInsuranceStatus =
+  (typeof OrganizationComplianceStatusInsuranceStatus)[keyof typeof OrganizationComplianceStatusInsuranceStatus];
 
 export const OrganizationComplianceStatusInsuranceStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;

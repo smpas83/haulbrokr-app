@@ -1,4 +1,12 @@
-import { pgTable, text, serial, timestamp, integer, uuid, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  integer,
+  uuid,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -28,7 +36,9 @@ export const activityTypeEnum = pgEnum("activity_type", [
 
 export const activityTable = pgTable("activity", {
   id: serial("id").primaryKey(),
-  profileId: integer("profile_id").notNull().references(() => profilesTable.id, { onDelete: "cascade" }),
+  profileId: integer("profile_id")
+    .notNull()
+    .references(() => profilesTable.id, { onDelete: "cascade" }),
   type: activityTypeEnum("type").notNull(),
   description: text("description").notNull(),
   relatedId: integer("related_id"),
@@ -36,9 +46,14 @@ export const activityTable = pgTable("activity", {
   // uuid, which can't live in the integer relatedId column, so bin-order
   // activity carries its reference here instead.
   relatedBinOrderId: uuid("related_bin_order_id"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
-export const insertActivitySchema = createInsertSchema(activityTable).omit({ id: true, createdAt: true });
+export const insertActivitySchema = createInsertSchema(activityTable).omit({
+  id: true,
+  createdAt: true,
+});
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 export type Activity = typeof activityTable.$inferSelect;

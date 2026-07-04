@@ -13,7 +13,10 @@ export default defineConfig({
       { find: "expo-haptics", replacement: stub("expoHaptics.ts") },
       { find: "expo-router", replacement: stub("expoRouter.ts") },
       { find: "react-native-reanimated", replacement: stub("reanimated.tsx") },
-      { find: "react-native-safe-area-context", replacement: stub("safeArea.ts") },
+      {
+        find: "react-native-safe-area-context",
+        replacement: stub("safeArea.ts"),
+      },
       { find: "@clerk/expo", replacement: stub("clerkExpo.ts") },
       { find: /^expo$/, replacement: stub("expo.ts") },
       { find: "react-native", replacement: "react-native-web" },

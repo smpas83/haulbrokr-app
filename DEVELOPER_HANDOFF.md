@@ -23,6 +23,7 @@ libraries.
 ## 2. Install
 
 From the repo root:
+
 ```bash
 pnpm install
 ```
@@ -32,12 +33,12 @@ pnpm install
 Create the secrets your environment needs (these are NOT included in this archive
 for security). Set them in your shell / hosting provider / a local `.env`:
 
-| Variable | Used by | Notes |
-|---|---|---|
-| `DATABASE_URL` | api-server | Postgres connection string (required) |
-| `STRIPE_SECRET_KEY` | api-server | Stripe payments (if using checkout) |
-| `CLERK_SECRET_KEY` / `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | mobile auth | Clerk auth keys |
-| `DEFAULT_OBJECT_STORAGE_BUCKET_ID`, `PRIVATE_OBJECT_DIR`, `PUBLIC_OBJECT_SEARCH_PATHS` | object storage | File uploads |
+| Variable                                                                               | Used by        | Notes                                 |
+| -------------------------------------------------------------------------------------- | -------------- | ------------------------------------- |
+| `DATABASE_URL`                                                                         | api-server     | Postgres connection string (required) |
+| `STRIPE_SECRET_KEY`                                                                    | api-server     | Stripe payments (if using checkout)   |
+| `CLERK_SECRET_KEY` / `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`                               | mobile auth    | Clerk auth keys                       |
+| `DEFAULT_OBJECT_STORAGE_BUCKET_ID`, `PRIVATE_OBJECT_DIR`, `PUBLIC_OBJECT_SEARCH_PATHS` | object storage | File uploads                          |
 
 Check each artifact's source for the exact variable names it reads (search for
 `process.env` / `EXPO_PUBLIC_`).
@@ -50,12 +51,12 @@ pnpm --filter @workspace/db run push     # push schema to your DATABASE_URL (dev
 
 ## 5. Run each piece (dev)
 
-| What | Command | Notes |
-|---|---|---|
-| **Backend API** | `pnpm --filter @workspace/api-server run dev` | Express + Drizzle |
-| **Website** | `pnpm --filter @workspace/haulbrokr run dev` | React + Vite |
+| What                       | Command                                             | Notes                 |
+| -------------------------- | --------------------------------------------------- | --------------------- |
+| **Backend API**            | `pnpm --filter @workspace/api-server run dev`       | Express + Drizzle     |
+| **Website**                | `pnpm --filter @workspace/haulbrokr run dev`        | React + Vite          |
 | **Mobile (iOS + Android)** | `pnpm --filter @workspace/haulbrokr-mobile run dev` | Expo; open in Expo Go |
-| **Pitch deck** | `pnpm --filter @workspace/haulbrokr-deck run dev` | Slides |
+| **Pitch deck**             | `pnpm --filter @workspace/haulbrokr-deck run dev`   | Slides                |
 
 Each dev server reads a `PORT` env var (assigned automatically on Replit; set your
 own when running elsewhere).
@@ -71,6 +72,7 @@ pnpm run build            # typecheck + build all
 
 The mobile app is a single Expo project (`artifacts/haulbrokr-mobile`) that targets
 both platforms.
+
 - **Quick preview:** run the mobile dev command above, then scan the QR with Expo Go.
 - **Installable / store builds:** use EAS:
   ```bash
@@ -80,6 +82,7 @@ both platforms.
   Config: `app.json` (icon, splash, bundle id, permissions) and `eas.json`.
 
 ### App icon note
+
 The launcher/app icon (`assets/images/app-icon-v2.png`) and splash
 (`assets/images/haulbrokr-logo.png`) are baked in at **build time**. In the Expo Go
 dev launcher the icon can appear cached/stale — that is an Expo Go quirk, not a code

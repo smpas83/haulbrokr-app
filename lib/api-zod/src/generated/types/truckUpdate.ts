@@ -5,8 +5,8 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { TruckUpdateCoiStatus } from './truckUpdateCoiStatus';
-import type { TruckUpdateTruckType } from './truckUpdateTruckType';
+import type { TruckUpdateCoiStatus } from "./truckUpdateCoiStatus";
+import type { TruckUpdateTruckType } from "./truckUpdateTruckType";
 
 export interface TruckUpdate {
   truckType?: TruckUpdateTruckType;

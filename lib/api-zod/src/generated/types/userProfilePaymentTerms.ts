@@ -9,12 +9,13 @@
 /**
  * @nullable
  */
-export type UserProfilePaymentTerms = typeof UserProfilePaymentTerms[keyof typeof UserProfilePaymentTerms] | null;
-
+export type UserProfilePaymentTerms =
+  | (typeof UserProfilePaymentTerms)[keyof typeof UserProfilePaymentTerms]
+  | null;
 
 export const UserProfilePaymentTerms = {
-  due_on_receipt: 'due_on_receipt',
-  net_15: 'net_15',
-  net_30: 'net_30',
-  prepaid: 'prepaid',
+  due_on_receipt: "due_on_receipt",
+  net_15: "net_15",
+  net_30: "net_30",
+  prepaid: "prepaid",
 } as const;

@@ -1,16 +1,17 @@
 import type { ComponentType } from "react";
 
 import manifestJson from "@/data/slides-manifest.json";
-import { parseSlidesManifest, type SlideEntry } from "@/data/slidesManifestSchema";
+import {
+  parseSlidesManifest,
+  type SlideEntry,
+} from "@/data/slidesManifestSchema";
 
 export interface LoadedSlide extends SlideEntry {
   Component: ComponentType;
 }
 
-const slideModules: Record<string, { default: ComponentType }> = import.meta.glob(
-  "./pages/slides/*.tsx",
-  { eager: true },
-);
+const slideModules: Record<string, { default: ComponentType }> =
+  import.meta.glob("./pages/slides/*.tsx", { eager: true });
 
 function loadManifestSlides(): SlideEntry[] {
   try {

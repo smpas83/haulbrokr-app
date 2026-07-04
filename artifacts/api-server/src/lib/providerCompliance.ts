@@ -30,11 +30,18 @@ export type AdminUploadDocType = (typeof ADMIN_UPLOAD_DOC_TYPES)[number];
 export const W9_UPLOAD_DOC_TYPES = new Set<AdminUploadDocType>(["w9"]);
 export const COI_UPLOAD_DOC_TYPES = new Set<AdminUploadDocType>(["coi"]);
 export const DOT_UPLOAD_DOC_TYPES = new Set<AdminUploadDocType>([
-  "dot_authority", "dot_medical_card", "mc_authority",
+  "dot_authority",
+  "dot_medical_card",
+  "mc_authority",
 ]);
-export const CDL_UPLOAD_DOC_TYPES = new Set<AdminUploadDocType>(["cdl_front", "cdl_back"]);
+export const CDL_UPLOAD_DOC_TYPES = new Set<AdminUploadDocType>([
+  "cdl_front",
+  "cdl_back",
+]);
 
-export function isAdminUploadDocType(value: string): value is AdminUploadDocType {
+export function isAdminUploadDocType(
+  value: string,
+): value is AdminUploadDocType {
   return (ADMIN_UPLOAD_DOC_TYPES as readonly string[]).includes(value);
 }
 
@@ -57,11 +64,11 @@ export function computeProviderCanBid(input: {
   payoutStatus: string;
 }): boolean {
   return (
-    input.role === "provider"
-    && input.w9Status === "verified"
-    && input.insuranceStatus === "verified"
-    && input.dotCdlStatus === "verified"
-    && isPayoutReadyForBidding(input.payoutStatus)
+    input.role === "provider" &&
+    input.w9Status === "verified" &&
+    input.insuranceStatus === "verified" &&
+    input.dotCdlStatus === "verified" &&
+    isPayoutReadyForBidding(input.payoutStatus)
   );
 }
 
@@ -80,13 +87,20 @@ export function describeCanBidBlockers(input: {
 }): string[] {
   const blockers: string[] = [];
   if (input.role !== "provider") blockers.push("a provider account");
-  if (input.w9Status !== "verified") blockers.push(artifactLabel("W-9", input.w9Status));
-  if (input.insuranceStatus !== "verified") blockers.push(artifactLabel("insurance", input.insuranceStatus));
+  if (input.w9Status !== "verified")
+    blockers.push(artifactLabel("W-9", input.w9Status));
+  if (input.insuranceStatus !== "verified")
+    blockers.push(artifactLabel("insurance", input.insuranceStatus));
   const dotCdlStatus = input.dotCdlStatus ?? "not_submitted";
-  if (dotCdlStatus !== "verified") blockers.push(artifactLabel("DOT/CDL", dotCdlStatus));
+  if (dotCdlStatus !== "verified")
+    blockers.push(artifactLabel("DOT/CDL", dotCdlStatus));
   if (!isPayoutReadyForBidding(input.payoutStatus)) {
-    if (input.payoutStatus === "not_submitted") blockers.push("payout account on file");
-    else blockers.push(`verified payout account (currently ${input.payoutStatus})`);
+    if (input.payoutStatus === "not_submitted")
+      blockers.push("payout account on file");
+    else
+      blockers.push(
+        `verified payout account (currently ${input.payoutStatus})`,
+      );
   }
   return blockers;
 }

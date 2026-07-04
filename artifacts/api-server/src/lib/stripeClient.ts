@@ -1,5 +1,8 @@
 import Stripe from "stripe";
-import { createMockStripeClient, MOCK_PUBLISHABLE_KEY } from "./mockStripeClient";
+import {
+  createMockStripeClient,
+  MOCK_PUBLISHABLE_KEY,
+} from "./mockStripeClient";
 import { logger } from "./logger";
 
 let connectionSettings: any;
@@ -39,7 +42,11 @@ async function getCredentials(): Promise<CredResult> {
   const envSecret = process.env.STRIPE_SECRET_KEY;
   const envPublishable = process.env.STRIPE_PUBLISHABLE_KEY;
   if (envSecret && envPublishable) {
-    return { kind: "connected", publishableKey: envPublishable, secretKey: envSecret };
+    return {
+      kind: "connected",
+      publishableKey: envPublishable,
+      secretKey: envSecret,
+    };
   }
 
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
@@ -54,7 +61,9 @@ async function getCredentials(): Promise<CredResult> {
   if (!hostname || !xReplitToken) return { kind: "not_connected" };
 
   const connectorName = "stripe";
-  const targetEnvironment = isProductionDeployment() ? "production" : "development";
+  const targetEnvironment = isProductionDeployment()
+    ? "production"
+    : "development";
 
   const url = new URL(`https://${hostname}/api/v2/connection`);
   url.searchParams.set("include_secrets", "true");
@@ -73,7 +82,12 @@ async function getCredentials(): Promise<CredResult> {
   }
 
   if (!response.ok) {
-    return { kind: "error", error: new Error(`Stripe connector lookup returned HTTP ${response.status}`) };
+    return {
+      kind: "error",
+      error: new Error(
+        `Stripe connector lookup returned HTTP ${response.status}`,
+      ),
+    };
   }
 
   let data: { items?: any[] };
@@ -94,7 +108,10 @@ async function getCredentials(): Promise<CredResult> {
   // A connection exists but is missing usable keys is a misconfiguration, not an
   // "unconfigured" state — surface it as an error so production fails closed.
   if (!publishableKey || !secretKey) {
-    return { kind: "error", error: new Error("Stripe connection is missing publishable/secret keys") };
+    return {
+      kind: "error",
+      error: new Error("Stripe connection is missing publishable/secret keys"),
+    };
   }
 
   return { kind: "connected", publishableKey, secretKey };
@@ -135,14 +152,18 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
   const creds = await getCredentials();
   if (creds.kind === "connected") {
     // Pin to snippet-provided API version; cast because installed @types ships a newer one.
-    return new Stripe(creds.secretKey, { apiVersion: "2025-08-27.basil" as Stripe.LatestApiVersion });
+    return new Stripe(creds.secretKey, {
+      apiVersion: "2025-08-27.basil" as Stripe.LatestApiVersion,
+    });
   }
   if (failClosedOnError(creds)) {
     logger.error(
       { err: (creds as { error: unknown }).error },
       "Stripe connector unavailable in production — refusing to fall back to mock payments",
     );
-    throw new Error("Payment processing is temporarily unavailable. Please try again shortly.");
+    throw new Error(
+      "Payment processing is temporarily unavailable. Please try again shortly.",
+    );
   }
   warnMockOnce(creds.kind);
   return createMockStripeClient();
@@ -158,7 +179,9 @@ export async function getStripePublishableKey(): Promise<string> {
   const creds = await getCredentials();
   if (creds.kind === "connected") return creds.publishableKey;
   if (failClosedOnError(creds)) {
-    throw new Error("Payment processing is temporarily unavailable. Please try again shortly.");
+    throw new Error(
+      "Payment processing is temporarily unavailable. Please try again shortly.",
+    );
   }
   return MOCK_PUBLISHABLE_KEY;
 }

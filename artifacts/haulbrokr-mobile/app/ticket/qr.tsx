@@ -1,7 +1,15 @@
 import { Feather } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, Share, Platform } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  Share,
+  Platform,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import QRCode from "react-native-qrcode-svg";
 import * as Haptics from "expo-haptics";
@@ -12,7 +20,9 @@ export default function TicketQRScreen() {
   const jobId = parseInt(String(params.jobId ?? ""), 10);
   const ticketId = parseInt(String(params.ticketId ?? ""), 10);
 
-  const { data: ticketsData } = useTickets(Number.isFinite(jobId) ? jobId : null);
+  const { data: ticketsData } = useTickets(
+    Number.isFinite(jobId) ? jobId : null,
+  );
   const tickets: any[] = ticketsData?.tickets ?? [];
   const ticket = tickets.find((t) => t.id === ticketId);
 
@@ -47,7 +57,9 @@ export default function TicketQRScreen() {
   const handleShare = async () => {
     if (!token) return;
     try {
-      await Share.share({ message: `HaulBrokr ticket #${ticket?.loadNumber}\nVerification token: ${token}` });
+      await Share.share({
+        message: `HaulBrokr ticket #${ticket?.loadNumber}\nVerification token: ${token}`,
+      });
     } catch {}
   };
 
@@ -59,7 +71,13 @@ export default function TicketQRScreen() {
   if (!ticket) {
     return (
       <SafeAreaView style={styles.safe}>
-        <Stack.Screen options={{ title: "Ticket QR", headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+        <Stack.Screen
+          options={{
+            title: "Ticket QR",
+            headerStyle: { backgroundColor: "#1e2235" },
+            headerTintColor: "#f0f6ff",
+          }}
+        />
         <View style={styles.center}>
           <Feather name="alert-circle" size={36} color="#8ba0b8" />
           <Text style={styles.errorText}>Ticket not found.</Text>
@@ -72,14 +90,25 @@ export default function TicketQRScreen() {
   }
 
   const expiryLabel = expiresAt
-    ? new Date(expiresAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+    ? new Date(expiresAt).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      })
     : "";
 
   return (
     <SafeAreaView style={styles.safe}>
-      <Stack.Screen options={{ title: `Ticket #${ticket.loadNumber}`, headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+      <Stack.Screen
+        options={{
+          title: `Ticket #${ticket.loadNumber}`,
+          headerStyle: { backgroundColor: "#1e2235" },
+          headerTintColor: "#f0f6ff",
+        }}
+      />
       <View style={styles.container}>
-        <Text style={styles.title}>{isVerified ? "Verified ✓" : "Show this code to your supervisor"}</Text>
+        <Text style={styles.title}>
+          {isVerified ? "Verified ✓" : "Show this code to your supervisor"}
+        </Text>
         <Text style={styles.subtitle}>
           {isVerified
             ? `Verified at ${new Date(ticket.verifiedAt).toLocaleString()}`
@@ -98,7 +127,12 @@ export default function TicketQRScreen() {
                 <Text style={styles.qrWebFallbackText}>QR Preview</Text>
               </View>
             ) : token ? (
-              <QRCode value={token} size={240} backgroundColor="#ffffff" color="#1e2235" />
+              <QRCode
+                value={token}
+                size={240}
+                backgroundColor="#ffffff"
+                color="#1e2235"
+              />
             ) : (
               <View style={styles.qrWebFallback}>
                 <ActivityIndicator color="#1e2235" />
@@ -114,24 +148,38 @@ export default function TicketQRScreen() {
 
         {error ? (
           <View style={styles.tokenBox}>
-            <Text style={[styles.tokenText, { color: "#ff8a8a" }]}>{error}</Text>
+            <Text style={[styles.tokenText, { color: "#ff8a8a" }]}>
+              {error}
+            </Text>
           </View>
         ) : !isVerified && token ? (
           <View style={styles.tokenBox}>
             <Text style={styles.tokenLabel}>VERIFICATION TOKEN</Text>
-            <Text style={styles.tokenText} selectable numberOfLines={2}>{token}</Text>
+            <Text style={styles.tokenText} selectable numberOfLines={2}>
+              {token}
+            </Text>
           </View>
         ) : null}
 
         {!isVerified && (
           <View style={styles.actions}>
-            <Pressable style={styles.actionBtn} onPress={handleShare} disabled={!token}>
+            <Pressable
+              style={styles.actionBtn}
+              onPress={handleShare}
+              disabled={!token}
+            >
               <Feather name="share-2" size={16} color="#1e2235" />
               <Text style={styles.actionText}>Share</Text>
             </Pressable>
-            <Pressable style={styles.actionBtnGhost} onPress={handleRegenerate} disabled={issueQR.isPending}>
+            <Pressable
+              style={styles.actionBtnGhost}
+              onPress={handleRegenerate}
+              disabled={issueQR.isPending}
+            >
               <Feather name="refresh-cw" size={16} color="#e9a600" />
-              <Text style={styles.actionGhostText}>{issueQR.isPending ? "Issuing…" : "New Code"}</Text>
+              <Text style={styles.actionGhostText}>
+                {issueQR.isPending ? "Issuing…" : "New Code"}
+              </Text>
             </Pressable>
           </View>
         )}
@@ -149,33 +197,120 @@ export default function TicketQRScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#1e2235" },
   container: { flex: 1, padding: 24, alignItems: "center" },
-  title: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#f0f6ff", textAlign: "center", marginTop: 8 },
-  subtitle: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8ba0b8", textAlign: "center", marginTop: 6, marginBottom: 24 },
+  title: {
+    fontSize: 20,
+    fontFamily: "Inter_700Bold",
+    color: "#f0f6ff",
+    textAlign: "center",
+    marginTop: 8,
+  },
+  subtitle: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: "#8ba0b8",
+    textAlign: "center",
+    marginTop: 6,
+    marginBottom: 24,
+  },
   qrFrame: {
-    padding: 16, backgroundColor: "#fff", borderRadius: 20,
-    borderWidth: 3, borderColor: "#e9a600", marginBottom: 20,
+    padding: 16,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: "#e9a600",
+    marginBottom: 20,
     position: "relative",
   },
   qrFrameVerified: { borderColor: "#5fb878" },
   qrInner: { padding: 4 },
-  qrWebFallback: { width: 240, height: 240, alignItems: "center", justifyContent: "center", gap: 8 },
-  qrWebFallbackText: { fontFamily: "Inter_600SemiBold", color: "#1e2235", fontSize: 12 },
-  verifiedBadge: {
-    position: "absolute", top: -10, right: -10, width: 36, height: 36, borderRadius: 18,
-    backgroundColor: "#5fb878", alignItems: "center", justifyContent: "center",
-    borderWidth: 3, borderColor: "#1e2235",
+  qrWebFallback: {
+    width: 240,
+    height: 240,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
-  tokenBox: { backgroundColor: "#2a3352", borderRadius: 10, padding: 12, marginBottom: 20, width: "100%", borderWidth: 1, borderColor: "#3a4565" },
-  tokenLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#8ba0b8", letterSpacing: 1, marginBottom: 4 },
+  qrWebFallbackText: {
+    fontFamily: "Inter_600SemiBold",
+    color: "#1e2235",
+    fontSize: 12,
+  },
+  verifiedBadge: {
+    position: "absolute",
+    top: -10,
+    right: -10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#5fb878",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#1e2235",
+  },
+  tokenBox: {
+    backgroundColor: "#2a3352",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 20,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#3a4565",
+  },
+  tokenLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    color: "#8ba0b8",
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
   tokenText: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#e9a600" },
   actions: { flexDirection: "row", gap: 10, width: "100%" },
-  actionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#e9a600", height: 44, borderRadius: 10 },
+  actionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#e9a600",
+    height: 44,
+    borderRadius: 10,
+  },
   actionText: { color: "#1e2235", fontFamily: "Inter_700Bold", fontSize: 14 },
-  actionBtnGhost: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1.5, borderColor: "#e9a60055", height: 44, borderRadius: 10 },
-  actionGhostText: { color: "#e9a600", fontFamily: "Inter_700Bold", fontSize: 14 },
-  hint: { marginTop: 18, fontSize: 12, color: "#8ba0b8", textAlign: "center", lineHeight: 18 },
+  actionBtnGhost: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: "#e9a60055",
+    height: 44,
+    borderRadius: 10,
+  },
+  actionGhostText: {
+    color: "#e9a600",
+    fontFamily: "Inter_700Bold",
+    fontSize: 14,
+  },
+  hint: {
+    marginTop: 18,
+    fontSize: 12,
+    color: "#8ba0b8",
+    textAlign: "center",
+    lineHeight: 18,
+  },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  errorText: { color: "#f0f6ff", fontFamily: "Inter_600SemiBold", fontSize: 15 },
-  backBtn: { backgroundColor: "#2a3352", paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10 },
+  errorText: {
+    color: "#f0f6ff",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+  },
+  backBtn: {
+    backgroundColor: "#2a3352",
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+  },
   backText: { color: "#f0f6ff", fontFamily: "Inter_600SemiBold" },
 });

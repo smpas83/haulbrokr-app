@@ -29,7 +29,14 @@ type StripeBankFormProps = {
  * back to micro-deposits) and confirms the SetupIntent — minting an off-session
  * chargeable us_bank_account PaymentMethod whose id we hand upward.
  */
-export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHolderName, email }: StripeBankFormProps) {
+export function StripeBankForm({
+  onSaved,
+  onCancel,
+  saving,
+  saveLabel,
+  accountHolderName,
+  email,
+}: StripeBankFormProps) {
   const setupIntent = useCreatePaymentMethodBankSetupIntent();
   const [stripe, setStripe] = useState<Stripe | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -46,7 +53,11 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
         setStripe(await loadStripe(data.publishableKey));
       },
       onError: (err: unknown) =>
-        setInitError(err instanceof Error ? err.message : "Could not start secure bank setup."),
+        setInitError(
+          err instanceof Error
+            ? err.message
+            : "Could not start secure bank setup.",
+        ),
     });
   };
 
@@ -62,7 +73,9 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
     if (!stripe || !clientSecret) return;
     const name = accountHolderName?.trim();
     if (!name) {
-      setError("Enter the account holder's name before connecting a bank account.");
+      setError(
+        "Enter the account holder's name before connecting a bank account.",
+      );
       return;
     }
     setConfirming(true);
@@ -81,7 +94,10 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
 
     if (collectResult.error) {
       setConfirming(false);
-      setError(collectResult.error.message ?? "Could not connect your bank account. Please try again.");
+      setError(
+        collectResult.error.message ??
+          "Could not connect your bank account. Please try again.",
+      );
       return;
     }
 
@@ -96,10 +112,14 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
     // 2) Confirm the SetupIntent to attach the verified account (and its mandate).
     let intent = collected;
     if (collected.status === "requires_confirmation") {
-      const confirmResult = await stripe.confirmUsBankAccountSetup(clientSecret);
+      const confirmResult =
+        await stripe.confirmUsBankAccountSetup(clientSecret);
       if (confirmResult.error) {
         setConfirming(false);
-        setError(confirmResult.error.message ?? "Could not verify your bank account. Please try again.");
+        setError(
+          confirmResult.error.message ??
+            "Could not verify your bank account. Please try again.",
+        );
         return;
       }
       if (confirmResult.setupIntent) intent = confirmResult.setupIntent;
@@ -109,7 +129,9 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
 
     const pmId = intent.payment_method;
     if (typeof pmId !== "string") {
-      setError("Bank account was connected but no payment method was returned. Please try again.");
+      setError(
+        "Bank account was connected but no payment method was returned. Please try again.",
+      );
       return;
     }
 
@@ -128,12 +150,24 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
           <AlertCircle className="h-4 w-4 flex-shrink-0" /> {initError}
         </p>
         <div className="flex items-center gap-2">
-          <Button type="button" className="rounded-none font-bold" onClick={start} disabled={setupIntent.isPending}>
-            {setupIntent.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          <Button
+            type="button"
+            className="rounded-none font-bold"
+            onClick={start}
+            disabled={setupIntent.isPending}
+          >
+            {setupIntent.isPending && (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            )}
             Try again
           </Button>
           {onCancel && (
-            <Button type="button" variant="outline" className="rounded-none border-2 font-bold" onClick={onCancel}>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-none border-2 font-bold"
+              onClick={onCancel}
+            >
               Cancel
             </Button>
           )}
@@ -155,8 +189,8 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Connect your bank securely through Stripe. Most banks verify instantly; if
-        yours doesn't, Stripe will send two small deposits to confirm.
+        Connect your bank securely through Stripe. Most banks verify instantly;
+        if yours doesn't, Stripe will send two small deposits to confirm.
       </p>
       {error && (
         <p className="text-sm text-destructive flex items-center gap-1.5">
@@ -164,12 +198,23 @@ export function StripeBankForm({ onSaved, onCancel, saving, saveLabel, accountHo
         </p>
       )}
       <div className="flex items-center gap-2">
-        <Button type="button" onClick={handleConfirm} disabled={busy} className="rounded-none font-bold">
+        <Button
+          type="button"
+          onClick={handleConfirm}
+          disabled={busy}
+          className="rounded-none font-bold"
+        >
           {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {saveLabel ?? "Connect bank account"}
         </Button>
         {onCancel && (
-          <Button type="button" variant="outline" className="rounded-none border-2 font-bold" onClick={onCancel} disabled={busy}>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-none border-2 font-bold"
+            onClick={onCancel}
+            disabled={busy}
+          >
             Cancel
           </Button>
         )}

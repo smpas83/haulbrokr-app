@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { buildDemoLoads, buildDemoMarketplace, buildDemoTrucks } from "./demoMarketplace";
+import {
+  buildDemoLoads,
+  buildDemoMarketplace,
+  buildDemoTrucks,
+} from "./demoMarketplace";
 
 describe("demoMarketplace", () => {
   it("generates 250 nationwide loads with coordinates", () => {

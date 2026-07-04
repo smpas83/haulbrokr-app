@@ -1,15 +1,30 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 import {
-  Platform, Pressable, RefreshControl, ScrollView, StyleSheet,
-  Switch, Text, View,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
 } from "react-native";
 import MapView, { Circle, Marker, Region, MapType } from "@/lib/maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
-  FadeIn, FadeInDown, FadeInUp, FadeOut,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  FadeOut,
 } from "react-native-reanimated";
 
 import { LocationFilterModal } from "@/components/LocationFilterModal";
@@ -17,9 +32,18 @@ import { STATUS_COLOR } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import type { Job } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
-import { useLiveJobs, useLiveRequests, useMarketplaceMap } from "@/hooks/useLiveApi";
+import {
+  useLiveJobs,
+  useLiveRequests,
+  useMarketplaceMap,
+} from "@/hooks/useLiveApi";
 import { useJobCoordinates } from "@/hooks/useJobCoordinates";
-import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
+import {
+  liveJobToViewJob,
+  liveRequestToViewJob,
+  type LiveJob,
+  type LiveRequest,
+} from "@/lib/liveJob";
 import {
   coordFromMarketplace,
   coordFromTruck,
@@ -29,15 +53,16 @@ import {
 import { distanceMiles } from "@/lib/geocode";
 
 // Demo fallback coords (legacy seed data only)
-const DEMO_JOB_COORDS: Record<string, { latitude: number; longitude: number }> = {
-  "1": { latitude: 32.7767, longitude: -96.7970 }, // Dallas — Industrial Blvd
-  "2": { latitude: 32.7555, longitude: -97.3308 }, // Fort Worth — Commerce St
-  "3": { latitude: 33.1976, longitude: -96.6397 }, // McKinney — US-75
-  "4": { latitude: 32.7357, longitude: -96.2750 }, // Terrell — quarry
-  "5": { latitude: 32.7814, longitude: -96.7950 }, // Dallas — Elm St
-  "6": { latitude: 33.1032, longitude: -96.6706 }, // Allen — delivery area
-  "7": { latitude: 32.3868, longitude: -96.8448 }, // Waxahachie — farm
-};
+const DEMO_JOB_COORDS: Record<string, { latitude: number; longitude: number }> =
+  {
+    "1": { latitude: 32.7767, longitude: -96.797 }, // Dallas — Industrial Blvd
+    "2": { latitude: 32.7555, longitude: -97.3308 }, // Fort Worth — Commerce St
+    "3": { latitude: 33.1976, longitude: -96.6397 }, // McKinney — US-75
+    "4": { latitude: 32.7357, longitude: -96.275 }, // Terrell — quarry
+    "5": { latitude: 32.7814, longitude: -96.795 }, // Dallas — Elm St
+    "6": { latitude: 33.1032, longitude: -96.6706 }, // Allen — delivery area
+    "7": { latitude: 32.3868, longitude: -96.8448 }, // Waxahachie — farm
+  };
 
 const OPEN_STATUSES = new Set(["open", "bidding", "bid_received"]);
 
@@ -51,8 +76,8 @@ const US_REGION: Region = {
 
 // ── Surge heat zones (overridden by API heatZones when present) ─────
 const DEFAULT_SURGE_ZONES = [
-  { latitude: 32.7767, longitude: -96.7970, radius: 9000 },
-  { latitude: 32.7700, longitude: -97.2200, radius: 7000 },
+  { latitude: 32.7767, longitude: -96.797, radius: 9000 },
+  { latitude: 32.77, longitude: -97.22, radius: 7000 },
 ];
 
 const TRUCK_PIN_COLOR: Record<MarketplaceTruck["status"], string> = {
@@ -64,27 +89,63 @@ const TRUCK_PIN_COLOR: Record<MarketplaceTruck["status"], string> = {
 
 // ── Dark map style ────────────────────────────────────────────────────
 const DARK_MAP_STYLE = [
-  { elementType: "geometry",            stylers: [{ color: "#0f172a" }] },
-  { elementType: "labels.text.fill",    stylers: [{ color: "#6b7280" }] },
-  { elementType: "labels.text.stroke",  stylers: [{ color: "#0f172a" }] },
-  { featureType: "administrative",      elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
-  { featureType: "road",                elementType: "geometry",        stylers: [{ color: "#1c2333" }] },
-  { featureType: "road",                elementType: "geometry.stroke", stylers: [{ color: "#0a1020" }] },
-  { featureType: "road.highway",        elementType: "geometry",        stylers: [{ color: "#1e3a54" }] },
-  { featureType: "road.highway",        elementType: "geometry.stroke", stylers: [{ color: "#0f172a" }] },
-  { featureType: "road.highway",        elementType: "labels.text.fill",stylers: [{ color: "#4b6080" }] },
-  { featureType: "water",               elementType: "geometry",        stylers: [{ color: "#0a1628" }] },
-  { featureType: "water",               elementType: "labels.text.fill",stylers: [{ color: "#1e3a54" }] },
-  { featureType: "poi",                 stylers: [{ visibility: "off" }] },
-  { featureType: "transit",             stylers: [{ visibility: "off" }] },
-  { featureType: "landscape",           elementType: "geometry",        stylers: [{ color: "#111827" }] },
+  { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#6b7280" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+  {
+    featureType: "administrative",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#1e293b" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#1c2333" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#0a1020" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#1e3a54" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#0f172a" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#4b6080" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#0a1628" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#1e3a54" }],
+  },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  {
+    featureType: "landscape",
+    elementType: "geometry",
+    stylers: [{ color: "#111827" }],
+  },
 ];
 
 // ── Map type options ──────────────────────────────────────────────────
 const MAP_TYPES: { type: MapType; label: string; icon: string }[] = [
-  { type: "standard",  label: "Map",      icon: "map"    },
-  { type: "satellite", label: "Satellite", icon: "globe"  },
-  { type: "hybrid",    label: "Hybrid",    icon: "layers" },
+  { type: "standard", label: "Map", icon: "map" },
+  { type: "satellite", label: "Satellite", icon: "globe" },
+  { type: "hybrid", label: "Hybrid", icon: "layers" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -97,8 +158,10 @@ function isInRegion(
   const lonMin = region.longitude - region.longitudeDelta / 2;
   const lonMax = region.longitude + region.longitudeDelta / 2;
   return (
-    coord.latitude >= latMin && coord.latitude <= latMax &&
-    coord.longitude >= lonMin && coord.longitude <= lonMax
+    coord.latitude >= latMin &&
+    coord.latitude <= latMax &&
+    coord.longitude >= lonMin &&
+    coord.longitude <= lonMax
   );
 }
 
@@ -106,13 +169,24 @@ type FilterType = "all" | "open" | "nearby";
 
 // ── Screen ────────────────────────────────────────────────────────────
 export default function MapScreen() {
-  const colors  = useColors();
-  const insets  = useSafeAreaInsets();
-  const { profile, isOnline, setIsOnline,
-          userLocation, setUserLocation, searchRadius, setSearchRadius } = useApp();
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const {
+    profile,
+    isOnline,
+    setIsOnline,
+    userLocation,
+    setUserLocation,
+    searchRadius,
+    setSearchRadius,
+  } = useApp();
   const isProvider = profile.role === "provider";
 
-  const { data: liveJobsRaw, refetch: refetchJobs, isFetching: fetchingJobs } = useLiveJobs();
+  const {
+    data: liveJobsRaw,
+    refetch: refetchJobs,
+    isFetching: fetchingJobs,
+  } = useLiveJobs();
   const {
     data: liveRequestsRaw,
     refetch: refetchRequests,
@@ -124,7 +198,11 @@ export default function MapScreen() {
     isFetching: fetchingOpenRequests,
   } = useLiveRequests({ mine: false, enabled: isProvider });
 
-  const { data: marketplace, refetch: refetchMarketplace, isFetching: fetchingMarketplace } = useMarketplaceMap();
+  const {
+    data: marketplace,
+    refetch: refetchMarketplace,
+    isFetching: fetchingMarketplace,
+  } = useMarketplaceMap();
 
   const jobs = useMemo<Job[]>(() => {
     if (marketplace?.loads?.length) {
@@ -147,11 +225,21 @@ export default function MapScreen() {
           .map(liveRequestToViewJob)
       : [];
     return [...fromRequests, ...fromJobs];
-  }, [marketplace, liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider]);
+  }, [
+    marketplace,
+    liveJobsRaw,
+    liveRequestsRaw,
+    liveOpenRequestsRaw,
+    isProvider,
+  ]);
 
   const trucks = marketplace?.trucks ?? [];
   const heatZones = marketplace?.heatZones?.length
-    ? marketplace.heatZones.map((z) => ({ latitude: z.latitude, longitude: z.longitude, radius: z.radius }))
+    ? marketplace.heatZones.map((z) => ({
+        latitude: z.latitude,
+        longitude: z.longitude,
+        radius: z.radius,
+      }))
     : DEFAULT_SURGE_ZONES;
   const demoMode = marketplace?.demoMode ?? false;
 
@@ -159,31 +247,39 @@ export default function MapScreen() {
     marketplace?.loads?.length ? [] : jobs,
   );
 
-  const getCoord = useCallback((job: Job) => {
-    if (marketplace?.loads?.length) {
-      const load = marketplace.loads.find((l) => l.id === job.id);
-      if (load) return coordFromMarketplace(load);
-    }
-    return coordsByJobId[job.id] ?? DEMO_JOB_COORDS[job.id] ?? null;
-  }, [coordsByJobId, marketplace]);
+  const getCoord = useCallback(
+    (job: Job) => {
+      if (marketplace?.loads?.length) {
+        const load = marketplace.loads.find((l) => l.id === job.id);
+        if (load) return coordFromMarketplace(load);
+      }
+      return coordsByJobId[job.id] ?? DEMO_JOB_COORDS[job.id] ?? null;
+    },
+    [coordsByJobId, marketplace],
+  );
 
-  const [selectedPin,      setSelectedPin]      = useState<string | null>(null);
-  const [activeFilter,     setActiveFilter]      = useState<FilterType>("all");
-  const [showSurge,        setShowSurge]         = useState(true);
-  const [showLocationModal,setShowLocationModal] = useState(false);
-  const [isFullscreen,     setIsFullscreen]      = useState(false);
-  const [mapType,          setMapType]           = useState<MapType>("standard");
+  const [selectedPin, setSelectedPin] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [showSurge, setShowSurge] = useState(true);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mapType, setMapType] = useState<MapType>("standard");
   // Committed visible region (updated by "Search this area")
-  const [visibleRegion,    setVisibleRegion]     = useState<Region>(US_REGION);
+  const [visibleRegion, setVisibleRegion] = useState<Region>(US_REGION);
   // Pending region while dragging — triggers the search button
-  const [pendingRegion,    setPendingRegion]     = useState<Region | null>(null);
-  const [showSearchHere,   setShowSearchHere]    = useState(false);
-  const [refreshing,       setRefreshing]        = useState(false);
+  const [pendingRegion, setPendingRegion] = useState<Region | null>(null);
+  const [showSearchHere, setShowSearchHere] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetchJobs(), refetchRequests(), refetchOpenRequests(), refetchMarketplace()]);
+      await Promise.all([
+        refetchJobs(),
+        refetchRequests(),
+        refetchOpenRequests(),
+        refetchMarketplace(),
+      ]);
       setVisibleRegion(pendingRegion ?? US_REGION);
       setPendingRegion(null);
       setShowSearchHere(false);
@@ -191,14 +287,22 @@ export default function MapScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, [pendingRegion, refetchJobs, refetchRequests, refetchOpenRequests, refetchMarketplace]);
+  }, [
+    pendingRegion,
+    refetchJobs,
+    refetchRequests,
+    refetchOpenRequests,
+    refetchMarketplace,
+  ]);
 
   const mapRef = useRef<MapView>(null);
   const didFitRef = useRef(false);
   // Prevent the initial map animation from triggering "Search this area"
   const mapReadyRef = useRef(false);
   useEffect(() => {
-    const t = setTimeout(() => { mapReadyRef.current = true; }, 700);
+    const t = setTimeout(() => {
+      mapReadyRef.current = true;
+    }, 700);
     return () => clearTimeout(t);
   }, []);
 
@@ -226,10 +330,17 @@ export default function MapScreen() {
     });
   }, []);
 
-  const topPad     = Platform.OS === "web" ? 67 : insets.top;
-  const openCount  = jobs.filter((j) => j.status === "open" || j.status === "bidding").length;
-  const isSurge    = openCount >= 3;
-  const isLoading  = fetchingJobs || fetchingRequests || fetchingOpenRequests || fetchingMarketplace || geocoding;
+  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const openCount = jobs.filter(
+    (j) => j.status === "open" || j.status === "bidding",
+  ).length;
+  const isSurge = openCount >= 3;
+  const isLoading =
+    fetchingJobs ||
+    fetchingRequests ||
+    fetchingOpenRequests ||
+    fetchingMarketplace ||
+    geocoding;
 
   // Jobs that match the active filter type
   const typeFiltered = jobs.filter((j) => {
@@ -237,7 +348,12 @@ export default function MapScreen() {
     if (activeFilter === "nearby") {
       const coord = getCoord(j);
       if (!coord) return false;
-      return distanceMiles(coord, { latitude: US_REGION.latitude, longitude: US_REGION.longitude }) < searchRadius;
+      return (
+        distanceMiles(coord, {
+          latitude: US_REGION.latitude,
+          longitude: US_REGION.longitude,
+        }) < searchRadius
+      );
     }
     return j.status !== "completed" && j.status !== "cancelled";
   });
@@ -248,7 +364,9 @@ export default function MapScreen() {
     return coord ? isInRegion(coord, visibleRegion) : false;
   });
 
-  const selectedJob = selectedPin ? jobs.find((j) => j.id === selectedPin) : null;
+  const selectedJob = selectedPin
+    ? jobs.find((j) => j.id === selectedPin)
+    : null;
 
   // Called continuously while dragging — only show the button, don't commit region yet
   const handleRegionChange = useCallback((_region: Region) => {
@@ -274,25 +392,41 @@ export default function MapScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-
       {/* ── Header ────────────────────────────────────────────────── */}
       {!isFullscreen && (
-        <View style={[styles.header, {
-          backgroundColor: colors.background,
-          borderBottomColor: colors.border,
-          paddingTop: topPad + 12,
-        }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: colors.background,
+              borderBottomColor: colors.border,
+              paddingTop: topPad + 12,
+            },
+          ]}
+        >
           <View style={styles.headerRow}>
-            <Pressable onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setShowLocationModal(true);
-            }}>
-              <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowLocationModal(true);
+              }}
+            >
+              <Text
+                style={[
+                  styles.title,
+                  { color: colors.foreground, fontFamily: "Inter_700Bold" },
+                ]}
+              >
                 Job Map
               </Text>
               <View style={styles.subtitleRow}>
                 <Feather name="map-pin" size={12} color={colors.primary} />
-                <Text style={[styles.subtitle, { color: colors.primary, fontFamily: "Inter_500Medium" }]}>
+                <Text
+                  style={[
+                    styles.subtitle,
+                    { color: colors.primary, fontFamily: "Inter_500Medium" },
+                  ]}
+                >
                   {userLocation}
                 </Text>
                 <Feather name="chevron-down" size={12} color={colors.primary} />
@@ -300,15 +434,30 @@ export default function MapScreen() {
             </Pressable>
 
             {isProvider && (
-              <View style={[styles.onlinePill, {
-                backgroundColor: isOnline ? "#16a34a18" : colors.card,
-                borderColor:     isOnline ? "#16a34a40" : colors.border,
-              }]}>
-                <View style={[styles.onlineDot, { backgroundColor: isOnline ? "#16a34a" : "#6b7280" }]} />
-                <Text style={[styles.onlinePillText, {
-                  color:      isOnline ? "#16a34a" : colors.mutedForeground,
-                  fontFamily: "Inter_600SemiBold",
-                }]}>
+              <View
+                style={[
+                  styles.onlinePill,
+                  {
+                    backgroundColor: isOnline ? "#16a34a18" : colors.card,
+                    borderColor: isOnline ? "#16a34a40" : colors.border,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.onlineDot,
+                    { backgroundColor: isOnline ? "#16a34a" : "#6b7280" },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.onlinePillText,
+                    {
+                      color: isOnline ? "#16a34a" : colors.mutedForeground,
+                      fontFamily: "Inter_600SemiBold",
+                    },
+                  ]}
+                >
                   {isOnline ? "Online" : "Offline"}
                 </Text>
                 <Switch
@@ -337,29 +486,63 @@ export default function MapScreen() {
                   }
                   setActiveFilter(f);
                 }}
-                style={[styles.chip, {
-                  backgroundColor: activeFilter === f ? colors.primary : colors.card,
-                  borderColor:     activeFilter === f ? colors.primary : colors.border,
-                }]}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor:
+                      activeFilter === f ? colors.primary : colors.card,
+                    borderColor:
+                      activeFilter === f ? colors.primary : colors.border,
+                  },
+                ]}
               >
                 {f === "nearby" && (
                   <Feather
                     name="navigation"
                     size={11}
-                    color={activeFilter === f ? colors.primaryForeground : colors.mutedForeground}
+                    color={
+                      activeFilter === f
+                        ? colors.primaryForeground
+                        : colors.mutedForeground
+                    }
                   />
                 )}
-                <Text style={[styles.chipText, {
-                  color:      activeFilter === f ? colors.primaryForeground : colors.foreground,
-                  fontFamily: "Inter_500Medium",
-                }]}>
-                  {f === "all" ? "All Active" : f === "open" ? "Open" : `< ${searchRadius} mi`}
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color:
+                        activeFilter === f
+                          ? colors.primaryForeground
+                          : colors.foreground,
+                      fontFamily: "Inter_500Medium",
+                    },
+                  ]}
+                >
+                  {f === "all"
+                    ? "All Active"
+                    : f === "open"
+                      ? "Open"
+                      : `< ${searchRadius} mi`}
                 </Text>
               </Pressable>
             ))}
 
-            <View style={[styles.chip, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.chipText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+            <View
+              style={[
+                styles.chip,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  {
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                  },
+                ]}
+              >
                 {visibleJobs.length} in view
               </Text>
             </View>
@@ -367,16 +550,26 @@ export default function MapScreen() {
             {isSurge && (
               <Pressable
                 onPress={() => setShowSurge((v) => !v)}
-                style={[styles.chip, {
-                  backgroundColor: showSurge ? "#b4530920" : colors.card,
-                  borderColor:     showSurge ? "#f59e0b60" : colors.border,
-                }]}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: showSurge ? "#b4530920" : colors.card,
+                    borderColor: showSurge ? "#f59e0b60" : colors.border,
+                  },
+                ]}
               >
                 <Text style={{ fontSize: 11 }}>🔥</Text>
-                <Text style={[styles.chipText, {
-                  color:      showSurge ? "#b45309" : colors.mutedForeground,
-                  fontFamily: "Inter_500Medium",
-                }]}>Surge</Text>
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color: showSurge ? "#b45309" : colors.mutedForeground,
+                      fontFamily: "Inter_500Medium",
+                    },
+                  ]}
+                >
+                  Surge
+                </Text>
               </Pressable>
             )}
           </View>
@@ -386,13 +579,24 @@ export default function MapScreen() {
       {/* ── Surge banner ──────────────────────────────────────────── */}
       {!isFullscreen && demoMode && (
         <Animated.View entering={FadeInDown.duration(300)}>
-          <View style={[styles.surgeBanner, {
-            backgroundColor:   "#1e3a54",
-            borderBottomColor: "#3b82f640",
-          }]}>
+          <View
+            style={[
+              styles.surgeBanner,
+              {
+                backgroundColor: "#1e3a54",
+                borderBottomColor: "#3b82f640",
+              },
+            ]}
+          >
             <Text style={styles.surgeEmoji}>🗺️</Text>
-            <Text style={[styles.surgeText, { fontFamily: "Inter_700Bold", color: "#93c5fd" }]}>
-              DEMO MODE — {marketplace?.loads.length ?? 0} loads · {marketplace?.trucks.length ?? 0} trucks nationwide
+            <Text
+              style={[
+                styles.surgeText,
+                { fontFamily: "Inter_700Bold", color: "#93c5fd" },
+              ]}
+            >
+              DEMO MODE — {marketplace?.loads.length ?? 0} loads ·{" "}
+              {marketplace?.trucks.length ?? 0} trucks nationwide
             </Text>
           </View>
         </Animated.View>
@@ -400,10 +604,15 @@ export default function MapScreen() {
 
       {!isFullscreen && isSurge && showSurge && !demoMode && (
         <Animated.View entering={FadeInDown.duration(300)}>
-          <View style={[styles.surgeBanner, {
-            backgroundColor:   "#78350f",
-            borderBottomColor: "#f59e0b30",
-          }]}>
+          <View
+            style={[
+              styles.surgeBanner,
+              {
+                backgroundColor: "#78350f",
+                borderBottomColor: "#f59e0b30",
+              },
+            ]}
+          >
             <Text style={styles.surgeEmoji}>🔥</Text>
             <Text style={[styles.surgeText, { fontFamily: "Inter_700Bold" }]}>
               HIGH DEMAND — {openCount} open loads • Rates 15–20% above avg
@@ -462,24 +671,32 @@ export default function MapScreen() {
           })}
 
           {/* Surge heat circles */}
-          {showSurge && isSurge && heatZones.map((zone, i) => (
-            <React.Fragment key={i}>
-              <Circle
-                center={{ latitude: zone.latitude, longitude: zone.longitude }}
-                radius={zone.radius}
-                fillColor="rgba(245,158,11,0.13)"
-                strokeColor="rgba(245,158,11,0.40)"
-                strokeWidth={1.5}
-              />
-              <Circle
-                center={{ latitude: zone.latitude, longitude: zone.longitude }}
-                radius={zone.radius * 0.42}
-                fillColor="rgba(245,158,11,0.07)"
-                strokeColor="transparent"
-                strokeWidth={0}
-              />
-            </React.Fragment>
-          ))}
+          {showSurge &&
+            isSurge &&
+            heatZones.map((zone, i) => (
+              <React.Fragment key={i}>
+                <Circle
+                  center={{
+                    latitude: zone.latitude,
+                    longitude: zone.longitude,
+                  }}
+                  radius={zone.radius}
+                  fillColor="rgba(245,158,11,0.13)"
+                  strokeColor="rgba(245,158,11,0.40)"
+                  strokeWidth={1.5}
+                />
+                <Circle
+                  center={{
+                    latitude: zone.latitude,
+                    longitude: zone.longitude,
+                  }}
+                  radius={zone.radius * 0.42}
+                  fillColor="rgba(245,158,11,0.07)"
+                  strokeColor="transparent"
+                  strokeWidth={0}
+                />
+              </React.Fragment>
+            ))}
         </MapView>
 
         {/* ── "Search this area" button (Yelp-style) ─────────────── */}
@@ -491,16 +708,24 @@ export default function MapScreen() {
           >
             <Pressable
               onPress={commitSearch}
-              style={[styles.searchAreaBtn, {
-                backgroundColor: colors.background,
-                borderColor:     colors.border,
-              }]}
+              style={[
+                styles.searchAreaBtn,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                },
+              ]}
             >
               <Feather name="search" size={13} color={colors.primary} />
-              <Text style={[styles.searchAreaText, {
-                color:      colors.foreground,
-                fontFamily: "Inter_600SemiBold",
-              }]}>
+              <Text
+                style={[
+                  styles.searchAreaText,
+                  {
+                    color: colors.foreground,
+                    fontFamily: "Inter_600SemiBold",
+                  },
+                ]}
+              >
                 Search this area
               </Text>
             </Pressable>
@@ -510,14 +735,24 @@ export default function MapScreen() {
         {/* ── Map type toggle (Standard → Satellite → Hybrid) ────── */}
         <Pressable
           onPress={cycleMapType}
-          style={[styles.mapTypeBtn, { backgroundColor: "#0a1628cc", borderColor: "#ffffff20" }]}
+          style={[
+            styles.mapTypeBtn,
+            { backgroundColor: "#0a1628cc", borderColor: "#ffffff20" },
+          ]}
         >
           <Feather
-            name={MAP_TYPES.find((m) => m.type === mapType)?.icon as any ?? "map"}
+            name={
+              (MAP_TYPES.find((m) => m.type === mapType)?.icon as any) ?? "map"
+            }
             size={13}
             color="#ffffff"
           />
-          <Text style={[styles.mapTypeBtnText, { color: "#ffffff", fontFamily: "Inter_600SemiBold" }]}>
+          <Text
+            style={[
+              styles.mapTypeBtnText,
+              { color: "#ffffff", fontFamily: "Inter_600SemiBold" },
+            ]}
+          >
             {MAP_TYPES.find((m) => m.type === mapType)?.label}
           </Text>
         </Pressable>
@@ -530,26 +765,34 @@ export default function MapScreen() {
           }}
           style={[styles.fullscreenBtn, { backgroundColor: "#0a162890" }]}
         >
-          <Feather name={isFullscreen ? "minimize-2" : "maximize-2"} size={16} color="#ffffff" />
+          <Feather
+            name={isFullscreen ? "minimize-2" : "maximize-2"}
+            size={16}
+            color="#ffffff"
+          />
         </Pressable>
 
         {/* ── Legend ─────────────────────────────────────────────── */}
         <View style={[styles.legend, { backgroundColor: "#0a162890" }]}>
           {[
-            { color: "#e9a600", label: "Open"    },
+            { color: "#e9a600", label: "Open" },
             { color: "#3b82f6", label: "Bidding" },
-            { color: "#16a34a", label: "Active"  },
-            { color: "#22c55e", label: "Trucks"  },
+            { color: "#16a34a", label: "Active" },
+            { color: "#22c55e", label: "Trucks" },
           ].map((l) => (
             <View key={l.label} style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: l.color }]} />
-              <Text style={[styles.legendText, { color: "#ffffff99" }]}>{l.label}</Text>
+              <Text style={[styles.legendText, { color: "#ffffff99" }]}>
+                {l.label}
+              </Text>
             </View>
           ))}
           {showSurge && isSurge && (
             <View style={styles.legendItem}>
               <Text style={{ fontSize: 10 }}>🔥</Text>
-              <Text style={[styles.legendText, { color: "#fbbf24" }]}>Surge</Text>
+              <Text style={[styles.legendText, { color: "#fbbf24" }]}>
+                Surge
+              </Text>
             </View>
           )}
         </View>
@@ -563,13 +806,21 @@ export default function MapScreen() {
           >
             <Pressable
               onPress={() => setShowLocationModal(true)}
-              style={[styles.fullscreenLocBtn, {
-                backgroundColor: "#0a1628cc",
-                borderColor:     "#ffffff20",
-              }]}
+              style={[
+                styles.fullscreenLocBtn,
+                {
+                  backgroundColor: "#0a1628cc",
+                  borderColor: "#ffffff20",
+                },
+              ]}
             >
               <Feather name="map-pin" size={13} color={colors.primary} />
-              <Text style={[styles.fullscreenLocText, { color: "#ffffff", fontFamily: "Inter_600SemiBold" }]}>
+              <Text
+                style={[
+                  styles.fullscreenLocText,
+                  { color: "#ffffff", fontFamily: "Inter_600SemiBold" },
+                ]}
+              >
                 {userLocation}
               </Text>
               <Feather name="chevron-down" size={13} color={colors.primary} />
@@ -582,16 +833,33 @@ export default function MapScreen() {
                     if (f === "nearby") setShowLocationModal(true);
                     setActiveFilter(f);
                   }}
-                  style={[styles.fullscreenChip, {
-                    backgroundColor: activeFilter === f ? colors.primary : "#0a1628cc",
-                    borderColor:     activeFilter === f ? colors.primary : "#ffffff20",
-                  }]}
+                  style={[
+                    styles.fullscreenChip,
+                    {
+                      backgroundColor:
+                        activeFilter === f ? colors.primary : "#0a1628cc",
+                      borderColor:
+                        activeFilter === f ? colors.primary : "#ffffff20",
+                    },
+                  ]}
                 >
-                  <Text style={[styles.chipText, {
-                    color:      activeFilter === f ? colors.primaryForeground : "#ffffffcc",
-                    fontFamily: "Inter_500Medium",
-                  }]}>
-                    {f === "all" ? "All" : f === "open" ? "Open" : `< ${searchRadius} mi`}
+                  <Text
+                    style={[
+                      styles.chipText,
+                      {
+                        color:
+                          activeFilter === f
+                            ? colors.primaryForeground
+                            : "#ffffffcc",
+                        fontFamily: "Inter_500Medium",
+                      },
+                    ]}
+                  >
+                    {f === "all"
+                      ? "All"
+                      : f === "open"
+                        ? "Open"
+                        : `< ${searchRadius} mi`}
                   </Text>
                 </Pressable>
               ))}
@@ -602,18 +870,31 @@ export default function MapScreen() {
 
       {/* ── Bottom sheet ──────────────────────────────────────────── */}
       {!isFullscreen && (
-        <View style={[styles.bottomSheet, {
-          backgroundColor: colors.background,
-          borderTopColor:  colors.border,
-        }]}>
+        <View
+          style={[
+            styles.bottomSheet,
+            {
+              backgroundColor: colors.background,
+              borderTopColor: colors.border,
+            },
+          ]}
+        >
           {selectedJob ? (
             // ── Selected job card ──────────────────────────────────
-            <Animated.View entering={FadeInUp.duration(250)} style={{ flex: 1 }}>
+            <Animated.View
+              entering={FadeInUp.duration(250)}
+              style={{ flex: 1 }}
+            >
               <View style={styles.selectedJobHeader}>
-                <Text style={[styles.selectedJobTitle, {
-                  color:      colors.foreground,
-                  fontFamily: "Inter_700Bold",
-                }]}>
+                <Text
+                  style={[
+                    styles.selectedJobTitle,
+                    {
+                      color: colors.foreground,
+                      fontFamily: "Inter_700Bold",
+                    },
+                  ]}
+                >
                   {selectedJob.projectName}
                 </Text>
                 <Pressable onPress={() => setSelectedPin(null)}>
@@ -621,23 +902,52 @@ export default function MapScreen() {
                 </Pressable>
               </View>
               <View style={styles.selectedJobDetails}>
-                <DetailPill icon="layers"     label={selectedJob.material}                colors={colors} />
-                <DetailPill icon="dollar-sign" label={`$${selectedJob.budgetPerHour}/hr`} highlight colors={colors} />
-                <DetailPill icon="map-pin"    label={`${selectedJob.distanceToStart} mi away`} colors={colors} />
-                <DetailPill icon="truck"      label={`${selectedJob.trucksNeeded} trucks`}     colors={colors} />
+                <DetailPill
+                  icon="layers"
+                  label={selectedJob.material}
+                  colors={colors}
+                />
+                <DetailPill
+                  icon="dollar-sign"
+                  label={`$${selectedJob.budgetPerHour}/hr`}
+                  highlight
+                  colors={colors}
+                />
+                <DetailPill
+                  icon="map-pin"
+                  label={`${selectedJob.distanceToStart} mi away`}
+                  colors={colors}
+                />
+                <DetailPill
+                  icon="truck"
+                  label={`${selectedJob.trucksNeeded} trucks`}
+                  colors={colors}
+                />
               </View>
               <View style={styles.selectedJobRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.selectedJobSub, {
-                    color:      colors.mutedForeground,
-                    fontFamily: "Inter_400Regular",
-                  }]} numberOfLines={1}>
+                  <Text
+                    style={[
+                      styles.selectedJobSub,
+                      {
+                        color: colors.mutedForeground,
+                        fontFamily: "Inter_400Regular",
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
                     {selectedJob.pickupAddress}
                   </Text>
-                  <Text style={[styles.selectedJobSub, {
-                    color:      colors.mutedForeground,
-                    fontFamily: "Inter_400Regular",
-                  }]} numberOfLines={1}>
+                  <Text
+                    style={[
+                      styles.selectedJobSub,
+                      {
+                        color: colors.mutedForeground,
+                        fontFamily: "Inter_400Regular",
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
                     → {selectedJob.deliveryAddress}
                   </Text>
                 </View>
@@ -648,13 +958,22 @@ export default function MapScreen() {
                   }}
                   style={[styles.viewBtn, { backgroundColor: colors.primary }]}
                 >
-                  <Text style={[styles.viewBtnText, {
-                    color:      colors.primaryForeground,
-                    fontFamily: "Inter_700Bold",
-                  }]}>
+                  <Text
+                    style={[
+                      styles.viewBtnText,
+                      {
+                        color: colors.primaryForeground,
+                        fontFamily: "Inter_700Bold",
+                      },
+                    ]}
+                  >
                     {isProvider ? "Bid Now" : "View"}
                   </Text>
-                  <Feather name="arrow-right" size={14} color={colors.primaryForeground} />
+                  <Feather
+                    name="arrow-right"
+                    size={14}
+                    color={colors.primaryForeground}
+                  />
                 </Pressable>
               </View>
             </Animated.View>
@@ -671,45 +990,78 @@ export default function MapScreen() {
                 />
               }
             >
-              <Text style={[styles.listTitle, {
-                color:      colors.mutedForeground,
-                fontFamily: "Inter_600SemiBold",
-              }]}>
+              <Text
+                style={[
+                  styles.listTitle,
+                  {
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_600SemiBold",
+                  },
+                ]}
+              >
                 {visibleJobs.length} JOBS IN VIEW
               </Text>
               {isLoading ? (
                 <View style={styles.emptyState}>
-                  <Feather name="loader" size={28} color={colors.mutedForeground} />
-                  <Text style={[styles.emptyTitle, {
-                    color: colors.mutedForeground,
-                    fontFamily: "Inter_500Medium",
-                  }]}>
+                  <Feather
+                    name="loader"
+                    size={28}
+                    color={colors.mutedForeground}
+                  />
+                  <Text
+                    style={[
+                      styles.emptyTitle,
+                      {
+                        color: colors.mutedForeground,
+                        fontFamily: "Inter_500Medium",
+                      },
+                    ]}
+                  >
                     Loading jobs on map…
                   </Text>
                 </View>
               ) : visibleJobs.length === 0 ? (
                 <View style={styles.emptyState}>
-                  <Feather name="map" size={28} color={colors.mutedForeground} />
-                  <Text style={[styles.emptyTitle, {
-                    color:      colors.mutedForeground,
-                    fontFamily: "Inter_500Medium",
-                  }]}>
-                    {jobs.length === 0 ? "No open loads right now" : "No jobs in this area"}
+                  <Feather
+                    name="map"
+                    size={28}
+                    color={colors.mutedForeground}
+                  />
+                  <Text
+                    style={[
+                      styles.emptyTitle,
+                      {
+                        color: colors.mutedForeground,
+                        fontFamily: "Inter_500Medium",
+                      },
+                    ]}
+                  >
+                    {jobs.length === 0
+                      ? "No open loads right now"
+                      : "No jobs in this area"}
                   </Text>
-                  <Text style={[styles.emptySub, {
-                    color:      colors.mutedForeground,
-                    fontFamily: "Inter_400Regular",
-                  }]}>
+                  <Text
+                    style={[
+                      styles.emptySub,
+                      {
+                        color: colors.mutedForeground,
+                        fontFamily: "Inter_400Regular",
+                      },
+                    ]}
+                  >
                     {jobs.length === 0
                       ? "Post a load from the Loads tab or check back soon"
                       : demoMode
                         ? "Pan the map — demo loads and trucks are active nationwide"
-                        : "Pan the map to the pickup location and tap \"Search this area\""}
+                        : 'Pan the map to the pickup location and tap "Search this area"'}
                   </Text>
                 </View>
               ) : (
                 visibleJobs.slice(0, 6).map((job, idx) => (
-                  <Animated.View key={job.id} entering={FadeInDown.delay(idx * 40).springify()}>
+                  <Animated.View
+                    key={job.id}
+                    entering={FadeInDown.delay(idx * 40).springify()}
+                  >
                     <Pressable
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -717,34 +1069,62 @@ export default function MapScreen() {
                       }}
                       style={[styles.listItem, { borderColor: colors.border }]}
                     >
-                      <View style={[styles.listDot, {
-                        backgroundColor: STATUS_COLOR[job.status] ?? colors.primary,
-                      }]} />
+                      <View
+                        style={[
+                          styles.listDot,
+                          {
+                            backgroundColor:
+                              STATUS_COLOR[job.status] ?? colors.primary,
+                          },
+                        ]}
+                      />
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.listItemTitle, {
-                          color:      colors.foreground,
-                          fontFamily: "Inter_600SemiBold",
-                        }]} numberOfLines={1}>
+                        <Text
+                          style={[
+                            styles.listItemTitle,
+                            {
+                              color: colors.foreground,
+                              fontFamily: "Inter_600SemiBold",
+                            },
+                          ]}
+                          numberOfLines={1}
+                        >
                           {job.projectName}
                         </Text>
-                        <Text style={[styles.listItemSub, {
-                          color:      colors.mutedForeground,
-                          fontFamily: "Inter_400Regular",
-                        }]}>
-                          {job.material} • {job.distanceToStart} mi • {job.scheduledDate}
+                        <Text
+                          style={[
+                            styles.listItemSub,
+                            {
+                              color: colors.mutedForeground,
+                              fontFamily: "Inter_400Regular",
+                            },
+                          ]}
+                        >
+                          {job.material} • {job.distanceToStart} mi •{" "}
+                          {job.scheduledDate}
                         </Text>
                       </View>
                       <View style={{ alignItems: "flex-end" }}>
-                        <Text style={[styles.listItemRate, {
-                          color:      colors.primary,
-                          fontFamily: "Inter_700Bold",
-                        }]}>
+                        <Text
+                          style={[
+                            styles.listItemRate,
+                            {
+                              color: colors.primary,
+                              fontFamily: "Inter_700Bold",
+                            },
+                          ]}
+                        >
                           ${job.budgetPerHour}/hr
                         </Text>
-                        <Text style={[styles.listItemBids, {
-                          color:      colors.mutedForeground,
-                          fontFamily: "Inter_400Regular",
-                        }]}>
+                        <Text
+                          style={[
+                            styles.listItemBids,
+                            {
+                              color: colors.mutedForeground,
+                              fontFamily: "Inter_400Regular",
+                            },
+                          ]}
+                        >
                           {job.bidsCount} bids
                         </Text>
                       </View>
@@ -773,18 +1153,33 @@ export default function MapScreen() {
 
       {/* ── Provider Online bar ────────────────────────────────────── */}
       {isProvider && (
-        <View style={[styles.onlineBar, {
-          backgroundColor: isOnline ? "#16a34a" : "#1c2333",
-          bottom:          insets.bottom + 60,
-        }]}>
+        <View
+          style={[
+            styles.onlineBar,
+            {
+              backgroundColor: isOnline ? "#16a34a" : "#1c2333",
+              bottom: insets.bottom + 60,
+            },
+          ]}
+        >
           <View style={styles.onlineBarLeft}>
-            <View style={[styles.onlineBarDot, {
-              backgroundColor: isOnline ? "#ffffff80" : "#6b7280",
-            }]} />
-            <Text style={[styles.onlineBarText, {
-              color:      "#ffffff",
-              fontFamily: "Inter_700Bold",
-            }]}>
+            <View
+              style={[
+                styles.onlineBarDot,
+                {
+                  backgroundColor: isOnline ? "#ffffff80" : "#6b7280",
+                },
+              ]}
+            />
+            <Text
+              style={[
+                styles.onlineBarText,
+                {
+                  color: "#ffffff",
+                  fontFamily: "Inter_700Bold",
+                },
+              ]}
+            >
               {isOnline ? "You are Online" : "You are Offline"}
             </Text>
           </View>
@@ -805,24 +1200,40 @@ export default function MapScreen() {
 
 // ── Detail pill ───────────────────────────────────────────────────────
 function DetailPill({
-  icon, label, highlight, colors,
+  icon,
+  label,
+  highlight,
+  colors,
 }: {
-  icon: string; label: string; highlight?: boolean; colors: any;
+  icon: string;
+  label: string;
+  highlight?: boolean;
+  colors: any;
 }) {
   return (
-    <View style={[styles.detailPill, {
-      backgroundColor: highlight ? colors.primary + "18" : colors.card,
-      borderColor:     highlight ? colors.primary + "40" : colors.border,
-    }]}>
+    <View
+      style={[
+        styles.detailPill,
+        {
+          backgroundColor: highlight ? colors.primary + "18" : colors.card,
+          borderColor: highlight ? colors.primary + "40" : colors.border,
+        },
+      ]}
+    >
       <Feather
         name={icon as any}
         size={12}
         color={highlight ? colors.primary : colors.mutedForeground}
       />
-      <Text style={[styles.detailPillText, {
-        color:      highlight ? colors.primary : colors.foreground,
-        fontFamily: "Inter_500Medium",
-      }]}>
+      <Text
+        style={[
+          styles.detailPillText,
+          {
+            color: highlight ? colors.primary : colors.foreground,
+            fontFamily: "Inter_500Medium",
+          },
+        ]}
+      >
         {label}
       </Text>
     </View>
@@ -831,92 +1242,235 @@ function DetailPill({
 
 // ── Styles ────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container:    { flex: 1 },
+  container: { flex: 1 },
 
   // Header
-  header:       { borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12 },
-  headerRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  title:        { fontSize: 24, fontWeight: "700" as const },
-  subtitleRow:  { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 },
-  subtitle:     { fontSize: 13 },
-  onlinePill:   { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
-  onlineDot:    { width: 8, height: 8, borderRadius: 4 },
+  header: { borderBottomWidth: 1, paddingHorizontal: 16, paddingBottom: 12 },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  title: { fontSize: 24, fontWeight: "700" as const },
+  subtitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 3,
+  },
+  subtitle: { fontSize: 13 },
+  onlinePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  onlineDot: { width: 8, height: 8, borderRadius: 4 },
   onlinePillText: { fontSize: 13 },
 
   // Filter chips
-  chips:        { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  chip:         { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
-  chipText:     { fontSize: 12 },
+  chips: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  chipText: { fontSize: 12 },
 
   // Surge banner
-  surgeBanner:  { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
-  surgeEmoji:   { fontSize: 16 },
-  surgeText:    { fontSize: 12, color: "#fbbf24", letterSpacing: 0.3 },
+  surgeBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  surgeEmoji: { fontSize: 16 },
+  surgeText: { fontSize: 12, color: "#fbbf24", letterSpacing: 0.3 },
 
   // Map
   mapContainer: { flex: 1, position: "relative" },
 
   // "Search this area" button
   searchAreaWrapper: {
-    position: "absolute", top: 14, left: 0, right: 0,
-    alignItems: "center", zIndex: 30,
+    position: "absolute",
+    top: 14,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 30,
   },
   searchAreaBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    paddingHorizontal: 16, paddingVertical: 9,
-    borderRadius: 24, borderWidth: 1,
-    shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 24,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
   searchAreaText: { fontSize: 13 },
 
   // Map overlay buttons
-  mapTypeBtn:       { position: "absolute", bottom: 14, left: 14, flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 11, paddingVertical: 8, borderRadius: 8, borderWidth: 1, zIndex: 30 },
-  mapTypeBtnText:   { fontSize: 12 },
-  fullscreenBtn:    { position: "absolute", bottom: 14, right: 14, width: 36, height: 36, borderRadius: 8, alignItems: "center", justifyContent: "center", zIndex: 30 },
+  mapTypeBtn: {
+    position: "absolute",
+    bottom: 14,
+    left: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    zIndex: 30,
+  },
+  mapTypeBtnText: { fontSize: 12 },
+  fullscreenBtn: {
+    position: "absolute",
+    bottom: 14,
+    right: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 30,
+  },
 
   // Legend
-  legend:       { position: "absolute", top: 10, right: 10, flexDirection: "row", gap: 10, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
-  legendItem:   { flexDirection: "row", alignItems: "center", gap: 4 },
-  legendDot:    { width: 8, height: 8, borderRadius: 4 },
-  legendText:   { fontSize: 10 },
+  legend: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  legendText: { fontSize: 10 },
 
   // Fullscreen overlay
-  fullscreenOverlay:  { position: "absolute", top: 0, left: 0, right: 0, zIndex: 25, paddingHorizontal: 14, gap: 8 },
-  fullscreenLocBtn:   { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
-  fullscreenLocText:  { fontSize: 13 },
-  fullscreenChips:    { flexDirection: "row", gap: 8 },
-  fullscreenChip:     { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  fullscreenOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 25,
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  fullscreenLocBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  fullscreenLocText: { fontSize: 13 },
+  fullscreenChips: { flexDirection: "row", gap: 8 },
+  fullscreenChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
 
   // Bottom sheet
-  bottomSheet:       { height: 215, borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 14 },
-  listTitle:         { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
-  listItem:          { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderBottomWidth: 1 },
-  listDot:           { width: 10, height: 10, borderRadius: 5 },
-  listItemTitle:     { fontSize: 14, marginBottom: 2 },
-  listItemSub:       { fontSize: 12 },
-  listItemRate:      { fontSize: 14 },
-  listItemBids:      { fontSize: 11 },
+  bottomSheet: {
+    height: 215,
+    borderTopWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+  },
+  listTitle: { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
+  listItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+  },
+  listDot: { width: 10, height: 10, borderRadius: 5 },
+  listItemTitle: { fontSize: 14, marginBottom: 2 },
+  listItemSub: { fontSize: 12 },
+  listItemRate: { fontSize: 14 },
+  listItemBids: { fontSize: 11 },
 
   // Empty state
-  emptyState:  { alignItems: "center", paddingTop: 20, gap: 6 },
-  emptyTitle:  { fontSize: 14 },
-  emptySub:    { fontSize: 12, textAlign: "center" },
+  emptyState: { alignItems: "center", paddingTop: 20, gap: 6 },
+  emptyTitle: { fontSize: 14 },
+  emptySub: { fontSize: 12, textAlign: "center" },
 
   // Selected job card
-  selectedJobHeader:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
-  selectedJobTitle:   { fontSize: 16, flex: 1, marginRight: 8 },
-  selectedJobDetails: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 },
-  selectedJobRow:     { flexDirection: "row", alignItems: "center", gap: 12 },
-  selectedJobSub:     { fontSize: 12, marginBottom: 2 },
-  viewBtn:            { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10 },
-  viewBtnText:        { fontSize: 14 },
-  detailPill:         { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
-  detailPillText:     { fontSize: 12 },
+  selectedJobHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  selectedJobTitle: { fontSize: 16, flex: 1, marginRight: 8 },
+  selectedJobDetails: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 10,
+  },
+  selectedJobRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  selectedJobSub: { fontSize: 12, marginBottom: 2 },
+  viewBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  viewBtnText: { fontSize: 14 },
+  detailPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  detailPillText: { fontSize: 12 },
 
   // Provider online bar
-  onlineBar:     { position: "absolute", left: 16, right: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
+  onlineBar: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
   onlineBarLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-  onlineBarDot:  { width: 8, height: 8, borderRadius: 4 },
+  onlineBarDot: { width: 8, height: 8, borderRadius: 4 },
   onlineBarText: { fontSize: 14 },
 });

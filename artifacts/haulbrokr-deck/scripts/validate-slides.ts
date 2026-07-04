@@ -13,7 +13,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const slidesDir = path.join(projectRoot, "src/pages/slides");
-const slidesManifestPath = path.join(projectRoot, "src/data/slides-manifest.json");
+const slidesManifestPath = path.join(
+  projectRoot,
+  "src/data/slides-manifest.json",
+);
 
 type ValidationIssue = {
   message: string;
@@ -116,7 +119,9 @@ function validateFilepaths(issues: ValidationIssue[]) {
 
 function validateOrphanedSlideFiles(issues: ValidationIssue[]) {
   const manifestSet = new Set(
-    slides.map((slide) => path.normalize(path.resolve(projectRoot, slide.filepath))),
+    slides.map((slide) =>
+      path.normalize(path.resolve(projectRoot, slide.filepath)),
+    ),
   );
 
   const files = getSlideFilenames().map((name) => path.join(slidesDir, name));
@@ -146,7 +151,9 @@ async function main() {
 
   let rawManifest: unknown;
   try {
-    rawManifest = JSON.parse(readFileSync(slidesManifestPath, "utf8")) as unknown;
+    rawManifest = JSON.parse(
+      readFileSync(slidesManifestPath, "utf8"),
+    ) as unknown;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(
@@ -179,7 +186,9 @@ async function main() {
   validateOrphanedSlideFiles(issues);
 
   if (issues.length > 0) {
-    console.error(`Slide manifest validation failed (${issues.length} issue(s)):\n`);
+    console.error(
+      `Slide manifest validation failed (${issues.length} issue(s)):\n`,
+    );
     for (const issue of issues) {
       console.error(`- ${issue.message}`);
     }

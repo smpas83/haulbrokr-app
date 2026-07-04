@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { ActivityItemType } from './activityItemType';
+import type { ActivityItemType } from "./activityItemType";
 
 export interface ActivityItem {
   id: number;

@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type AccountStatusPayoutStatus = typeof AccountStatusPayoutStatus[keyof typeof AccountStatusPayoutStatus];
-
+export type AccountStatusPayoutStatus =
+  (typeof AccountStatusPayoutStatus)[keyof typeof AccountStatusPayoutStatus];
 
 export const AccountStatusPayoutStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;

@@ -57,7 +57,11 @@ export function getObjectStorageClient(): S3Client {
 /** @deprecated Use getObjectStorageClient() — kept for orphan upload cleaner compatibility. */
 export const objectStorageClient = {
   listByPrefix(prefix: string) {
-    return listStorageObjectsByPrefix(getObjectStorageClient(), getR2Bucket(), prefix);
+    return listStorageObjectsByPrefix(
+      getObjectStorageClient(),
+      getR2Bucket(),
+      prefix,
+    );
   },
 };
 
@@ -76,7 +80,10 @@ function objectPathFromEntityId(entityId: string): string {
   return `/objects/${entityId}`;
 }
 
-function objectKeyFromEntityId(entityId: string, privateObjectDir: string): string {
+function objectKeyFromEntityId(
+  entityId: string,
+  privateObjectDir: string,
+): string {
   return `${dirToKeyPrefix(privateObjectDir)}/${entityId}`;
 }
 
@@ -98,13 +105,13 @@ export class ObjectStorageService {
         pathsStr
           .split(",")
           .map((path) => path.trim())
-          .filter((path) => path.length > 0)
-      )
+          .filter((path) => path.length > 0),
+      ),
     );
     if (paths.length === 0) {
       throw new Error(
         "PUBLIC_OBJECT_SEARCH_PATHS not set. Set PUBLIC_OBJECT_SEARCH_PATHS " +
-          "(comma-separated key prefixes within R2_BUCKET)."
+          "(comma-separated key prefixes within R2_BUCKET).",
       );
     }
     return paths;
@@ -115,7 +122,7 @@ export class ObjectStorageService {
     if (!dir) {
       throw new Error(
         "PRIVATE_OBJECT_DIR not set. Set PRIVATE_OBJECT_DIR to the private " +
-          "object key prefix within R2_BUCKET (e.g. /haulbrokr/private)."
+          "object key prefix within R2_BUCKET (e.g. /haulbrokr/private).",
       );
     }
     return dir;
@@ -137,7 +144,10 @@ export class ObjectStorageService {
     return null;
   }
 
-  async downloadObject(file: StorageObject, cacheTtlSec: number = 3600): Promise<Response> {
+  async downloadObject(
+    file: StorageObject,
+    cacheTtlSec: number = 3600,
+  ): Promise<Response> {
     const [metadata] = await file.getMetadata();
     const aclPolicy = await getObjectAclPolicy(file);
     const isPublic = aclPolicy?.visibility === "public";
@@ -229,7 +239,7 @@ export class ObjectStorageService {
 
   async trySetObjectEntityAclPolicy(
     rawPath: string,
-    aclPolicy: ObjectAclPolicy
+    aclPolicy: ObjectAclPolicy,
   ): Promise<string> {
     const normalizedPath = this.normalizeObjectEntityPath(rawPath);
     if (!normalizedPath.startsWith("/")) {
@@ -258,6 +268,12 @@ export class ObjectStorageService {
   }
 }
 
-export async function listPrivateUploadObjects(prefix: string): Promise<StorageObject[]> {
-  return listStorageObjectsByPrefix(getObjectStorageClient(), getR2Bucket(), prefix);
+export async function listPrivateUploadObjects(
+  prefix: string,
+): Promise<StorageObject[]> {
+  return listStorageObjectsByPrefix(
+    getObjectStorageClient(),
+    getR2Bucket(),
+    prefix,
+  );
 }

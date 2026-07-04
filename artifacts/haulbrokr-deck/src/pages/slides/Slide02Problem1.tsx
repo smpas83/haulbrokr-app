@@ -93,7 +93,8 @@ export default function Slide02Problem1() {
               lineHeight: 1.5,
             }}
           >
-            U.S. dump truck market operating with no unified digital dispatch layer
+            U.S. dump truck market operating with no unified digital dispatch
+            layer
           </div>
         </div>
 
@@ -108,7 +109,9 @@ export default function Slide02Problem1() {
             gap: "4vh",
           }}
         >
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "2vw" }}>
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "2vw" }}
+          >
             <div
               style={{
                 width: "0.5vw",
@@ -129,13 +132,18 @@ export default function Slide02Problem1() {
               >
                 Phone-tag dispatch
               </div>
-              <div style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}>
-                Contractors spend hours calling individual owner-operators to find available trucks, wasting time on every job.
+              <div
+                style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Contractors spend hours calling individual owner-operators to
+                find available trucks, wasting time on every job.
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "2vw" }}>
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "2vw" }}
+          >
             <div
               style={{
                 width: "0.5vw",
@@ -156,13 +164,18 @@ export default function Slide02Problem1() {
               >
                 No price transparency
               </div>
-              <div style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}>
-                Rates vary wildly. There is no market rate. Operators undercharge; contractors overpay or get ghosted entirely.
+              <div
+                style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Rates vary wildly. There is no market rate. Operators
+                undercharge; contractors overpay or get ghosted entirely.
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "2vw" }}>
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "2vw" }}
+          >
             <div
               style={{
                 width: "0.5vw",
@@ -183,13 +196,18 @@ export default function Slide02Problem1() {
               >
                 Paper invoicing and disputes
               </div>
-              <div style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}>
-                Load counts are handwritten. Disputes are common. Payments are slow — net-30 or worse.
+              <div
+                style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Load counts are handwritten. Disputes are common. Payments are
+                slow — net-30 or worse.
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "2vw" }}>
+          <div
+            style={{ display: "flex", alignItems: "flex-start", gap: "2vw" }}
+          >
             <div
               style={{
                 width: "0.5vw",
@@ -210,8 +228,11 @@ export default function Slide02Problem1() {
               >
                 Compliance blind spots
               </div>
-              <div style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}>
-                Contractors have no way to verify insurance, licensing, or DOT compliance before a truck shows up on site.
+              <div
+                style={{ fontSize: "1.1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Contractors have no way to verify insurance, licensing, or DOT
+                compliance before a truck shows up on site.
               </div>
             </div>
           </div>
@@ -234,7 +255,9 @@ export default function Slide02Problem1() {
           letterSpacing: "0.2em",
         }}
       >
-        <span>HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026</span>
+        <span>
+          HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026
+        </span>
         <span style={{ color: "#A0785A" }}>02</span>
       </div>
     </div>

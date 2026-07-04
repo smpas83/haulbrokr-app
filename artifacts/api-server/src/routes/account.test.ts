@@ -85,7 +85,10 @@ vi.mock("../middlewares/requireAdmin", () => ({
 
 import accountRouter from "./account";
 import { paymentMethodsTable } from "@workspace/db";
-import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
+import {
+  getUncachableStripeClient,
+  getStripePublishableKey,
+} from "../lib/stripeClient";
 
 const PROFILE_ID = 1;
 
@@ -100,9 +103,19 @@ beforeEach(() => {
   h.rows.clear();
   h.updates = [];
   h.inserts = [];
-  h.updateBase = { id: 99, profileId: PROFILE_ID, methodType: "credit_card", createdAt: new Date() };
+  h.updateBase = {
+    id: 99,
+    profileId: PROFILE_ID,
+    methodType: "credit_card",
+    createdAt: new Date(),
+  };
   h.insertBase = { id: 99, createdAt: new Date() };
-  h.profile = { id: PROFILE_ID, email: "ops@acme.com", companyName: "Acme Hauling", contactName: "Pat" };
+  h.profile = {
+    id: PROFILE_ID,
+    email: "ops@acme.com",
+    companyName: "Acme Hauling",
+    contactName: "Pat",
+  };
   vi.mocked(getUncachableStripeClient).mockReset();
   vi.mocked(getStripePublishableKey).mockClear();
 });
@@ -117,16 +130,25 @@ beforeEach(() => {
  */
 function mockStripe(opts: { newCustomerId?: string; pm?: any } = {}) {
   const customers = {
-    create: vi.fn(async (_args: any) => ({ id: opts.newCustomerId ?? "cus_new_1" })),
+    create: vi.fn(async (_args: any) => ({
+      id: opts.newCustomerId ?? "cus_new_1",
+    })),
   };
   const setupIntents = {
-    create: vi.fn(async (_args: any) => ({ id: "seti_1", client_secret: "seti_1_secret" })),
+    create: vi.fn(async (_args: any) => ({
+      id: "seti_1",
+      client_secret: "seti_1_secret",
+    })),
   };
   const paymentMethods = {
     retrieve: vi.fn(async (_id: string) => opts.pm),
     attach: vi.fn(async (_id: string, _args: any) => ({})),
   };
-  vi.mocked(getUncachableStripeClient).mockResolvedValue({ customers, setupIntents, paymentMethods } as any);
+  vi.mocked(getUncachableStripeClient).mockResolvedValue({
+    customers,
+    setupIntents,
+    paymentMethods,
+  } as any);
   return { customers, setupIntents, paymentMethods };
 }
 
@@ -145,7 +167,9 @@ describe("POST /account/payment-method/setup-intent", () => {
     // Profile has no stripeCustomerId yet → a Customer must be minted on demand.
     const stripe = mockStripe({ newCustomerId: "cus_new_42" });
 
-    const res = await request(makeApp()).post("/account/payment-method/setup-intent");
+    const res = await request(makeApp()).post(
+      "/account/payment-method/setup-intent",
+    );
 
     expect(res.status).toBe(200);
     expect(res.body.clientSecret).toBe("seti_1_secret");
@@ -159,7 +183,9 @@ describe("POST /account/payment-method/setup-intent", () => {
     expect(custArgs.metadata).toEqual({ profileId: String(PROFILE_ID) });
 
     // The new id is persisted on the profile so it is reused next time.
-    const persisted = h.updates.find((u) => u.stripeCustomerId === "cus_new_42");
+    const persisted = h.updates.find(
+      (u) => u.stripeCustomerId === "cus_new_42",
+    );
     expect(persisted).toBeTruthy();
 
     // The SetupIntent is bound to that Customer and saved off-session for reuse.
@@ -174,20 +200,28 @@ describe("POST /account/payment-method/setup-intent", () => {
     h.profile.stripeCustomerId = "cus_existing_7";
     const stripe = mockStripe();
 
-    const res = await request(makeApp()).post("/account/payment-method/setup-intent");
+    const res = await request(makeApp()).post(
+      "/account/payment-method/setup-intent",
+    );
 
     expect(res.status).toBe(200);
     // No new Customer is created; the SetupIntent targets the saved one.
     expect(stripe.customers.create).not.toHaveBeenCalled();
-    expect(stripe.setupIntents.create.mock.calls[0][0].customer).toBe("cus_existing_7");
+    expect(stripe.setupIntents.create.mock.calls[0][0].customer).toBe(
+      "cus_existing_7",
+    );
     // The profile is not re-written with a customer id it already has.
     expect(h.updates.some((u) => "stripeCustomerId" in u)).toBe(false);
   });
 
   it("returns 502 when Stripe fails to start card setup", async () => {
-    vi.mocked(getUncachableStripeClient).mockRejectedValue(new Error("Stripe is down"));
+    vi.mocked(getUncachableStripeClient).mockRejectedValue(
+      new Error("Stripe is down"),
+    );
 
-    const res = await request(makeApp()).post("/account/payment-method/setup-intent");
+    const res = await request(makeApp()).post(
+      "/account/payment-method/setup-intent",
+    );
 
     expect(res.status).toBe(502);
     expect(res.body.error).toBe("Stripe is down");
@@ -200,17 +234,15 @@ describe("POST /account/payment-method (stripePaymentMethodId)", () => {
     h.rows.set(paymentMethodsTable, []); // no existing method → POST allowed
     const stripe = mockStripe({ pm: cardPm({ customer: "cus_real_1" }) });
 
-    const res = await request(makeApp())
-      .post("/account/payment-method")
-      .send({
-        methodType: "credit_card",
-        stripePaymentMethodId: "pm_card_1",
-        // Bogus client-supplied values that must be overwritten by Stripe truth.
-        cardBrand: "amex",
-        cardLast4: "0000",
-        cardExpMonth: "01",
-        cardExpYear: "2000",
-      });
+    const res = await request(makeApp()).post("/account/payment-method").send({
+      methodType: "credit_card",
+      stripePaymentMethodId: "pm_card_1",
+      // Bogus client-supplied values that must be overwritten by Stripe truth.
+      cardBrand: "amex",
+      cardLast4: "0000",
+      cardExpMonth: "01",
+      cardExpYear: "2000",
+    });
 
     expect(res.status).toBe(201);
 
@@ -261,19 +293,30 @@ describe("POST /account/payment-method (stripePaymentMethodId)", () => {
 describe("PATCH /account/payment-method (stripePaymentMethodId)", () => {
   it("derives card metadata from Stripe on update and ignores client-supplied values", async () => {
     h.profile.stripeCustomerId = "cus_real_1";
-    const stripe = mockStripe({ pm: cardPm({ id: "pm_card_2", customer: "cus_real_1", card: { brand: "mastercard", last4: "5454", exp_month: 6, exp_year: 2031 } }) });
+    const stripe = mockStripe({
+      pm: cardPm({
+        id: "pm_card_2",
+        customer: "cus_real_1",
+        card: {
+          brand: "mastercard",
+          last4: "5454",
+          exp_month: 6,
+          exp_year: 2031,
+        },
+      }),
+    });
 
-    const res = await request(makeApp())
-      .patch("/account/payment-method")
-      .send({
-        methodType: "credit_card",
-        stripePaymentMethodId: "pm_card_2",
-        cardBrand: "discover",
-        cardLast4: "1111",
-      });
+    const res = await request(makeApp()).patch("/account/payment-method").send({
+      methodType: "credit_card",
+      stripePaymentMethodId: "pm_card_2",
+      cardBrand: "discover",
+      cardLast4: "1111",
+    });
 
     expect(res.status).toBe(200);
-    const updated = h.updates.find((u) => u.stripePaymentMethodId === "pm_card_2");
+    const updated = h.updates.find(
+      (u) => u.stripePaymentMethodId === "pm_card_2",
+    );
     expect(updated).toBeTruthy();
     expect(updated!.cardBrand).toBe("mastercard");
     expect(updated!.cardLast4).toBe("5454");
@@ -284,7 +327,9 @@ describe("PATCH /account/payment-method (stripePaymentMethodId)", () => {
 
   it("rejects updating to a PaymentMethod owned by another customer (400)", async () => {
     h.profile.stripeCustomerId = "cus_real_1";
-    mockStripe({ pm: cardPm({ id: "pm_card_2", customer: "cus_someone_else" }) });
+    mockStripe({
+      pm: cardPm({ id: "pm_card_2", customer: "cus_someone_else" }),
+    });
 
     const res = await request(makeApp())
       .patch("/account/payment-method")
@@ -292,7 +337,9 @@ describe("PATCH /account/payment-method (stripePaymentMethodId)", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/does not belong to this account/i);
-    expect(h.updates.some((u) => u.stripePaymentMethodId === "pm_card_2")).toBe(false);
+    expect(h.updates.some((u) => u.stripePaymentMethodId === "pm_card_2")).toBe(
+      false,
+    );
   });
 });
 
@@ -314,12 +361,16 @@ function pendingAchPm(overrides: Record<string, unknown> = {}) {
 }
 
 /** Stripe mock whose verifyMicrodeposits resolves to the given status (or throws). */
-function mockMicrodepositStripe(opts: { status?: string; throwMessage?: string } = {}) {
+function mockMicrodepositStripe(
+  opts: { status?: string; throwMessage?: string } = {},
+) {
   const verifyMicrodeposits = vi.fn(async () => {
     if (opts.throwMessage) throw new Error(opts.throwMessage);
     return { id: "seti_123", status: opts.status ?? "succeeded" };
   });
-  vi.mocked(getUncachableStripeClient).mockResolvedValue({ setupIntents: { verifyMicrodeposits } } as any);
+  vi.mocked(getUncachableStripeClient).mockResolvedValue({
+    setupIntents: { verifyMicrodeposits },
+  } as any);
   return { verifyMicrodeposits };
 }
 
@@ -332,31 +383,45 @@ describe("POST /account/payment-method/verify-microdeposits", () => {
 
   it("verifies with deposit amounts and marks the method verified", async () => {
     h.rows.set(paymentMethodsTable, [pendingAchPm()]);
-    const { verifyMicrodeposits } = mockMicrodepositStripe({ status: "succeeded" });
+    const { verifyMicrodeposits } = mockMicrodepositStripe({
+      status: "succeeded",
+    });
 
-    const res = await request(makeApp()).post(VERIFY).send({ amounts: [32, 45] });
+    const res = await request(makeApp())
+      .post(VERIFY)
+      .send({ amounts: [32, 45] });
 
     expect(res.status).toBe(200);
     expect(res.body.verificationStatus).toBe("verified");
-    expect(verifyMicrodeposits).toHaveBeenCalledWith("seti_123", { amounts: [32, 45] });
+    expect(verifyMicrodeposits).toHaveBeenCalledWith("seti_123", {
+      amounts: [32, 45],
+    });
     expect(h.updates[0]).toEqual({ verificationStatus: "verified" });
   });
 
   it("verifies with a descriptor code", async () => {
     h.rows.set(paymentMethodsTable, [pendingAchPm()]);
-    const { verifyMicrodeposits } = mockMicrodepositStripe({ status: "succeeded" });
+    const { verifyMicrodeposits } = mockMicrodepositStripe({
+      status: "succeeded",
+    });
 
-    const res = await request(makeApp()).post(VERIFY).send({ descriptorCode: "sm11aa" });
+    const res = await request(makeApp())
+      .post(VERIFY)
+      .send({ descriptorCode: "sm11aa" });
 
     expect(res.status).toBe(200);
-    expect(verifyMicrodeposits).toHaveBeenCalledWith("seti_123", { descriptor_code: "sm11aa" });
+    expect(verifyMicrodeposits).toHaveBeenCalledWith("seti_123", {
+      descriptor_code: "sm11aa",
+    });
   });
 
   it("rejects when both amounts and a descriptor code are supplied", async () => {
     h.rows.set(paymentMethodsTable, [pendingAchPm()]);
     mockMicrodepositStripe();
 
-    const res = await request(makeApp()).post(VERIFY).send({ amounts: [32, 45], descriptorCode: "sm11aa" });
+    const res = await request(makeApp())
+      .post(VERIFY)
+      .send({ amounts: [32, 45], descriptorCode: "sm11aa" });
 
     expect(res.status).toBe(400);
     expect(getUncachableStripeClient).not.toHaveBeenCalled();
@@ -372,25 +437,35 @@ describe("POST /account/payment-method/verify-microdeposits", () => {
   });
 
   it("returns 404 when there is no pending ACH method", async () => {
-    h.rows.set(paymentMethodsTable, [pendingAchPm({ verificationStatus: "verified" })]);
+    h.rows.set(paymentMethodsTable, [
+      pendingAchPm({ verificationStatus: "verified" }),
+    ]);
 
-    const res = await request(makeApp()).post(VERIFY).send({ amounts: [32, 45] });
+    const res = await request(makeApp())
+      .post(VERIFY)
+      .send({ amounts: [32, 45] });
 
     expect(res.status).toBe(404);
     expect(getUncachableStripeClient).not.toHaveBeenCalled();
   });
 
   it("returns 404 when no payment method exists", async () => {
-    const res = await request(makeApp()).post(VERIFY).send({ amounts: [32, 45] });
+    const res = await request(makeApp())
+      .post(VERIFY)
+      .send({ amounts: [32, 45] });
 
     expect(res.status).toBe(404);
   });
 
   it("returns 400 when Stripe rejects the amounts", async () => {
     h.rows.set(paymentMethodsTable, [pendingAchPm()]);
-    mockMicrodepositStripe({ throwMessage: "The amounts provided do not match." });
+    mockMicrodepositStripe({
+      throwMessage: "The amounts provided do not match.",
+    });
 
-    const res = await request(makeApp()).post(VERIFY).send({ amounts: [11, 22] });
+    const res = await request(makeApp())
+      .post(VERIFY)
+      .send({ amounts: [11, 22] });
 
     expect(res.status).toBe(400);
     expect(h.updates).toHaveLength(0);
@@ -400,7 +475,9 @@ describe("POST /account/payment-method/verify-microdeposits", () => {
     h.rows.set(paymentMethodsTable, [pendingAchPm()]);
     mockMicrodepositStripe({ status: "requires_action" });
 
-    const res = await request(makeApp()).post(VERIFY).send({ amounts: [32, 45] });
+    const res = await request(makeApp())
+      .post(VERIFY)
+      .send({ amounts: [32, 45] });
 
     expect(res.status).toBe(400);
     expect(h.updates).toHaveLength(0);
@@ -409,8 +486,22 @@ describe("POST /account/payment-method/verify-microdeposits", () => {
 
 describe("GET /account/status canBid", () => {
   it("is true only when W-9, insurance, DOT/CDL are verified and payout is verified", async () => {
-    h.profile = { id: PROFILE_ID, role: "provider", companyName: "Acme", contactName: "Pat", phone: "1", city: "LA", state: "CA" };
-    const { w9SubmissionsTable, insuranceSubmissionsTable, dotCdlTable, payoutAccountsTable, paymentMethodsTable } = await import("@workspace/db");
+    h.profile = {
+      id: PROFILE_ID,
+      role: "provider",
+      companyName: "Acme",
+      contactName: "Pat",
+      phone: "1",
+      city: "LA",
+      state: "CA",
+    };
+    const {
+      w9SubmissionsTable,
+      insuranceSubmissionsTable,
+      dotCdlTable,
+      payoutAccountsTable,
+      paymentMethodsTable,
+    } = await import("@workspace/db");
     h.rows.set(w9SubmissionsTable, [{ status: "verified" }]);
     h.rows.set(insuranceSubmissionsTable, [{ status: "verified" }]);
     h.rows.set(dotCdlTable, [{ status: "verified" }]);
@@ -423,8 +514,21 @@ describe("GET /account/status canBid", () => {
   });
 
   it("is false when payout is not verified", async () => {
-    h.profile = { id: PROFILE_ID, role: "provider", companyName: "Acme", contactName: "Pat", phone: "1", city: "LA", state: "CA" };
-    const { w9SubmissionsTable, insuranceSubmissionsTable, dotCdlTable, payoutAccountsTable } = await import("@workspace/db");
+    h.profile = {
+      id: PROFILE_ID,
+      role: "provider",
+      companyName: "Acme",
+      contactName: "Pat",
+      phone: "1",
+      city: "LA",
+      state: "CA",
+    };
+    const {
+      w9SubmissionsTable,
+      insuranceSubmissionsTable,
+      dotCdlTable,
+      payoutAccountsTable,
+    } = await import("@workspace/db");
     h.rows.set(w9SubmissionsTable, [{ status: "verified" }]);
     h.rows.set(insuranceSubmissionsTable, [{ status: "verified" }]);
     h.rows.set(dotCdlTable, [{ status: "verified" }]);
@@ -436,8 +540,21 @@ describe("GET /account/status canBid", () => {
   });
 
   it("is false when DOT/CDL is not verified", async () => {
-    h.profile = { id: PROFILE_ID, role: "provider", companyName: "Acme", contactName: "Pat", phone: "1", city: "LA", state: "CA" };
-    const { w9SubmissionsTable, insuranceSubmissionsTable, dotCdlTable, payoutAccountsTable } = await import("@workspace/db");
+    h.profile = {
+      id: PROFILE_ID,
+      role: "provider",
+      companyName: "Acme",
+      contactName: "Pat",
+      phone: "1",
+      city: "LA",
+      state: "CA",
+    };
+    const {
+      w9SubmissionsTable,
+      insuranceSubmissionsTable,
+      dotCdlTable,
+      payoutAccountsTable,
+    } = await import("@workspace/db");
     h.rows.set(w9SubmissionsTable, [{ status: "verified" }]);
     h.rows.set(insuranceSubmissionsTable, [{ status: "verified" }]);
     h.rows.set(dotCdlTable, [{ status: "pending" }]);
@@ -449,8 +566,21 @@ describe("GET /account/status canBid", () => {
   });
 
   it("is false when any required document is rejected", async () => {
-    h.profile = { id: PROFILE_ID, role: "provider", companyName: "Acme", contactName: "Pat", phone: "1", city: "LA", state: "CA" };
-    const { w9SubmissionsTable, insuranceSubmissionsTable, dotCdlTable, payoutAccountsTable } = await import("@workspace/db");
+    h.profile = {
+      id: PROFILE_ID,
+      role: "provider",
+      companyName: "Acme",
+      contactName: "Pat",
+      phone: "1",
+      city: "LA",
+      state: "CA",
+    };
+    const {
+      w9SubmissionsTable,
+      insuranceSubmissionsTable,
+      dotCdlTable,
+      payoutAccountsTable,
+    } = await import("@workspace/db");
     h.rows.set(w9SubmissionsTable, [{ status: "rejected" }]);
     h.rows.set(insuranceSubmissionsTable, [{ status: "verified" }]);
     h.rows.set(dotCdlTable, [{ status: "verified" }]);

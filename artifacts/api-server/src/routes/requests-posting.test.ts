@@ -3,7 +3,10 @@ import express, { type Express } from "express";
 import request from "supertest";
 
 const h = vi.hoisted(() => ({
-  profile: { id: 1, role: "customer", companyName: "Test Builders" } as Record<string, unknown>,
+  profile: { id: 1, role: "customer", companyName: "Test Builders" } as Record<
+    string,
+    unknown
+  >,
   requests: [] as Record<string, unknown>[],
   nextRequestId: 1,
   inserts: [] as Record<string, unknown>[],
@@ -23,7 +26,8 @@ vi.mock("@workspace/db", () => {
       from: (table: unknown) => ({
         where: (..._args: unknown[]) => {
           if (table === requestsTable) return Promise.resolve(h.requests);
-          if (table === profilesTable) return Promise.resolve([{ companyName: "Test Builders" }]);
+          if (table === profilesTable)
+            return Promise.resolve([{ companyName: "Test Builders" }]);
           if (table === bidsTable) return Promise.resolve([{ count: 0 }]);
           return Promise.resolve([]);
         },

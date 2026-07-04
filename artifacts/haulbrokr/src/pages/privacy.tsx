@@ -1,4 +1,14 @@
-import { Truck, Mail, Shield, Database, Share2, Lock, Clock, UserCheck, ArrowRight } from "lucide-react";
+import {
+  Truck,
+  Mail,
+  Shield,
+  Database,
+  Share2,
+  Lock,
+  Clock,
+  UserCheck,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const SUPPORT_EMAIL = "info@haulbrokr.com";
@@ -75,7 +85,11 @@ export default function PrivacyPage() {
             </div>
           </a>
           <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" className="font-semibold text-foreground hover:text-primary">
+            <Button
+              asChild
+              variant="ghost"
+              className="font-semibold text-foreground hover:text-primary"
+            >
               <a href="/sign-in">Log in</a>
             </Button>
             <Button asChild className="font-semibold">
@@ -90,14 +104,20 @@ export default function PrivacyPage() {
         <section className="py-16 md:py-24 px-4 bg-card border-b border-border relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
           <div className="container mx-auto max-w-5xl relative z-10">
-            <p className="font-mono text-sm uppercase tracking-widest text-primary mb-4">Privacy Policy</p>
+            <p className="font-mono text-sm uppercase tracking-widest text-primary mb-4">
+              Privacy Policy
+            </p>
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-foreground leading-[1.1]">
-              Your data, <span className="text-primary">handled with care.</span>
+              Your data,{" "}
+              <span className="text-primary">handled with care.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-              This policy explains what information HaulBrokr collects, how we use it, and the choices you have.
+              This policy explains what information HaulBrokr collects, how we
+              use it, and the choices you have.
             </p>
-            <p className="font-mono text-sm text-muted-foreground mt-6">Effective {EFFECTIVE_DATE}</p>
+            <p className="font-mono text-sm text-muted-foreground mt-6">
+              Effective {EFFECTIVE_DATE}
+            </p>
           </div>
         </section>
 
@@ -105,10 +125,11 @@ export default function PrivacyPage() {
         <section className="py-16 px-4 bg-background border-b border-border">
           <div className="container mx-auto max-w-5xl">
             <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl">
-              HaulBrokr Logistics ("HaulBrokr", "we", "us") operates a marketplace that connects construction
-              sites and contractors with dump-truck fleets and owner-operators. This Privacy Policy applies to our
-              website, mobile app, and related services. By using HaulBrokr, you agree to the practices described
-              here.
+              HaulBrokr Logistics ("HaulBrokr", "we", "us") operates a
+              marketplace that connects construction sites and contractors with
+              dump-truck fleets and owner-operators. This Privacy Policy applies
+              to our website, mobile app, and related services. By using
+              HaulBrokr, you agree to the practices described here.
             </p>
           </div>
         </section>
@@ -125,7 +146,10 @@ export default function PrivacyPage() {
                   <h2 className="text-xl font-bold">{s.title}</h2>
                   <ul className="space-y-3">
                     {s.body.map((line, i) => (
-                      <li key={i} className="text-muted-foreground leading-relaxed flex gap-3">
+                      <li
+                        key={i}
+                        className="text-muted-foreground leading-relaxed flex gap-3"
+                      >
                         <span className="text-primary mt-1.5 h-1.5 w-1.5 bg-primary shrink-0" />
                         <span>{line}</span>
                       </li>
@@ -143,15 +167,17 @@ export default function PrivacyPage() {
             <div className="border border-border/60 bg-card p-8 space-y-3">
               <h2 className="text-xl font-bold">Children's privacy</h2>
               <p className="text-muted-foreground leading-relaxed">
-                HaulBrokr is intended for business use by adults and is not directed to children under 18. We do not
-                knowingly collect personal information from children.
+                HaulBrokr is intended for business use by adults and is not
+                directed to children under 18. We do not knowingly collect
+                personal information from children.
               </p>
             </div>
             <div className="border border-border/60 bg-card p-8 space-y-3">
               <h2 className="text-xl font-bold">Changes to this policy</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We may update this Privacy Policy from time to time. When we do, we will revise the effective date
-                above and, where appropriate, notify you within the app.
+                We may update this Privacy Policy from time to time. When we do,
+                we will revise the effective date above and, where appropriate,
+                notify you within the app.
               </p>
             </div>
           </div>
@@ -166,14 +192,20 @@ export default function PrivacyPage() {
                   <Mail className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold mb-1">Questions about your privacy?</h2>
+                  <h2 className="text-2xl font-bold mb-1">
+                    Questions about your privacy?
+                  </h2>
                   <p className="text-muted-foreground max-w-md">
-                    Contact us about this policy or to exercise your data rights and we'll respond promptly.
+                    Contact us about this policy or to exercise your data rights
+                    and we'll respond promptly.
                   </p>
                 </div>
               </div>
               <a href={`mailto:${SUPPORT_EMAIL}`} className="shrink-0">
-                <Button size="lg" className="text-base h-12 px-6 font-bold w-full md:w-auto">
+                <Button
+                  size="lg"
+                  className="text-base h-12 px-6 font-bold w-full md:w-auto"
+                >
                   {SUPPORT_EMAIL}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -189,12 +221,22 @@ export default function PrivacyPage() {
           HaulBrokr
         </div>
         <div className="flex items-center justify-center gap-6 mb-4 text-sm font-semibold">
-          <a href="/" className="hover:text-primary">Home</a>
-          <a href="/support" className="hover:text-primary">Support</a>
-          <a href="/privacy" className="hover:text-primary">Privacy</a>
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-primary">Contact</a>
+          <a href="/" className="hover:text-primary">
+            Home
+          </a>
+          <a href="/support" className="hover:text-primary">
+            Support
+          </a>
+          <a href="/privacy" className="hover:text-primary">
+            Privacy
+          </a>
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-primary">
+            Contact
+          </a>
         </div>
-        <p>© {new Date().getFullYear()} HaulBrokr Logistics. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} HaulBrokr Logistics. All rights reserved.
+        </p>
       </footer>
     </div>
   );
