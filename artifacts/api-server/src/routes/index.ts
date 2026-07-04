@@ -26,6 +26,7 @@ import ratingsRouter from "./ratings";
 import mapRouter from "./map";
 import trackingRouter from "./tracking";
 import copilotRouter from "./copilot";
+import operationsRouter from "./operations";
 import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
@@ -57,6 +58,7 @@ router.use(ratingsRouter);
 router.use(mapRouter);
 router.use(trackingRouter);
 router.use(copilotRouter);
+router.use(operationsRouter);
 router.use(notificationsRouter);
 
 export default router;
