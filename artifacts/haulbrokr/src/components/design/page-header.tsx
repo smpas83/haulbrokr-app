@@ -7,19 +7,56 @@ interface PageHeaderProps {
   actions?: ReactNode;
   badge?: ReactNode;
   className?: string;
+  /** Optional eyebrow text above the title */
+  eyebrow?: string;
 }
 
-export function PageHeader({ title, description, actions, badge, className }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+  badge,
+  className,
+  eyebrow,
+}: PageHeaderProps) {
+  const titleId = "page-title";
+
   return (
-    <div className={cn("flex flex-col md:flex-row justify-between items-start md:items-center gap-4", className)}>
-      <div className="space-y-1">
+    <header
+      className={cn(
+        "flex flex-col md:flex-row justify-between items-start md:items-center gap-4",
+        className,
+      )}
+      aria-labelledby={titleId}
+    >
+      <div className="space-y-1 min-w-0">
         {badge}
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">{title}</h1>
+        {eyebrow && (
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+            {eyebrow}
+          </p>
+        )}
+        <h1
+          id={titleId}
+          className="text-3xl md:text-4xl font-bold tracking-tight text-foreground"
+        >
+          {title}
+        </h1>
         {description && (
-          <div className="text-muted-foreground text-base max-w-2xl">{description}</div>
+          <div className="text-muted-foreground text-base max-w-2xl leading-relaxed">
+            {description}
+          </div>
         )}
       </div>
-      {actions && <div className="flex gap-3 flex-shrink-0">{actions}</div>}
-    </div>
+      {actions && (
+        <div
+          className="flex gap-3 flex-shrink-0 w-full md:w-auto"
+          role="toolbar"
+          aria-label="Page actions"
+        >
+          {actions}
+        </div>
+      )}
+    </header>
   );
 }
