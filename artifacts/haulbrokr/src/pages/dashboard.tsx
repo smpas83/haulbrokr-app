@@ -26,7 +26,7 @@ import { CHART_COLORS } from "@/lib/design-tokens";
 const CustomBarTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
     return (
-      <div className="glass-panel rounded-lg px-3 py-2 text-sm">
+      <div className="surface-panel rounded-lg px-3 py-2 text-sm">
         <p className="font-semibold">{label}</p>
         <p className="text-primary">{payload[0].value} events</p>
       </div>
@@ -38,7 +38,7 @@ const CustomBarTooltip = ({ active, payload, label }: any) => {
 const CustomPieTooltip = ({ active, payload }: any) => {
   if (active && payload?.length) {
     return (
-      <div className="glass-panel rounded-lg px-3 py-2 text-sm">
+      <div className="surface-panel rounded-lg px-3 py-2 text-sm">
         <p className="font-semibold capitalize">{payload[0].name}</p>
         <p className="text-primary">{payload[0].value}</p>
       </div>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
           { icon: Activity, label: "Utilization", value: stats?.activeJobs ? `${Math.min(100, (stats.activeJobs ?? 0) * 12)}%` : "—", color: "text-accent" },
           { icon: Sparkles, label: "AI Insights", value: "3 new", color: "text-primary" },
         ].map((item) => (
-          <div key={item.label} className="glass-panel rounded-xl px-4 py-3 flex items-center gap-3">
+          <div key={item.label} className="surface-panel rounded-xl px-4 py-3 flex items-center gap-3">
             <item.icon className={`h-4 w-4 ${item.color}`} />
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</p>

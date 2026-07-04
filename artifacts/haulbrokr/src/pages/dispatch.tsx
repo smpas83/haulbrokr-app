@@ -70,15 +70,15 @@ export default function DispatchPage() {
       ) : data ? (
         <>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="glass-panel rounded-xl p-5">
+            <div className="surface-panel rounded-xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Jobs</p>
               <p className="text-3xl font-bold stat-number mt-1">{data.activeJobs}</p>
             </div>
-            <div className="glass-panel rounded-xl p-5">
+            <div className="surface-panel rounded-xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fleet Available</p>
               <p className="text-3xl font-bold stat-number mt-1">{data.fleet.filter((t) => t.isAvailable).length}</p>
             </div>
-            <div className="glass-panel rounded-xl p-5">
+            <div className="surface-panel rounded-xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">GPS Live</p>
               <p className="text-3xl font-bold stat-number mt-1 text-emerald-400">
                 {data.jobs.filter((j) => j.position).length}
@@ -86,7 +86,7 @@ export default function DispatchPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-xl p-6 min-h-[320px] relative overflow-hidden">
+          <div className="surface-panel rounded-xl p-6 min-h-[320px] relative overflow-hidden">
             <div className="absolute inset-0 opacity-20">
               {data.jobs.filter((j) => j.position).map((j) => (
                 <div

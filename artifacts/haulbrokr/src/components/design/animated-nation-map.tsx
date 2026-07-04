@@ -176,7 +176,7 @@ export function AnimatedNationMap({ className }: { className?: string }) {
             <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
           </div>
           {activePin === pin.id && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 glass-panel rounded-lg px-3 py-2 whitespace-nowrap z-10 animate-fade-in">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 surface-panel rounded-lg px-3 py-2 whitespace-nowrap z-10 animate-fade-in">
               <p className="text-xs font-semibold text-foreground">{pin.label}</p>
               <p className="text-sm font-bold text-accent">{pin.value}</p>
             </div>
@@ -185,13 +185,13 @@ export function AnimatedNationMap({ className }: { className?: string }) {
       ))}
 
       {/* Live indicator */}
-      <div className="absolute top-4 left-4 flex items-center gap-2 glass-panel rounded-full px-3 py-1.5">
+      <div className="absolute top-4 left-4 flex items-center gap-2 surface-panel rounded-full px-3 py-1.5">
         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
         <span className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">Live Network</span>
       </div>
 
       {/* Stats overlay */}
-      <div className="absolute bottom-4 right-4 glass-panel rounded-xl px-4 py-3 space-y-1">
+      <div className="absolute bottom-4 right-4 surface-panel rounded-xl px-4 py-3 space-y-1">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Active Loads</p>
         <p className="text-2xl font-bold stat-number text-foreground">2,847</p>
       </div>

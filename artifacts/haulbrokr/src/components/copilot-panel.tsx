@@ -56,7 +56,7 @@ export function CopilotPanel({ open, onClose }: CopilotPanelProps) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden />
-      <div className="relative w-full max-w-md h-full glass-panel-strong border-l border-border/60 flex flex-col animate-slide-up">
+      <div className="relative w-full max-w-md h-full surface-panel-elevated border-l border-border/60 flex flex-col animate-slide-up">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">

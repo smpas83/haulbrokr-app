@@ -21,6 +21,7 @@ const colors = {
     input: "#E4E4E7",
     success: "#10B981",
     warning: "#F59E0B",
+    info: "#22D3EE",
   },
   dark: {
     text: "#F4F4F5",
@@ -43,8 +44,9 @@ const colors = {
     input: "#27272A",
     success: "#10B981",
     warning: "#F59E0B",
+    info: "#22D3EE",
   },
-  radius: 8,
+  radius: 16,
 };
 
 export default colors;
