@@ -67,6 +67,18 @@ vi.mock("../lib/operationsInsights", () => ({
   })),
 }));
 
+vi.mock("../lib/autonomousStatus", () => ({
+  buildAutonomousLayer: vi.fn(async () => ({
+    businessHealth: { overall: 80, operational: 75, revenue: 70, fleet: 85, customer: 60, vendor: 80, compliance: 95, dispatch: 75, driver: 88, aiConfidence: 90 },
+    pendingApprovals: [],
+    interruptQueue: [],
+    autonomousActivity: [],
+    executiveDigest: { period: "morning", title: "Brief", summary: "Hi", highlights: [], metrics: {}, recommendations: [], risks: [], opportunities: [] },
+    memorySummary: { patterns: 0, approvals: 0, dismissals: 0 },
+    engineStatus: { lastRunAt: new Date().toISOString(), recommendationsGenerated: 0, executedToday: 0 },
+  })),
+}));
+
 import operationsRouter from "./operations";
 import { buildOperationsCenter, searchOperations } from "../lib/operationsInsights";
 
@@ -87,6 +99,7 @@ describe("Operations Center", () => {
     expect(res.status).toBe(200);
     expect(res.body.morningBrief).toContain("Good morning");
     expect(res.body.insights).toHaveLength(1);
+    expect(res.body.autonomous).toBeDefined();
     expect(buildOperationsCenter).toHaveBeenCalled();
   });
 

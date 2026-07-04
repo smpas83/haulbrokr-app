@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import {
   Plus, Truck, AlertCircle, ShieldAlert, Cloud, Navigation,
   Radio, Users, DollarSign, Briefcase, Sparkles, RefreshCw,
-  AlertTriangle, Fuel, Calendar, ArrowUpRight, Activity,
+  AlertTriangle, Fuel, Calendar, ArrowUpRight, Activity, Bot, Bell,
 } from "lucide-react";
 import { useGetMyProfile, useGetAccountStatus } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,10 @@ import { InsightCard } from "@/components/operations/insight-card";
 import { LiveOperationsStream } from "@/components/operations/live-operations-stream";
 import { DispatchOptimizerPanel } from "@/components/operations/dispatch-optimizer-panel";
 import { ExecutiveAnalyticsPanel } from "@/components/operations/executive-analytics-panel";
+import { BusinessHealthPanel } from "@/components/operations/business-health-panel";
+import { AutonomousApprovalCard } from "@/components/operations/autonomous-approval-card";
+import { AutonomousTimelinePanel } from "@/components/operations/autonomous-timeline-panel";
+import { ExecutiveDigestPanel } from "@/components/operations/executive-digest-panel";
 
 export function OperationsFeed() {
   const { data: profile } = useGetMyProfile();
@@ -103,6 +107,12 @@ export function OperationsFeed() {
           {data.traffic && <StatusTile icon={Navigation} label="Routes" value={data.traffic.summary} color="text-accent" />}
           <StatusTile icon={Sparkles} label="AI Insights" value={`${data.insights.length} active`} color="text-primary" />
           <StatusTile icon={Activity} label="Utilization" value={`${data.analytics.fleetUtilization}%`} color="text-accent" />
+          {data.autonomous && (
+            <>
+              <StatusTile icon={Bot} label="Health" value={`${data.autonomous.businessHealth.overall}`} color="text-emerald-400" />
+              <StatusTile icon={Bell} label="Pending" value={`${data.autonomous.pendingApprovals.length}`} color="text-warning" />
+            </>
+          )}
         </div>
       )}
 
@@ -118,6 +128,88 @@ export function OperationsFeed() {
           <KpiCard title="Active Alerts" value={data.criticalAlerts.length} icon={AlertTriangle} />
           <KpiCard title="Upcoming" value={data.upcomingDeliveries.length} icon={Calendar} sub="Scheduled deliveries" />
         </div>
+      )}
+
+      {/* Autonomous Operations Layer */}
+      {data?.autonomous && (
+        <>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-primary" />
+                Business Health — AI COO
+              </CardTitle>
+              <CardDescription>
+                {data.autonomous.engineStatus.executedToday} action(s) executed today · {data.autonomous.memorySummary.patterns} patterns learned
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BusinessHealthPanel scores={data.autonomous.businessHealth} />
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 lg:grid-cols-7">
+            <Card className="col-span-full lg:col-span-4">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-warning" />
+                  Pending Approvals
+                  {data.autonomous.interruptQueue.length > 0 && (
+                    <span className="text-xs font-normal text-destructive">({data.autonomous.interruptQueue.length} urgent)</span>
+                  )}
+                </CardTitle>
+                <CardDescription>AI recommendations requiring your decision</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {data.autonomous.pendingApprovals.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">No pending approvals — autonomous ops running smoothly.</p>
+                ) : (
+                  data.autonomous.pendingApprovals.slice(0, 6).map((rec) => (
+                    <AutonomousApprovalCard key={rec.id} recommendation={rec} onAction={() => refresh()} />
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="col-span-full lg:col-span-3">
+              <CardHeader className="pb-2">
+                <CardTitle>Executive Digest</CardTitle>
+                <CardDescription>{data.autonomous.executiveDigest.title}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ExecutiveDigestPanel digest={data.autonomous.executiveDigest} />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-7">
+            <Card className="col-span-full lg:col-span-4">
+              <CardHeader className="pb-2">
+                <CardTitle>Autonomous Activity Feed</CardTitle>
+                <CardDescription>AI decisions, approvals, and executions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AutonomousTimelinePanel initialEvents={data.autonomous.autonomousActivity} />
+              </CardContent>
+            </Card>
+
+            <Card className="col-span-full lg:col-span-3">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-destructive">Interrupt Queue</CardTitle>
+                <CardDescription>Critical and high-priority items</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {data.autonomous.interruptQueue.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">No interrupts</p>
+                ) : (
+                  data.autonomous.interruptQueue.map((rec) => (
+                    <AutonomousApprovalCard key={`int-${rec.id}`} recommendation={rec} onAction={() => refresh()} />
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </>
       )}
 
       {/* Critical alerts */}

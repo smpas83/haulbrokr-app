@@ -127,7 +127,7 @@ export interface OperationsCenterPayload {
   updatedAt: string;
 }
 
-interface ProfileCtx {
+export interface ProfileCtx {
   id: number;
   role: string;
   companyName: string;
@@ -939,6 +939,7 @@ export async function searchOperations(profile: ProfileCtx, query: string) {
     { type: "nav", label: "Live Map", href: "/map", keywords: ["map", "gps", "tracking"] },
     { type: "nav", label: "Account", href: "/account", keywords: ["account", "compliance", "insurance"] },
     { type: "nav", label: "AI Copilot", href: "#copilot", keywords: ["ai", "copilot", "assistant", "chat"] },
+    { type: "nav", label: "Autonomous Ops", href: "/dashboard", keywords: ["autonomous", "approvals", "coo", "health"] },
   ];
   for (const cmd of navCommands) {
     if (cmd.label.toLowerCase().includes(lower) || cmd.keywords.some((k) => k.includes(lower) || lower.includes(k))) {

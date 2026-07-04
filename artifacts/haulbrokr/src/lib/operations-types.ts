@@ -109,4 +109,63 @@ export interface OperationsCenterData {
     utilization: number;
   };
   updatedAt: string;
+  autonomous?: AutonomousLayerData;
+}
+
+export interface AutonomousRecommendation {
+  id: number;
+  externalKey: string;
+  actionType: string;
+  priority: "critical" | "high" | "medium" | "low";
+  title: string;
+  description: string;
+  businessImpact: string;
+  confidence: number;
+  estimatedRoi: number;
+  status: string;
+  payload: Record<string, unknown>;
+  modifiedPayload: Record<string, unknown> | null;
+  relatedJobId: number | null;
+  relatedRequestId: number | null;
+  relatedTruckId: number | null;
+  createdAt: string;
+}
+
+export interface BusinessHealthScores {
+  revenue: number;
+  fleet: number;
+  customer: number;
+  vendor: number;
+  compliance: number;
+  dispatch: number;
+  driver: number;
+  aiConfidence: number;
+  overall: number;
+  operational: number;
+}
+
+export interface AutonomousLayerData {
+  businessHealth: BusinessHealthScores;
+  pendingApprovals: AutonomousRecommendation[];
+  interruptQueue: AutonomousRecommendation[];
+  autonomousActivity: {
+    id: number;
+    eventType: string;
+    title: string;
+    description: string;
+    recommendationId: number | null;
+    createdAt: string;
+  }[];
+  executiveDigest: {
+    period: string;
+    title: string;
+    summary: string;
+    highlights: string[];
+    metrics: Record<string, number>;
+    recommendations: string[];
+    risks: string[];
+    opportunities: string[];
+  };
+  memorySummary: { patterns: number; approvals: number; dismissals: number };
+  engineStatus: { lastRunAt: string; recommendationsGenerated: number; executedToday: number };
 }
