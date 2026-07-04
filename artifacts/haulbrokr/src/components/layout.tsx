@@ -4,7 +4,7 @@ import {
   Truck, ClipboardList, Briefcase, LayoutDashboard,
   LogOut, Loader2, Settings, Menu, Trash2,
   FolderOpen, DollarSign, Plug, ShieldCheck, Building2, MapPin,
-  Sparkles, Radio
+  Sparkles, Radio, Layers,
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/react";
 import { useGetMyProfile, useGetAdminAccess } from "@workspace/api-client-react";
@@ -139,6 +139,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
+    { href: "/enterprise", label: "Enterprise OS", icon: Layers, show: true },
     { href: "/requests", label: isCustomer ? "My Requests" : "Load Board", icon: ClipboardList, show: true },
     { href: "/fleet", label: "My Fleet", icon: Truck, show: isProvider },
     { href: "/dispatch", label: "Digital Twin", icon: Radio, show: true },

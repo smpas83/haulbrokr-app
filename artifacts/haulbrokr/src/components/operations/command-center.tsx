@@ -7,7 +7,7 @@ import {
 import { apiFetch } from "@/lib/apiFetch";
 import {
   LayoutDashboard, ClipboardList, Briefcase, Radio, MapPin,
-  Settings, Sparkles, Truck, Search,
+  Settings, Sparkles, Truck, Search, Layers, Plus, FileText,
 } from "lucide-react";
 
 interface SearchResult {
@@ -25,12 +25,15 @@ interface CommandCenterProps {
 
 const QUICK_COMMANDS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, shortcut: "D" },
+  { label: "Enterprise OS", href: "/enterprise", icon: Layers, shortcut: "E" },
   { label: "Load Board", href: "/requests", icon: ClipboardList, shortcut: "L" },
   { label: "Active Jobs", href: "/jobs", icon: Briefcase, shortcut: "J" },
   { label: "Digital Twin", href: "/dispatch", icon: Radio, shortcut: "T" },
   { label: "Live Map", href: "/map", icon: MapPin, shortcut: "M" },
   { label: "My Fleet", href: "/fleet", icon: Truck, shortcut: "F" },
   { label: "Account", href: "/account", icon: Settings, shortcut: "A" },
+  { label: "New Request", href: "/requests/new", icon: Plus, shortcut: "N" },
+  { label: "Documents", href: "/enterprise?tab=documents", icon: FileText, shortcut: "" },
 ];
 
 export function CommandCenter({ open, onOpenChange, onCopilotOpen }: CommandCenterProps) {
@@ -46,8 +49,18 @@ export function CommandCenter({ open, onOpenChange, onCopilotOpen }: CommandCent
     }
     setSearching(true);
     try {
-      const data = await apiFetch<{ results: SearchResult[] }>(`/operations/search?q=${encodeURIComponent(q)}`);
-      setResults(data.results ?? []);
+      const [opsData, enterpriseData] = await Promise.all([
+        apiFetch<{ results: SearchResult[] }>(`/operations/search?q=${encodeURIComponent(q)}`).catch(() => ({ results: [] })),
+        apiFetch<{ results: SearchResult[] }>(`/enterprise/search?q=${encodeURIComponent(q)}`).catch(() => ({ results: [] })),
+      ]);
+      const merged = [...(enterpriseData.results ?? []), ...(opsData.results ?? [])];
+      const seen = new Set<string>();
+      setResults(merged.filter((r) => {
+        const key = `${r.type}-${r.href}-${r.label}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }));
     } catch {
       setResults([]);
     } finally {
@@ -76,7 +89,7 @@ export function CommandCenter({ open, onOpenChange, onCopilotOpen }: CommandCent
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandInput
-        placeholder="Search jobs, loads, or type a command…"
+        placeholder="Search everything — loads, docs, customers, reports…"
         value={query}
         onValueChange={setQuery}
       />
@@ -141,12 +154,14 @@ export function useCommandCenter(onCopilotOpen: () => void, navigate: (path: str
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey) {
         const shortcuts: Record<string, string> = {
           d: "/dashboard",
+          e: "/enterprise",
           l: "/requests",
           j: "/jobs",
           t: "/dispatch",
           m: "/map",
           f: "/fleet",
           a: "/account",
+          n: "/requests/new",
         };
         const href = shortcuts[e.key.toLowerCase()];
         if (href && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {

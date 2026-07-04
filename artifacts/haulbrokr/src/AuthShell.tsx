@@ -22,6 +22,7 @@ const JobsPage = lazy(() => import("./pages/jobs"));
 const MapPage = lazy(() => import("./pages/map"));
 const JobDetailPage = lazy(() => import("./pages/job-detail"));
 const DispatchPage = lazy(() => import("./pages/dispatch"));
+const EnterprisePage = lazy(() => import("./pages/enterprise"));
 const AccountPage = lazy(() => import("./pages/account"));
 const CompanyPage = lazy(() => import("./pages/company"));
 const BinsPage = lazy(() => import("./pages/bins"));
@@ -206,6 +207,11 @@ function AuthShellRoutes() {
 
             <Route path="/dispatch">
               <Show when="signed-in"><RequireProfile><DispatchPage /></RequireProfile></Show>
+              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+            </Route>
+
+            <Route path="/enterprise">
+              <Show when="signed-in"><RequireProfile><EnterprisePage /></RequireProfile></Show>
               <Show when="signed-out"><Redirect to="/sign-in" /></Show>
             </Route>
 
