@@ -28,8 +28,10 @@ vi.mock("@workspace/db", () => {
       from: (table: { __table?: string }) => {
         const countPromise = Promise.resolve(countFor(table));
         return {
-          then: (...args: Parameters<Promise<{ count: number }[]>[typeof Promise.prototype.then]>) =>
-            countPromise.then(...args),
+          then: (
+            onFulfilled?: (value: { count: number }[]) => unknown,
+            onRejected?: (reason: unknown) => unknown,
+          ) => countPromise.then(onFulfilled, onRejected),
           where: () => countPromise,
           leftJoin: () => ({ limit: () => Promise.resolve([]) }),
           limit: () => Promise.resolve([]),
