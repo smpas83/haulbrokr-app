@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/design";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,18 +91,19 @@ export default function FleetPage() {
 
   return (
     <div className="space-y-6 page-enter max-w-5xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Fleet</h1>
-          <p className="text-muted-foreground">Manage your dump trucks, compliance, and driver assignments.</p>
-        </div>
-        <Link href="/fleet/new">
-          <Button className="font-bold rounded-xl" data-testid="btn-add-truck">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Truck
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Fleet"
+        title="My Fleet"
+        description="Manage your dump trucks, compliance, and driver assignments."
+        actions={
+          <Link href="/fleet/new">
+            <Button className="font-bold rounded-xl" data-testid="btn-add-truck">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Truck
+            </Button>
+          </Link>
+        }
+      />
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

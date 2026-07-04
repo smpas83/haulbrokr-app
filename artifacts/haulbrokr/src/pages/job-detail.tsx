@@ -19,6 +19,7 @@ import {
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/design";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CarrierDocuments } from "@/components/documents";
@@ -1359,23 +1360,25 @@ export default function JobDetailPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 page-enter pb-12">
-      <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/jobs")}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Jobs
-      </Button>
+      <PageHeader
+        eyebrow="Jobs"
+        title={`JOB-${job.id.toString().padStart(4, "0")}`}
+        description={<span className="capitalize">{job.materialType} Haul</span>}
+        breadcrumb={[
+          { label: "Active Jobs", href: "/jobs" },
+          { label: `Job #${job.id}` },
+        ]}
+        badge={
+          <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 mb-2 ${getStatusColor(job.status)}`}>
+            {job.status.replace("_", " ")}
+          </Badge>
+        }
+      />
 
       <div className="bg-card border border-border/60 shadow-sm overflow-hidden">
         {/* Header */}
         <div className="bg-secondary text-secondary-foreground p-6 md:p-8 flex flex-col md:flex-row justify-between items-start gap-4">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold tracking-tight uppercase">
-                JOB-{job.id.toString().padStart(4, '0')}
-              </h1>
-              <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 ${getStatusColor(job.status)}`}>
-                {job.status.replace('_', ' ')}
-              </Badge>
-            </div>
             <p className="text-xl font-medium text-secondary-foreground/80 capitalize">
               {job.materialType} Haul
             </p>

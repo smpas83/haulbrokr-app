@@ -1,4 +1,4 @@
-export { PageHeader } from "./page-header";
+export { PageHeader, type BreadcrumbItem } from "./page-header";
 export { KpiCard } from "./kpi-card";
 export { SurfacePanel, GlassPanel } from "./surface-panel";
 export { StatusChip } from "./status-chip";

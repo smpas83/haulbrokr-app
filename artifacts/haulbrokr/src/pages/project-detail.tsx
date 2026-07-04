@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/design";
 import { apiFetch } from "@/lib/apiFetch";
 
 function ForemanAssignments({ projectId }: { projectId: number }) {
@@ -185,19 +186,31 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 page-enter pb-12">
-      <Button variant="ghost" className="-ml-4" onClick={() => setLocation("/projects")}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Projects
-      </Button>
+      <PageHeader
+        eyebrow="Projects"
+        title={editing ? editForm.name || project.name : project.name}
+        description={project.siteAddress ? (
+          <span className="flex items-center gap-2"><MapPin className="h-4 w-4" />{project.siteAddress}</span>
+        ) : undefined}
+        breadcrumb={[
+          { label: "Projects", href: "/projects" },
+          { label: project.name },
+        ]}
+        badge={
+          !editing ? (
+            <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 mb-2 ${STATUS_COLORS[project.status]}`}>
+              {project.status.replace("_", " ")}
+            </Badge>
+          ) : undefined
+        }
+      />
 
       <div className="bg-card border border-border/60 overflow-hidden">
         <div className="bg-secondary text-secondary-foreground p-6 md:p-8 flex flex-col md:flex-row justify-between items-start gap-4">
           <div>
             {editing ? (
               <Input className="rounded-xl text-2xl font-bold bg-white/10 border-white/20 text-white placeholder:text-white/50 mb-2" value={editForm.name} onChange={e => setEditForm((f: any) => ({ ...f, name: e.target.value }))} />
-            ) : (
-              <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-            )}
-            {project.siteAddress && <p className="flex items-center gap-2 text-secondary-foreground/70 mt-1"><MapPin className="h-4 w-4" />{project.siteAddress}</p>}
+            ) : null}
           </div>
           <div className="flex items-center gap-3">
             {editing ? (

@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useGetMyProfile } from "@workspace/api-client-react";
+import { PageHeader } from "@/components/design";
 import { apiFetch } from "@/lib/apiFetch";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -110,13 +111,12 @@ export default function ProjectsPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 page-enter">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black uppercase tracking-tight">Projects</h1>
-          <p className="text-muted-foreground mt-1">Group your hauling requests and track budgets per project</p>
-        </div>
-        <NewProjectDialog onCreated={() => {}} />
-      </div>
+      <PageHeader
+        eyebrow="Projects"
+        title="Projects"
+        description="Group your hauling requests and track budgets per project."
+        actions={<NewProjectDialog onCreated={() => {}} />}
+      />
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

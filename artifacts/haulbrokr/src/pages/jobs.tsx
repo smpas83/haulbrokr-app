@@ -16,6 +16,7 @@ export default function JobsPage() {
   return (
     <div className="space-y-6 page-enter max-w-6xl mx-auto">
       <PageHeader
+        eyebrow="Jobs"
         title="Active Jobs"
         description="Track and manage accepted hauling jobs."
       />

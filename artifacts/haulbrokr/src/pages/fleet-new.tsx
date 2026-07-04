@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/design";
 
 const formSchema = z.object({
   truckType: z.nativeEnum(TruckInputTruckType, {
@@ -132,16 +133,14 @@ export default function NewTruckPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 page-enter pb-12">
-      <div>
-        <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/fleet")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Fleet
-        </Button>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Truck className="h-8 w-8 text-primary" />
-          {isEdit ? "Edit Truck" : "Add Truck to Fleet"}
-        </h1>
-      </div>
+      <PageHeader
+        eyebrow="Fleet"
+        title={isEdit ? "Edit Truck" : "Add Truck to Fleet"}
+        breadcrumb={[
+          { label: "My Fleet", href: "/fleet" },
+          { label: isEdit ? "Edit Truck" : "Add Truck" },
+        ]}
+      />
 
       <div className="bg-card border border-border/60 shadow-sm p-6 md:p-8">
         <Form {...form}>

@@ -33,6 +33,7 @@ const IntegrationsPage = lazy(() => import("./pages/integrations"));
 const MobilePaymentPage = lazy(() => import("./pages/mobile-payment"));
 const AdminPage = lazy(() => import("./pages/admin"));
 const AdminLoginPage = lazy(() => import("./pages/admin-login"));
+const NotificationsPage = lazy(() => import("./pages/notifications"));
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient();
@@ -226,6 +227,11 @@ function AuthShellRoutes() {
 
             <Route path="/account">
               <Show when="signed-in"><RequireProfile><AccountPage /></RequireProfile></Show>
+              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+            </Route>
+
+            <Route path="/notifications">
+              <Show when="signed-in"><RequireProfile><NotificationsPage /></RequireProfile></Show>
               <Show when="signed-out"><Redirect to="/sign-in" /></Show>
             </Route>
 

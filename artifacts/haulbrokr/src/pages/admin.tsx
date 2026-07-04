@@ -31,6 +31,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PageHeader } from "@/components/design";
 
 /**
  * Approve / reject controls shared by the carrier and credit cards. Rejecting
@@ -1174,31 +1175,32 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <ShieldCheck className="w-7 h-7 text-primary" /> Command Center
-          </h1>
-          <p className="text-muted-foreground mt-1">
+      <PageHeader
+        eyebrow="Administration"
+        title="Command Center"
+        description={
+          <>
             Platform overview, carrier &amp; credit review, payouts, bin orders, and team management.
             {(access as { staffDisplayName?: string | null }).staffDisplayName
-              ? ` Â· Signed in as ${(access as { staffDisplayName?: string | null }).staffDisplayName}`
+              ? ` · Signed in as ${(access as { staffDisplayName?: string | null }).staffDisplayName}`
               : ""}
-          </p>
-        </div>
-        {(access as { authMethod?: string | null }).authMethod === "staff" && (
-          <Button
-            variant="outline"
-            className="rounded-xl border-2 shrink-0"
-            onClick={async () => {
-              await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
-              window.location.assign("/admin/login");
-            }}
-          >
-            Sign out
-          </Button>
-        )}
-      </div>
+          </>
+        }
+        actions={
+          (access as { authMethod?: string | null }).authMethod === "staff" ? (
+            <Button
+              variant="outline"
+              className="rounded-xl border-2 shrink-0"
+              onClick={async () => {
+                await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
+                window.location.assign("/admin/login");
+              }}
+            >
+              Sign out
+            </Button>
+          ) : undefined
+        }
+      />
 
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList className="rounded-xl">

@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/design";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -208,12 +209,11 @@ export default function CompanyPage() {
   if (profile.role === "driver") {
     return (
       <div className="max-w-5xl mx-auto space-y-6 page-enter">
-        <div>
-          <h1 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
-            <Building2 className="h-8 w-8 text-primary" /> Company
-          </h1>
-          <p className="text-muted-foreground mt-1">Your hauling company compliance status.</p>
-        </div>
+        <PageHeader
+          eyebrow="Organization"
+          title="Company"
+          description="Your hauling company compliance status."
+        />
         <ComplianceStatusPanel />
       </div>
     );
@@ -233,12 +233,11 @@ export default function CompanyPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 page-enter">
-      <div>
-        <h1 className="text-3xl font-black uppercase tracking-tight flex items-center gap-3">
-          <Building2 className="h-8 w-8 text-primary" /> Company
-        </h1>
-        <p className="text-muted-foreground mt-1">Manage your team, roles, and invite code.</p>
-      </div>
+      <PageHeader
+        eyebrow="Organization"
+        title="Company"
+        description="Manage your team, roles, and invite code."
+      />
 
       {isProviderSide && <ComplianceStatusPanel />}
 
