@@ -11,6 +11,8 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "wouter";
 import { useGetMyProfile } from "@workspace/api-client-react";
+import { getDocStatusColor } from "@/lib/design-tokens";
+import { cn } from "@/lib/utils";
 
 // ── Shared document model ────────────────────────────────────────────────────
 export interface DriverDoc {
@@ -26,7 +28,6 @@ export interface DriverDoc {
   updatedAt?: string | null;
 }
 
-// Provider-facing document catalog (mirrors the mobile app). Shared docs first.
 interface DocSpec { id: string; label: string; description: string; required: boolean; expires?: boolean; }
 const PROVIDER_DOC_SPECS: DocSpec[] = [
   { id: "coi", label: "Certificate of Insurance (COI)", description: "Auto liability & cargo proof", required: true, expires: true },
@@ -53,33 +54,28 @@ const docLabel = (t: string) => DOC_LABELS[t] ?? t.replace(/_/g, " ").replace(/\
 
 function storageHref(objectPath: string | null): string | null {
   if (!objectPath) return null;
-  // objectPath is stored as "/objects/<...>"; served at /api/storage/objects/<...>.
   return `/api/storage${objectPath.startsWith("/") ? objectPath : "/" + objectPath}`;
 }
 const isExpired = (e: string | null) => !!e && new Date(e).getTime() < Date.now();
 
 function StatusBadge({ status, expiry }: { status: string; expiry?: string | null }) {
-  if (status === "verified" && isExpired(expiry ?? null)) {
-    return <Badge variant="outline" className="rounded-none border-amber-500 text-amber-600">Expired</Badge>;
-  }
-  const map: Record<string, string> = {
-    verified: "border-green-600 text-green-700",
-    uploaded: "border-blue-500 text-blue-600",
-    rejected: "border-red-500 text-red-600",
-    missing: "border-muted-foreground/40 text-muted-foreground",
-  };
+  const expired = status === "verified" && isExpired(expiry ?? null);
   const labels: Record<string, string> = {
-    verified: "Approved",
+    verified: expired ? "Expired" : "Approved",
     uploaded: "Pending review",
     rejected: "Rejected",
     missing: "Missing",
     pending: "Pending review",
   };
   const label = labels[status] ?? (status || "missing").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-  return <Badge variant="outline" className={`rounded-none ${map[status] ?? map.missing}`}>{label}</Badge>;
+  const colorKey = expired ? "expired" : status;
+  return (
+    <Badge variant="outline" className={cn("rounded-md border uppercase text-[10px] tracking-wide", getDocStatusColor(colorKey, expired))}>
+      {label}
+    </Badge>
+  );
 }
 
-// ── Vendor self-service upload list (Account page) ───────────────────────────
 export function AccountDocuments() {
   const qc = useQueryClient();
   const { data: profile } = useGetMyProfile();
@@ -122,8 +118,8 @@ export function AccountDocuments() {
   if (docsQuery.isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-20 w-full rounded-none" />
-        {[0, 1, 2].map((i) => <Skeleton key={i} className="h-28 w-full rounded-none" />)}
+        <Skeleton className="h-20 w-full rounded-xl" />
+        {[0, 1, 2].map((i) => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
       </div>
     );
   }
@@ -143,10 +139,13 @@ export function AccountDocuments() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-none border-2 p-5">
+      <Card className="rounded-2xl border border-border/60 p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-11 h-11 border-2 ${allDone ? "border-green-600 text-green-700" : "border-primary text-primary"}`}>
+            <div className={cn(
+              "flex items-center justify-center w-11 h-11 rounded-xl border",
+              allDone ? "border-emerald-500/40 text-emerald-400 bg-emerald-500/10" : "border-primary/40 text-primary bg-primary/10",
+            )}>
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
@@ -158,12 +157,15 @@ export function AccountDocuments() {
               </p>
             </div>
           </div>
-          <div className={`px-3 py-1 border-2 text-sm font-semibold whitespace-nowrap ${allDone ? "border-green-600 text-green-700 bg-green-50" : "border-primary/40 text-foreground"}`}>
+          <div className={cn(
+            "px-3 py-1 rounded-lg border text-sm font-semibold whitespace-nowrap",
+            allDone ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-border text-foreground bg-muted/30",
+          )}>
             {verifiedCount} / {requiredSpecs.length} verified
           </div>
         </div>
         <div className="mt-4">
-          <Progress value={pct} className="h-2 rounded-none" />
+          <Progress value={pct} className="h-2 rounded-full" />
         </div>
       </Card>
 
@@ -178,21 +180,26 @@ export function AccountDocuments() {
           return (
             <Card
               key={spec.id}
-              className={`rounded-none border-2 p-4 transition-colors ${dragOver === spec.id ? "border-primary bg-primary/5" : rejected ? "border-red-300" : "hover:border-primary/40"}`}
+              className={cn(
+                "rounded-xl border border-border/60 p-4 transition-colors",
+                dragOver === spec.id && "border-primary bg-primary/5",
+                rejected && "border-destructive/40 bg-destructive/5",
+                !rejected && dragOver !== spec.id && "hover:border-primary/40",
+              )}
               onDragOver={(e) => { e.preventDefault(); setDragOver(spec.id); }}
               onDragLeave={() => setDragOver((d) => (d === spec.id ? null : d))}
               onDrop={(e) => onDrop(e, spec.id)}
             >
               <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center w-11 h-11 border-2 border-muted-foreground/20 text-muted-foreground shrink-0">
+                <div className="flex items-center justify-center w-11 h-11 rounded-xl border border-border/60 text-muted-foreground shrink-0">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-sm">{spec.label}</span>
                     {spec.required
-                      ? <span className="text-[10px] uppercase tracking-wider text-muted-foreground border px-1.5 py-0.5">Required</span>
-                      : <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 border px-1.5 py-0.5">Optional</span>}
+                      ? <span className="text-[10px] uppercase tracking-wider text-muted-foreground border border-border/60 px-1.5 py-0.5 rounded-md">Required</span>
+                      : <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 border border-border/40 px-1.5 py-0.5 rounded-md">Optional</span>}
                     <StatusBadge status={status} expiry={doc?.expiry ?? null} />
                   </div>
                   <div className="text-xs text-muted-foreground mt-1 truncate">
@@ -200,13 +207,13 @@ export function AccountDocuments() {
                     {doc?.expiry ? ` · expires ${new Date(doc.expiry).toLocaleDateString()}` : ""}
                   </div>
                   {rejected && doc?.reviewNote && (
-                    <div className="mt-2 flex items-start gap-1.5 text-xs text-red-600">
+                    <div className="mt-2 flex items-start gap-1.5 text-xs text-destructive">
                       <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                       <span>{doc.reviewNote}</span>
                     </div>
                   )}
                   {!hasFile && (
-                    <div className="mt-3 border-2 border-dashed border-muted-foreground/25 p-3 text-center text-xs text-muted-foreground">
+                    <div className="mt-3 border border-dashed border-border/60 rounded-xl p-3 text-center text-xs text-muted-foreground">
                       <UploadCloud className="w-5 h-5 mx-auto mb-1 opacity-60" />
                       Drag and drop a file here, or use the button. PDF, JPG, or PNG.
                     </div>
@@ -220,7 +227,7 @@ export function AccountDocuments() {
                     accept="image/*,application/pdf"
                     onChange={(e) => { const fl = e.target.files?.[0]; if (fl) handleFile(spec.id, fl); e.target.value = ""; }}
                   />
-                  <Button size="sm" variant={hasFile ? "outline" : "default"} className="rounded-none w-28 justify-center" disabled={uploading} onClick={() => inputs.current[spec.id]?.click()}>
+                  <Button size="sm" variant={hasFile ? "outline" : "default"} className="rounded-lg w-28 justify-center" disabled={uploading} onClick={() => inputs.current[spec.id]?.click()}>
                     {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                     <span className="ml-1">{hasFile ? "Replace" : "Upload"}</span>
                   </Button>
@@ -231,7 +238,7 @@ export function AccountDocuments() {
                   )}
                   {hasFile && (
                     <button
-                      className="inline-flex items-center gap-1 text-muted-foreground hover:text-red-600 text-xs disabled:opacity-50"
+                      className="inline-flex items-center gap-1 text-muted-foreground hover:text-destructive text-xs disabled:opacity-50"
                       disabled={remove.isPending}
                       onClick={() => remove.mutate(spec.id)}
                     >
@@ -248,7 +255,6 @@ export function AccountDocuments() {
   );
 }
 
-// ── Customer view of the awarded carrier's documents (job-detail page) ───────
 interface CarrierDocsResp {
   providerId: number | null;
   providerCompany: string | null;
@@ -261,12 +267,12 @@ export function CarrierDocuments({ jobId }: { jobId: number }) {
     enabled: Number.isFinite(jobId),
   });
 
-  if (isLoading) return <Skeleton className="h-24 w-full rounded-none" />;
+  if (isLoading) return <Skeleton className="h-24 w-full rounded-xl" />;
   if (!data || !data.providerId) return null;
 
   const docs = data.documents ?? [];
   return (
-    <div className="border p-4 space-y-3">
+    <div className="surface-panel rounded-2xl p-4 space-y-3">
       <div className="flex items-center gap-2">
         <ShieldCheck className="w-5 h-5 text-primary" />
         <h3 className="font-semibold">Carrier Documents</h3>
@@ -276,10 +282,10 @@ export function CarrierDocuments({ jobId }: { jobId: number }) {
       </p>
       {docs.length === 0 ? (
         <div className="text-sm text-muted-foreground flex items-center gap-2 py-2">
-          <AlertTriangle className="w-4 h-4 text-amber-500" /> Your carrier has not uploaded these documents yet.
+          <AlertTriangle className="w-4 h-4 text-warning" /> Your carrier has not uploaded these documents yet.
         </div>
       ) : (
-        <div className="border divide-y">
+        <div className="border border-border/60 rounded-xl divide-y divide-border/40">
           {docs.map((d) => {
             const href = storageHref(d.objectPath);
             return (
@@ -306,8 +312,6 @@ export function CarrierDocuments({ jobId }: { jobId: number }) {
   );
 }
 
-
-// ── App-wide gate banner ─────────────────────────────────────────────────────
 interface DocStatusResp {
   profileId: number;
   role: string;
@@ -317,11 +321,6 @@ interface DocStatusResp {
   items: { key: string; label: string; satisfied: boolean; status: string }[];
 }
 
-/**
- * Persistent banner shown until the signed-in user's required documents are
- * complete. Carriers see a hard-gate tone; customers see a softer reminder.
- * Rendered app-wide from the main layout.
- */
 export function DocumentGateBanner() {
   const { data } = useQuery({
     queryKey: ["my-document-status"],
@@ -332,10 +331,13 @@ export function DocumentGateBanner() {
 
   if (!data || data.complete || data.missing.length === 0) return null;
 
-  const hard = data.gated; // carriers
+  const hard = data.gated;
   return (
-    <div className={`mb-4 border-2 rounded-none p-3 flex flex-col sm:flex-row sm:items-center gap-2 ${hard ? "border-red-500 bg-red-50" : "border-amber-400 bg-amber-50"}`}>
-      <AlertTriangle className={`w-5 h-5 shrink-0 ${hard ? "text-red-600" : "text-amber-600"}`} />
+    <div className={cn(
+      "mb-4 rounded-xl border p-3 flex flex-col sm:flex-row sm:items-center gap-2",
+      hard ? "border-destructive/40 bg-destructive/10" : "border-warning/40 bg-warning/10",
+    )}>
+      <AlertTriangle className={cn("w-5 h-5 shrink-0", hard ? "text-destructive" : "text-warning")} />
       <div className="flex-1 min-w-0 text-sm">
         <span className="font-semibold">
           {hard ? "Action required: " : "Reminder: "}
@@ -346,11 +348,10 @@ export function DocumentGateBanner() {
         <span className="text-muted-foreground">Outstanding: {data.missing.join(", ")}.</span>
       </div>
       <Link href="/account?tab=documents">
-        <Button size="sm" className="rounded-none shrink-0">Upload documents</Button>
+        <Button size="sm" className="rounded-lg shrink-0">Upload documents</Button>
       </Link>
     </div>
   );
 }
-
 
 export const VendorDocuments = AccountDocuments;

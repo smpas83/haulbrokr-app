@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { Radio, Truck, MapPin, RefreshCw } from "lucide-react";
+import { Radio, Truck, MapPin, RefreshCw, Shield, Wrench, Fuel, Users } from "lucide-react";
 import { apiFetch } from "@/lib/apiFetch";
 import { PageHeader } from "@/components/design";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusChip } from "@/components/design";
+import { useOperationsCenter } from "@/hooks/use-operations-center";
 
 interface DispatchJob {
   id: number;
@@ -27,6 +28,7 @@ export default function DispatchPage() {
   const [data, setData] = useState<DispatchOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: opsData, refresh: refreshOps } = useOperationsCenter(60_000);
 
   const load = () => {
     setLoading(true);
@@ -35,6 +37,7 @@ export default function DispatchPage() {
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+    refreshOps();
   };
 
   useEffect(() => { load(); }, []);
@@ -111,6 +114,35 @@ export default function DispatchPage() {
             </div>
           </div>
 
+          {opsData && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">Fleet Health — Digital Twin</h2>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <HealthCard icon={Truck} label="Fleet Health" score={opsData.digitalTwinHealth.fleetHealth.score} detail={opsData.digitalTwinHealth.fleetHealth.label} />
+                <HealthCard icon={Users} label="Driver Health" score={opsData.digitalTwinHealth.driverHealth.score} detail={opsData.digitalTwinHealth.driverHealth.label} />
+                <HealthCard icon={Wrench} label="Equipment" score={opsData.digitalTwinHealth.equipmentHealth.score} detail={opsData.digitalTwinHealth.equipmentHealth.label} />
+                <HealthCard icon={Shield} label="Compliance" score={opsData.digitalTwinHealth.compliance.status === "good" ? 100 : 45} detail={opsData.digitalTwinHealth.compliance.status === "good" ? "Verified" : "Action required"} />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="surface-panel rounded-xl p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Shield className="h-3 w-3" /> Insurance</p>
+                  <p className="text-sm font-semibold mt-1 capitalize">{opsData.digitalTwinHealth.insurance.status.replace(/_/g, " ")}</p>
+                  {opsData.digitalTwinHealth.insurance.expiringWithin30Days && (
+                    <p className="text-xs text-warning mt-1">Expiring within 30 days</p>
+                  )}
+                </div>
+                <div className="surface-panel rounded-xl p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Wrench className="h-3 w-3" /> Maintenance</p>
+                  <p className="text-sm font-semibold mt-1">{opsData.digitalTwinHealth.maintenance.overdue} overdue · {opsData.digitalTwinHealth.maintenance.upcoming} upcoming</p>
+                </div>
+                <div className="surface-panel rounded-xl p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Fuel className="h-3 w-3" /> Utilization</p>
+                  <p className="text-2xl font-bold stat-number mt-1">{opsData.digitalTwinHealth.utilization}%</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3">
             <h2 className="text-lg font-semibold">Active Dispatches</h2>
             {data.jobs.length === 0 ? (
@@ -168,6 +200,20 @@ export default function DispatchPage() {
           )}
         </>
       ) : null}
+    </div>
+  );
+}
+
+function HealthCard({ icon: Icon, label, score, detail }: { icon: React.ElementType; label: string; score: number; detail: string }) {
+  const color = score >= 80 ? "text-emerald-400" : score >= 50 ? "text-warning" : "text-destructive";
+  return (
+    <div className="surface-panel rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className="h-4 w-4 text-primary" />
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+      </div>
+      <p className={`text-2xl font-bold stat-number ${color}`}>{score}%</p>
+      <p className="text-xs text-muted-foreground mt-1 truncate">{detail}</p>
     </div>
   );
 }

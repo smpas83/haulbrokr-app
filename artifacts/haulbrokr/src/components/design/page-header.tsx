@@ -6,13 +6,17 @@ interface PageHeaderProps {
   description?: ReactNode;
   actions?: ReactNode;
   badge?: ReactNode;
+  eyebrow?: string;
   className?: string;
 }
 
-export function PageHeader({ title, description, actions, badge, className }: PageHeaderProps) {
+export function PageHeader({ title, description, actions, badge, eyebrow, className }: PageHeaderProps) {
   return (
     <div className={cn("flex flex-col md:flex-row justify-between items-start md:items-center gap-4", className)}>
       <div className="space-y-1">
+        {eyebrow && (
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">{eyebrow}</p>
+        )}
         {badge}
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">{title}</h1>
         {description && (

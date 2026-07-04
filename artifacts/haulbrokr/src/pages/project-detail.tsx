@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/apiFetch";
+import { getStatusColor } from "@/lib/design-tokens";
 
 function ForemanAssignments({ projectId }: { projectId: number }) {
   const { toast } = useToast();
@@ -111,13 +112,6 @@ function ForemanAssignments({ projectId }: { projectId: number }) {
   );
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  active: "bg-green-100 text-green-800 border-green-200",
-  on_hold: "bg-amber-100 text-amber-800 border-amber-200",
-  completed: "bg-gray-100 text-gray-800 border-gray-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
-};
-
 function BudgetProgress({ spent, total }: { spent: number; total: number | null }) {
   if (!total) return null;
   const pct = Math.min((spent / total) * 100, 100);
@@ -208,7 +202,7 @@ export default function ProjectDetailPage() {
                 </SelectContent>
               </Select>
             ) : (
-              <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 ${STATUS_COLORS[project.status]}`}>{project.status.replace("_"," ")}</Badge>
+              <Badge className={`rounded-xl border font-bold uppercase text-xs px-3 py-1 ${getStatusColor(project.status)}`}>{project.status.replace("_"," ")}</Badge>
             )}
             {editing ? (
               <div className="flex gap-2">

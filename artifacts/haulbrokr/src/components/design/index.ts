@@ -7,3 +7,6 @@ export { AnimatedNationMap } from "./animated-nation-map";
 export { AiCopilotPreview } from "./ai-copilot-preview";
 export { FaqSection } from "./faq-section";
 export { KpiSkeletonGrid, TableSkeleton } from "./loading-skeleton";
+export { ExecutiveMetric } from "./executive-metric";
+export { SectionHeader } from "./section-header";
+export { DataTableShell } from "./data-table-shell";

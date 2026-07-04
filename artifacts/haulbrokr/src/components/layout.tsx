@@ -4,7 +4,7 @@ import {
   Truck, ClipboardList, Briefcase, LayoutDashboard,
   LogOut, Loader2, Settings, Menu, Trash2,
   FolderOpen, DollarSign, Plug, ShieldCheck, Building2, MapPin,
-  Sparkles, Radio
+  Sparkles, Radio, Layers,
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/react";
 import { useGetMyProfile, useGetAdminAccess } from "@workspace/api-client-react";
@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { DocumentGateBanner } from "@/components/documents";
 import { CopilotPanel } from "@/components/copilot-panel";
+import { CommandCenter, useCommandCenter } from "@/components/operations/command-center";
 
 interface NavItem {
   href: string;
@@ -27,7 +28,7 @@ function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; on
       <div className={cn(
         "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-150 cursor-pointer",
         active
-          ? "bg-primary/15 text-primary border border-primary/20"
+          ? "bg-primary/15 text-primary border border-primary/20 nav-active-indicator"
           : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent"
       )}>
         <item.icon className={cn("h-4 w-4 flex-shrink-0", active && "text-primary")} />
@@ -107,20 +108,28 @@ function Sidebar({ navItems, profile, user, onSignOut, onCopilotOpen }: {
 }
 
 export function Layout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user } = useUser();
   const { signOut } = useClerk();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
+  const commandCenter = useCommandCenter(() => setCopilotOpen(true), navigate);
   const { data: profile, isLoading } = useGetMyProfile();
   const { data: adminAccess } = useGetAdminAccess();
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading mission control...</p>
+        <div className="flex flex-col items-center gap-5 animate-fade-in">
+          <div className="relative">
+            <div className="h-14 w-14 rounded-2xl surface-panel flex items-center justify-center command-pulse">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+            </div>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-foreground">Loading mission control</p>
+            <p className="text-xs text-muted-foreground mt-1">Syncing operations data…</p>
+          </div>
         </div>
       </div>
     );
@@ -137,6 +146,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
+    { href: "/enterprise", label: "Enterprise OS", icon: Layers, show: true },
     { href: "/requests", label: isCustomer ? "My Requests" : "Load Board", icon: ClipboardList, show: true },
     { href: "/fleet", label: "My Fleet", icon: Truck, show: isProvider },
     { href: "/dispatch", label: "Digital Twin", icon: Radio, show: true },
@@ -200,6 +210,16 @@ export function Layout({ children }: { children: ReactNode }) {
           {children}
         </div>
 
+        {/* Command Center trigger hint — desktop */}
+        <button
+          type="button"
+          onClick={() => commandCenter.setOpen(true)}
+          className="hidden md:flex fixed bottom-6 right-6 z-30 items-center gap-2 rounded-xl border border-border/50 bg-sidebar px-4 py-2.5 text-xs font-medium text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all duration-200 shadow-lg hover:shadow-primary/10 command-pulse"
+          aria-label="Open command center"
+        >
+          <span>⌘K Command Center</span>
+        </button>
+
         {/* Mobile Bottom Tab Bar */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-sidebar border-t border-sidebar-border safe-area-bottom">
           <div className="flex items-stretch h-16">
@@ -224,6 +244,11 @@ export function Layout({ children }: { children: ReactNode }) {
         </nav>
       </main>
       <CopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
+      <CommandCenter
+        open={commandCenter.open}
+        onOpenChange={commandCenter.setOpen}
+        onCopilotOpen={() => { commandCenter.setOpen(false); setCopilotOpen(true); }}
+      />
     </div>
   );
 }

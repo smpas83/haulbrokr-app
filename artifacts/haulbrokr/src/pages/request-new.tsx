@@ -575,7 +575,7 @@ export default function NewRequestPage() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-8 text-xs rounded-xl border-2 border-blue-500/50 text-blue-600 hover:bg-blue-50 gap-1.5"
+                            className="h-8 text-xs rounded-xl border border-primary/50 text-primary hover:bg-primary/10 gap-1.5"
                             onClick={handleUseMyLocation}
                             disabled={geoLoading}
                           >

@@ -12,13 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { useGetMyProfile } from "@workspace/api-client-react";
 import { apiFetch } from "@/lib/apiFetch";
-
-const STATUS_COLORS: Record<string, string> = {
-  active: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300",
-  on_hold: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300",
-  completed: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300",
-  cancelled: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300",
-};
+import { getStatusColor } from "@/lib/design-tokens";
 
 function BudgetBar({ spent, total }: { spent: number; total: number | null }) {
   if (!total) return <p className="text-sm text-muted-foreground">No budget set</p>;
@@ -136,7 +130,7 @@ export default function ProjectsPage() {
               <div className="bg-secondary text-secondary-foreground p-4 flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge className={`rounded-xl border text-xs font-bold uppercase ${STATUS_COLORS[p.status]}`}>{p.status.replace("_"," ")}</Badge>
+                    <Badge className={`rounded-xl border text-xs font-bold uppercase ${getStatusColor(p.status)}`}>{p.status.replace("_"," ")}</Badge>
                   </div>
                   <h3 className="font-bold text-lg leading-tight truncate">{p.name}</h3>
                   {p.siteAddress && <p className="text-xs text-secondary-foreground/60 mt-1 truncate">{p.siteAddress}</p>}

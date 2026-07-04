@@ -20,6 +20,8 @@ import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend,
 } from "recharts";
+import { getDocStatusColor } from "@/lib/design-tokens";
+import { cn } from "@/lib/utils";
 
 // Types returned by the expanded /admin endpoints ──────────────────────────
 export interface AdminOverviewV2 {
@@ -124,17 +126,13 @@ function docHref(objectPath: string | null): string | null {
 const isExpired = (expiry: string | null) => !!expiry && new Date(expiry).getTime() < Date.now();
 
 function DocStatusBadge({ status, expiry }: { status: string; expiry?: string | null }) {
-  if (isExpired(expiry ?? null) && status === "verified") {
-    return <Badge variant="outline" className="rounded-none border-amber-500 text-amber-600">Expired</Badge>;
-  }
-  const map: Record<string, string> = {
-    verified: "border-green-600 text-green-700",
-    uploaded: "border-blue-500 text-blue-600",
-    rejected: "border-red-500 text-red-600",
-    missing: "border-muted-foreground/40 text-muted-foreground",
-  };
-  const cls = map[status] ?? "border-muted-foreground/40 text-muted-foreground";
-  return <Badge variant="outline" className={`rounded-none ${cls}`}>{formatDocStatus(status)}</Badge>;
+  const expired = isExpired(expiry ?? null) && status === "verified";
+  const colorKey = expired ? "expired" : status;
+  return (
+    <Badge variant="outline" className={cn("rounded-xl border uppercase text-[10px]", getDocStatusColor(colorKey, expired))}>
+      {formatDocStatus(status)}
+    </Badge>
+  );
 }
 
 type Drill =
@@ -155,7 +153,7 @@ function MetricCard({
       type="button"
       onClick={onClick}
       disabled={!onClick}
-      className={`text-left rounded-none border p-4 transition-colors w-full ${
+      className={`text-left rounded-xl border p-4 transition-colors w-full ${
         onClick ? "hover:border-primary hover:bg-muted/40 cursor-pointer" : "cursor-default"
       } ${accent ? "border-primary/40 bg-primary/5" : ""}`}
     >
@@ -223,7 +221,7 @@ function DocReviewButtons({
         type="button"
         size="sm"
         variant="outline"
-        className="h-7 rounded-none text-xs"
+        className="h-7 rounded-xl text-xs"
         disabled={review.isPending}
         onClick={() => act("approve")}
       >
@@ -233,7 +231,7 @@ function DocReviewButtons({
         type="button"
         size="sm"
         variant="outline"
-        className="h-7 rounded-none text-xs text-destructive"
+        className="h-7 rounded-xl text-xs text-destructive"
         disabled={review.isPending}
         onClick={() => act("reject")}
       >
@@ -299,7 +297,7 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-4xl rounded-none max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl rounded-xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -312,7 +310,7 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
               type="button"
               onClick={handleExport}
               disabled={loading || activeRows.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-none hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border rounded-xl hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
               <Download className="w-3.5 h-3.5" /> Export CSV
             </button>
@@ -320,7 +318,7 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
         </DialogHeader>
         <div className="relative mb-2">
           <Search className="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, location, material…" className="pl-8 rounded-none" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, location, material…" className="pl-8 rounded-xl" />
         </div>
         <div className="overflow-auto flex-1 -mx-1 px-1">
           {loading ? (
@@ -339,7 +337,7 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
                     <td className="text-xs max-w-[200px]"><div className="truncate" title={r.pickupAddress}>↑ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>↓ {r.deliveryAddress}</div></td>
                     <td className="text-right tabular-nums">{money(r.gmv)}</td>
                     <td className="text-right tabular-nums text-primary font-medium">{money(r.brokerFee)}</td>
-                    <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
+                    <td className="pl-3"><Badge variant="outline" className="rounded-xl capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
                   </tr>
                 ))}
               </tbody>
@@ -356,7 +354,7 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
                     <td><div>{r.customerName ?? "—"}</div><div className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{loc(r.customerCity, r.customerState)}</div></td>
                     <td className="text-xs max-w-[220px]"><div className="truncate" title={r.pickupAddress}>↑ {r.pickupAddress}</div><div className="truncate" title={r.deliveryAddress}>↓ {r.deliveryAddress}</div></td>
                     <td className="text-right tabular-nums">{r.budgetPerHour ? money(Number(r.budgetPerHour)) : "—"}</td>
-                    <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
+                    <td className="pl-3"><Badge variant="outline" className="rounded-xl capitalize">{String(r.status).replace(/_/g, " ")}</Badge></td>
                   </tr>
                 ))}
               </tbody>
@@ -437,7 +435,7 @@ const STATUS_COLORS = ["#16a34a", "#f59e0b", "#0ea5e9", "#ef4444", "#94a3b8"];
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <Card className="rounded-none">
+    <Card className="rounded-xl">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{title}</CardTitle>
         {subtitle ? <p className="text-xs text-muted-foreground">{subtitle}</p> : null}
@@ -491,7 +489,7 @@ function AdminCharts({ enabled, overview }: { enabled: boolean; overview: AdminO
                 key={m}
                 type="button"
                 onClick={() => { setCustom(false); setMonths(m); }}
-                className={`px-3 py-1 text-xs border rounded-none ${!customActive && months === m ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
+                className={`px-3 py-1 text-xs border rounded-xl ${!customActive && months === m ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
               >
                 {m}m
               </button>
@@ -499,16 +497,16 @@ function AdminCharts({ enabled, overview }: { enabled: boolean; overview: AdminO
             <button
               type="button"
               onClick={() => setCustom((c) => !c)}
-              className={`flex items-center gap-1 px-3 py-1 text-xs border rounded-none ${customActive ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
+              className={`flex items-center gap-1 px-3 py-1 text-xs border rounded-xl ${customActive ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
             >
               <CalendarRange className="w-3.5 h-3.5" /> Custom
             </button>
           </div>
           {custom && (
             <div className="flex items-center gap-1 text-xs">
-              <Input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="h-8 rounded-none w-[140px]" />
+              <Input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="h-8 rounded-xl w-[140px]" />
               <span className="text-muted-foreground">→</span>
-              <Input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="h-8 rounded-none w-[140px]" />
+              <Input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="h-8 rounded-xl w-[140px]" />
             </div>
           )}
         </div>
@@ -605,7 +603,7 @@ const money2 = (n: number) =>
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="border rounded-none p-3">
+    <div className="border rounded-xl p-3">
       <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className="text-lg font-bold tabular-nums">{value}</div>
     </div>
@@ -635,12 +633,12 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
 
   return (
     <Dialog open={id !== null} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl rounded-none max-h-[88vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-3xl rounded-xl max-h-[88vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5" />
             {p?.companyName ?? (detail.isLoading ? "Loading…" : "Details")}
-            {p?.role ? <Badge variant="outline" className="rounded-none capitalize">{p.role}</Badge> : null}
+            {p?.role ? <Badge variant="outline" className="rounded-xl capitalize">{p.role}</Badge> : null}
           </DialogTitle>
           <DialogDescription>{p?.dba ? `DBA: ${p.dba}` : "Full profile and job history."}</DialogDescription>
         </DialogHeader>
@@ -663,7 +661,7 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
               </div>
 
               {/* Contact + company info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 border rounded-none p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 border rounded-xl p-4">
                 <Field icon={<Users className="w-4 h-4" />} label="Contact" value={p?.contactName} />
                 <Field icon={<Mail className="w-4 h-4" />} label="Email" value={p?.email} />
                 <Field icon={<Phone className="w-4 h-4" />} label="Phone" value={p?.phone} />
@@ -683,7 +681,7 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
                   Job history ({d.jobs.length})
                 </div>
                 {d.jobs.length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-4 text-center border rounded-none">No jobs yet.</div>
+                  <div className="text-sm text-muted-foreground py-4 text-center border rounded-xl">No jobs yet.</div>
                 ) : (
                   <table className="w-full text-sm">
                     <thead className="text-xs uppercase text-muted-foreground border-b">
@@ -696,7 +694,7 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
                           <td>{j.otherName ?? "—"}</td>
                           <td className="text-xs max-w-[200px]"><div className="truncate" title={j.pickupAddress}>↑ {j.pickupAddress}</div><div className="truncate" title={j.deliveryAddress}>↓ {j.deliveryAddress}</div></td>
                           <td className="text-right tabular-nums">{money2(j.gmv)}</td>
-                          <td className="pl-3"><Badge variant="outline" className="rounded-none capitalize">{String(j.status).replace(/_/g, " ")}</Badge></td>
+                          <td className="pl-3"><Badge variant="outline" className="rounded-xl capitalize">{String(j.status).replace(/_/g, " ")}</Badge></td>
                         </tr>
                       ))}
                     </tbody>
@@ -709,7 +707,7 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
                   Documents ({(d.documents ?? []).length})
                 </div>
                 {(d.documents ?? []).length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-4 text-center border rounded-none">No documents uploaded.</div>
+                  <div className="text-sm text-muted-foreground py-4 text-center border rounded-xl">No documents uploaded.</div>
                 ) : (
                   <table className="w-full text-sm">
                     <thead className="text-xs uppercase text-muted-foreground border-b">
@@ -768,7 +766,7 @@ function PartyCard({ title, name, contact, email, phone, city, state }: {
   phone: string | null; city: string | null; state: string | null;
 }) {
   return (
-    <div className="border rounded-none p-4 space-y-1">
+    <div className="border rounded-xl p-4 space-y-1">
       <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{title}</div>
       <div className="font-semibold">{name ?? "—"}</div>
       {contact ? <div className="text-sm">{contact}</div> : null}
@@ -790,12 +788,12 @@ function JobDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
 
   return (
     <Dialog open={id !== null} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl rounded-none max-h-[88vh] overflow-auto">
+      <DialogContent className="max-w-2xl rounded-xl max-h-[88vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Briefcase className="w-5 h-5" />
             {j ? `Job #${j.id}` : (detail.isLoading ? "Loading…" : "Job")}
-            {j?.status ? <Badge variant="outline" className="rounded-none capitalize">{String(j.status).replace(/_/g, " ")}</Badge> : null}
+            {j?.status ? <Badge variant="outline" className="rounded-xl capitalize">{String(j.status).replace(/_/g, " ")}</Badge> : null}
           </DialogTitle>
           <DialogDescription>{j ? `${j.materialType} · ${String(j.truckType).replace(/_/g, " ")}` : "Full job details."}</DialogDescription>
         </DialogHeader>
@@ -807,9 +805,9 @@ function JobDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
         ) : (
           <div className="space-y-5">
             <div className="grid grid-cols-3 gap-3">
-              <div className="border rounded-none p-3"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">GMV</div><div className="text-lg font-bold tabular-nums">{usd(j.gmv)}</div></div>
-              <div className="border rounded-none p-3"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">Broker fee</div><div className="text-lg font-bold tabular-nums text-primary">{usd(j.brokerFee)}</div></div>
-              <div className="border rounded-none p-3"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">Carrier net</div><div className="text-lg font-bold tabular-nums">{usd(j.providerNet)}</div></div>
+              <div className="border rounded-xl p-3"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">GMV</div><div className="text-lg font-bold tabular-nums">{usd(j.gmv)}</div></div>
+              <div className="border rounded-xl p-3"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">Broker fee</div><div className="text-lg font-bold tabular-nums text-primary">{usd(j.brokerFee)}</div></div>
+              <div className="border rounded-xl p-3"><div className="text-[11px] uppercase tracking-wider text-muted-foreground">Carrier net</div><div className="text-lg font-bold tabular-nums">{usd(j.providerNet)}</div></div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -817,7 +815,7 @@ function JobDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
               <PartyCard title="Carrier" name={j.providerName} contact={j.providerContact} email={j.providerEmail} phone={j.providerPhone} city={j.providerCity} state={j.providerState} />
             </div>
 
-            <div className="border rounded-none p-4 space-y-2">
+            <div className="border rounded-xl p-4 space-y-2">
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Route</div>
               <div className="text-sm flex items-start gap-2"><span className="text-muted-foreground">↑ Pickup</span><span className="font-medium">{j.pickupAddress}</span></div>
               <div className="text-sm flex items-start gap-2"><span className="text-muted-foreground">↓ Drop</span><span className="font-medium">{j.deliveryAddress}</span></div>
