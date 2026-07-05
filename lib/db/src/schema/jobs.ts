@@ -20,7 +20,7 @@ export const jobStatusEnum = pgEnum("job_status", [
 export const jobCompletionApprovalEnum = pgEnum("job_completion_approval", ["pending", "approved", "flagged"]);
 
 export const jobPaymentStatusEnum = pgEnum("job_payment_status", [
-  "unpaid", "invoiced", "paid", "released", "failed", "requires_action",
+  "unpaid", "invoiced", "paid", "released", "failed", "requires_action", "refunded",
 ]);
 
 export const jobsTable = pgTable("jobs", {
@@ -56,6 +56,8 @@ export const jobsTable = pgTable("jobs", {
   releasedAt: timestamp("released_at", { withTimezone: true }),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   stripeTransferId: text("stripe_transfer_id"),
+  stripeRefundId: text("stripe_refund_id"),
+  refundedAt: timestamp("refunded_at", { withTimezone: true }),
   // Number of settlement attempts made for this job. Incremented on every
   // charge/release attempt so each retry uses a fresh Stripe idempotency key
   // (otherwise Stripe replays the previously declined intent).

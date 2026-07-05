@@ -217,6 +217,29 @@ export async function handleAccountUpdated(account: Stripe.Account): Promise<Web
   return { handled: true, action: "payout_status_synced" };
 }
 
+async function markJobRefunded(jobId: number, refundId: string | null): Promise<void> {
+  await db.update(jobsTable)
+    .set({
+      paymentStatus: "refunded",
+      stripeRefundId: refundId,
+      refundedAt: new Date(),
+    })
+    .where(eq(jobsTable.id, jobId));
+}
+
+async function handleChargeRefunded(charge: Stripe.Charge): Promise<WebhookHandleResult> {
+  const piId = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+  if (!piId) return { handled: false, reason: "no_payment_intent" };
+
+  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.stripePaymentIntentId, piId));
+  if (!job) return { handled: false, reason: "job_not_found" };
+  if (job.paymentStatus === "refunded") return { handled: true, action: "already_refunded" };
+
+  const refundId = typeof charge.refunds?.data?.[0]?.id === "string" ? charge.refunds.data[0].id : null;
+  await markJobRefunded(job.id, refundId);
+  return { handled: true, action: "job_marked_refunded" };
+}
+
 export async function handleStripeEvent(event: Stripe.Event): Promise<WebhookHandleResult> {
   switch (event.type) {
     case "payment_intent.succeeded":
@@ -234,6 +257,8 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<WebhookHan
       );
     case "account.updated":
       return handleAccountUpdated(event.data.object as Stripe.Account);
+    case "charge.refunded":
+      return handleChargeRefunded(event.data.object as Stripe.Charge);
     default:
       return { handled: false, reason: "ignored_event_type" };
   }

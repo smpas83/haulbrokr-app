@@ -1,35 +1,25 @@
 /**
  * Server-side geocode cache for marketplace map coordinates.
- * Uses Google Geocoding API when GOOGLE_MAPS_API_KEY is set; falls back to Nominatim.
+ * Production: Google Geocoding API only (GOOGLE_MAPS_API_KEY required).
+ * Development: Google when configured; Nominatim fallback for local dev without a key.
  */
+
+import { geocodeAddressGoogle } from "./googleMapsService";
 
 type GeoResult = { latitude: number; longitude: number };
 
 const cache = new Map<string, GeoResult>();
 const inflight = new Map<string, Promise<GeoResult | null>>();
 
-async function geocodeGoogle(address: string): Promise<GeoResult | null> {
-  const key = process.env.GOOGLE_MAPS_API_KEY;
-  if (!key) return null;
-  const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
-  url.searchParams.set("address", address);
-  url.searchParams.set("key", key);
-  const res = await fetch(url.toString());
-  if (!res.ok) return null;
-  const data = (await res.json()) as { results?: { geometry?: { location?: { lat: number; lng: number } } }[] };
-  const loc = data.results?.[0]?.geometry?.location;
-  if (!loc) return null;
-  return { latitude: loc.lat, longitude: loc.lng };
-}
-
-async function geocodeNominatim(address: string): Promise<GeoResult | null> {
+async function geocodeNominatimDevOnly(address: string): Promise<GeoResult | null> {
+  if (process.env.NODE_ENV === "production") return null;
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", address);
   url.searchParams.set("format", "json");
   url.searchParams.set("limit", "1");
   url.searchParams.set("countrycodes", "us");
   const res = await fetch(url.toString(), {
-    headers: { "User-Agent": "HaulBrokr/1.0 (marketplace-map)" },
+    headers: { "User-Agent": "HaulBrokr/1.0 (marketplace-map-dev)" },
   });
   if (!res.ok) return null;
   const data = (await res.json()) as { lat?: string; lon?: string }[];
@@ -47,8 +37,8 @@ export async function geocodeAddressCached(address: string): Promise<GeoResult |
   let pending = inflight.get(key);
   if (!pending) {
     pending = (async () => {
-      const google = await geocodeGoogle(address);
-      const result = google ?? await geocodeNominatim(address);
+      const google = await geocodeAddressGoogle(address);
+      const result = google ?? await geocodeNominatimDevOnly(address);
       if (result) cache.set(key, result);
       inflight.delete(key);
       return result;

@@ -49,6 +49,9 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   { service: "r2", variable: "PRIVATE_OBJECT_DIR", required: true, description: "Private object key prefix within R2_BUCKET." },
   { service: "r2", variable: "PUBLIC_OBJECT_SEARCH_PATHS", required: true, description: "Comma-separated public object key prefixes within R2_BUCKET." },
 
+  // Google Maps (server-side geocoding, directions, ETA)
+  { service: "core", variable: "GOOGLE_MAPS_API_KEY", required: true, description: "Google Maps API key for production geocoding, directions, and ETA." },
+
   // Render (API host)
   { service: "render", variable: "PORT", required: true, description: "HTTP listen port (8080 on Render)." },
   { service: "render", variable: "NODE_ENV", required: true, description: "Must be production on Render." },
@@ -247,6 +250,13 @@ function validateR2(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void 
   }
 }
 
+function validateGoogleMaps(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+  const key = envValue(env, "GOOGLE_MAPS_API_KEY");
+  if (!key) {
+    pushMissing(issues, "core", "GOOGLE_MAPS_API_KEY");
+  }
+}
+
 function validateRender(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
   const port = envValue(env, "PORT");
   if (!port) {
@@ -311,6 +321,7 @@ export function collectProductionEnvIssues(env: NodeJS.ProcessEnv = process.env)
   validateStripe(env, issues);
   validateResend(env, issues);
   validateR2(env, issues);
+  validateGoogleMaps(env, issues);
   validateRender(env, issues);
   validateCoreSecrets(env, issues);
   return issues;

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/expo";
 import type { Job } from "@/context/AppContext";
-import { geocodeAddress, type GeoCoord } from "@/lib/geocode";
+import { geocodeAddressViaApi, type GeoCoord } from "@/lib/geocode";
 
-/** Geocode pickup addresses for map markers; results are cached in geocode.ts. */
+/** Geocode pickup addresses via production Google Maps API (server proxy). */
 export function useJobCoordinates(jobs: Job[]) {
+  const { getToken, isSignedIn } = useAuth();
   const [coordsByJobId, setCoordsByJobId] = useState<Record<string, GeoCoord>>({});
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +16,7 @@ export function useJobCoordinates(jobs: Job[]) {
 
   useEffect(() => {
     let cancelled = false;
-    if (!jobs.length) {
+    if (!jobs.length || !isSignedIn) {
       setCoordsByJobId({});
       return;
     }
@@ -24,7 +26,7 @@ export function useJobCoordinates(jobs: Job[]) {
       const next: Record<string, GeoCoord> = {};
       for (const job of jobs) {
         if (!job.pickupAddress?.trim()) continue;
-        const coord = await geocodeAddress(job.pickupAddress);
+        const coord = await geocodeAddressViaApi(getToken, job.pickupAddress);
         if (cancelled) return;
         if (coord) next[job.id] = coord;
       }
@@ -35,7 +37,7 @@ export function useJobCoordinates(jobs: Job[]) {
     })();
 
     return () => { cancelled = true; };
-  }, [jobsKey, jobs]);
+  }, [jobsKey, jobs, getToken, isSignedIn]);
 
   return { coordsByJobId, loading };
 }
