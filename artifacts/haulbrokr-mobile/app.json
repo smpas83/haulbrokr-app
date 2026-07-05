@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "haulbrokr",
+      "bundleIdentifier": "com.haulbrokr.mobile",
       "buildNumber": "2",
       "usesAppleSignIn": true,
       "icon": "./assets/images/app-icon-ios.png",

@@ -18,6 +18,14 @@ import {
   buildHeatZonesFromLoads,
 } from "../lib/demoMarketplace";
 import { geocodeAddressCached } from "../lib/geocodeCache";
+import {
+  computeDrivingDistances,
+  computeDrivingRoute,
+  haversineMiles,
+  isGoogleMapsConfigured,
+  allowDevFallback,
+  type LatLng,
+} from "../lib/googleRoutes";
 
 const router: IRouter = Router();
 
@@ -29,20 +37,23 @@ const QuerySchema = z.object({
 
 const GeocodeBody = z.object({ address: z.string().min(3).max(500) });
 
+const LatLngSchema = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+const RouteBody = z.object({
+  origin: LatLngSchema,
+  destination: LatLngSchema,
+});
+
+const DistanceBody = z.object({
+  origin: LatLngSchema,
+  destinations: z.array(LatLngSchema).min(1).max(100),
+});
+
 const OPEN_STATUSES = ["open", "bid_received", "bidding"] as const;
 const ACTIVE_JOB_STATUSES = ["active", "awarded", "accepted", "in_progress"] as const;
-
-function haversineMiles(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
-  const R = 3958.8;
-  const dLat = ((b.latitude - a.latitude) * Math.PI) / 180;
-  const dLon = ((b.longitude - a.longitude) * Math.PI) / 180;
-  const lat1 = (a.latitude * Math.PI) / 180;
-  const lat2 = (b.latitude * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-}
 
 async function countLiveMarketplaceRows(): Promise<number> {
   const [[openReq], [activeJob], [truckCount]] = await Promise.all([
@@ -193,13 +204,39 @@ async function buildLiveMarketplace(profile: { id: number; role: string }): Prom
   };
 }
 
-function filterByRadius(payload: MarketplacePayload, lat: number, lng: number, radiusMiles: number): MarketplacePayload {
-  const origin = { latitude: lat, longitude: lng };
-  return {
-    ...payload,
-    loads: payload.loads.filter((l) => haversineMiles(origin, l) <= radiusMiles),
-    trucks: payload.trucks.filter((t) => haversineMiles(origin, t) <= radiusMiles),
-  };
+async function filterByRadius(
+  payload: MarketplacePayload,
+  origin: LatLng,
+  radiusMiles: number,
+): Promise<MarketplacePayload> {
+  const loadCoords = payload.loads.map((l) => ({ latitude: l.latitude, longitude: l.longitude }));
+  const truckCoords = payload.trucks.map((t) => ({ latitude: t.latitude, longitude: t.longitude }));
+
+  let loadDistances: number[];
+  let truckDistances: number[];
+
+  if (isGoogleMapsConfigured() || !allowDevFallback()) {
+    const [loadResults, truckResults] = await Promise.all([
+      loadCoords.length > 0 ? computeDrivingDistances(origin, loadCoords) : Promise.resolve([]),
+      truckCoords.length > 0 ? computeDrivingDistances(origin, truckCoords) : Promise.resolve([]),
+    ]);
+    loadDistances = loadResults.map((r) => r.distanceMiles);
+    truckDistances = truckResults.map((r) => r.distanceMiles);
+  } else {
+    loadDistances = loadCoords.map((c) => haversineMiles(origin, c));
+    truckDistances = truckCoords.map((c) => haversineMiles(origin, c));
+  }
+
+  const loads = payload.loads
+    .map((load, i) => ({
+      ...load,
+      distanceMiles: loadDistances[i] ?? haversineMiles(origin, load),
+    }))
+    .filter((l) => (l.distanceMiles ?? haversineMiles(origin, l)) <= radiusMiles);
+
+  const trucks = payload.trucks.filter((_t, i) => (truckDistances[i] ?? Infinity) <= radiusMiles);
+
+  return { ...payload, loads, trucks };
 }
 
 async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], res: import("express").Response): Promise<void> {
@@ -216,7 +253,11 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
       liveCount === 0 ? buildEmptyMarketplace() : await buildLiveMarketplace(profile);
 
     if (parsed.data.lat != null && parsed.data.lng != null && parsed.data.radiusMiles != null) {
-      payload = filterByRadius(payload, parsed.data.lat, parsed.data.lng, parsed.data.radiusMiles);
+      payload = await filterByRadius(
+        payload,
+        { latitude: parsed.data.lat, longitude: parsed.data.lng },
+        parsed.data.radiusMiles,
+      );
     }
 
     res.json(payload);
@@ -227,8 +268,7 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
 }
 
 /**
- * Forward-geocode a street address (Google Geocoding API when configured, else Nominatim).
- * Kept for clients that predate GET /map/marketplace server-side geocoding.
+ * Forward-geocode a street address (Google Geocoding API when configured, else Nominatim in dev).
  */
 router.post("/maps/geocode", requireProfile, async (req, res): Promise<void> => {
   const parsed = GeocodeBody.safeParse(req.body);
@@ -242,6 +282,38 @@ router.post("/maps/geocode", requireProfile, async (req, res): Promise<void> => 
     return;
   }
   res.json(coord);
+});
+
+/** Driving route with polyline and traffic-aware ETA. */
+router.post("/maps/route", requireProfile, async (req, res): Promise<void> => {
+  const parsed = RouteBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  try {
+    const route = await computeDrivingRoute(parsed.data.origin, parsed.data.destination);
+    res.json(route);
+  } catch (err) {
+    console.error("[maps/route]", err);
+    res.status(502).json({ error: err instanceof Error ? err.message : "Route calculation failed" });
+  }
+});
+
+/** Batch driving distances from one origin to many destinations. */
+router.post("/maps/distance", requireProfile, async (req, res): Promise<void> => {
+  const parsed = DistanceBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  try {
+    const distances = await computeDrivingDistances(parsed.data.origin, parsed.data.destinations);
+    res.json({ distances });
+  } catch (err) {
+    console.error("[maps/distance]", err);
+    res.status(502).json({ error: err instanceof Error ? err.message : "Distance calculation failed" });
+  }
 });
 
 /**

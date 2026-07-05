@@ -14,6 +14,7 @@ export type MarketplaceLoad = {
   latitude: number;
   longitude: number;
   scheduledDate: string;
+  distanceMiles?: number;
 };
 
 export type MarketplaceTruck = {
@@ -80,7 +81,7 @@ export function marketplaceLoadToJob(load: MarketplaceLoad): Job {
     postedBy: "Marketplace",
     bidsCount: load.bidsCount,
     providerSupplies: false,
-    distanceToStart: 0,
+    distanceToStart: load.distanceMiles ?? 0,
     distanceToEnd: 0,
     bids: [],
   };

@@ -17,6 +17,7 @@ export type MarketplaceLoad = {
   latitude: number;
   longitude: number;
   scheduledDate: string;
+  distanceMiles?: number;
 };
 
 export type MarketplaceTruck = {

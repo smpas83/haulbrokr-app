@@ -19,6 +19,13 @@ if (googleMapsApiKey) {
       },
     },
   };
+  config.ios = {
+    ...config.ios,
+    config: {
+      ...config.ios?.config,
+      googleMapsApiKey,
+    },
+  };
 }
 
 module.exports = config;
