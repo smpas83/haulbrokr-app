@@ -17,7 +17,7 @@ import {
   type MarketplaceTruck,
   buildHeatZonesFromLoads,
 } from "../lib/demoMarketplace";
-import { geocodeAddressCached } from "../lib/geocodeCache";
+import { geocodeAddressCached, reverseGeocodeAddressCached } from "../lib/geocodeCache";
 
 const router: IRouter = Router();
 
@@ -28,6 +28,10 @@ const QuerySchema = z.object({
 });
 
 const GeocodeBody = z.object({ address: z.string().min(3).max(500) });
+const ReverseGeocodeBody = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+});
 
 const OPEN_STATUSES = ["open", "bid_received", "bidding"] as const;
 const ACTIVE_JOB_STATUSES = ["active", "awarded", "accepted", "in_progress"] as const;
@@ -227,8 +231,7 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
 }
 
 /**
- * Forward-geocode a street address (Google Geocoding API when configured, else Nominatim).
- * Kept for clients that predate GET /map/marketplace server-side geocoding.
+ * Forward-geocode a street address via Google Geocoding API (GOOGLE_MAPS_API_KEY required in production).
  */
 router.post("/maps/geocode", requireProfile, async (req, res): Promise<void> => {
   const parsed = GeocodeBody.safeParse(req.body);
@@ -242,6 +245,23 @@ router.post("/maps/geocode", requireProfile, async (req, res): Promise<void> => 
     return;
   }
   res.json(coord);
+});
+
+/**
+ * Reverse-geocode coordinates to a formatted address via Google Geocoding API.
+ */
+router.post("/maps/reverse-geocode", requireProfile, async (req, res): Promise<void> => {
+  const parsed = ReverseGeocodeBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const address = await reverseGeocodeAddressCached(parsed.data.lat, parsed.data.lng);
+  if (!address) {
+    res.status(404).json({ error: "Address not found for coordinates" });
+    return;
+  }
+  res.json({ address });
 });
 
 /**

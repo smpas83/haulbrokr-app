@@ -64,6 +64,10 @@ vi.mock("../lib/geocodeCache", () => ({
     if (address.includes("Unknown")) return null;
     return { latitude: 32.7767, longitude: -96.797 };
   }),
+  reverseGeocodeAddressCached: vi.fn(async (lat: number, lng: number) => {
+    if (lat === 0 && lng === 0) return null;
+    return "123 Main St, Dallas, TX 75201, USA";
+  }),
   resetGeocodeCacheForTests: vi.fn(),
 }));
 
@@ -119,6 +123,28 @@ describe("POST /api/maps/geocode", () => {
 
   it("returns 400 for invalid body", async () => {
     const res = await request(app()).post("/api/maps/geocode").send({ address: "ab" });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/maps/reverse-geocode", () => {
+  it("returns a formatted address for valid coordinates", async () => {
+    const res = await request(app())
+      .post("/api/maps/reverse-geocode")
+      .send({ lat: 32.7767, lng: -96.797 });
+    expect(res.status).toBe(200);
+    expect(res.body.address).toContain("Dallas");
+  });
+
+  it("returns 404 when reverse geocoding fails", async () => {
+    const res = await request(app())
+      .post("/api/maps/reverse-geocode")
+      .send({ lat: 0, lng: 0 });
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 for invalid body", async () => {
+    const res = await request(app()).post("/api/maps/reverse-geocode").send({ lat: 999, lng: 0 });
     expect(res.status).toBe(400);
   });
 });

@@ -39,6 +39,7 @@ Use this as the source of truth for staging and production configuration. Do not
 |---|---:|---|---|---|---|
 | `VITE_CLERK_PUBLISHABLE_KEY` | Yes | Clerk/Web | Clerk dashboard | `pk_test_...` / `pk_live_...` | Clerk key baked into the Vite build. |
 | `VITE_CLERK_PROXY_URL` | Yes | Web/Vercel | Deployment URL | `/api/__clerk` | Same-origin Clerk proxy URL. |
+| `VITE_GOOGLE_MAPS_API_KEY` | Yes | Web/Vercel | Google Cloud Console | `AIza...` | Google Maps JavaScript API for haulbrokr.com live map page. Restrict by HTTP referrer (haulbrokr.com). |
 | `BASE_PATH` | Optional | Web | Host/runtime | `/` | Local serve base path. Build falls back to `/`. |
 
 ## Mobile / Expo
@@ -47,9 +48,9 @@ Use this as the source of truth for staging and production configuration. Do not
 |---|---:|---|---|---|---|
 | `EXPO_PUBLIC_DOMAIN` | Yes | Expo/API | Release operator | `haulbrokr.com` | Hostname used by mobile for `https://<domain>/api`. |
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Yes | Clerk/Expo | Clerk dashboard | `pk_test_...` / `pk_live_...` | Clerk publishable key for Expo app auth. |
-| `GOOGLE_MAPS_API_KEY` | Yes | Google Maps/Expo | Google Cloud Console | `AIza...` | Maps SDK key for Android/iOS. Restrict by app package/bundle. |
-| `GOOGLE_MAPS_API_KEY` | Optional | API/Render | Google Cloud Console | `AIza...` | Server-side geocoding for marketplace map (falls back to Nominatim). |
-| `VITE_GOOGLE_MAPS_API_KEY` | Yes | Web/Vercel | Google Cloud Console | `AIza...` | Google Maps JavaScript API for haulbrokr.com live map page. |
+| `GOOGLE_MAPS_API_KEY` | Yes | Google Maps/Expo | Google Cloud Console | `AIza...` | Maps SDK key for Android native maps. Restrict by app package + SHA-1/SHA-256. |
+| `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` | Optional | Expo/Web | Google Cloud Console | `AIza...` | Alternate name for mobile web builds (Expo inlines EXPO_PUBLIC_* vars). |
+| `GOOGLE_MAPS_API_KEY` | Yes | API/Render | Google Cloud Console | `AIza...` | Server-side geocoding (Geocoding API). Required in production — no Nominatim fallback. |
 
 ## Deployment automation
 

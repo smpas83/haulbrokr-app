@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/expo";
 import type { Job } from "@/context/AppContext";
-import { geocodeAddress, type GeoCoord } from "@/lib/geocode";
+import { type GeoCoord } from "@/lib/geocode";
 
-/** Geocode pickup addresses for map markers; results are cached in geocode.ts. */
+const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
+  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
+  : "/api";
+
+/** Geocode pickup addresses for map markers via the API (Google Geocoding on the server). */
 export function useJobCoordinates(jobs: Job[]) {
+  const { getToken, isSignedIn } = useAuth();
   const [coordsByJobId, setCoordsByJobId] = useState<Record<string, GeoCoord>>({});
   const [loading, setLoading] = useState(false);
 
@@ -14,19 +20,35 @@ export function useJobCoordinates(jobs: Job[]) {
 
   useEffect(() => {
     let cancelled = false;
-    if (!jobs.length) {
+    if (!jobs.length || !isSignedIn) {
       setCoordsByJobId({});
       return;
     }
 
     (async () => {
       setLoading(true);
+      const token = await getToken();
       const next: Record<string, GeoCoord> = {};
       for (const job of jobs) {
         if (!job.pickupAddress?.trim()) continue;
-        const coord = await geocodeAddress(job.pickupAddress);
-        if (cancelled) return;
-        if (coord) next[job.id] = coord;
+        try {
+          const res = await fetch(`${API_BASE}/maps/geocode`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ address: job.pickupAddress }),
+          });
+          if (cancelled) return;
+          if (!res.ok) continue;
+          const coord = (await res.json()) as GeoCoord;
+          if (Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude)) {
+            next[job.id] = coord;
+          }
+        } catch {
+          // Skip failed geocodes — marker simply won't render
+        }
       }
       if (!cancelled) {
         setCoordsByJobId(next);
@@ -35,7 +57,7 @@ export function useJobCoordinates(jobs: Job[]) {
     })();
 
     return () => { cancelled = true; };
-  }, [jobsKey, jobs]);
+  }, [jobsKey, jobs, getToken, isSignedIn]);
 
   return { coordsByJobId, loading };
 }
