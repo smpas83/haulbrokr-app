@@ -11,6 +11,8 @@ const PROVIDER_ROLES = new Set(["provider", "driver"]);
 
 // Money is settled to the provider once a job's payment is paid or released.
 const AVAILABLE_STATUSES = new Set(["paid", "released"]);
+// Refunded jobs claw back provider earnings from the available balance.
+const REFUNDED_STATUSES = new Set(["refunded", "partially_refunded"]);
 // Earned but not yet released to the provider.
 const PENDING_STATUSES = new Set(["unpaid", "invoiced", "requires_action"]);
 
@@ -41,8 +43,15 @@ router.get("/wallet", requireProfile, async (req, res): Promise<void> => {
 
   for (const job of jobs) {
     const net = job.providerNetAmount != null ? parseFloat(job.providerNetAmount) : 0;
+    const gross = job.customerTotalAmount != null ? parseFloat(job.customerTotalAmount) : 0;
+    const refunded = job.refundedAmount != null ? parseFloat(job.refundedAmount) : 0;
+    const refundRatio = gross > 0 ? Math.min(1, refunded / gross) : 0;
+    const netAfterRefund = net * (1 - refundRatio);
+
     if (AVAILABLE_STATUSES.has(job.paymentStatus)) {
       availableBalance += net;
+    } else if (REFUNDED_STATUSES.has(job.paymentStatus)) {
+      availableBalance += Math.max(0, netAfterRefund);
     } else if (job.status === "completed" && PENDING_STATUSES.has(job.paymentStatus)) {
       pendingBalance += net;
     }
@@ -56,6 +65,17 @@ router.get("/wallet", requireProfile, async (req, res): Promise<void> => {
         status: job.paymentStatus,
         createdAt: job.completedAt ?? job.createdAt,
       });
+      if (refunded > 0) {
+        const clawback = net - Math.max(0, netAfterRefund);
+        transactions.push({
+          id: `refund-${job.id}`,
+          type: "payout",
+          description: `Refund clawback — ${job.materialType} job #${job.id}`,
+          amount: -clawback,
+          status: job.paymentStatus,
+          createdAt: job.releasedAt ?? job.completedAt ?? job.createdAt,
+        });
+      }
     }
   }
 

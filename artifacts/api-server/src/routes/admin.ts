@@ -25,6 +25,8 @@ import {
 } from "../middlewares/requireAdmin";
 import { ReviewComplianceBody, ReviewCreditApplicationBody, UpdateStaffRoleBody } from "@workspace/api-zod";
 import { findStuckPayoutJobs, retryStuckPayout } from "../lib/payoutRetry";
+import { getJobPaymentHistory, issueJobRefund } from "../lib/refunds";
+import { z } from "zod/v4";
 import { getUncachableResendClient } from "../lib/resendClient";
 import {
   listProviderComplianceBundles,
@@ -1065,6 +1067,103 @@ router.post("/admin/stuck-payouts/:id/reset-failures", requireStaffOrProfile, re
     .set({ payoutRetryFailures: 0, payoutAlertSentAt: null })
     .where(eq(jobsTable.id, jobId));
   res.json({ id: jobId, payoutRetryFailures: 0, payoutAlertSentAt: null });
+});
+
+const RefundJobBody = z.object({
+  amount: z.number().positive().optional(),
+  reason: z.string().max(500).optional(),
+});
+
+// POST /admin/jobs/:id/refund — staff-initiated Stripe refund (full or partial).
+router.post("/admin/jobs/:id/refund", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
+  const jobId = Number(req.params.id);
+  if (!Number.isInteger(jobId)) {
+    res.status(400).json({ error: "Invalid job id" });
+    return;
+  }
+
+  const staffRole = await getStaffRole(req);
+  if (!staffRole) {
+    res.status(403).json({ error: "Only authorized staff can issue refunds." });
+    return;
+  }
+
+  const profile = req.profile;
+  if (profile && ["driver", "provider", "customer"].includes(profile.role) && !profile.staffRole) {
+    res.status(403).json({ error: "Drivers, providers, and customers cannot issue refunds." });
+    return;
+  }
+
+  const parsed = RefundJobBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  const headerKey = typeof req.headers["idempotency-key"] === "string" ? req.headers["idempotency-key"].trim() : "";
+  const idempotencyKey =
+    headerKey ||
+    `job-refund:${job.id}:${job.refundAttempts + 1}`;
+
+  const result = await issueJobRefund({
+    job,
+    amountDollars: parsed.data.amount ?? null,
+    reason: parsed.data.reason ?? null,
+    createdByProfileId: profile?.id ?? null,
+    createdByStaffUsername: req.staffUser?.username ?? null,
+    idempotencyKey,
+  });
+
+  if (!result.ok) {
+    const status =
+      result.code === "already_refunded" || result.code === "not_refundable" || result.code === "invalid_amount"
+        ? 409
+        : result.code === "missing_payment_intent" || result.code === "missing_amount"
+          ? 422
+          : 400;
+    res.status(status).json({ error: result.message, code: result.code });
+    return;
+  }
+
+  res.status(result.duplicate ? 200 : 201).json({
+    duplicate: result.duplicate,
+    refund: {
+      id: result.refund.id,
+      jobId: result.refund.jobId,
+      stripeRefundId: result.refund.stripeRefundId,
+      stripePaymentIntentId: result.refund.stripePaymentIntentId,
+      stripeChargeId: result.refund.stripeChargeId,
+      amount: parseFloat(result.refund.amount),
+      reason: result.refund.reason,
+      status: result.refund.status,
+      createdAt: result.refund.createdAt,
+      createdByProfileId: result.refund.createdByProfileId,
+      createdByStaffUsername: result.refund.createdByStaffUsername,
+    },
+  });
+});
+
+// GET /admin/jobs/:id/payment-history — original payment, refunds, balance, timeline.
+router.get("/admin/jobs/:id/payment-history", requireStaffOrProfile, requirePermission("payouts"), async (req, res): Promise<void> => {
+  const jobId = Number(req.params.id);
+  if (!Number.isInteger(jobId)) {
+    res.status(400).json({ error: "Invalid job id" });
+    return;
+  }
+
+  const history = await getJobPaymentHistory(jobId);
+  if (!history) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  res.json(history);
 });
 
 export default router;

@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, jobsTable, payoutAccountsTable, activityTable } from "@workspace/db";
 import { checkProviderPayoutReadiness, syncStripeStatus } from "./payoutStatus";
 import { settleConfirmedPayout } from "./payoutRetry";
+import { handleChargeRefunded, upsertRefundFromStripe } from "./refunds";
 import { logger } from "./logger";
 
 export type WebhookHandleResult =
@@ -217,6 +218,18 @@ export async function handleAccountUpdated(account: Stripe.Account): Promise<Web
   return { handled: true, action: "payout_status_synced" };
 }
 
+export async function handleRefundEvent(refund: Stripe.Refund): Promise<WebhookHandleResult> {
+  const record = await upsertRefundFromStripe(refund);
+  if (!record) return { handled: false, reason: "refund_job_not_found" };
+  return { handled: true, action: `refund_${record.status}` };
+}
+
+export async function handleChargeRefundedEvent(charge: Stripe.Charge): Promise<WebhookHandleResult> {
+  const { jobId } = await handleChargeRefunded(charge);
+  if (!jobId) return { handled: false, reason: "charge_job_not_found" };
+  return { handled: true, action: "charge_refunded_synced" };
+}
+
 export async function handleStripeEvent(event: Stripe.Event): Promise<WebhookHandleResult> {
   switch (event.type) {
     case "payment_intent.succeeded":
@@ -234,6 +247,11 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<WebhookHan
       );
     case "account.updated":
       return handleAccountUpdated(event.data.object as Stripe.Account);
+    case "charge.refunded":
+      return handleChargeRefundedEvent(event.data.object as Stripe.Charge);
+    case "refund.created":
+    case "refund.updated":
+      return handleRefundEvent(event.data.object as Stripe.Refund);
     default:
       return { handled: false, reason: "ignored_event_type" };
   }

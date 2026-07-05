@@ -66,6 +66,7 @@ export function createMockStripeClient(): Stripe {
           status: "succeeded",
           client_secret: `${id}_secret_mock`,
           latest_charge: mockId("ch"),
+          metadata: {},
         };
       },
     },
@@ -199,6 +200,23 @@ export function createMockStripeClient(): Stripe {
             payment_intent: pi,
           };
         },
+      },
+    },
+
+    refunds: {
+      async create(params: any, _opts?: { idempotencyKey?: string }) {
+        const id = mockId("re");
+        const amount = params?.amount ?? 0;
+        return {
+          id,
+          object: "refund",
+          amount,
+          charge: params?.charge ?? mockId("ch"),
+          payment_intent: params?.payment_intent ?? null,
+          status: "succeeded",
+          reason: params?.reason ?? "requested_by_customer",
+          metadata: params?.metadata ?? {},
+        };
       },
     },
   };
