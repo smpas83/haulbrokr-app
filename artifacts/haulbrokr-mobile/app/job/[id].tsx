@@ -2,10 +2,12 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import * as ExpoLinking from "expo-linking";
+import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   Linking,
   Platform,
   Pressable,
@@ -48,8 +50,11 @@ import {
   useSendJobMessage,
   useJobRating,
   useSubmitJobRating,
+  useUploadFile,
 } from "@/hooks/useLiveApi";
 import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
+
+const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 
 // Cancellation fee: 15% of estimated one-day earnings
 function calcCancelFee(budgetPerHour: number) {
@@ -1710,19 +1715,77 @@ function LiveTicketsPanel({ numericId, role, status }: { numericId: number | nul
   const createTicket = useCreateTicket();
   const clockIn = useTicketClockIn();
   const clockOut = useTicketClockOut();
+  const upload = useUploadFile();
+  const [showForm, setShowForm] = useState(false);
+  const [weightTons, setWeightTons] = useState("");
+  const [ticketNotes, setTicketNotes] = useState("");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoAsset, setPhotoAsset] = useState<{ uri: string; name: string; mimeType: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const tickets: any[] = (data as any)?.tickets ?? [];
   const isDriverSide = role === "provider" || role === "driver";
   const isVerifierSide = role === "customer" || role === "supervisor";
   const totalWeight = tickets.reduce((sum, t) => sum + (parseFloat(t.weightTons) || 0), 0);
 
-  const handleAdd = () => {
+  const pickScalePhoto = async () => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    const result = perm.granted
+      ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 })
+      : await (async () => {
+          const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (!lib.granted) {
+            Alert.alert("Camera blocked", "Enable camera or photo access to attach a scale ticket.");
+            return null;
+          }
+          return ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 });
+        })();
+    if (!result || result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    setPhotoPreview(asset.uri);
+    setPhotoAsset({
+      uri: asset.uri,
+      name: asset.fileName ?? `scale-ticket-${Date.now()}.jpg`,
+      mimeType: asset.mimeType ?? "image/jpeg",
+    });
+  };
+
+  const resetForm = () => {
+    setShowForm(false);
+    setWeightTons("");
+    setTicketNotes("");
+    setPhotoPreview(null);
+    setPhotoAsset(null);
+  };
+
+  const handleSubmitTicket = async () => {
     if (numericId == null) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    createTicket.mutate(
-      { jobId: numericId },
-      { onError: (e: any) => Alert.alert("Couldn't log load", e?.message ?? "Try again.") }
-    );
+    const weight = parseFloat(weightTons);
+    if (!Number.isFinite(weight) || weight <= 0) {
+      Alert.alert("Weight required", "Enter the scale ticket weight in tons.");
+      return;
+    }
+    if (!photoAsset) {
+      Alert.alert("Photo required", "Attach a photo of the scale ticket.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const { objectPath } = await upload.mutateAsync(photoAsset);
+      await createTicket.mutateAsync({
+        jobId: numericId,
+        weightTons: weight,
+        notes: ticketNotes.trim() || undefined,
+        photoUrl: `${API_BASE}/storage${objectPath}`,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      resetForm();
+    } catch (e: any) {
+      Alert.alert("Couldn't log load", e?.message ?? "Try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -1744,8 +1807,8 @@ function LiveTicketsPanel({ numericId, role, status }: { numericId: number | nul
             )}
             {status !== "completed" && isDriverSide && (
               <Pressable
-                onPress={handleAdd}
-                disabled={createTicket.isPending}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowForm((v) => !v); }}
+                disabled={submitting || createTicket.isPending}
                 style={[styles.ticketAddBtn, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "40" }]}
               >
                 <Feather name="plus" size={13} color={colors.primary} />
@@ -1754,11 +1817,62 @@ function LiveTicketsPanel({ numericId, role, status }: { numericId: number | nul
             )}
           </View>
         </View>
+        {showForm && isDriverSide && (
+          <View style={{ gap: 10, marginBottom: 12 }}>
+            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>
+              Capture the scale ticket weight and photo for this load.
+            </Text>
+            <TextInput
+              value={weightTons}
+              onChangeText={setWeightTons}
+              placeholder="Weight (tons)"
+              keyboardType="decimal-pad"
+              placeholderTextColor={colors.mutedForeground}
+              style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+            />
+            <TextInput
+              value={ticketNotes}
+              onChangeText={setTicketNotes}
+              placeholder="Notes (optional)"
+              placeholderTextColor={colors.mutedForeground}
+              style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+            />
+            <Pressable
+              onPress={pickScalePhoto}
+              style={[styles.ticketAddBtn, { alignSelf: "flex-start", backgroundColor: colors.muted + "33", borderColor: colors.border }]}
+            >
+              <Feather name="camera" size={13} color={colors.foreground} />
+              <Text style={[styles.ticketAddText, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+                {photoAsset ? "Retake photo" : "Add scale ticket photo"}
+              </Text>
+            </Pressable>
+            {photoPreview && (
+              <Image source={{ uri: photoPreview }} style={{ width: "100%", height: 160, borderRadius: 8 }} resizeMode="cover" />
+            )}
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable
+                onPress={resetForm}
+                style={[styles.ticketAddBtn, { flex: 1, justifyContent: "center", borderColor: colors.border }]}
+              >
+                <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_600SemiBold" }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleSubmitTicket}
+                disabled={submitting}
+                style={[styles.ticketAddBtn, { flex: 1, justifyContent: "center", backgroundColor: colors.primary + "22", borderColor: colors.primary + "55" }]}
+              >
+                <Text style={{ color: colors.primary, fontFamily: "Inter_700Bold" }}>
+                  {submitting ? "Uploading…" : "Submit ticket"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
         {isLoading ? (
           <Text style={[styles.ticketEmpty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>Loading…</Text>
         ) : tickets.length === 0 ? (
           <Text style={[styles.ticketEmpty, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-            No load tickets yet. Tap "Log Load" after each trip.
+            No load tickets yet. Tap "Log Load" to capture weight and scale ticket photo.
           </Text>
         ) : (
           tickets.map((t, idx) => {
@@ -1923,6 +2037,7 @@ const styles = StyleSheet.create({
   msgText: { fontSize: 13, lineHeight: 18 },
   msgTime: { fontSize: 10 },
   msgInputRow: { flexDirection: "row", alignItems: "flex-end", borderWidth: 1, borderRadius: 10, padding: 8, gap: 8, marginTop: 6 },
+  input: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
   msgInput: { flex: 1, fontSize: 14, maxHeight: 80, minHeight: 36, paddingTop: 4 },
   sendBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
   // Rating

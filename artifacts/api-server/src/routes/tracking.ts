@@ -4,6 +4,7 @@ import { eq, desc, and, inArray } from "drizzle-orm";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { loadJobIfMember, DRIVER_SIDE } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { getRouteWithEta } from "../lib/googleMapsService";
 
 const router: IRouter = Router();
 
@@ -76,11 +77,34 @@ router.get("/jobs/:id/tracking", requireProfile, async (req, res): Promise<void>
 
   const latest = trail[0] ?? null;
 
+  let routeToDelivery: Awaited<ReturnType<typeof getRouteWithEta>> | null = null;
+  let routePickupToDelivery: Awaited<ReturnType<typeof getRouteWithEta>> | null = null;
+
+  try {
+    routePickupToDelivery = await getRouteWithEta(job.pickupAddress, job.deliveryAddress);
+    if (latest?.lat != null && latest?.lng != null) {
+      routeToDelivery = await getRouteWithEta(
+        { latitude: latest.lat, longitude: latest.lng },
+        job.deliveryAddress,
+      );
+    }
+  } catch {
+    // Maps unavailable — tracking still returns GPS trail without ETA.
+  }
+
   res.json({
     jobId,
     status: job.status,
+    pickupAddress: job.pickupAddress,
+    deliveryAddress: job.deliveryAddress,
     latest,
     trail: trail.slice(0, 20),
+    eta: routeToDelivery
+      ? { destination: "delivery", ...routeToDelivery }
+      : routePickupToDelivery
+        ? { destination: "delivery_from_pickup", ...routePickupToDelivery }
+        : null,
+    route: routePickupToDelivery,
   });
 });
 
@@ -135,9 +159,21 @@ router.get("/dispatch/overview", requireProfile, async (req, res): Promise<void>
 
   res.json({
     activeJobs: visibleJobs.length,
-    jobs: visibleJobs.map((j) => ({
-      ...j,
-      position: positions[j.id] ?? null,
+    jobs: await Promise.all(visibleJobs.map(async (j) => {
+      const pos = positions[j.id] ?? null;
+      let eta: Awaited<ReturnType<typeof getRouteWithEta>> | null = null;
+      if (pos) {
+        try {
+          eta = await getRouteWithEta({ latitude: pos.lat, longitude: pos.lng }, j.deliveryAddress);
+        } catch {
+          eta = null;
+        }
+      }
+      return {
+        ...j,
+        position: pos,
+        eta,
+      };
     })),
     fleet,
     updatedAt: new Date().toISOString(),

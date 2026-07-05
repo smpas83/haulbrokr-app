@@ -18,6 +18,13 @@ import {
   buildHeatZonesFromLoads,
 } from "../lib/demoMarketplace";
 import { geocodeAddressCached } from "../lib/geocodeCache";
+import {
+  reverseGeocodeGoogle,
+  getRouteWithEta,
+  getDrivingRoute,
+  haversineMiles as googleHaversineMiles,
+  type LatLng,
+} from "../lib/googleMapsService";
 
 const router: IRouter = Router();
 
@@ -28,6 +35,32 @@ const QuerySchema = z.object({
 });
 
 const GeocodeBody = z.object({ address: z.string().min(3).max(500) });
+
+const ReverseGeocodeBody = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+});
+
+const RouteBody = z.object({
+  origin: z.union([
+    z.string().min(3).max(500),
+    z.object({ lat: z.number(), lng: z.number() }),
+    z.object({ latitude: z.number(), longitude: z.number() }),
+  ]),
+  destination: z.union([
+    z.string().min(3).max(500),
+    z.object({ lat: z.number(), lng: z.number() }),
+    z.object({ latitude: z.number(), longitude: z.number() }),
+  ]),
+});
+
+function normalizeRoutePoint(
+  point: string | { lat: number; lng: number } | { latitude: number; longitude: number },
+): string | LatLng {
+  if (typeof point === "string") return point;
+  if ("latitude" in point) return { latitude: point.latitude, longitude: point.longitude };
+  return { latitude: point.lat, longitude: point.lng };
+}
 
 const OPEN_STATUSES = ["open", "bid_received", "bidding"] as const;
 const ACTIVE_JOB_STATUSES = ["active", "awarded", "accepted", "in_progress"] as const;
@@ -227,8 +260,7 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
 }
 
 /**
- * Forward-geocode a street address (Google Geocoding API when configured, else Nominatim).
- * Kept for clients that predate GET /map/marketplace server-side geocoding.
+ * Forward-geocode a street address via Google Geocoding API (production).
  */
 router.post("/maps/geocode", requireProfile, async (req, res): Promise<void> => {
   const parsed = GeocodeBody.safeParse(req.body);
@@ -242,6 +274,90 @@ router.post("/maps/geocode", requireProfile, async (req, res): Promise<void> => 
     return;
   }
   res.json(coord);
+});
+
+/** Reverse-geocode GPS coordinates to a formatted address (Google). */
+router.post("/maps/reverse-geocode", requireProfile, async (req, res): Promise<void> => {
+  const parsed = ReverseGeocodeBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const result = await reverseGeocodeGoogle(parsed.data.lat, parsed.data.lng);
+  if (!result) {
+    res.status(404).json({ error: "Location not found" });
+    return;
+  }
+  res.json(result);
+});
+
+/** Driving route, distance, and ETA between origin and destination (Google Directions). */
+router.post("/maps/directions", requireProfile, async (req, res): Promise<void> => {
+  const parsed = RouteBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const route = await getDrivingRoute(
+    normalizeRoutePoint(parsed.data.origin),
+    normalizeRoutePoint(parsed.data.destination),
+  );
+  if (!route) {
+    res.status(404).json({ error: "Route not found" });
+    return;
+  }
+  res.json(route);
+});
+
+/** Distance + ETA (Directions with Distance Matrix fallback). */
+router.post("/maps/distance", requireProfile, async (req, res): Promise<void> => {
+  const parsed = RouteBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const route = await getRouteWithEta(
+    normalizeRoutePoint(parsed.data.origin),
+    normalizeRoutePoint(parsed.data.destination),
+  );
+  if (!route) {
+    res.status(404).json({ error: "Distance not available" });
+    return;
+  }
+  res.json(route);
+});
+
+/** Route from a dump-site/facility address to a job delivery (facility routing). */
+router.post("/maps/facility-route", requireProfile, async (req, res): Promise<void> => {
+  const parsed = z.object({
+    facilityAddress: z.string().min(3).max(500),
+    deliveryAddress: z.string().min(3).max(500),
+  }).safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const route = await getRouteWithEta(parsed.data.facilityAddress, parsed.data.deliveryAddress);
+  if (!route) {
+    res.status(404).json({ error: "Facility route not found" });
+    return;
+  }
+  res.json(route);
+});
+
+/** Straight-line distance in miles between two coordinates (server-side helper). */
+router.post("/maps/haversine", requireProfile, async (req, res): Promise<void> => {
+  const parsed = z.object({
+    origin: z.object({ latitude: z.number(), longitude: z.number() }),
+    destination: z.object({ latitude: z.number(), longitude: z.number() }),
+  }).safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  res.json({
+    distanceMiles: googleHaversineMiles(parsed.data.origin, parsed.data.destination),
+  });
 });
 
 /**

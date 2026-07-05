@@ -12,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -128,6 +129,9 @@ function DriverJobCard({
   const upload = useUploadFile();
   const submitEvidence = useSubmitEvidence();
   const [busyProof, setBusyProof] = useState(false);
+  const [showLoadForm, setShowLoadForm] = useState(false);
+  const [loadWeight, setLoadWeight] = useState("");
+  const [busyLoad, setBusyLoad] = useState(false);
 
   const updates: any[] = (updatesQuery.data as any[]) ?? [];
   const tickets: any[] = (ticketsQuery.data as any[]) ?? [];
@@ -149,12 +153,46 @@ function DriverJobCard({
     );
   };
 
-  const handleNewLoad = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    createTicket.mutate(
-      { jobId: job.id },
-      { onError: (err: any) => Alert.alert("Couldn't start load", err?.message ?? "Try again.") },
-    );
+  const handleNewLoad = async () => {
+    if (!showLoadForm) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setShowLoadForm(true);
+      return;
+    }
+    const weight = parseFloat(loadWeight);
+    if (!Number.isFinite(weight) || weight <= 0) {
+      Alert.alert("Invalid weight", "Enter the scale ticket weight in tons.");
+      return;
+    }
+    setBusyLoad(true);
+    try {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      const result = perm.granted
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 });
+      if (result.canceled || !result.assets?.[0]) {
+        Alert.alert("Photo required", "Attach a scale ticket photo to log this load.");
+        return;
+      }
+      const asset = result.assets[0];
+      const { objectPath } = await upload.mutateAsync({
+        uri: asset.uri,
+        name: asset.fileName ?? `scale-${job.id}.jpg`,
+        mimeType: asset.mimeType ?? "image/jpeg",
+      });
+      await createTicket.mutateAsync({
+        jobId: job.id,
+        weightTons: weight,
+        photoUrl: `${API_BASE}/storage${objectPath}`,
+      });
+      setLoadWeight("");
+      setShowLoadForm(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err: any) {
+      Alert.alert("Couldn't start load", err?.message ?? "Try again.");
+    } finally {
+      setBusyLoad(false);
+    }
   };
 
   const handleProof = async () => {
@@ -302,14 +340,26 @@ function DriverJobCard({
               );
             })
           )}
+          {showLoadForm && (
+            <View style={{ gap: 8, marginBottom: 10 }}>
+              <TextInput
+                value={loadWeight}
+                onChangeText={setLoadWeight}
+                placeholder="Scale ticket weight (tons)"
+                keyboardType="decimal-pad"
+                placeholderTextColor={colors.mutedForeground}
+                style={[styles.weightInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+              />
+            </View>
+          )}
           <Pressable
             onPress={handleNewLoad}
-            disabled={createTicket.isPending}
+            disabled={createTicket.isPending || busyLoad}
             style={[styles.outlineBtn, { borderColor: colors.border }]}
           >
             <Feather name="plus" size={15} color={colors.foreground} />
             <Text style={[styles.outlineBtnText, { color: colors.foreground }]}>
-              {createTicket.isPending ? "Starting…" : "Start New Load"}
+              {busyLoad || createTicket.isPending ? "Uploading…" : showLoadForm ? "Capture scale ticket" : "Start New Load"}
             </Text>
           </Pressable>
 
@@ -378,5 +428,6 @@ const styles = StyleSheet.create({
   smallBtnText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff" },
   outlineBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 10, borderWidth: 1 },
   outlineBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  weightInput: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14 },
   proofThumb: { width: 72, height: 72, borderRadius: 8, marginRight: 8 },
 });

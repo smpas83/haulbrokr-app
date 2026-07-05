@@ -57,6 +57,7 @@ export function formatPaymentStatusLabel(status: Job["paymentStatus"]): string {
     invoiced: "Invoiced",
     paid: "Paid",
     released: "Released",
+    refunded: "Refunded",
     failed: "Failed",
     requires_action: "Requires action",
   };

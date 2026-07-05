@@ -687,7 +687,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
     res.status(400).json({ error: "Job has no computed amount. Mark it completed with hours first." });
     return;
   }
-  if (job.paymentStatus === "paid" || job.paymentStatus === "released") {
+  if (job.paymentStatus === "paid" || job.paymentStatus === "released" || job.paymentStatus === "refunded") {
     res.status(409).json({ error: "This job has already been paid." });
     return;
   }
@@ -892,6 +892,85 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
 });
 
 /**
+ * POST /jobs/:id/refund — full refund of a released/paid job charge (customer or admin).
+ */
+router.post("/jobs/:id/refund", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const jobId = parseInt(String(req.params.id), 10);
+  if (!Number.isFinite(jobId)) {
+    res.status(400).json({ error: "Invalid job id" });
+    return;
+  }
+
+  const job = await loadJobIfMember(jobId, profile);
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  const staff = await isAdmin(req);
+  const isCustomer = job.customerId === profile.id;
+  if (!isCustomer && !staff) {
+    res.status(403).json({ error: "Only the customer or an admin can refund this job." });
+    return;
+  }
+
+  if (job.paymentStatus === "refunded") {
+    res.status(400).json({ error: "This job has already been refunded." });
+    return;
+  }
+  if (job.paymentStatus !== "released" && job.paymentStatus !== "paid") {
+    res.status(400).json({ error: "Only released or paid jobs can be refunded." });
+    return;
+  }
+  if (!job.stripePaymentIntentId) {
+    res.status(400).json({ error: "No Stripe payment is associated with this job." });
+    return;
+  }
+
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim().slice(0, 500) : null;
+
+  try {
+    const stripe = await getUncachableStripeClient();
+    const refund = await stripe.refunds.create(
+      { payment_intent: job.stripePaymentIntentId, reason: "requested_by_customer" },
+      { idempotencyKey: `job-refund:${job.id}:${job.paymentAttempts ?? 0}` },
+    );
+
+    const now = new Date();
+    const [updated] = await db.update(jobsTable)
+      .set({
+        paymentStatus: "refunded",
+        stripeRefundId: refund.id,
+        refundedAt: now,
+      })
+      .where(eq(jobsTable.id, job.id))
+      .returning();
+
+    await db.insert(activityTable).values([
+      {
+        profileId: job.customerId,
+        type: "payment_refunded",
+        description: `Refund issued for job #${job.id}${reason ? `: ${reason}` : "."}`,
+        relatedId: job.id,
+      },
+      {
+        profileId: job.providerId,
+        type: "payment_refunded",
+        description: `Customer refund processed for job #${job.id}.`,
+        relatedId: job.id,
+      },
+    ]);
+
+    const { customerCompany, providerCompany } = await companiesFor(updated);
+    res.json(serializeJob(updated, customerCompany, providerCompany));
+  } catch (err: any) {
+    req.log?.error?.({ err, jobId: job.id }, "Job refund failed");
+    res.status(502).json({ error: err?.message ?? "Refund failed" });
+  }
+});
+
+/**
  * GET /jobs/:id/payment-confirmation — hand the client the PaymentIntent client
  * secret it needs to complete bank authentication (3-D Secure) on-session for a
  * job parked in `requires_action`.
@@ -1035,7 +1114,7 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
   }
   // Same double-payment guard as /charge: a job that is already paid, released,
   // or awaiting on-session card authentication must not start a fresh Checkout.
-  if (job.paymentStatus === "paid" || job.paymentStatus === "released") {
+  if (job.paymentStatus === "paid" || job.paymentStatus === "released" || job.paymentStatus === "refunded") {
     res.status(409).json({ error: "This job has already been paid." });
     return;
   }
