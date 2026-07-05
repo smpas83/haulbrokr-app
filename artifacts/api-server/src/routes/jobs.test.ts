@@ -136,7 +136,11 @@ beforeEach(() => {
 /** Builds a Stripe client mock whose create() calls return fixed ids. */
 function mockStripe(ids = { paymentIntentId: "pi_test_1", chargeId: "ch_test_1", transferId: "tr_test_1" }) {
   const paymentIntents = {
-    create: vi.fn(async (_args: any, _opts?: any) => ({ id: ids.paymentIntentId, latest_charge: ids.chargeId })),
+    create: vi.fn(async (_args: any, _opts?: any) => ({
+      id: ids.paymentIntentId,
+      status: "succeeded",
+      latest_charge: ids.chargeId,
+    })),
   };
   const transfers = {
     create: vi.fn(async (_args: any, _opts?: any) => ({ id: ids.transferId })),
@@ -154,7 +158,7 @@ function mockStripeFailure(failAt: "paymentIntent" | "transfer", message = "Stri
   const paymentIntents = {
     create: vi.fn(async (_args: any, _opts?: any) => {
       if (failAt === "paymentIntent") throw new Error(message);
-      return { id: "pi_test_1", latest_charge: "ch_test_1" };
+      return { id: "pi_test_1", status: "succeeded", latest_charge: "ch_test_1" };
     }),
   };
   const transfers = {
@@ -323,35 +327,39 @@ describe("POST /jobs/:id/charge", () => {
 
   const chargeFailureCases = [
     { failAt: "paymentIntent" as const, label: "paymentIntents.create rejects" },
-    { failAt: "transfer" as const, label: "transfers.create rejects" },
+    { failAt: "transfer" as const, label: "transfers.create rejects after a succeeded charge" },
   ];
   for (const c of chargeFailureCases) {
-    it(`returns 502 and marks the job failed when ${c.label} (instant)`, async () => {
+    it(`handles ${c.label} (instant)`, async () => {
       h.rows.set(jobsTable, [baseJob()]);
       h.rows.set(paymentMethodsTable, [{ profileId: CUSTOMER_ID, methodType: "credit_card" }]);
       const stripe = mockStripeFailure(c.failAt);
 
       const res = await request(makeApp()).post(`/jobs/${JOB_ID}/charge`);
 
-      // The customer is told the charge failed (bad-gateway, not a 200).
-      expect(res.status).toBe(502);
-      expect(res.body.error).toBe("Stripe is down");
-
-      // The job is left in a recoverable "failed" state, never "released".
-      const failed = h.updates.find((u) => u.paymentStatus === "failed");
-      expect(failed).toBeTruthy();
-      expect(h.updates.some((u) => u.paymentStatus === "released")).toBe(false);
-
-      // A transfer is never attempted when the charge itself fails.
       if (c.failAt === "paymentIntent") {
+        expect(res.status).toBe(502);
+        expect(res.body.error).toBe("Stripe is down");
+        const failed = h.updates.find((u) => u.paymentStatus === "failed");
+        expect(failed).toBeTruthy();
+        expect(h.updates.some((u) => u.paymentStatus === "released")).toBe(false);
         expect(stripe.transfers.create).not.toHaveBeenCalled();
+        const note = h.inserts.find((i) => i.type === "payment_failed");
+        expect(note).toBeTruthy();
+        expect(note!.profileId).toBe(CUSTOMER_ID);
+        expect(note!.relatedId).toBe(JOB_ID);
+        return;
       }
 
-      // The customer is notified in-app, with a link back to the job to retry.
-      const note = h.inserts.find((i) => i.type === "payment_failed");
-      expect(note).toBeTruthy();
-      expect(note!.profileId).toBe(CUSTOMER_ID);
-      expect(note!.relatedId).toBe(JOB_ID);
+      // Transfer failed after the charge succeeded — must NOT mark failed (that
+      // would route back through /charge and double-bill the customer).
+      expect(res.status).toBe(502);
+      expect(h.updates.some((u) => u.paymentStatus === "failed")).toBe(false);
+      expect(h.updates.some((u) => u.paymentStatus === "released")).toBe(false);
+      const parked = h.updates.find((u) => u.paymentStatus === "requires_action");
+      expect(parked).toBeTruthy();
+      expect(parked!.stripePaymentIntentId).toBe("pi_test_1");
+      expect(h.inserts.some((i) => i.type === "payment_failed")).toBe(false);
     });
   }
 
@@ -534,10 +542,10 @@ describe("POST /jobs/:id/release", () => {
 
   const releaseFailureCases = [
     { failAt: "paymentIntent" as const, label: "paymentIntents.create rejects" },
-    { failAt: "transfer" as const, label: "transfers.create rejects" },
+    { failAt: "transfer" as const, label: "transfers.create rejects after a succeeded charge" },
   ];
   for (const c of releaseFailureCases) {
-    it(`returns 502 and marks the job failed when ${c.label}`, async () => {
+    it(`handles ${c.label}`, async () => {
       h.rows.set(jobsTable, [baseJob({ paymentStatus: "invoiced" })]);
       h.updateBase = baseJob({ paymentStatus: "invoiced" });
       h.rows.set(paymentMethodsTable, [{ profileId: CUSTOMER_ID, methodType: "net_30" }]);
@@ -545,24 +553,27 @@ describe("POST /jobs/:id/release", () => {
 
       const res = await request(makeApp()).post(`/jobs/${JOB_ID}/release`);
 
-      // The release fails loudly (502), not silently as a success.
-      expect(res.status).toBe(502);
-      expect(res.body.error).toBe("Stripe is down");
-
-      // The invoice is moved to "failed", never to "released".
-      const failed = h.updates.find((u) => u.paymentStatus === "failed");
-      expect(failed).toBeTruthy();
-      expect(h.updates.some((u) => u.paymentStatus === "released")).toBe(false);
-
       if (c.failAt === "paymentIntent") {
+        expect(res.status).toBe(502);
+        expect(res.body.error).toBe("Stripe is down");
+        const failed = h.updates.find((u) => u.paymentStatus === "failed");
+        expect(failed).toBeTruthy();
+        expect(h.updates.some((u) => u.paymentStatus === "released")).toBe(false);
         expect(stripe.transfers.create).not.toHaveBeenCalled();
+        const note = h.inserts.find((i) => i.type === "payment_failed");
+        expect(note).toBeTruthy();
+        expect(note!.profileId).toBe(CUSTOMER_ID);
+        expect(note!.relatedId).toBe(JOB_ID);
+        return;
       }
 
-      // The customer is notified in-app, with a link back to the job to retry.
-      const note = h.inserts.find((i) => i.type === "payment_failed");
-      expect(note).toBeTruthy();
-      expect(note!.profileId).toBe(CUSTOMER_ID);
-      expect(note!.relatedId).toBe(JOB_ID);
+      expect(res.status).toBe(502);
+      expect(h.updates.some((u) => u.paymentStatus === "failed")).toBe(false);
+      expect(h.updates.some((u) => u.paymentStatus === "released")).toBe(false);
+      const parked = h.updates.find((u) => u.paymentStatus === "requires_action");
+      expect(parked).toBeTruthy();
+      expect(parked!.stripePaymentIntentId).toBe("pi_test_1");
+      expect(h.inserts.some((i) => i.type === "payment_failed")).toBe(false);
     });
   }
 

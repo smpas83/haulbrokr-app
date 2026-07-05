@@ -232,21 +232,48 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
     { idempotencyKey: `job-charge:${job.id}:${attempt}` },
   );
 
+  // Off-session card charges can return requires_action without throwing — treat
+  // like authentication_required so the customer confirms on-session.
+  if (pi.status === "requires_action") {
+    const err: any = new Error("This payment requires authentication.");
+    err.code = "authentication_required";
+    err.payment_intent = { id: pi.id };
+    throw err;
+  }
+
+  // ACH and other async rails may leave the PaymentIntent in processing. Park
+  // the job and let payment_intent.succeeded complete the transfer via webhook.
+  if (pi.status !== "succeeded") {
+    throw makeSettlementError(
+      "settlement_pending",
+      pi.id,
+      "Payment is still processing. The provider payout will complete once the charge settles.",
+    );
+  }
+
   const chargeId = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge?.id;
 
-  const transfer = await stripe.transfers.create(
-    {
-      amount: netCents,
-      currency: "usd",
-      destination: stripeAccountId,
-      source_transaction: chargeId,
-      description: `HaulBrokr payout for job #${job.id} (net of 15% broker fee)`,
-      metadata: { jobId: String(job.id), attempt: String(attempt) },
-    },
-    { idempotencyKey: `job-transfer:${job.id}:${attempt}` },
-  );
-
-  return { paymentIntentId: pi.id, transferId: transfer.id };
+  try {
+    const transfer = await stripe.transfers.create(
+      {
+        amount: netCents,
+        currency: "usd",
+        destination: stripeAccountId,
+        source_transaction: chargeId,
+        description: `HaulBrokr payout for job #${job.id} (net of 15% broker fee)`,
+        metadata: { jobId: String(job.id), attempt: String(attempt) },
+      },
+      { idempotencyKey: `job-transfer:${job.id}:${attempt}` },
+    );
+    return { paymentIntentId: pi.id, transferId: transfer.id };
+  } catch (err: any) {
+    // The customer's charge succeeded — never route back through /charge.
+    throw makeSettlementError(
+      "transfer_after_charge",
+      pi.id,
+      err?.message ?? "Releasing the provider payout failed.",
+    );
+  }
 }
 
 /**
@@ -260,6 +287,77 @@ function authRequiredPaymentIntent(err: any): string | null {
   if (err?.code !== "authentication_required") return null;
   const pi = err.payment_intent ?? err.raw?.payment_intent;
   return typeof pi?.id === "string" ? pi.id : null;
+}
+
+type SettlementErrorCode = "settlement_pending" | "transfer_after_charge";
+
+function makeSettlementError(code: SettlementErrorCode, paymentIntentId: string, message: string): Error {
+  const err = new Error(message) as Error & { code: SettlementErrorCode; paymentIntentId: string };
+  err.code = code;
+  err.paymentIntentId = paymentIntentId;
+  return err;
+}
+
+function settlementPendingPaymentIntent(err: unknown): string | null {
+  const e = err as { code?: string; paymentIntentId?: string };
+  if (e?.code === "settlement_pending" && typeof e.paymentIntentId === "string") {
+    return e.paymentIntentId;
+  }
+  return null;
+}
+
+function transferAfterChargePaymentIntent(err: unknown): string | null {
+  const e = err as { code?: string; paymentIntentId?: string };
+  if (e?.code === "transfer_after_charge" && typeof e.paymentIntentId === "string") {
+    return e.paymentIntentId;
+  }
+  return null;
+}
+
+/**
+ * Shared catch-path for charge/release settlement errors. Returns true when the
+ * error was handled and a response was sent.
+ */
+async function handleSettlementCatch(
+  err: unknown,
+  job: { id: number },
+  attempt: number,
+  res: import("express").Response,
+  parseResponse: (job: ReturnType<typeof serializeJob>) => unknown,
+): Promise<boolean> {
+  const authPi = authRequiredPaymentIntent(err);
+  if (authPi) {
+    const [updated] = await db.update(jobsTable)
+      .set({ paymentStatus: "requires_action", paymentAttempts: attempt, stripePaymentIntentId: authPi })
+      .where(eq(jobsTable.id, job.id)).returning();
+    await notifyPaymentRequiresAction(job as any);
+    const { customerCompany, providerCompany } = await companiesFor(updated);
+    res.json(parseResponse(serializeJob(updated, customerCompany, providerCompany)));
+    return true;
+  }
+
+  const pendingPi = settlementPendingPaymentIntent(err);
+  if (pendingPi) {
+    const [updated] = await db.update(jobsTable)
+      .set({ paymentStatus: "requires_action", paymentAttempts: attempt, stripePaymentIntentId: pendingPi })
+      .where(eq(jobsTable.id, job.id)).returning();
+    const { customerCompany, providerCompany } = await companiesFor(updated);
+    res.json(parseResponse(serializeJob(updated, customerCompany, providerCompany)));
+    return true;
+  }
+
+  const transferPi = transferAfterChargePaymentIntent(err);
+  if (transferPi) {
+    await db.update(jobsTable)
+      .set({ paymentStatus: "requires_action", paymentAttempts: attempt, stripePaymentIntentId: transferPi })
+      .where(eq(jobsTable.id, job.id));
+    res.status(502).json({
+      error: "Your payment was confirmed, but releasing the provider payout didn't complete. Please try again in a moment.",
+    });
+    return true;
+  }
+
+  return false;
 }
 
 router.get("/jobs", requireProfile, async (req, res): Promise<void> => {
@@ -691,6 +789,12 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
     res.status(409).json({ error: "This job has already been paid." });
     return;
   }
+  if (job.paymentStatus === "requires_action") {
+    res.status(409).json({
+      error: "This job has a payment awaiting confirmation or settlement. Complete it before charging again.",
+    });
+    return;
+  }
   // A job that already has an open invoice (its payout release failed) must be
   // retried through /release, not re-charged — re-charging would reset the
   // invoice instead of re-attempting the deferred payout.
@@ -777,17 +881,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {
-    // The customer's bank wants them to authenticate this charge (3-D Secure).
-    // Park the job in `requires_action` (NOT failed) so the UI can prompt them to
-    // confirm the same card on-session, then resume via /confirm-payment.
-    const authPi = authRequiredPaymentIntent(err);
-    if (authPi) {
-      const [updated] = await db.update(jobsTable)
-        .set({ paymentStatus: "requires_action", paymentAttempts: attempt, stripePaymentIntentId: authPi })
-        .where(eq(jobsTable.id, job.id)).returning();
-      await notifyPaymentRequiresAction(job);
-      const { customerCompany, providerCompany } = await companiesFor(updated);
-      res.json(ChargeJobResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+    if (await handleSettlementCatch(err, job, attempt, res, (j) => ChargeJobResponse.parse(j))) {
       return;
     }
     req.log?.error?.({ err }, "Job charge failed");
@@ -872,16 +966,7 @@ router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void>
     const { customerCompany, providerCompany } = await companiesFor(updated);
     res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
   } catch (err: any) {
-    // Bank wants the customer to authenticate this charge — park in
-    // `requires_action` so they can confirm on-session and resume the release.
-    const authPi = authRequiredPaymentIntent(err);
-    if (authPi) {
-      const [updated] = await db.update(jobsTable)
-        .set({ paymentStatus: "requires_action", paymentAttempts: attempt, stripePaymentIntentId: authPi })
-        .where(eq(jobsTable.id, job.id)).returning();
-      await notifyPaymentRequiresAction(job);
-      const { customerCompany, providerCompany } = await companiesFor(updated);
-      res.json(ReleaseJobPaymentResponse.parse(serializeJob(updated, customerCompany, providerCompany)));
+    if (await handleSettlementCatch(err, job, attempt, res, (j) => ReleaseJobPaymentResponse.parse(j))) {
       return;
     }
     req.log?.error?.({ err }, "Job payout release failed");

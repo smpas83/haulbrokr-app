@@ -36,7 +36,8 @@ export function isAllowedReturnTo(value: string): boolean {
       host.endsWith(".worf.replit.dev") ||
       host.endsWith(".janeway.replit.dev") ||
       host === "haulbrokr.com" ||
-      host.endsWith(".haulbrokr.com")
+      host.endsWith(".haulbrokr.com") ||
+      host === "haulbrokr.vercel.app"
     );
   } catch {
     return false;
