@@ -8,6 +8,14 @@
     "scheme": "haulbrokr",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "linking": {
+      "scheme": "haulbrokr",
+      "prefixes": [
+        "haulbrokr://",
+        "https://haulbrokr.com",
+        "https://www.haulbrokr.com"
+      ]
+    },
     "splash": {
       "image": "./assets/images/haulbrokr-logo.png",
       "resizeMode": "contain",
@@ -18,6 +26,10 @@
       "bundleIdentifier": "com.haulbrokr.mobile",
       "buildNumber": "2",
       "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:haulbrokr.com",
+        "applinks:www.haulbrokr.com"
+      ],
       "icon": "./assets/images/app-icon-ios.png",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "HaulBrokr uses your location to show nearby jobs and calculate distances.",
@@ -29,6 +41,18 @@
     "android": {
       "package": "com.haulbrokr.mobile",
       "versionCode": 2,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "haulbrokr" },
+            { "scheme": "https", "host": "haulbrokr.com", "pathPrefix": "/" },
+            { "scheme": "https", "host": "www.haulbrokr.com", "pathPrefix": "/" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/app-icon-v2.png",
         "backgroundColor": "#0f172a"

@@ -6,6 +6,15 @@ const googleMapsApiKey =
 
 const config = {
   ...appJson.expo,
+  extra: {
+    ...appJson.expo.extra,
+    clerkRedirectAllowlist: [
+      "haulbrokr://",
+      "haulbrokr://*",
+      "https://haulbrokr.com/*",
+      "https://www.haulbrokr.com/*",
+    ],
+  },
 };
 
 if (googleMapsApiKey) {
