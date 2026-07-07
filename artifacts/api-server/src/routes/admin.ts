@@ -13,6 +13,7 @@ import {
   w9SubmissionsTable,
   insuranceSubmissionsTable,
   driverDocumentsTable,
+  factoringRequestsTable,
 } from "@workspace/db";
 import { requireStaffOrProfile, attachStaffSession } from "../middlewares/staffAuth";
 import { attachClerkProfileIfPresent } from "../middlewares/requireAuth";
@@ -1072,6 +1073,38 @@ router.post("/admin/stuck-payouts/:id/reset-failures", requireStaffOrProfile, re
 const RefundJobBody = z.object({
   amount: z.number().positive().optional(),
   reason: z.string().max(500).optional(),
+});
+
+// GET /admin/factoring — pending provider advance requests for staff review.
+router.get("/admin/factoring", requireStaffOrProfile, requirePermission("credit"), async (_req, res): Promise<void> => {
+  const prov = alias(profilesTable, "fprov");
+  const rows = await db
+    .select({
+      id: factoringRequestsTable.id,
+      jobId: factoringRequestsTable.jobId,
+      providerId: factoringRequestsTable.providerId,
+      status: factoringRequestsTable.status,
+      invoiceAmount: factoringRequestsTable.invoiceAmount,
+      feeAmount: factoringRequestsTable.feeAmount,
+      netAmount: factoringRequestsTable.netAmount,
+      requestedAt: factoringRequestsTable.requestedAt,
+      fundedAt: factoringRequestsTable.fundedAt,
+      providerCompany: prov.companyName,
+      materialType: jobsTable.materialType,
+    })
+    .from(factoringRequestsTable)
+    .leftJoin(jobsTable, eq(jobsTable.id, factoringRequestsTable.jobId))
+    .leftJoin(prov, eq(prov.id, factoringRequestsTable.providerId))
+    .orderBy(desc(factoringRequestsTable.requestedAt));
+
+  res.json(
+    rows.map((r) => ({
+      ...r,
+      invoiceAmount: parseFloat(r.invoiceAmount),
+      feeAmount: parseFloat(r.feeAmount),
+      netAmount: parseFloat(r.netAmount),
+    })),
+  );
 });
 
 // POST /admin/jobs/:id/refund — staff-initiated Stripe refund (full or partial).

@@ -4,11 +4,11 @@ import {
   db,
   jobsTable,
   paymentRefundsTable,
-  activityTable,
   type Job,
   type PaymentRefund,
 } from "@workspace/db";
 import { getUncachableStripeClient } from "./stripeClient";
+import { recordActivity } from "./activityNotify";
 import { logger } from "./logger";
 
 const REFUNDABLE_PAYMENT_STATUSES = new Set(["released", "paid", "partially_refunded"]);
@@ -95,18 +95,14 @@ export async function syncJobRefundTotals(jobId: number): Promise<void> {
 }
 
 async function notifyRefund(job: Job, amount: string, full: boolean): Promise<void> {
-  try {
-    await db.insert(activityTable).values({
-      profileId: job.customerId,
-      type: "payment_refunded",
-      description: full
-        ? `A full refund of $${amount} was issued for job #${job.id} — ${job.materialType} delivery.`
-        : `A partial refund of $${amount} was issued for job #${job.id} — ${job.materialType} delivery.`,
-      relatedId: job.id,
-    });
-  } catch (err) {
-    logger.error({ err, jobId: job.id }, "Failed to record payment_refunded notification");
-  }
+  await recordActivity({
+    profileId: job.customerId,
+    type: "payment_refunded",
+    description: full
+      ? `A full refund of $${amount} was issued for job #${job.id} — ${job.materialType} delivery.`
+      : `A partial refund of $${amount} was issued for job #${job.id} — ${job.materialType} delivery.`,
+    relatedId: job.id,
+  });
 }
 
 export async function issueJobRefund(input: IssueRefundInput): Promise<IssueRefundResult> {

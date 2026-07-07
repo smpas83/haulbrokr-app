@@ -16,13 +16,25 @@
    - Use `pnpm run verify:staging-e2e` for infrastructure checks.
    - Complete `POST_LAUNCH_CHECKLIST.md` with staging accounts.
 
-2. **Push notification delivery requires Expo push credentials and device_tokens table migration.**
-   - API: `POST /notifications/register` stores tokens.
-   - Run `pnpm --filter @workspace/db run push` before production deploy.
+2. **Push notification delivery requires Expo push credentials in EAS.**
+   - API: `POST /notifications/register` stores tokens; `device_tokens` table migrates on API boot.
+   - Mobile: `expo-notifications` registers tokens on sign-in.
+   - Operator: configure Expo push credentials in the EAS dashboard before store builds.
 
 3. **QuickBooks integration remains simulated** — UI labels updated; do not market as live sync.
 
-## Resolved in staging-e2e branch
+## Resolved in full-go-live-fixes branch
+
+- Expo push notifications (API send + mobile registration)
+- iOS bundle ID `com.haulbrokr.mobile` + EAS production submit track
+- Mobile scale-ticket capture (weight + photo on create)
+- Admin refund operations panel (Payouts tab) and factoring panel (Credit tab)
+- Web supervisor onboarding role card
+- Mobile team screen no longer falls back to demo data when signed in
+- FMCSA compliance verify restricted to staff with `compliance` permission
+- `device_tokens` startup migration + readyz health check
+
+## Resolved in staging-e2e branch (prior)
 
 - Global API rate limiting (120 req/min per IP/profile)
 - Live GPS tracking via `POST /jobs/:id/location` and `GET /jobs/:id/tracking`
@@ -33,18 +45,6 @@
 
 ## Medium-priority issues
 
-1. **Scale ticket capture is incomplete on mobile.**
-   - Evidence: ticket rows display weight/photo data when present, but the mobile create-ticket flow only logs a load and does not collect weight or a scale-ticket photo.
-   - Impact: scale-ticket compliance depends on later evidence upload or back-office entry.
-
-2. **Supervisor onboarding is mobile-supported but not available as a first-class web onboarding option.**
-   - Evidence: backend accepts supervisor invite onboarding; web onboarding is limited to customer, provider, and driver.
-   - Impact: foremen/supervisors should onboard through mobile or an assisted flow.
-
-3. **Factoring approval is API-backed but not exposed as a dedicated admin tab.**
-   - Evidence: provider factoring requests can be created; approval remains an admin/API operation rather than a complete staff UI workflow.
-   - Impact: factoring needs staff runbook coverage until the admin surface is expanded.
-
-4. **Upload token replay protection and rate limiting are in-memory.**
+1. **Upload token replay protection and rate limiting are in-memory.**
    - Evidence: upload token consumption and request limits are process-local.
    - Impact: acceptable for a single Render instance; use a shared store before horizontal scaling.

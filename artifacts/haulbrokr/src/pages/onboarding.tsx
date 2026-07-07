@@ -34,7 +34,7 @@ const emailOptional = z
   .or(z.literal(""));
 
 const formSchema = z.object({
-  role: z.enum(["customer", "provider", "driver"], {
+  role: z.enum(["customer", "provider", "driver", "supervisor"], {
     required_error: "Please select a role.",
   }),
   inviteCode: z.string().optional(),
@@ -62,7 +62,7 @@ const formSchema = z.object({
   apEmail: emailOptional,
   paymentTerms: z.enum(["due_on_receipt", "net_15", "net_30", "prepaid"]).optional(),
 }).superRefine((data, ctx) => {
-  if (data.role === "driver") {
+  if (data.role === "driver" || data.role === "supervisor") {
     if (!data.inviteCode?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -162,6 +162,8 @@ export default function OnboardingPage() {
   const selectedRole = form.watch("role");
   const isProvider = selectedRole === "provider";
   const isDriver = selectedRole === "driver";
+  const isSupervisor = selectedRole === "supervisor";
+  const needsInvite = isDriver || isSupervisor;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -185,7 +187,7 @@ export default function OnboardingPage() {
                 name="role"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div
                         className={`border-2 p-6 rounded-xl cursor-pointer transition-all duration-200 ${
                           field.value === "customer"
@@ -224,10 +226,25 @@ export default function OnboardingPage() {
                         }`}
                         onClick={() => field.onChange("driver")}
                       >
-                        <User className={`w-8 h-8 mb-4 ${field.value === "driver" ? "text-primary" : "text-muted-foreground"}`} />
+                        <Truck className={`w-8 h-8 mb-4 ${field.value === "driver" ? "text-primary" : "text-muted-foreground"}`} />
                         <h3 className="font-bold text-lg mb-2">I&apos;m a driver</h3>
                         <p className="text-sm text-muted-foreground">
-                          I drive for a hauling company and need to check in, upload tickets, and report status.
+                          I drive dump trucks for a fleet or contractor and need my assigned jobs.
+                        </p>
+                      </div>
+
+                      <div
+                        className={`border-2 p-6 rounded-xl cursor-pointer transition-all duration-200 ${
+                          field.value === "supervisor"
+                            ? "border-primary bg-primary/5 shadow-md"
+                            : "border-border hover:border-primary/30 hover:bg-muted"
+                        }`}
+                        onClick={() => field.onChange("supervisor")}
+                      >
+                        <User className={`w-8 h-8 mb-4 ${field.value === "supervisor" ? "text-primary" : "text-muted-foreground"}`} />
+                        <h3 className="font-bold text-lg mb-2">I&apos;m a supervisor</h3>
+                        <p className="text-sm text-muted-foreground">
+                          I manage job sites and coordinate drivers for a customer or contractor.
                         </p>
                       </div>
                     </div>
@@ -238,7 +255,7 @@ export default function OnboardingPage() {
 
               {selectedRole && (
                 <div className="space-y-8 pt-4 border-t border-border animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  {isDriver ? (
+                  {needsInvite ? (
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg">Join Your Team</h3>
                       <p className="text-sm text-muted-foreground">

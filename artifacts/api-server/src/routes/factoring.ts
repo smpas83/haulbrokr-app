@@ -3,6 +3,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { db, factoringRequestsTable, jobsTable, profilesTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { requirePermission } from "../middlewares/requireAdmin";
+import { attachStaffSession, requireStaffOrProfile } from "../middlewares/staffAuth";
 
 const FACTORING_FEE_RATE = 0.03; // 3% same-day advance fee
 
@@ -70,7 +71,8 @@ router.post("/factoring", requireProfile, async (req, res): Promise<void> => {
 
 router.patch(
   "/factoring/:id/approve",
-  requireProfile,
+  attachStaffSession,
+  requireStaffOrProfile,
   requirePermission("credit"),
   async (req, res): Promise<void> => {
   const id = parseInt(req.params.id as string, 10);
@@ -80,6 +82,31 @@ router.patch(
     .returning();
   if (!updated) { res.status(404).json({ error: "Factoring request not found" }); return; }
   res.json({ ...updated, invoiceAmount: parseFloat(updated.invoiceAmount), feeAmount: parseFloat(updated.feeAmount), netAmount: parseFloat(updated.netAmount) });
+  },
+);
+
+router.patch(
+  "/factoring/:id/reject",
+  attachStaffSession,
+  requireStaffOrProfile,
+  requirePermission("credit"),
+  async (req, res): Promise<void> => {
+    const id = parseInt(req.params.id as string, 10);
+    const [updated] = await db
+      .update(factoringRequestsTable)
+      .set({ status: "denied" })
+      .where(eq(factoringRequestsTable.id, id))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ error: "Factoring request not found" });
+      return;
+    }
+    res.json({
+      ...updated,
+      invoiceAmount: parseFloat(updated.invoiceAmount),
+      feeAmount: parseFloat(updated.feeAmount),
+      netAmount: parseFloat(updated.netAmount),
+    });
   },
 );
 

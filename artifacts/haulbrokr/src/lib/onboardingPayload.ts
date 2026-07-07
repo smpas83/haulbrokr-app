@@ -1,4 +1,4 @@
-export type OnboardingRole = "customer" | "provider" | "driver";
+export type OnboardingRole = "customer" | "provider" | "driver" | "supervisor";
 
 export type OnboardingFormValues = {
   role: OnboardingRole;
@@ -31,9 +31,9 @@ const str = (v?: string) => (v && v.trim() !== "" ? v.trim() : undefined);
 
 /** Maps onboarding form values to POST /profiles body (mirrors web onboarding submit). */
 export function buildCreateProfilePayload(values: OnboardingFormValues): Record<string, unknown> {
-  if (values.role === "driver") {
+  if (values.role === "driver" || values.role === "supervisor") {
     return {
-      role: "driver",
+      role: values.role,
       companyName: "Pending team assignment",
       contactName: str(values.contactName),
       phone: str(values.phone),
