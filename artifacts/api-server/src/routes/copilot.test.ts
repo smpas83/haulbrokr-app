@@ -3,14 +3,35 @@ import express, { type Express } from "express";
 import request from "supertest";
 
 const h = vi.hoisted(() => ({
-  profile: { id: 1, role: "customer", companyName: "Acme" } as Record<string, unknown>,
-  requests: [{ id: 1, status: "open", materialType: "dirt" }] as Record<string, unknown>[],
-  jobs: [{ id: 10, status: "in_progress", materialType: "gravel", customerId: 1, providerId: 2 }] as Record<string, unknown>[],
-  activity: [{ description: "Bid received", type: "bid_received", createdAt: new Date() }] as Record<string, unknown>[],
+  profile: { id: 1, role: "customer", companyName: "Acme" } as Record<
+    string,
+    unknown
+  >,
+  requests: [{ id: 1, status: "open", materialType: "dirt" }] as Record<
+    string,
+    unknown
+  >[],
+  jobs: [
+    {
+      id: 10,
+      status: "in_progress",
+      materialType: "gravel",
+      customerId: 1,
+      providerId: 2,
+    },
+  ] as Record<string, unknown>[],
+  activity: [
+    {
+      description: "Bid received",
+      type: "bid_received",
+      createdAt: new Date(),
+    },
+  ] as Record<string, unknown>[],
 }));
 
 vi.mock("@workspace/db", () => {
-  const makeTable = (name: string) => new Proxy({}, { get: (_t, p) => `${name}.${String(p)}` });
+  const makeTable = (name: string) =>
+    new Proxy({}, { get: (_t, p) => `${name}.${String(p)}` });
   const requestsTable = makeTable("requests");
   const jobsTable = makeTable("jobs");
   const activityTable = makeTable("activity");
@@ -39,7 +60,7 @@ vi.mock("@workspace/db", () => {
 });
 
 vi.mock("../middlewares/requireAuth", () => ({
-  requireProfile: (_req: any, _res: any, next: any) => next(),
+  requireProfile: (_req: unknown, _res: unknown, next: () => void) => next(),
   getRequestProfile: () => h.profile,
 }));
 
@@ -73,7 +94,9 @@ describe("AI Copilot", () => {
   });
 
   it("rejects empty chat message", async () => {
-    const res = await request(makeApp()).post("/copilot/chat").send({ message: "" });
+    const res = await request(makeApp())
+      .post("/copilot/chat")
+      .send({ message: "" });
     expect(res.status).toBe(400);
   });
 });

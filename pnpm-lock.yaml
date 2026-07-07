@@ -173,6 +173,25 @@ importers:
         specifier: ~5.9.3
         version: 5.9.3
 
+  apps/haulbrokr:
+    dependencies:
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../../lib/db
+      '@workspace/platform':
+        specifier: workspace:*
+        version: link:../../lib/platform
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)
+    devDependencies:
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.9(@types/node@25.6.2)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.4)
+
   artifacts/api-server:
     dependencies:
       '@aws-sdk/client-s3':
@@ -181,6 +200,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.888.0
         version: 3.1073.0
+      '@clerk/backend':
+        specifier: ^3.4.7
+        version: 3.4.7
       '@clerk/express':
         specifier: ^2.1.15
         version: 2.1.15(express@5.2.1)
@@ -193,6 +215,12 @@ importers:
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db
+      '@workspace/haulbrokr-app':
+        specifier: workspace:*
+        version: link:../../apps/haulbrokr
+      '@workspace/platform':
+        specifier: workspace:*
+        version: link:../../lib/platform
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
@@ -610,6 +638,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../lib/api-client-react
+      '@workspace/haulbrokr-app':
+        specifier: workspace:*
+        version: link:../../apps/haulbrokr
       babel-plugin-react-compiler:
         specifier: ^19.0.0-beta-e993439-20250117
         version: 19.0.0-beta-ebf51a3-20250411
@@ -1019,6 +1050,15 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+
+  lib/platform:
+    devDependencies:
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.9(@types/node@25.6.2)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.4)
 
   scripts:
     devDependencies:
@@ -9569,7 +9609,7 @@ snapshots:
 
   '@clerk/backend@3.4.7':
     dependencies:
-      '@clerk/shared': 4.10.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@clerk/shared': 4.13.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       standardwebhooks: 1.0.0
       tslib: 2.8.1
     transitivePeerDependencies:

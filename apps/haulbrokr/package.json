@@ -1,0 +1,26 @@
+{
+  "name": "@workspace/haulbrokr-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./adapter": "./src/HaulBrokrAdapter.ts",
+    "./intelligence": "./src/intelligence/index.ts",
+    "./features": "./src/features/index.ts",
+    "./components": "./src/components/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@workspace/db": "workspace:*",
+    "@workspace/platform": "workspace:*",
+    "drizzle-orm": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.9"
+  }
+}
