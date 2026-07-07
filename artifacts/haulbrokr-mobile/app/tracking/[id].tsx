@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import MapView, { Marker } from "@/lib/maps";
+import MapView, { Marker, Polyline } from "@/lib/maps";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -56,14 +56,24 @@ export default function TrackingScreen() {
   const { data: tracking, isLoading: trackingLoading } = useJobTracking(numericId, isLiveJob);
 
   const latestPosition = tracking?.latest ?? null;
+  const routeEta = tracking?.eta ?? null;
+  const trailCoords = useMemo(
+    () =>
+      (tracking?.trail ?? [])
+        .filter((p) => p.lat != null && p.lng != null)
+        .map((p) => ({ latitude: p.lat, longitude: p.lng })),
+    [tracking?.trail],
+  );
+  const routePolyline = routeEta?.polyline?.length ? routeEta.polyline : trailCoords;
   const lastUpdatedLabel = useMemo(() => {
+    if (routeEta?.etaLabel) return `ETA ${routeEta.etaLabel}`;
     if (!latestPosition?.at) return null;
     try {
       return new Date(latestPosition.at).toLocaleString();
     } catch {
       return null;
     }
-  }, [latestPosition?.at]);
+  }, [routeEta?.etaLabel, latestPosition?.at]);
 
   if (!job) {
     return (
@@ -194,9 +204,16 @@ export default function TrackingScreen() {
               <Marker
                 coordinate={{ latitude: latestPosition.lat, longitude: latestPosition.lng }}
                 title="Vehicle"
-                description={lastUpdatedLabel ? `Updated ${lastUpdatedLabel}` : "Latest GPS ping"}
+                description={routeEta ? `ETA ${routeEta.etaLabel}` : lastUpdatedLabel ?? "Latest GPS ping"}
                 pinColor={colors.primary}
               />
+              {routePolyline.length > 1 && (
+                <Polyline
+                  coordinates={routePolyline}
+                  strokeColor={colors.primary}
+                  strokeWidth={4}
+                />
+              )}
             </MapView>
           ) : (
             <View style={[styles.center, { paddingHorizontal: 24 }]}>
@@ -229,6 +246,11 @@ export default function TrackingScreen() {
               {job.deliveryAddress.split(",")[0]}
             </Text>
           </View>
+          {routeEta && (
+            <Text style={[styles.progressAddr, { color: colors.primary, fontFamily: "Inter_600SemiBold", marginTop: 4 }]}>
+              {routeEta.distanceMiles} mi • ETA {routeEta.etaLabel} to {routeEta.destination}
+            </Text>
+          )}
         </View>
 
         {/* Driver info + contact */}

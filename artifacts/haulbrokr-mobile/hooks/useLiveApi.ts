@@ -411,6 +411,44 @@ export type JobTrackingData = {
   status: string;
   latest: { lat: number; lng: number; at: string; source?: string; status?: string } | null;
   trail: Array<{ lat: number; lng: number; at?: string; createdAt?: string; source?: string; status?: string }>;
+  eta?: {
+    destination: "pickup" | "delivery";
+    destinationAddress: string;
+    distanceMiles: number;
+    durationSeconds: number;
+    etaIso: string;
+    etaLabel: string;
+    polyline: Array<{ latitude: number; longitude: number }>;
+    encodedPolyline: string;
+    source: string;
+  } | null;
+};
+
+export type DrivingRouteData = {
+  distanceMiles: number;
+  durationSeconds: number;
+  durationInTrafficSeconds: number | null;
+  etaIso: string;
+  polyline: Array<{ latitude: number; longitude: number }>;
+  encodedPolyline: string;
+  source: string;
+};
+
+export type FacilityRouteData = {
+  pickup: { latitude: number; longitude: number; address: string | null };
+  routes: Array<{
+    siteId: number;
+    name: string;
+    fullAddress: string;
+    type: string;
+    distanceMiles: number;
+    durationSeconds: number;
+    etaIso: string;
+    polyline: Array<{ latitude: number; longitude: number }>;
+    encodedPolyline: string;
+    source: string;
+  }>;
+  generatedAt: string;
 };
 
 /** Live vehicle GPS trail for an active job. */
@@ -421,6 +459,55 @@ export function useJobTracking(jobId: number | null, enabled = true) {
     queryFn: () => apiFetch(getToken, "GET", `/jobs/${jobId}/tracking`),
     enabled: !!isSignedIn && jobId != null && enabled,
     refetchInterval: 15_000,
+  });
+}
+
+/** Server-side geocode (Google in production). */
+export function useGeocodeAddress(address: string | null, enabled = true) {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery<{ latitude: number; longitude: number }>({
+    queryKey: ["maps", "geocode", address],
+    queryFn: () => apiFetch(getToken, "POST", "/maps/geocode", { address }),
+    enabled: !!isSignedIn && !!address && enabled,
+    staleTime: 60 * 60_000,
+  });
+}
+
+/** Driving route with polyline and traffic-aware ETA. */
+export function useDrivingRoute(
+  origin: { latitude: number; longitude: number } | null,
+  destination: { latitude: number; longitude: number } | null,
+  enabled = true,
+) {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery<DrivingRouteData>({
+    queryKey: ["maps", "route", origin, destination],
+    queryFn: () =>
+      apiFetch(getToken, "POST", "/maps/route", { origin, destination }),
+    enabled: !!isSignedIn && !!origin && !!destination && enabled,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Nearest facility driving routes from pickup location. */
+export function useFacilityRoutes(
+  pickup: { latitude: number; longitude: number; address?: string; state?: string } | null,
+  enabled = true,
+) {
+  const { getToken, isSignedIn } = useAuth();
+  const qs = new URLSearchParams();
+  if (pickup) {
+    qs.set("pickupLat", String(pickup.latitude));
+    qs.set("pickupLng", String(pickup.longitude));
+    if (pickup.address) qs.set("pickupAddress", pickup.address);
+    if (pickup.state) qs.set("state", pickup.state);
+    qs.set("limit", "5");
+  }
+  return useQuery<FacilityRouteData>({
+    queryKey: ["dump-sites", "routes", pickup],
+    queryFn: () => apiFetch(getToken, "GET", `/dump-sites/routes?${qs.toString()}`),
+    enabled: !!isSignedIn && !!pickup && enabled,
+    staleTime: 10 * 60_000,
   });
 }
 

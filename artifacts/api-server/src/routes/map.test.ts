@@ -67,6 +67,21 @@ vi.mock("../lib/geocodeCache", () => ({
   resetGeocodeCacheForTests: vi.fn(),
 }));
 
+vi.mock("../lib/googleRoutes", () => ({
+  computeDrivingDistances: vi.fn(async (_origin: unknown, destinations: { latitude: number; longitude: number }[]) =>
+    destinations.map((_, i) => ({
+      destinationIndex: i,
+      distanceMiles: 5,
+      durationSeconds: 600,
+      source: "google_distance_matrix",
+    })),
+  ),
+  computeDrivingRoute: vi.fn(),
+  haversineMiles: vi.fn(() => 5),
+  isGoogleMapsConfigured: vi.fn(() => true),
+  allowDevFallback: vi.fn(() => true),
+}));
+
 import mapRouter from "./map";
 
 function app() {

@@ -71,6 +71,7 @@ function MapView({
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const circlesRef = useRef<any[]>([]);
+  const polylinesRef = useRef<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -116,8 +117,10 @@ function MapView({
     if (!ready || !mapRef.current || !window.google?.maps) return;
     markersRef.current.forEach((m) => m.setMap(null));
     circlesRef.current.forEach((c) => c.setMap(null));
+    polylinesRef.current.forEach((p) => p.setMap(null));
     markersRef.current = [];
     circlesRef.current = [];
+    polylinesRef.current = [];
 
     React.Children.forEach(children, (child) => {
       if (!React.isValidElement(child)) return;
@@ -153,6 +156,18 @@ function MapView({
           strokeWeight: strokeWidth ?? 1.5,
         });
         circlesRef.current.push(circle);
+      }
+      if (child.type === Polyline) {
+        const { coordinates, strokeColor, strokeWidth } = child.props as PolylineProps;
+        if (!coordinates?.length) return;
+        const polyline = new window.google.maps.Polyline({
+          map: mapRef.current,
+          path: coordinates.map((c: LatLng) => ({ lat: c.latitude, lng: c.longitude })),
+          strokeColor: strokeColor ?? "#3b82f6",
+          strokeOpacity: 0.9,
+          strokeWeight: strokeWidth ?? 4,
+        });
+        polylinesRef.current.push(polyline);
       }
     });
   }, [children, ready]);
@@ -199,6 +214,14 @@ type CircleProps = {
 };
 
 export function Circle(_props: CircleProps) { return null; }
+
+type PolylineProps = {
+  coordinates: LatLng[];
+  strokeColor?: string;
+  strokeWidth?: number;
+};
+
+export function Polyline(_props: PolylineProps) { return null; }
 
 const webStyles = StyleSheet.create({
   map:         { flex: 1, backgroundColor: "#0f172a", overflow: "hidden" },

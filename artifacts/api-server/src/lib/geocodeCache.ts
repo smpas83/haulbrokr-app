@@ -22,7 +22,12 @@ async function geocodeGoogle(address: string): Promise<GeoResult | null> {
   return { latitude: loc.lat, longitude: loc.lng };
 }
 
+function allowDevFallback(): boolean {
+  return process.env.NODE_ENV !== "production";
+}
+
 async function geocodeNominatim(address: string): Promise<GeoResult | null> {
+  if (!allowDevFallback()) return null;
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", address);
   url.searchParams.set("format", "json");
@@ -48,7 +53,7 @@ export async function geocodeAddressCached(address: string): Promise<GeoResult |
   if (!pending) {
     pending = (async () => {
       const google = await geocodeGoogle(address);
-      const result = google ?? await geocodeNominatim(address);
+      const result = google ?? (allowDevFallback() ? await geocodeNominatim(address) : null);
       if (result) cache.set(key, result);
       inflight.delete(key);
       return result;

@@ -4,6 +4,8 @@ import { eq, desc, and, inArray } from "drizzle-orm";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { loadJobIfMember, DRIVER_SIDE } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { geocodeAddressCached } from "../lib/geocodeCache";
+import { computeDrivingRoute, formatEtaLabel } from "../lib/googleRoutes";
 
 const router: IRouter = Router();
 
@@ -47,7 +49,7 @@ router.post("/jobs/:id/location", requireProfile, async (req, res): Promise<void
   res.status(201).json({ lat, lng, recordedAt: new Date(ts).toISOString() });
 });
 
-/** Latest truck position + trail for a job. */
+/** Latest truck position + trail for a job, with computed driving ETA when GPS is available. */
 router.get("/jobs/:id/tracking", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
   const jobId = parseInt(req.params.id as string, 10);
@@ -76,11 +78,60 @@ router.get("/jobs/:id/tracking", requireProfile, async (req, res): Promise<void>
 
   const latest = trail[0] ?? null;
 
+  let eta: {
+    destination: "pickup" | "delivery";
+    destinationAddress: string;
+    distanceMiles: number;
+    durationSeconds: number;
+    etaIso: string;
+    etaLabel: string;
+    polyline: { latitude: number; longitude: number }[];
+    encodedPolyline: string;
+    source: string;
+  } | null = null;
+
+  if (latest?.lat != null && latest?.lng != null) {
+    const vehicle = { latitude: latest.lat, longitude: latest.lng };
+    const pickupCoord = await geocodeAddressCached(job.pickupAddress);
+    const deliveryCoord = await geocodeAddressCached(job.deliveryAddress);
+
+    const destination =
+      job.status === "in_progress" || job.status === "active"
+        ? deliveryCoord
+        : pickupCoord ?? deliveryCoord;
+
+    const destinationKind: "pickup" | "delivery" =
+      destination === deliveryCoord ? "delivery" : "pickup";
+
+    const destinationAddress =
+      destinationKind === "delivery" ? job.deliveryAddress : job.pickupAddress;
+
+    if (destination) {
+      try {
+        const route = await computeDrivingRoute(vehicle, destination);
+        eta = {
+          destination: destinationKind,
+          destinationAddress,
+          distanceMiles: route.distanceMiles,
+          durationSeconds: route.durationSeconds,
+          etaIso: route.etaIso,
+          etaLabel: formatEtaLabel(route.etaIso),
+          polyline: route.polyline,
+          encodedPolyline: route.encodedPolyline,
+          source: route.source,
+        };
+      } catch (err) {
+        console.warn("[tracking] ETA calculation failed", jobId, err);
+      }
+    }
+  }
+
   res.json({
     jobId,
     status: job.status,
     latest,
     trail: trail.slice(0, 20),
+    eta,
   });
 });
 

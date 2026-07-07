@@ -6,7 +6,7 @@ import {
   Platform, Pressable, RefreshControl, ScrollView, StyleSheet,
   Switch, Text, View,
 } from "react-native";
-import MapView, { Circle, Marker, Region, MapType } from "@/lib/maps";
+import MapView, { Circle, Marker, Polyline, Region, MapType } from "@/lib/maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   FadeIn, FadeInDown, FadeInUp, FadeOut,
@@ -17,7 +17,7 @@ import { STATUS_COLOR } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import type { Job } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
-import { useLiveJobs, useLiveRequests, useMarketplaceMap } from "@/hooks/useLiveApi";
+import { useLiveJobs, useLiveRequests, useMarketplaceMap, useGeocodeAddress } from "@/hooks/useLiveApi";
 import { useJobCoordinates } from "@/hooks/useJobCoordinates";
 import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
 import {
@@ -108,9 +108,12 @@ export default function MapScreen() {
     isFetching: fetchingOpenRequests,
   } = useLiveRequests({ mine: false, enabled: isProvider });
 
-  const { data: marketplace, refetch: refetchMarketplace, isFetching: fetchingMarketplace } = useMarketplaceMap();
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [filterOrigin, setFilterOrigin] = useState<{ latitude: number; longitude: number } | null>(null);
+
   const {
     coords: gpsCoords,
+    permission: gpsPermission,
     error: gpsError,
     following: gpsFollowing,
     locating: gpsLocating,
@@ -118,6 +121,28 @@ export default function MapScreen() {
     recenter: recenterGps,
     stopFollowing: stopGpsFollowing,
   } = useFindMyLocation();
+
+  const useGpsForNearby = activeFilter === "nearby" && gpsPermission === "granted" && gpsCoords != null;
+  const geocodeQuery = activeFilter === "nearby" && !useGpsForNearby ? userLocation : null;
+  const { data: geocodedFilterOrigin } = useGeocodeAddress(geocodeQuery, activeFilter === "nearby");
+
+  useEffect(() => {
+    if (activeFilter !== "nearby") return;
+    if (useGpsForNearby && gpsCoords) {
+      setFilterOrigin(gpsCoords);
+      return;
+    }
+    if (geocodedFilterOrigin) {
+      setFilterOrigin(geocodedFilterOrigin);
+    }
+  }, [activeFilter, useGpsForNearby, gpsCoords, geocodedFilterOrigin]);
+
+  const marketplaceOpts =
+    activeFilter === "nearby" && filterOrigin
+      ? { lat: filterOrigin.latitude, lng: filterOrigin.longitude, radiusMiles: searchRadius }
+      : undefined;
+
+  const { data: marketplace, refetch: refetchMarketplace, isFetching: fetchingMarketplace } = useMarketplaceMap(marketplaceOpts);
 
   const jobs = useMemo<Job[]>(() => {
     if (marketplace?.loads?.length) {
@@ -160,7 +185,6 @@ export default function MapScreen() {
   }, [coordsByJobId, marketplace]);
 
   const [selectedPin,      setSelectedPin]      = useState<string | null>(null);
-  const [activeFilter,     setActiveFilter]      = useState<FilterType>("all");
   const [showSurge,        setShowSurge]         = useState(true);
   const [showLocationModal,setShowLocationModal] = useState(false);
   const [isFullscreen,     setIsFullscreen]      = useState(false);
@@ -251,9 +275,10 @@ export default function MapScreen() {
   const typeFiltered = jobs.filter((j) => {
     if (activeFilter === "open") return OPEN_STATUSES.has(j.status);
     if (activeFilter === "nearby") {
+      if (marketplace?.loads?.length) return true;
       const coord = getCoord(j);
-      if (!coord) return false;
-      return distanceMiles(coord, { latitude: US_REGION.latitude, longitude: US_REGION.longitude }) < searchRadius;
+      if (!coord || !filterOrigin) return false;
+      return distanceMiles(coord, filterOrigin) < searchRadius;
     }
     return j.status !== "completed" && j.status !== "cancelled";
   });
@@ -350,6 +375,9 @@ export default function MapScreen() {
                   if (f === "nearby") {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setShowLocationModal(true);
+                    if (gpsPermission !== "granted") {
+                      void findMyLocation();
+                    }
                   }
                   setActiveFilter(f);
                 }}
@@ -817,6 +845,10 @@ export default function MapScreen() {
           setUserLocation(loc);
           setSearchRadius(rad);
           setShowLocationModal(false);
+          setActiveFilter("nearby");
+          if (gpsPermission === "granted") {
+            void findMyLocation();
+          }
         }}
         onClose={() => setShowLocationModal(false)}
       />
