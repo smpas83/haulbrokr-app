@@ -8,9 +8,13 @@
 
 ## FINAL DECISION
 
-### ⚠️ STRIPE CERTIFIED WITH OPERATOR ACTION
+### ⚠️ STRIPE CERTIFIED WITH OPERATOR ACTION → LIVE DEPLOY IN PROGRESS
 
-Refund issuance, persistence, webhooks, authorization, and automated tests are implemented and passing in CI. Production certification requires operator execution of database migration and Stripe Dashboard webhook configuration (documented below).
+PR #95 merged to `master` on 2026-07-07. Production API routes are live (`401` on refund endpoints = deployed, auth required).
+
+**Auto-migration on boot** (`startupMigrations.ts`) applies refund schema on the next Render deploy — no manual `db push` required.
+
+**Remaining operator step:** enable Stripe webhook events (run `node scripts/go-live-stripe-refunds.mjs` with `STRIPE_SECRET_KEY`, or use Stripe Dashboard).
 
 ---
 

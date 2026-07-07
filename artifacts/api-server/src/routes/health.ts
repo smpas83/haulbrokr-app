@@ -14,6 +14,9 @@ router.get("/healthz", sendHealth);
 router.get("/readyz", async (_req, res): Promise<void> => {
   try {
     await pool.query("select 1");
+    if (process.env.NODE_ENV === "production") {
+      await pool.query("select 1 from payment_refunds limit 1");
+    }
     const data = HealthCheckResponse.parse({ status: "ok" });
     res.json(data);
   } catch {

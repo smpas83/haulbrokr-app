@@ -5,6 +5,7 @@ import { logger } from "./lib/logger";
 import { startPayoutRetryScheduler } from "./lib/payoutRetryScheduler";
 import { startOrphanUploadCleaner } from "./lib/orphanUploadCleaner";
 import { startDocReminderScheduler } from "./lib/docReminderScheduler";
+import { runStartupMigrations } from "./lib/startupMigrations";
 
 validateProductionEnv();
 
@@ -22,14 +23,25 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
+async function boot(): Promise<void> {
+  if (process.env.NODE_ENV === "production") {
+    await runStartupMigrations();
   }
 
-  logger.info({ port }, "Server listening");
-  startPayoutRetryScheduler();
-  startOrphanUploadCleaner();
-  startDocReminderScheduler();
+  app.listen(port, (err) => {
+    if (err) {
+      logger.error({ err }, "Error listening on port");
+      process.exit(1);
+    }
+
+    logger.info({ port }, "Server listening");
+    startPayoutRetryScheduler();
+    startOrphanUploadCleaner();
+    startDocReminderScheduler();
+  });
+}
+
+boot().catch((err) => {
+  logger.error({ err }, "Failed to start API");
+  process.exit(1);
 });
