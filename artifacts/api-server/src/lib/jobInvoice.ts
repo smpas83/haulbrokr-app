@@ -59,6 +59,8 @@ export function formatPaymentStatusLabel(status: Job["paymentStatus"]): string {
     released: "Released",
     failed: "Failed",
     requires_action: "Requires action",
+    partially_refunded: "Partially refunded",
+    refunded: "Refunded",
   };
   return labels[status] ?? status;
 }
