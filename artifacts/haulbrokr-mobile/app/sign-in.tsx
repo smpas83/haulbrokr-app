@@ -1,7 +1,8 @@
 import { useAuth, useClerk, useSignIn, useSignUp, useSSO } from "@clerk/expo";
+import { useSignInWithApple } from "@clerk/expo/apple";
+import { useSignInWithGoogle } from "@clerk/expo/google";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
-import * as AuthSession from "expo-auth-session";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useRef, useState } from "react";
@@ -20,6 +21,16 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  clerkErrorMessage,
+  logClerkAuthError,
+} from "@/lib/clerkAuthLogging";
+import {
+  clerkOAuthRedirectUri,
+  clerkOAuthRedirectUriCandidates,
+  hasGoogleNativeSignInConfig,
+  shouldUseNativeAppleSignIn,
+} from "@/lib/clerkOAuth";
 import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
@@ -28,11 +39,6 @@ type VerifyReason = "signup" | "trust";
 
 WebBrowser.maybeCompleteAuthSession();
 
-function clerkErrorMessage(error: { message?: string; longMessage?: string } | null | undefined): string {
-  if (!error) return "";
-  return error.longMessage ?? error.message ?? "";
-}
-
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
@@ -40,8 +46,16 @@ export default function SignInScreen() {
   const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
+  const { startAppleAuthenticationFlow } = useSignInWithApple();
+  const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
+
+  useEffect(() => {
+    if (__DEV__) {
+      console.log("[ClerkAuth] OAuth redirect URIs for this build:", clerkOAuthRedirectUriCandidates());
+    }
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -56,29 +70,84 @@ export default function SignInScreen() {
     }
   }, [authLoaded, isSignedIn]);
 
+  const activateSession = async (sessionId: string | null | undefined): Promise<boolean> => {
+    if (!sessionId) return false;
+    try {
+      if (clerk.setActive) {
+        await clerk.setActive({ session: sessionId });
+      }
+      await markClerkActiveSession();
+      return true;
+    } catch (err) {
+      logClerkAuthError("setActive", err, { sessionId });
+      return false;
+    }
+  };
+
+  const completeOAuthSession = async (
+    createdSessionId: string | null | undefined,
+    setActive: ((params: { session: string }) => Promise<void>) | undefined,
+    which: "google" | "apple",
+  ) => {
+    if (!createdSessionId) {
+      setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+      return;
+    }
+    try {
+      if (setActive) {
+        await setActive({ session: createdSessionId });
+      } else {
+        const activated = await activateSession(createdSessionId);
+        if (!activated) {
+          setError(`Sign-in with ${which} couldn't activate your session. Please try again.`);
+          return;
+        }
+      }
+      await markClerkActiveSession();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace("/" as any);
+    } catch (err) {
+      logClerkAuthError(`${which}-setActive`, err, { createdSessionId });
+      setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+    }
+  };
+
   const handleSSO = async (strategy: "oauth_google" | "oauth_apple") => {
     const which = strategy === "oauth_google" ? "google" : "apple";
     setSsoBusy(which);
     setError("");
     try {
+      if (which === "apple" && shouldUseNativeAppleSignIn()) {
+        const { createdSessionId, setActive } = await startAppleAuthenticationFlow();
+        await completeOAuthSession(createdSessionId, setActive, which);
+        return;
+      }
+
+      if (which === "google" && hasGoogleNativeSignInConfig()) {
+        const { createdSessionId, setActive } = await startGoogleAuthenticationFlow();
+        await completeOAuthSession(createdSessionId, setActive, which);
+        return;
+      }
+
+      const redirectUrl = clerkOAuthRedirectUri();
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy,
-        redirectUrl: AuthSession.makeRedirectUri(),
+        redirectUrl,
       });
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
-        await markClerkActiveSession();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        router.replace("/" as any);
-      } else {
-        setError(`Sign-in with ${which} couldn't complete. Please try again.`);
-      }
+      await completeOAuthSession(createdSessionId, setActive, which);
     } catch (err: any) {
-      const msg = err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? err?.message ?? "";
+      logClerkAuthError(`${which}-sso`, err, { which, redirectUrl: clerkOAuthRedirectUri() });
+      const msg = clerkErrorMessage(err) || err?.message || "";
       if (/not enabled|provider.*not.*configured|strategy.*not.*allowed/i.test(msg)) {
         setError(`Sign in with ${which === "google" ? "Google" : "Apple"} isn't enabled yet — turn it on in the Auth pane.`);
+      } else if (/redirect|callback|native application/i.test(msg)) {
+        setError(
+          `Sign in with ${which === "google" ? "Google" : "Apple"} failed — confirm Clerk Native Applications includes haulbrokr://sso-callback.`
+        );
       } else if (msg) {
         setError(msg);
+      } else {
+        setError(`Sign-in with ${which} couldn't complete. Please try again.`);
       }
     } finally {
       setSsoBusy(null);
@@ -186,14 +255,35 @@ export default function SignInScreen() {
     }
   }, [authLoaded, isSignedIn, signIn?.status, signIn?.createdSessionId, signIn?.existingSession?.sessionId]);
 
-  const finalizeSignUp = async () => {
-    if (!signUp) return;
-    await signUp.finalize({
+  const finalizeSignUp = async (): Promise<boolean> => {
+    if (!signUp) return false;
+
+    const sessionId = signUp.createdSessionId ?? null;
+    const { error } = await signUp.finalize({
       navigate: async () => {
         await markClerkActiveSession();
         router.replace("/onboarding" as any);
       },
     });
+
+    if (!error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return true;
+    }
+
+    logClerkAuthError("signUp.finalize", error, { status: signUp.status, sessionId });
+
+    if (sessionId) {
+      const activated = await activateSession(sessionId);
+      if (activated) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace("/onboarding" as any);
+        return true;
+      }
+    }
+
+    setError(clerkErrorMessage(error));
+    return false;
   };
 
   const beginSecondFactorEmail = async (): Promise<boolean> => {
@@ -233,6 +323,7 @@ export default function SignInScreen() {
     try {
       const { error: passwordError } = await signIn.password({ identifier: id, password });
       if (passwordError) {
+        logClerkAuthError("signIn.password", passwordError, { identifier: id });
         const msg = clerkErrorMessage(passwordError);
         if (/already signed in/i.test(msg)) {
           const finalized = await finalizeSignIn();
@@ -300,6 +391,7 @@ export default function SignInScreen() {
         password,
       });
       if (passwordError) {
+        logClerkAuthError("signUp.password", passwordError, { email: nextEmail, username: nextUsername });
         setError(clerkErrorMessage(passwordError));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
@@ -314,6 +406,7 @@ export default function SignInScreen() {
       if (signUp.status === "missing_requirements") {
         const { error: sendError } = await signUp.verifications.sendEmailCode();
         if (sendError) {
+          logClerkAuthError("signUp.sendEmailCode", sendError);
           setError(clerkErrorMessage(sendError));
           return;
         }
@@ -333,6 +426,37 @@ export default function SignInScreen() {
       void handleSignIn();
     } else {
       void handleSignUp();
+    }
+  };
+
+  const handleResendCode = async () => {
+    setError("");
+    if (!clerkReady) {
+      setError("Authentication is initialising. Please wait a moment.");
+      return;
+    }
+    setLoading(true);
+    try {
+      if (verifyReason === "trust") {
+        if (!signIn) return;
+        const { error: sendError } = await signIn.mfa.sendEmailCode();
+        if (sendError) {
+          logClerkAuthError("signIn.resendMfaCode", sendError);
+          setError(clerkErrorMessage(sendError));
+          return;
+        }
+        setError("");
+        return;
+      }
+      if (!signUp) return;
+      const { error: sendError } = await signUp.verifications.sendEmailCode();
+      if (sendError) {
+        logClerkAuthError("signUp.resendEmailCode", sendError);
+        setError(clerkErrorMessage(sendError));
+        return;
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -357,6 +481,7 @@ export default function SignInScreen() {
         }
         const { error: verifyError } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
         if (verifyError) {
+          logClerkAuthError("signIn.verifyMfaCode", verifyError);
           setError(clerkErrorMessage(verifyError));
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           return;
@@ -364,7 +489,10 @@ export default function SignInScreen() {
         if (signIn.status === "complete") {
           await finalizeSignIn();
         } else {
-          setError("Verification incomplete. Please try again.");
+          logClerkAuthError("signIn.verifyMfaIncomplete", new Error("MFA verify succeeded but sign-in not complete"), {
+            status: signIn.status,
+          });
+          setError("Additional verification is still required. Check your email or try signing in again.");
         }
         return;
       }
@@ -375,15 +503,32 @@ export default function SignInScreen() {
       }
       const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code: code.trim() });
       if (verifyError) {
+        logClerkAuthError("signUp.verifyEmailCode", verifyError, { status: signUp.status });
         setError(clerkErrorMessage(verifyError));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
-      if (signUp.status === "complete") {
+
+      const sessionId = signUp.createdSessionId ?? null;
+      if (signUp.status === "complete" || sessionId) {
+        if (sessionId) {
+          const activated = await activateSession(sessionId);
+          if (!activated && signUp.status !== "complete") {
+            setError("Verification succeeded but session activation failed. Please try again.");
+            return;
+          }
+        }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        await finalizeSignUp();
+        const finalized = await finalizeSignUp();
+        if (!finalized && signUp.status === "complete") {
+          await markClerkActiveSession();
+          router.replace("/onboarding" as any);
+        }
       } else {
-        setError("Verification incomplete. Please try again.");
+        logClerkAuthError("signUp.verifyIncomplete", new Error("Email verify succeeded without session"), {
+          status: signUp.status,
+        });
+        setError("Email verified but sign-up could not finish. Tap Resend or go back and try again.");
       }
     } finally {
       setLoading(false);
@@ -663,6 +808,11 @@ export default function SignInScreen() {
             </Pressable>
 
             <View style={styles.resendRow}>
+              <Text style={styles.resendLabel}>Didn't get a code? </Text>
+              <Pressable onPress={() => void handleResendCode()} disabled={busy}>
+                <Text style={styles.resendLink}>Resend</Text>
+              </Pressable>
+              <Text style={styles.resendLabel}> · </Text>
               <Text style={styles.resendLabel}>Wrong email? </Text>
               <Pressable onPress={handleBackToCredentials}>
                 <Text style={styles.resendLink}>Go back</Text>

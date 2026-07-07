@@ -77,6 +77,14 @@ Optional later: [Cloudflare R2](https://www.cloudflare.com/products/r2/) for fil
    Creates: `ceo`, `president`, `cto`, `cfo`, `accounting`, `it`, `programmer` (roles map to admin permissions).
    Change passwords after first login in production (re-run seed only on empty DB, or update rows manually).
 
+7. **Seed permanent Apple App Store review account** (mobile Clerk login):
+   ```bash
+   export DATABASE_URL="postgres://..."
+   export CLERK_SECRET_KEY="sk_live_..."
+   pnpm --filter @workspace/api-server run seed-apple-review
+   ```
+   Creates/updates `apple-review@haulbrokr.com` / `Apple1demo123!` with verified email, provider profile, fleet, jobs, and notifications. Add credentials to App Store Connect review notes.
+
 ---
 
 ## Phase 3 — Render API (20 min)
@@ -186,6 +194,9 @@ Set EAS secrets (or `.env` for local):
 |--------|-------|
 | `EXPO_PUBLIC_DOMAIN` | `haulbrokr.com` |
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
+| `EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID` | Google web client ID (Clerk Dashboard) |
+| `EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID` | Google iOS client ID (Clerk Dashboard) |
+| `EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME` | Reversed iOS client ID URL scheme |
 | `GOOGLE_MAPS_API_KEY` | Android Google Maps SDK key |
 
 ```bash

@@ -30,6 +30,8 @@ Start from empty provider accounts and complete these steps in order.
 - [ ] Configure sign-in and sign-up paths: `/sign-in`, `/sign-up`.
 - [ ] Enable required social providers.
 - [ ] Configure Apple Sign-In for `com.haulbrokr.mobile`.
+- [ ] Enable **Native applications** in Clerk.
+- [ ] Add redirect URIs: `haulbrokr://`, `haulbrokr://*`, `haulbrokr://sso-callback`, `https://haulbrokr.com/*`, `https://www.haulbrokr.com/*`.
 - [ ] Copy `CLERK_SECRET_KEY`.
 - [ ] Copy `CLERK_PUBLISHABLE_KEY`.
 - [ ] Copy publishable key to Vercel as `VITE_CLERK_PUBLISHABLE_KEY`.
