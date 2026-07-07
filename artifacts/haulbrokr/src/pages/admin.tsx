@@ -1102,6 +1102,169 @@ function OverviewPanel({
   );
 }
 
+function RefundOperationsPanel() {
+  const { toast } = useToast();
+  const [jobId, setJobId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("requested_by_customer");
+  const [history, setHistory] = useState<any | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function loadHistory() {
+    const id = Number(jobId);
+    if (!Number.isInteger(id)) {
+      toast({ title: "Enter a valid job id", variant: "destructive" });
+      return;
+    }
+    setBusy(true);
+    try {
+      const data = await apiFetch(`/admin/jobs/${id}/payment-history`);
+      setHistory(data);
+    } catch (e: any) {
+      toast({ title: e.message ?? "Failed to load history", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function issueRefund() {
+    const id = Number(jobId);
+    if (!Number.isInteger(id)) {
+      toast({ title: "Enter a valid job id", variant: "destructive" });
+      return;
+    }
+    setBusy(true);
+    try {
+      const body: Record<string, unknown> = { reason };
+      if (amount.trim()) body.amount = Number(amount);
+      await apiFetch(`/admin/jobs/${id}/refund`, {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: { "Idempotency-Key": `admin-refund:${id}:${Date.now()}` },
+      });
+      toast({ title: "Refund issued", description: `Job #${id} refund submitted to Stripe.` });
+      await loadHistory();
+    } catch (e: any) {
+      toast({ title: e.message ?? "Refund failed", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="rounded-xl border-2">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <RotateCcw className="w-4 h-4 text-primary" /> Refunds
+        </CardTitle>
+        <CardDescription>Issue full or partial Stripe refunds for released jobs.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input
+            className="rounded-xl border-2 px-3 py-2 text-sm"
+            placeholder="Job ID"
+            value={jobId}
+            onChange={(e) => setJobId(e.target.value)}
+          />
+          <input
+            className="rounded-xl border-2 px-3 py-2 text-sm"
+            placeholder="Partial amount (optional)"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+          <input
+            className="rounded-xl border-2 px-3 py-2 text-sm"
+            placeholder="Reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button className="rounded-xl" disabled={busy} onClick={issueRefund}>
+            {busy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-1" />}
+            Issue refund
+          </Button>
+          <Button variant="outline" className="rounded-xl" disabled={busy} onClick={loadHistory}>
+            View payment history
+          </Button>
+        </div>
+        {history && (
+          <div className="rounded-xl border p-4 text-sm space-y-2">
+            <p><strong>Balance:</strong> ${history.currentBalance?.toFixed?.(2) ?? history.currentBalance}</p>
+            <p><strong>Status:</strong> {history.refundStatus}</p>
+            <p><strong>Refunds:</strong> {history.refunds?.length ?? 0}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+type AdminFactoringItem = {
+  id: number;
+  jobId: number;
+  providerCompany: string | null;
+  materialType: string | null;
+  status: string;
+  invoiceAmount: number;
+  netAmount: number;
+  requestedAt: string | null;
+};
+
+function FactoringPanel() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery<AdminFactoringItem[]>({
+    queryKey: ["admin-factoring"],
+    queryFn: () => apiFetch("/admin/factoring"),
+  });
+
+  async function act(id: number, action: "approve" | "reject") {
+    try {
+      await apiFetch(`/factoring/${id}/${action}`, { method: "PATCH" });
+      qc.invalidateQueries({ queryKey: ["admin-factoring"] });
+      toast({ title: action === "approve" ? "Advance approved" : "Advance rejected" });
+    } catch (e: any) {
+      toast({ title: e.message ?? "Action failed", variant: "destructive" });
+    }
+  }
+
+  const items = data ?? [];
+  const pending = items.filter((i) => i.status === "pending");
+
+  return (
+    <Card className="rounded-xl border-2">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <DollarSign className="w-4 h-4 text-primary" /> Factoring advances
+        </CardTitle>
+        <CardDescription>Review provider requests for same-day invoice advances.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {isLoading ? (
+          <Skeleton className="h-24 w-full" />
+        ) : pending.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No pending factoring requests.</p>
+        ) : (
+          pending.map((item) => (
+            <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+              <div>
+                <p className="font-semibold">Job #{item.jobId} · {item.materialType ?? "—"}</p>
+                <p className="text-sm text-muted-foreground">{item.providerCompany} · Net ${item.netAmount.toLocaleString()}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" className="rounded-xl" onClick={() => act(item.id, "approve")}>Approve</Button>
+                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => act(item.id, "reject")}>Reject</Button>
+              </div>
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminPage() {
   const { data: access, isLoading: accessLoading } = useGetAdminAccess();
   const isAdmin = !!access?.isAdmin;
@@ -1266,6 +1429,7 @@ export default function AdminPage() {
 
         {canCredit && (
           <TabsContent value="credit" className="space-y-4 mt-4">
+            <FactoringPanel />
             {credit.isLoading ? (
               <Skeleton className="h-48 w-full" />
             ) : creditItems.length === 0 ? (
@@ -1278,6 +1442,7 @@ export default function AdminPage() {
 
         {canPayouts && (
           <TabsContent value="payouts" className="space-y-4 mt-4">
+            <RefundOperationsPanel />
             {payouts.isLoading ? (
               <Skeleton className="h-48 w-full" />
             ) : payoutItems.length === 0 ? (

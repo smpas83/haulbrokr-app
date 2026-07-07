@@ -7,6 +7,7 @@ import {
   ActivityIndicator, Alert, Pressable, ScrollView, Share, StyleSheet, Text, View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@clerk/expo";
 import { useApp, type Role } from "@/context/AppContext";
 import { useMyOrganization, useOrgMembers, useRotateInviteCode } from "@/hooks/useLiveApi";
 
@@ -25,6 +26,7 @@ function formatJoined(iso?: string | null): string {
 }
 
 export default function TeamScreen() {
+  const { isSignedIn } = useAuth();
   const { profile, team: localTeam, rotateInviteCode: rotateLocal } = useApp();
   const isOwner = profile.role === "customer" || profile.role === "provider";
 
@@ -32,16 +34,17 @@ export default function TeamScreen() {
   const membersQ = useOrgMembers();
   const rotateMut = useRotateInviteCode();
 
-  // Live API is the source of truth when available; fall back to local demo state.
   const liveOrg = orgQ.data;
   const liveMembers = (membersQ.data as { members?: Array<{ id: number; role: Role; contactName?: string | null; companyName: string; phone?: string | null; createdAt: string }> } | undefined)?.members;
 
-  const inviteCode = liveOrg?.inviteCode ?? profile.orgInviteCode ?? "—";
-  const usingLive = !!liveOrg;
+  // Signed-in users never fall back to demo team data.
+  const usingLive = !!isSignedIn;
+  const inviteCode = usingLive
+    ? (orgQ.isLoading && !liveOrg ? "······" : (liveOrg?.inviteCode ?? "—"))
+    : (profile.orgInviteCode ?? "—");
 
-  // Build a unified members list (exclude self/owner from "team" view).
-  const members = liveMembers
-    ? liveMembers
+  const members = usingLive
+    ? (liveMembers ?? [])
         .filter((m) => m.role !== "customer" && m.role !== "provider")
         .map((m) => ({
           id: String(m.id),

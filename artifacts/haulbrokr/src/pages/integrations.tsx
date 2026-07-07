@@ -24,7 +24,7 @@ function QuickBooksCard() {
 
   const connect = useMutation({
     mutationFn: () => apiFetch("/quickbooks/connect", { method: "POST", body: JSON.stringify({ companyName: connectName }) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["qb-status"] }); toast({ title: "QuickBooks connected!" }); setOpen(false); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["qb-status"] }); toast({ title: "QuickBooks linked (preview mode)" }); setOpen(false); },
     onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
   });
 
@@ -54,7 +54,7 @@ function QuickBooksCard() {
           </div>
           <div>
             <h3 className="font-bold text-lg">QuickBooks Online</h3>
-            <p className="text-sm text-secondary-foreground/70">Sync invoices and job payments automatically</p>
+            <p className="text-sm text-secondary-foreground/70">Preview — connect stores your company; live invoice sync is coming soon</p>
           </div>
         </div>
         {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (

@@ -124,7 +124,31 @@ vi.mock("../lib/stripeClient", () => ({
 
 // Authenticated customer (id 1) with a Stripe Customer already provisioned, so
 // ensureStripeCustomerId returns it without minting a new one.
+vi.mock("../middlewares/staffAuth", () => ({
+  attachStaffSession: (_req: any, _res: any, next: any) => next(),
+  requireStaffOrProfile: (req: any, _res: any, next: any) => {
+    req.profile = req.profile ?? {
+      id: 1,
+      stripeCustomerId: CUSTOMER_STRIPE_ID,
+      email: "ops@acme.test",
+      companyName: "Acme Hauling",
+      contactName: "Acme Owner",
+    };
+    next();
+  },
+}));
+
 vi.mock("../middlewares/requireAuth", () => ({
+  attachClerkProfileIfPresent: (req: any, _res: any, next: any) => {
+    req.profile = {
+      id: 1,
+      stripeCustomerId: CUSTOMER_STRIPE_ID,
+      email: "ops@acme.test",
+      companyName: "Acme Hauling",
+      contactName: "Acme Owner",
+    };
+    next();
+  },
   requireAuth: (_req: any, _res: any, next: any) => next(),
   requireProfile: (req: any, _res: any, next: any) => {
     req.profile = {

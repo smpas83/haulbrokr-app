@@ -1,9 +1,10 @@
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
-import { db, jobsTable, payoutAccountsTable, activityTable } from "@workspace/db";
+import { db, jobsTable, payoutAccountsTable } from "@workspace/db";
 import { checkProviderPayoutReadiness, syncStripeStatus } from "./payoutStatus";
 import { settleConfirmedPayout } from "./payoutRetry";
 import { handleChargeRefunded, upsertRefundFromStripe } from "./refunds";
+import { recordActivity } from "./activityNotify";
 import { logger } from "./logger";
 
 export type WebhookHandleResult =
@@ -11,16 +12,12 @@ export type WebhookHandleResult =
   | { handled: false; reason: string };
 
 async function notifyPaymentFailed(job: { id: number; customerId: number; materialType: string }): Promise<void> {
-  try {
-    await db.insert(activityTable).values({
-      profileId: job.customerId,
-      type: "payment_failed",
-      description: `Payment failed for job #${job.id} — ${job.materialType} delivery. Open the job to retry.`,
-      relatedId: job.id,
-    });
-  } catch (err) {
-    logger.error({ err, jobId: job.id }, "Failed to record payment_failed notification from webhook");
-  }
+  await recordActivity({
+    profileId: job.customerId,
+    type: "payment_failed",
+    description: `Payment failed for job #${job.id} — ${job.materialType} delivery. Open the job to retry.`,
+    relatedId: job.id,
+  });
 }
 
 async function markJobReleased(

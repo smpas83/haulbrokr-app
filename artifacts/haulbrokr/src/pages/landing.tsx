@@ -66,8 +66,8 @@ const segments = [
     icon: Globe,
     title: "Enterprise",
     subtitle: "Platform",
-    desc: "Multi-site dispatch, API integrations, QuickBooks sync, and dedicated account management.",
-    features: ["Multi-project dispatch", "QuickBooks integration", "Custom workflows", "Dedicated support"],
+    desc: "Multi-site dispatch, API integrations, accounting export (QuickBooks coming soon), and dedicated account management.",
+    features: ["Multi-project dispatch", "Accounting export (preview)", "Custom workflows", "Dedicated support"],
     cta: "Contact sales",
   },
 ];

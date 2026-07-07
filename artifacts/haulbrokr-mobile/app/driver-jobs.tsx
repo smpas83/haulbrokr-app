@@ -13,6 +13,8 @@ import {
   StyleSheet,
   Text,
   View,
+  Modal,
+  TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -128,6 +130,9 @@ function DriverJobCard({
   const upload = useUploadFile();
   const submitEvidence = useSubmitEvidence();
   const [busyProof, setBusyProof] = useState(false);
+  const [busyLoad, setBusyLoad] = useState(false);
+  const [loadModalOpen, setLoadModalOpen] = useState(false);
+  const [loadWeight, setLoadWeight] = useState("");
 
   const updates: any[] = (updatesQuery.data as any[]) ?? [];
   const tickets: any[] = (ticketsQuery.data as any[]) ?? [];
@@ -150,11 +155,47 @@ function DriverJobCard({
   };
 
   const handleNewLoad = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    createTicket.mutate(
-      { jobId: job.id },
-      { onError: (err: any) => Alert.alert("Couldn't start load", err?.message ?? "Try again.") },
-    );
+    setLoadWeight("");
+    setLoadModalOpen(true);
+  };
+
+  const submitNewLoad = async () => {
+    const weight = parseFloat(loadWeight);
+    if (!Number.isFinite(weight) || weight <= 0) {
+      Alert.alert("Invalid weight", "Enter a positive number of tons.");
+      return;
+    }
+    setBusyLoad(true);
+    try {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      const picker = perm.granted
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 })
+        : await (async () => {
+            const lib = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!lib.granted) {
+              Alert.alert("Photos blocked", "Enable camera or photo access to attach the scale ticket.");
+              return null;
+            }
+            return ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85 });
+          })();
+      if (!picker || picker.canceled || !picker.assets?.[0]) return;
+      const asset = picker.assets[0];
+      const filename = asset.fileName ?? `scale-ticket-${job.id}.jpg`;
+      const mimeType = asset.mimeType ?? "image/jpeg";
+      const { objectPath } = await upload.mutateAsync({ uri: asset.uri, name: filename, mimeType });
+      await createTicket.mutateAsync({
+        jobId: job.id,
+        weightTons: weight,
+        photoUrl: `${API_BASE}/storage${objectPath}`,
+        notes: "Scale ticket",
+      });
+      setLoadModalOpen(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err: any) {
+      Alert.alert("Couldn't log load", err?.message ?? "Try again.");
+    } finally {
+      setBusyLoad(false);
+    }
   };
 
   const handleProof = async () => {
@@ -304,14 +345,47 @@ function DriverJobCard({
           )}
           <Pressable
             onPress={handleNewLoad}
-            disabled={createTicket.isPending}
+            disabled={busyLoad || createTicket.isPending}
             style={[styles.outlineBtn, { borderColor: colors.border }]}
           >
             <Feather name="plus" size={15} color={colors.foreground} />
             <Text style={[styles.outlineBtnText, { color: colors.foreground }]}>
-              {createTicket.isPending ? "Starting…" : "Start New Load"}
+              {busyLoad || createTicket.isPending ? "Saving…" : "Log Scale Ticket"}
             </Text>
           </Pressable>
+
+          <Modal visible={loadModalOpen} transparent animationType="slide" onRequestClose={() => setLoadModalOpen(false)}>
+            <View style={styles.modalBackdrop}>
+              <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.modalTitle, { color: colors.foreground }]}>Log scale ticket</Text>
+                <Text style={[styles.hint, { color: colors.mutedForeground }]}>
+                  Enter weight in tons, then attach a photo of the scale ticket.
+                </Text>
+                <TextInput
+                  value={loadWeight}
+                  onChangeText={setLoadWeight}
+                  keyboardType="decimal-pad"
+                  placeholder="Weight (tons)"
+                  placeholderTextColor={colors.mutedForeground}
+                  style={[styles.weightInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                />
+                <View style={styles.modalActions}>
+                  <Pressable onPress={() => setLoadModalOpen(false)} style={[styles.outlineBtn, { borderColor: colors.border, flex: 1 }]}>
+                    <Text style={[styles.outlineBtnText, { color: colors.foreground }]}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={submitNewLoad}
+                    disabled={busyLoad}
+                    style={[styles.primaryBtn, { backgroundColor: colors.primary, flex: 1 }]}
+                  >
+                    <Text style={[styles.primaryBtnText, { color: colors.primaryForeground }]}>
+                      {busyLoad ? "Saving…" : "Add photo & save"}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
 
           {/* Proof upload */}
           <Text style={[styles.sectionLabel, { color: colors.mutedForeground, marginTop: 18 }]}>PROOF OF DELIVERY</Text>
@@ -379,4 +453,9 @@ const styles = StyleSheet.create({
   outlineBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 10, borderWidth: 1 },
   outlineBtnText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   proofThumb: { width: 72, height: 72, borderRadius: 8, marginRight: 8 },
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "flex-end" },
+  modalCard: { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderWidth: 1, padding: 20, gap: 12 },
+  modalTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  weightInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, fontFamily: "Inter_500Medium" },
+  modalActions: { flexDirection: "row", gap: 10, marginTop: 4 },
 });

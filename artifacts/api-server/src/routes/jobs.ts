@@ -23,6 +23,7 @@ import { settleConfirmedPayout } from "../lib/payoutRetry";
 import { returnUrlBase, isAllowedReturnTo } from "../lib/returnUrl";
 import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCompletion, orgScopedActorIds, isDriverAssignedToJob } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
+import { recordActivity } from "../lib/activityNotify";
 import {
   ListJobsQueryParams,
   ListJobsResponse,
@@ -95,16 +96,12 @@ async function companiesFor(job: { customerId: number; providerId: number }) {
  * must never mask the underlying payment error, so callers don't await a throw.
  */
 async function notifyPaymentFailed(job: { id: number; customerId: number; materialType: string }): Promise<void> {
-  try {
-    await db.insert(activityTable).values({
-      profileId: job.customerId,
-      type: "payment_failed",
-      description: `Payment failed for job #${job.id} — ${job.materialType} delivery. Open the job to retry.`,
-      relatedId: job.id,
-    });
-  } catch (err) {
-    console.error("Failed to record payment_failed notification", err);
-  }
+  await recordActivity({
+    profileId: job.customerId,
+    type: "payment_failed",
+    description: `Payment failed for job #${job.id} — ${job.materialType} delivery. Open the job to retry.`,
+    relatedId: job.id,
+  });
 }
 
 /**
@@ -115,16 +112,12 @@ async function notifyPaymentFailed(job: { id: number; customerId: number; materi
  * the payment flow, so callers don't await a throw.
  */
 async function notifyPaymentRequiresAction(job: { id: number; customerId: number; materialType: string }): Promise<void> {
-  try {
-    await db.insert(activityTable).values({
-      profileId: job.customerId,
-      type: "payment_requires_action",
-      description: `Your bank needs you to confirm the payment for job #${job.id} — ${job.materialType} delivery. Open the job to verify your card.`,
-      relatedId: job.id,
-    });
-  } catch (err) {
-    console.error("Failed to record payment_requires_action notification", err);
-  }
+  await recordActivity({
+    profileId: job.customerId,
+    type: "payment_requires_action",
+    description: `Your bank needs you to confirm the payment for job #${job.id} — ${job.materialType} delivery. Open the job to verify your card.`,
+    relatedId: job.id,
+  });
 }
 
 /**
@@ -139,16 +132,12 @@ async function notifyPayoutDelayed(
   job: { id: number; providerId: number; materialType: string },
   reason: string,
 ): Promise<void> {
-  try {
-    await db.insert(activityTable).values({
-      profileId: job.providerId,
-      type: "payout_delayed",
-      description: `Payout delayed for job #${job.id} — ${job.materialType} delivery. ${reason} Set up your payout account to get paid.`,
-      relatedId: job.id,
-    });
-  } catch (err) {
-    console.error("Failed to record payout_delayed notification", err);
-  }
+  await recordActivity({
+    profileId: job.providerId,
+    type: "payout_delayed",
+    description: `Payout delayed for job #${job.id} — ${job.materialType} delivery. ${reason} Set up your payout account to get paid.`,
+    relatedId: job.id,
+  });
 }
 
 /**

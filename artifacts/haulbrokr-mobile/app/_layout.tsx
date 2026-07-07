@@ -22,6 +22,7 @@ import { AppProvider } from "@/context/AppContext";
 import { ClerkAuthProvider } from "@/context/ClerkAuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { useMyProfile } from "@/hooks/useLiveApi";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { recoverStaleClientJwtOnStartup, syncClerkSessionStorage, tokenCache } from "@/lib/clerkTokenCache";
 
 SplashScreen.preventAutoHideAsync();
@@ -48,6 +49,11 @@ function ClerkSessionStorageSync() {
     void syncClerkSessionStorage(isLoaded, !!isSignedIn);
   }, [isLoaded, isSignedIn]);
 
+  return null;
+}
+
+function PushRegistration() {
+  usePushNotifications(true);
   return null;
 }
 
@@ -95,7 +101,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <PushRegistration />
+      {children}
+    </>
+  );
 }
 
 export default function RootLayout() {

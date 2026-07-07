@@ -69,7 +69,19 @@ vi.mock("../lib/stripeClient", () => ({
 // Inject an authenticated profile (mutable per test) without Clerk. A fresh copy
 // is handed to the route so a route mutation (e.g. caching the new customer id on
 // the profile) never leaks back into the shared fixture.
+vi.mock("../middlewares/staffAuth", () => ({
+  attachStaffSession: (_req: any, _res: any, next: any) => next(),
+  requireStaffOrProfile: (req: any, _res: any, next: any) => {
+    req.profile = { ...h.profile };
+    next();
+  },
+}));
+
 vi.mock("../middlewares/requireAuth", () => ({
+  attachClerkProfileIfPresent: (req: any, _res: any, next: any) => {
+    req.profile = { ...h.profile };
+    next();
+  },
   requireAuth: (_req: any, _res: any, next: any) => next(),
   requireProfile: (req: any, _res: any, next: any) => {
     req.profile = { ...h.profile };
@@ -81,6 +93,7 @@ vi.mock("../middlewares/requireAuth", () => ({
 vi.mock("../middlewares/requireAdmin", () => ({
   isAdmin: () => true,
   requireAdmin: (_req: any, _res: any, next: any) => next(),
+  requirePermission: () => (_req: any, _res: any, next: any) => next(),
 }));
 
 import accountRouter from "./account";

@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "haulbrokr",
+      "bundleIdentifier": "com.haulbrokr.mobile",
       "buildNumber": "2",
       "usesAppleSignIn": true,
       "icon": "./assets/images/app-icon-ios.png",
@@ -64,6 +64,13 @@
         "expo-image-picker",
         {
           "photosPermission": "HaulBrokr accesses your photo library to attach job photos and compliance documents."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/app-icon-v2.png",
+          "color": "#1e2235"
         }
       ],
       [

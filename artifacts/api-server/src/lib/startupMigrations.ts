@@ -69,6 +69,20 @@ export async function runStartupMigrations(): Promise<void> {
         ON payment_refunds (idempotency_key);
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS device_tokens (
+        id serial PRIMARY KEY,
+        profile_id integer NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+        expo_push_token text NOT NULL,
+        platform text NOT NULL DEFAULT 'unknown',
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS device_tokens_profile_token_idx
+        ON device_tokens (profile_id, expo_push_token);
+    `);
+
     await client.query("COMMIT");
     logger.info("Startup migrations applied (refund schema)");
   } catch (err) {

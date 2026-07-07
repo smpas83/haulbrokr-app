@@ -10,8 +10,9 @@ import {
   dotCdlTable,
   creditApplicationsTable,
 } from "@workspace/db";
-import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
-import { hasPermission } from "../middlewares/requireAdmin";
+import { getRequestProfile, requireProfile, attachClerkProfileIfPresent } from "../middlewares/requireAuth";
+import { hasPermission, requirePermission } from "../middlewares/requireAdmin";
+import { attachStaffSession, requireStaffOrProfile } from "../middlewares/staffAuth";
 import { computeProviderCanBid } from "../lib/providerCompliance";
 import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
 import {
@@ -37,11 +38,10 @@ import {
 
 const router: IRouter = Router();
 
-// Compliance verification is a manual admin action, gated by the "compliance"
-// staff permission (AP/CFO/CTO; ADMIN_USER_IDS allowlist or dev fallback resolve
-// to CTO). See requireAdmin.
-const canVerifyCompliance = (req: Parameters<typeof hasPermission>[0]) =>
-  hasPermission(req, "compliance");
+router.use(attachStaffSession);
+router.use(attachClerkProfileIfPresent);
+
+// Compliance verification is staff-only (compliance permission).
 
 // ── Account Status ────────────────────────────────────────────────────────────
 router.get("/account/status", requireProfile, async (req, res): Promise<void> => {
@@ -586,18 +586,18 @@ router.post("/account/compliance", requireProfile, async (req, res): Promise<voi
   res.json(rec);
 });
 
-// Manual admin/demo verification — flips the automated checks to "verified".
-// (Live FMCSA / insurance verification is deferred; this stands in for it.)
-router.patch("/account/compliance/verify", requireProfile, async (req, res): Promise<void> => {
-  if (!(await canVerifyCompliance(req))) {
-    res.status(403).json({ error: "Compliance verification is performed manually by HaulBrokr staff." });
+// Staff manually verify carrier DOT/CDL after document review (no live FMCSA API yet).
+router.patch("/account/compliance/verify", requireStaffOrProfile, requirePermission("compliance"), async (req, res): Promise<void> => {
+  if (!req.staffUser && !req.profile) {
+    res.status(403).json({ error: "Staff access required." });
     return;
   }
-  const profile = getRequestProfile(req);
-  // Staff may verify any carrier by passing profileId; otherwise the action
-  // applies to the caller's own compliance record (demo/self-serve fallback).
   const targetProfileId =
-    typeof req.body?.profileId === "number" ? req.body.profileId : profile.id;
+    typeof req.body?.profileId === "number" ? req.body.profileId : req.profile?.id;
+  if (!Number.isFinite(targetProfileId)) {
+    res.status(400).json({ error: "profileId is required for compliance verification." });
+    return;
+  }
   const now = new Date();
   const [rec] = await db.update(dotCdlTable).set({
     dotVerified: true,
