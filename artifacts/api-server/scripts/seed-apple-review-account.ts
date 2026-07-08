@@ -3,8 +3,8 @@
  *
  * Credentials (never rotated by this script):
  *   Email:    apple-review@haulbrokr.com
- *   Password: Apple1demo123!
- *   Username: apple-review
+ *   Password: Apple1demo
+ *   Username: Apple1demo
  *
  * Usage:
  *   CLERK_SECRET_KEY=sk_live_... DATABASE_URL=postgresql://... \
@@ -24,8 +24,8 @@ import {
 } from "@workspace/db";
 
 const REVIEW_EMAIL = "apple-review@haulbrokr.com";
-const REVIEW_PASSWORD = "Apple1demo123!";
-const REVIEW_USERNAME = "apple-review";
+const REVIEW_PASSWORD = "Apple1demo";
+const REVIEW_USERNAME = "Apple1demo";
 const REVIEW_CLERK_MARKER = "apple-review-permanent";
 const REVIEW_COMPANY = "Apple Review Hauling Co";
 

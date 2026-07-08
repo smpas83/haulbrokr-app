@@ -83,7 +83,7 @@ Optional later: [Cloudflare R2](https://www.cloudflare.com/products/r2/) for fil
    export CLERK_SECRET_KEY="sk_live_..."
    pnpm --filter @workspace/api-server run seed-apple-review
    ```
-   Creates/updates `apple-review@haulbrokr.com` / `Apple1demo123!` with verified email, provider profile, fleet, jobs, and notifications. Add credentials to App Store Connect review notes.
+   Creates/updates `apple-review@haulbrokr.com` with username/password `Apple1demo` / `Apple1demo`, verified email, provider profile, fleet, jobs, and notifications. Add credentials to App Store Connect review notes.
 
 ---
 

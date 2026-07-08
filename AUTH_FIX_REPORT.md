@@ -127,8 +127,8 @@ https://www.haulbrokr.com/*
 | Field | Value |
 |-------|-------|
 | Email | `apple-review@haulbrokr.com` |
-| Password | `Apple1demo123!` |
-| Username | `apple-review` |
+| Password | `Apple1demo` |
+| Username | `Apple1demo` |
 | Clerk user ID | `user_3GC8nZ5HdNKYoyK668GV8iK0stW` (created 2026-07-07) |
 | Email verified | Yes (via Clerk API) |
 | Never expires | Password/metadata re-applied by seed script; `public_metadata.permanent: true` |
@@ -260,7 +260,8 @@ eas build --platform ios --profile production
    ```
    Demo account:
    Email: apple-review@haulbrokr.com
-   Password: Apple1demo123!
+   Username: Apple1demo
+   Password: Apple1demo
    ```
 
 ---
