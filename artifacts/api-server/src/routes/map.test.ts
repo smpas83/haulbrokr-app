@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import express from "express";
 import request from "supertest";
 
@@ -67,14 +67,41 @@ vi.mock("../lib/geocodeCache", () => ({
   resetGeocodeCacheForTests: vi.fn(),
 }));
 
-import mapRouter from "./map";
+import mapRouter, { mapConfigRouter } from "./map";
 
 function app() {
   const a = express();
   a.use(express.json());
+  a.use("/api", mapConfigRouter);
   a.use("/api", mapRouter);
   return a;
 }
+
+describe("GET /api/map/config", () => {
+  const originalKey = process.env.GOOGLE_MAPS_API_KEY;
+
+  afterEach(() => {
+    if (originalKey === undefined) {
+      delete process.env.GOOGLE_MAPS_API_KEY;
+    } else {
+      process.env.GOOGLE_MAPS_API_KEY = originalKey;
+    }
+  });
+
+  it("returns the configured Google Maps API key", async () => {
+    process.env.GOOGLE_MAPS_API_KEY = "test-google-maps-key";
+    const res = await request(app()).get("/api/map/config");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ googleMapsApiKey: "test-google-maps-key" });
+  });
+
+  it("returns 500 when GOOGLE_MAPS_API_KEY is missing", async () => {
+    delete process.env.GOOGLE_MAPS_API_KEY;
+    const res = await request(app()).get("/api/map/config");
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: "GOOGLE_MAPS_API_KEY not configured" });
+  });
+});
 
 describe("GET /api/map/marketplace", () => {
   beforeEach(() => {

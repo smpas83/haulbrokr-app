@@ -12,6 +12,7 @@ import {
 import router from "./routes";
 import healthRouter from "./routes/health";
 import automationRouter from "./routes/automation";
+import { mapConfigRouter } from "./routes/map";
 import stripeWebhooksRouter from "./routes/stripe-webhooks";
 import { globalRateLimit } from "./middlewares/rateLimit";
 import { errorHandler } from "./middlewares/errorHandler";
@@ -112,6 +113,7 @@ app.use(express.urlencoded({ extended: true }));
 // even when Clerk keys are absent/invalid. Mount it before clerkMiddleware.
 app.use("/api", healthRouter);
 app.use("/api", automationRouter);
+app.use("/api", mapConfigRouter);
 
 app.use(
   clerkMiddleware((req) => ({

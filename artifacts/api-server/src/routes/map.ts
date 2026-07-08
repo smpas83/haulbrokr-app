@@ -19,6 +19,19 @@ import {
 } from "../lib/demoMarketplace";
 import { geocodeAddressCached } from "../lib/geocodeCache";
 
+const mapConfigHandler: import("express").RequestHandler = (_req, res): void => {
+  const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!googleMapsApiKey) {
+    res.status(500).json({ error: "GOOGLE_MAPS_API_KEY not configured" });
+    return;
+  }
+  res.json({ googleMapsApiKey });
+};
+
+/** Public runtime config — mounted before Clerk auth in app.ts. */
+export const mapConfigRouter: IRouter = Router();
+mapConfigRouter.get("/map/config", mapConfigHandler);
+
 const router: IRouter = Router();
 
 const QuerySchema = z.object({

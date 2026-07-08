@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useFindMyLocation } from "@/hooks/useFindMyLocation";
+import { resolveGoogleMapsApiKey } from "@/lib/googleMapsKey";
 
 type MarketplaceMapData = {
   demoMode: boolean;
@@ -56,16 +57,14 @@ declare global {
 
 function loadGoogleMaps(): Promise<void> {
   if (window.google?.maps) return Promise.resolve();
-  const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  if (!key) return Promise.reject(new Error("VITE_GOOGLE_MAPS_API_KEY is not set"));
-  return new Promise((resolve, reject) => {
+  return resolveGoogleMapsApiKey().then((key) => new Promise((resolve, reject) => {
     window.__haulbrokrWebMapInit = () => resolve();
     const s = document.createElement("script");
     s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__haulbrokrWebMapInit`;
     s.async = true;
     s.onerror = () => reject(new Error("Google Maps script failed"));
     document.head.appendChild(s);
-  });
+  }));
 }
 
 async function fetchMarketplace(getToken: () => Promise<string | null>): Promise<MarketplaceMapData> {
@@ -288,7 +287,7 @@ export default function MapPage() {
             <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-2 text-muted-foreground">
               <MapPin className="h-10 w-10 opacity-40" />
               <p className="font-semibold text-destructive">{mapError}</p>
-              <p className="text-sm">Set VITE_GOOGLE_MAPS_API_KEY on Vercel to enable the live map.</p>
+              <p className="text-sm">Set VITE_GOOGLE_MAPS_API_KEY or configure GOOGLE_MAPS_API_KEY on the API server.</p>
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center h-full min-h-[480px]">

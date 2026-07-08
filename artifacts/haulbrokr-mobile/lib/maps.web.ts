@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { resolveGoogleMapsApiKey } from "@/lib/googleMapsKey";
 
 export type Region = {
   latitude: number;
@@ -26,22 +27,20 @@ function loadGoogleMapsScript(): Promise<void> {
   if (window.google?.maps) return Promise.resolve();
   if (mapsScriptPromise) return mapsScriptPromise;
 
-  const key =
-    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY;
+  mapsScriptPromise = resolveGoogleMapsApiKey()
+    .then((key) => new Promise<void>((resolve, reject) => {
+      window.__haulbrokrMapsInit = () => resolve();
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__haulbrokrMapsInit`;
+      script.async = true;
+      script.onerror = () => reject(new Error("Failed to load Google Maps"));
+      document.head.appendChild(script);
+    }))
+    .catch((err) => {
+      mapsScriptPromise = null;
+      throw err;
+    });
 
-  mapsScriptPromise = new Promise((resolve, reject) => {
-    if (!key) {
-      reject(new Error("GOOGLE_MAPS_API_KEY not configured"));
-      return;
-    }
-    window.__haulbrokrMapsInit = () => resolve();
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__haulbrokrMapsInit`;
-    script.async = true;
-    script.onerror = () => reject(new Error("Failed to load Google Maps"));
-    document.head.appendChild(script);
-  });
   return mapsScriptPromise;
 }
 
@@ -165,7 +164,7 @@ function MapView({
         View,
         { style: webStyles.placeholder },
         React.createElement(Text, { style: webStyles.label }, `Map unavailable: ${error}`),
-        React.createElement(Text, { style: webStyles.sub }, "Set GOOGLE_MAPS_API_KEY in EAS secrets for web maps."),
+        React.createElement(Text, { style: webStyles.sub }, "Set GOOGLE_MAPS_API_KEY in EAS secrets or configure it on the API server."),
       ),
     );
   }
