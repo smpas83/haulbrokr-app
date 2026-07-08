@@ -89,6 +89,7 @@ export default function SignInScreen() {
     setActive: ((params: { session: string }) => Promise<void>) | undefined,
     which: "google" | "apple",
   ) => {
+    console.log("[COMPLETE OAUTH]", { createdSessionId, hasSetActive: !!setActive });
     if (!createdSessionId) {
       setError(`Sign-in with ${which} couldn't complete. Please try again.`);
       return;
@@ -118,7 +119,9 @@ export default function SignInScreen() {
     setError("");
     try {
       if (which === "apple" && shouldUseNativeAppleSignIn()) {
-        const { createdSessionId, setActive } = await startAppleAuthenticationFlow();
+        const result = await startAppleAuthenticationFlow();
+      console.log("[APPLE AUTH RESULT]", JSON.stringify(result, null, 2));
+      const { createdSessionId, setActive } = result;
         await completeOAuthSession(createdSessionId, setActive, which);
         return;
       }

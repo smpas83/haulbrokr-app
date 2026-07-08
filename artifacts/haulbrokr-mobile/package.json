@@ -10,7 +10,9 @@
     "serve": "node server/serve.js",
     "check:web-build": "node scripts/check-web-build.js",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -76,7 +78,10 @@
     "expo-notifications": "~0.32.17",
     "expo-device": "~8.0.10",
     "react-native-maps": "1.20.1",
-    "react-native-qrcode-svg": "^6.3.21"
+    "react-native-qrcode-svg": "^6.3.21",
+    "expo": "~54.0.35",
+    "react": "19.1.0",
+    "react-native": "0.81.5"
   },
   "expo": {
     "doctor": {

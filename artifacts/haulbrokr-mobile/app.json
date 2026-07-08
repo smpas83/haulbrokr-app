@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HaulBrokr",
-    "slug": "dumpbroker-mobile",
+    "slug": "haulbrokr",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon-v2.png",
