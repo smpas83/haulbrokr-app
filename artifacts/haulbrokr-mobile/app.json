@@ -18,6 +18,12 @@
       "bundleIdentifier": "com.haulbrokr.mobile",
       "buildNumber": "2",
       "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:haulbrokr.com",
+        "applinks:www.haulbrokr.com",
+        "webcredentials:haulbrokr.com",
+        "webcredentials:www.haulbrokr.com"
+      ],
       "icon": "./assets/images/app-icon-ios.png",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "HaulBrokr uses your location to show nearby jobs and calculate distances.",
@@ -44,7 +50,13 @@
       "favicon": "./assets/images/app-icon-v2.png"
     },
     "plugins": [
-      "@clerk/expo",
+      [
+        "@clerk/expo",
+        {
+          "appleSignIn": true
+        }
+      ],
+      "expo-apple-authentication",
       [
         "expo-router",
         {

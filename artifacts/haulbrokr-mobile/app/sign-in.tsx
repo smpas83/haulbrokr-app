@@ -1,7 +1,8 @@
 import { useAuth, useClerk, useSignIn, useSignUp, useSSO } from "@clerk/expo";
+import { useSignInWithApple } from "@clerk/expo/apple";
+import { useSignInWithGoogle } from "@clerk/expo/google";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
-import * as AuthSession from "expo-auth-session";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useRef, useState } from "react";
@@ -20,6 +21,18 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  clerkErrorMessage,
+  isUserCancelledAuthError,
+  logClerkAuthError,
+  logClerkAuthStep,
+} from "@/lib/clerkAuthLogging";
+import {
+  clerkOAuthRedirectUri,
+  getAppleSignInConfigAudit,
+  hasGoogleNativeSignInConfig,
+  shouldUseNativeAppleSignIn,
+} from "@/lib/clerkOAuth";
 import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
@@ -28,11 +41,6 @@ type VerifyReason = "signup" | "trust";
 
 WebBrowser.maybeCompleteAuthSession();
 
-function clerkErrorMessage(error: { message?: string; longMessage?: string } | null | undefined): string {
-  if (!error) return "";
-  return error.longMessage ?? error.message ?? "";
-}
-
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
@@ -40,8 +48,21 @@ export default function SignInScreen() {
   const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
+  const { startAppleAuthenticationFlow } = useSignInWithApple();
+  const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
+
+  useEffect(() => {
+    const audit = getAppleSignInConfigAudit();
+    logClerkAuthStep("startup", "Apple/OAuth configuration audit", audit);
+    if (!audit.bundleIdMatches) {
+      logClerkAuthError("startup", new Error("Bundle identifier mismatch"), audit);
+    }
+    if (!audit.usesAppleSignIn && Platform.OS === "ios") {
+      logClerkAuthError("startup", new Error("usesAppleSignIn is false on iOS"), audit);
+    }
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -56,29 +77,140 @@ export default function SignInScreen() {
     }
   }, [authLoaded, isSignedIn]);
 
+  const activateSession = async (
+    sessionId: string | null | undefined,
+    scope = "setActive",
+  ): Promise<boolean> => {
+    if (!sessionId) {
+      logClerkAuthStep(scope, "skipped — no sessionId");
+      return false;
+    }
+
+    logClerkAuthStep(scope, "setActive:start", { sessionId });
+    try {
+      if (clerk.setActive) {
+        await clerk.setActive({ session: sessionId });
+      }
+      await markClerkActiveSession();
+      logClerkAuthStep(scope, "setActive:success", { sessionId });
+      return true;
+    } catch (err) {
+      logClerkAuthError(scope, err, { sessionId });
+      return false;
+    }
+  };
+
+  const completeOAuthSession = async (
+    createdSessionId: string | null | undefined,
+    setActive: ((params: { session: string }) => Promise<void>) | undefined,
+    which: "google" | "apple",
+  ) => {
+    logClerkAuthStep(`${which}-completeOAuthSession`, "start", {
+      hasCreatedSessionId: !!createdSessionId,
+      hasSetActive: !!setActive,
+    });
+
+    if (!createdSessionId) {
+      logClerkAuthError(`${which}-completeOAuthSession`, new Error("Missing createdSessionId"));
+      setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+      return;
+    }
+
+    try {
+      if (setActive) {
+        logClerkAuthStep(`${which}-completeOAuthSession`, "setActive:start", { createdSessionId });
+        await setActive({ session: createdSessionId });
+        logClerkAuthStep(`${which}-completeOAuthSession`, "setActive:success", { createdSessionId });
+      } else {
+        const activated = await activateSession(createdSessionId, `${which}-completeOAuthSession`);
+        if (!activated) {
+          setError(`Sign-in with ${which} couldn't activate your session. Please try again.`);
+          return;
+        }
+      }
+      await markClerkActiveSession();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      logClerkAuthStep(`${which}-completeOAuthSession`, "success", { createdSessionId });
+      router.replace("/" as any);
+    } catch (err) {
+      logClerkAuthError(`${which}-completeOAuthSession`, err, { createdSessionId });
+      setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+    }
+  };
+
   const handleSSO = async (strategy: "oauth_google" | "oauth_apple") => {
     const which = strategy === "oauth_google" ? "google" : "apple";
+    const redirectUrl = clerkOAuthRedirectUri();
     setSsoBusy(which);
     setError("");
+
+    logClerkAuthStep(`${which}-sso`, "start", {
+      strategy,
+      redirectUrl,
+      useNativeApple: which === "apple" && shouldUseNativeAppleSignIn(),
+      useNativeGoogle: which === "google" && hasGoogleNativeSignInConfig(),
+    });
+
     try {
+      if (which === "apple" && shouldUseNativeAppleSignIn()) {
+        logClerkAuthStep("apple", "startAppleAuthenticationFlow:start");
+        const flowResult = await startAppleAuthenticationFlow();
+        logClerkAuthStep("apple", "startAppleAuthenticationFlow:complete", {
+          createdSessionId: flowResult.createdSessionId,
+          hasSetActive: !!flowResult.setActive,
+          signInStatus: flowResult.signIn?.status,
+          signUpStatus: flowResult.signUp?.status,
+        });
+        await completeOAuthSession(flowResult.createdSessionId, flowResult.setActive, which);
+        return;
+      }
+
+      if (which === "google" && hasGoogleNativeSignInConfig()) {
+        logClerkAuthStep("google", "startGoogleAuthenticationFlow:start");
+        const flowResult = await startGoogleAuthenticationFlow();
+        logClerkAuthStep("google", "startGoogleAuthenticationFlow:complete", {
+          createdSessionId: flowResult.createdSessionId,
+          hasSetActive: !!flowResult.setActive,
+          signInStatus: flowResult.signIn?.status,
+          signUpStatus: flowResult.signUp?.status,
+        });
+        await completeOAuthSession(flowResult.createdSessionId, flowResult.setActive, which);
+        return;
+      }
+
+      logClerkAuthStep(`${which}-sso`, "startSSOFlow:start", { strategy, redirectUrl });
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy,
-        redirectUrl: AuthSession.makeRedirectUri(),
+        redirectUrl,
       });
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
-        await markClerkActiveSession();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        router.replace("/" as any);
-      } else {
-        setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+      logClerkAuthStep(`${which}-sso`, "startSSOFlow:complete", {
+        createdSessionId,
+        hasSetActive: !!setActive,
+        redirectUrl,
+      });
+      await completeOAuthSession(createdSessionId, setActive, which);
+    } catch (err: unknown) {
+      if (isUserCancelledAuthError(err)) {
+        logClerkAuthStep(`${which}-sso`, "cancelled by user");
+        return;
       }
-    } catch (err: any) {
-      const msg = err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? err?.message ?? "";
+
+      logClerkAuthError(`${which}-sso`, err, { strategy, redirectUrl });
+      const msg = clerkErrorMessage(err as Parameters<typeof clerkErrorMessage>[0]) || (err as Error)?.message || "";
       if (/not enabled|provider.*not.*configured|strategy.*not.*allowed/i.test(msg)) {
         setError(`Sign in with ${which === "google" ? "Google" : "Apple"} isn't enabled yet — turn it on in the Auth pane.`);
+      } else if (/redirect|callback|native application/i.test(msg)) {
+        setError(
+          `Sign in with ${which === "google" ? "Google" : "Apple"} failed — confirm Clerk Native Applications includes haulbrokr://sso-callback.`
+        );
+      } else if (/sign up not completed|authorization attempt failed/i.test(msg)) {
+        setError(
+          "Apple Sign-In did not finish. Confirm Clerk Native Applications has Team ID B7Z55AHC9L and bundle ID com.haulbrokr.mobile."
+        );
       } else if (msg) {
         setError(msg);
+      } else {
+        setError(`Sign-in with ${which} couldn't complete. Please try again.`);
       }
     } finally {
       setSsoBusy(null);
@@ -133,8 +265,9 @@ export default function SignInScreen() {
         return;
       }
       DevSettings.reload();
-    } catch (err: any) {
-      setError(err?.message ?? "Could not reset authentication data.");
+    } catch (err: unknown) {
+      logClerkAuthError("resetAuth", err);
+      setError((err as Error)?.message ?? "Could not reset authentication data.");
     } finally {
       setResettingAuth(false);
     }
@@ -144,7 +277,7 @@ export default function SignInScreen() {
     if (!signIn) return false;
 
     const sessionId = signIn.createdSessionId ?? signIn.existingSession?.sessionId ?? null;
-    const { error } = await signIn.finalize({
+    const { error: finalizeError } = await signIn.finalize({
       navigate: async ({ session }) => {
         await markClerkActiveSession();
         if (session?.currentTask) {
@@ -155,25 +288,30 @@ export default function SignInScreen() {
       },
     });
 
-    if (!error) {
+    if (!finalizeError) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return true;
     }
 
+    logClerkAuthError("signIn.finalize", finalizeError, { status: signIn.status, sessionId });
+
     if (sessionId && clerk.setActive) {
       try {
+        logClerkAuthStep("signIn.finalize", "setActive:fallback:start", { sessionId });
         await clerk.setActive({ session: sessionId });
         await markClerkActiveSession();
+        logClerkAuthStep("signIn.finalize", "setActive:fallback:success", { sessionId });
         router.replace("/" as any);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         return true;
-      } catch {
-        setError(clerkErrorMessage(error));
+      } catch (setActiveErr) {
+        logClerkAuthError("signIn.finalize.setActive", setActiveErr, { sessionId });
+        setError(clerkErrorMessage(finalizeError));
         return false;
       }
     }
 
-    setError(clerkErrorMessage(error));
+    setError(clerkErrorMessage(finalizeError));
     return false;
   };
 
@@ -186,14 +324,35 @@ export default function SignInScreen() {
     }
   }, [authLoaded, isSignedIn, signIn?.status, signIn?.createdSessionId, signIn?.existingSession?.sessionId]);
 
-  const finalizeSignUp = async () => {
-    if (!signUp) return;
-    await signUp.finalize({
+  const finalizeSignUp = async (): Promise<boolean> => {
+    if (!signUp) return false;
+
+    const sessionId = signUp.createdSessionId ?? null;
+    const { error: finalizeError } = await signUp.finalize({
       navigate: async () => {
         await markClerkActiveSession();
         router.replace("/onboarding" as any);
       },
     });
+
+    if (!finalizeError) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return true;
+    }
+
+    logClerkAuthError("signUp.finalize", finalizeError, { status: signUp.status, sessionId });
+
+    if (sessionId) {
+      const activated = await activateSession(sessionId, "signUp.finalize");
+      if (activated) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace("/onboarding" as any);
+        return true;
+      }
+    }
+
+    setError(clerkErrorMessage(finalizeError));
+    return false;
   };
 
   const beginSecondFactorEmail = async (): Promise<boolean> => {
@@ -233,6 +392,7 @@ export default function SignInScreen() {
     try {
       const { error: passwordError } = await signIn.password({ identifier: id, password });
       if (passwordError) {
+        logClerkAuthError("signIn.password", passwordError, { identifier: id });
         const msg = clerkErrorMessage(passwordError);
         if (/already signed in/i.test(msg)) {
           const finalized = await finalizeSignIn();
@@ -300,6 +460,7 @@ export default function SignInScreen() {
         password,
       });
       if (passwordError) {
+        logClerkAuthError("signUp.password", passwordError, { email: nextEmail, username: nextUsername });
         setError(clerkErrorMessage(passwordError));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
@@ -314,6 +475,7 @@ export default function SignInScreen() {
       if (signUp.status === "missing_requirements") {
         const { error: sendError } = await signUp.verifications.sendEmailCode();
         if (sendError) {
+          logClerkAuthError("signUp.sendEmailCode", sendError);
           setError(clerkErrorMessage(sendError));
           return;
         }
@@ -333,6 +495,37 @@ export default function SignInScreen() {
       void handleSignIn();
     } else {
       void handleSignUp();
+    }
+  };
+
+  const handleResendCode = async () => {
+    setError("");
+    if (!clerkReady) {
+      setError("Authentication is initialising. Please wait a moment.");
+      return;
+    }
+    setLoading(true);
+    try {
+      if (verifyReason === "trust") {
+        if (!signIn) return;
+        const { error: sendError } = await signIn.mfa.sendEmailCode();
+        if (sendError) {
+          logClerkAuthError("signIn.resendMfaCode", sendError);
+          setError(clerkErrorMessage(sendError));
+          return;
+        }
+        setError("");
+        return;
+      }
+      if (!signUp) return;
+      const { error: sendError } = await signUp.verifications.sendEmailCode();
+      if (sendError) {
+        logClerkAuthError("signUp.resendEmailCode", sendError);
+        setError(clerkErrorMessage(sendError));
+        return;
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -357,6 +550,7 @@ export default function SignInScreen() {
         }
         const { error: verifyError } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
         if (verifyError) {
+          logClerkAuthError("signIn.verifyMfaCode", verifyError);
           setError(clerkErrorMessage(verifyError));
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           return;
@@ -364,7 +558,10 @@ export default function SignInScreen() {
         if (signIn.status === "complete") {
           await finalizeSignIn();
         } else {
-          setError("Verification incomplete. Please try again.");
+          logClerkAuthError("signIn.verifyMfaIncomplete", new Error("MFA verify succeeded but sign-in not complete"), {
+            status: signIn.status,
+          });
+          setError("Additional verification is still required. Check your email or try signing in again.");
         }
         return;
       }
@@ -375,15 +572,32 @@ export default function SignInScreen() {
       }
       const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code: code.trim() });
       if (verifyError) {
+        logClerkAuthError("signUp.verifyEmailCode", verifyError, { status: signUp.status });
         setError(clerkErrorMessage(verifyError));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
-      if (signUp.status === "complete") {
+
+      const sessionId = signUp.createdSessionId ?? null;
+      if (signUp.status === "complete" || sessionId) {
+        if (sessionId) {
+          const activated = await activateSession(sessionId, "signUp.verifyEmailCode");
+          if (!activated && signUp.status !== "complete") {
+            setError("Verification succeeded but session activation failed. Please try again.");
+            return;
+          }
+        }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        await finalizeSignUp();
+        const finalized = await finalizeSignUp();
+        if (!finalized && signUp.status === "complete") {
+          await markClerkActiveSession();
+          router.replace("/onboarding" as any);
+        }
       } else {
-        setError("Verification incomplete. Please try again.");
+        logClerkAuthError("signUp.verifyIncomplete", new Error("Email verify succeeded without session"), {
+          status: signUp.status,
+        });
+        setError("Email verified but sign-up could not finish. Tap Resend or go back and try again.");
       }
     } finally {
       setLoading(false);
@@ -663,6 +877,11 @@ export default function SignInScreen() {
             </Pressable>
 
             <View style={styles.resendRow}>
+              <Text style={styles.resendLabel}>Didn't get a code? </Text>
+              <Pressable onPress={() => void handleResendCode()} disabled={busy}>
+                <Text style={styles.resendLink}>Resend</Text>
+              </Pressable>
+              <Text style={styles.resendLabel}> · </Text>
               <Text style={styles.resendLabel}>Wrong email? </Text>
               <Pressable onPress={handleBackToCredentials}>
                 <Text style={styles.resendLink}>Go back</Text>
