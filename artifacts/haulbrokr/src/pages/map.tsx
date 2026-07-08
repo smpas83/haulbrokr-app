@@ -54,17 +54,46 @@ declare global {
   }
 }
 
-function loadGoogleMaps(): Promise<void> {
+let mapsScriptPromise: Promise<void> | null = null;
+
+async function resolveGoogleMapsApiKey(getToken: () => Promise<string | null>): Promise<string> {
+  const buildKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim();
+  if (buildKey) return buildKey;
+
+  const token = await getToken();
+  const res = await fetch("/api/map/config", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    throw new Error("Unable to load map configuration");
+  }
+  const data = (await res.json()) as { googleMapsApiKey?: string | null };
+  const serverKey = data.googleMapsApiKey?.trim();
+  if (!serverKey) {
+    throw new Error("Google Maps is not configured on the server");
+  }
+  return serverKey;
+}
+
+function loadGoogleMaps(getToken: () => Promise<string | null>): Promise<void> {
   if (window.google?.maps) return Promise.resolve();
-  const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  if (!key) return Promise.reject(new Error("VITE_GOOGLE_MAPS_API_KEY is not set"));
-  return new Promise((resolve, reject) => {
-    window.__haulbrokrWebMapInit = () => resolve();
-    const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__haulbrokrWebMapInit`;
-    s.async = true;
-    s.onerror = () => reject(new Error("Google Maps script failed"));
-    document.head.appendChild(s);
+  if (mapsScriptPromise) return mapsScriptPromise;
+
+  mapsScriptPromise = resolveGoogleMapsApiKey(getToken).then(
+    (key) =>
+      new Promise<void>((resolve, reject) => {
+        window.__haulbrokrWebMapInit = () => resolve();
+        const s = document.createElement("script");
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__haulbrokrWebMapInit`;
+        s.async = true;
+        s.onerror = () => reject(new Error("Google Maps script failed to load"));
+        document.head.appendChild(s);
+      }),
+  );
+
+  return mapsScriptPromise.catch((err) => {
+    mapsScriptPromise = null;
+    throw err;
   });
 }
 
@@ -105,9 +134,10 @@ export default function MapPage() {
   });
 
   useEffect(() => {
-    loadGoogleMaps()
+    let cancelled = false;
+    loadGoogleMaps(getToken)
       .then(() => {
-        if (!mapDivRef.current || !window.google?.maps) return;
+        if (cancelled || !mapDivRef.current || !window.google?.maps) return;
         mapRef.current = new window.google.maps.Map(mapDivRef.current, {
           center: { lat: 39.8283, lng: -98.5795 },
           zoom: 4,
@@ -123,8 +153,13 @@ export default function MapPage() {
         });
         setMapReady(true);
       })
-      .catch((err) => setMapError(err instanceof Error ? err.message : "Map failed"));
-  }, []);
+      .catch((err) => {
+        if (!cancelled) setMapError(err instanceof Error ? err.message : "Map failed");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [getToken]);
 
   const renderUserLocation = useCallback(() => {
     if (!mapReady || !mapRef.current || !userCoords || !window.google?.maps) return;
@@ -288,7 +323,7 @@ export default function MapPage() {
             <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-2 text-muted-foreground">
               <MapPin className="h-10 w-10 opacity-40" />
               <p className="font-semibold text-destructive">{mapError}</p>
-              <p className="text-sm">Set VITE_GOOGLE_MAPS_API_KEY on Vercel to enable the live map.</p>
+              <p className="text-sm">Ensure GOOGLE_MAPS_API_KEY is set on the API server, or VITE_GOOGLE_MAPS_API_KEY on Vercel.</p>
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center h-full min-h-[480px]">
@@ -326,7 +361,7 @@ export default function MapPage() {
                 </div>
               )}
 
-              <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
+              <div className="absolute bottom-6 right-6 z-10 flex flex-col items-end gap-2">
                 {following && userCoords && (
                   <Button
                     size="icon"
@@ -335,14 +370,17 @@ export default function MapPage() {
                     onClick={handleRecenter}
                     disabled={locating}
                     title="Re-center on my location"
+                    aria-label="Re-center on my location"
                   >
                     {locating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Crosshair className="h-5 w-5" />}
                   </Button>
                 )}
                 <Button
-                  size="icon"
                   variant={following ? "default" : "secondary"}
-                  className={cn("h-11 w-11 rounded-full border-2 shadow-lg", following && "ring-2 ring-blue-400/60")}
+                  className={cn(
+                    "rounded-none border-2 shadow-lg gap-2 px-4 h-11",
+                    following && "ring-2 ring-blue-400/60",
+                  )}
                   onClick={async () => {
                     if (following) {
                       stopFollowing();
@@ -351,9 +389,11 @@ export default function MapPage() {
                     await handleFindMe();
                   }}
                   disabled={locating}
-                  title={following ? "Stop following my location" : "Find my location"}
+                  title={following ? "Stop following my location" : "Locate me on the map"}
+                  aria-label={following ? "Stop following my location" : "Locate me"}
                 >
                   {locating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Navigation className="h-5 w-5" />}
+                  <span className="font-semibold">{following ? "Following" : "Locate Me"}</span>
                 </Button>
               </div>
             </>

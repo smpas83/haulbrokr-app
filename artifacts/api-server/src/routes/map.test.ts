@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import express from "express";
 import request from "supertest";
 
@@ -75,6 +75,32 @@ function app() {
   a.use("/api", mapRouter);
   return a;
 }
+
+describe("GET /api/map/config", () => {
+  const originalKey = process.env.GOOGLE_MAPS_API_KEY;
+
+  afterEach(() => {
+    if (originalKey === undefined) {
+      delete process.env.GOOGLE_MAPS_API_KEY;
+    } else {
+      process.env.GOOGLE_MAPS_API_KEY = originalKey;
+    }
+  });
+
+  it("returns the server Google Maps API key", async () => {
+    process.env.GOOGLE_MAPS_API_KEY = " AIza-test-key ";
+    const res = await request(app()).get("/api/map/config");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ googleMapsApiKey: "AIza-test-key" });
+  });
+
+  it("returns null when the key is not configured", async () => {
+    delete process.env.GOOGLE_MAPS_API_KEY;
+    const res = await request(app()).get("/api/map/config");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ googleMapsApiKey: null });
+  });
+});
 
 describe("GET /api/map/marketplace", () => {
   beforeEach(() => {

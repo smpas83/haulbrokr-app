@@ -227,6 +227,16 @@ async function handleMarketplace(req: Parameters<typeof getRequestProfile>[0], r
 }
 
 /**
+ * Public map bootstrap config for authenticated clients.
+ * Returns the Google Maps JavaScript API key from server env so the web app
+ * does not require a separate VITE_GOOGLE_MAPS_API_KEY build-time variable.
+ */
+router.get("/map/config", requireProfile, (_req, res): void => {
+  const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY?.trim() || null;
+  res.json({ googleMapsApiKey });
+});
+
+/**
  * Forward-geocode a street address (Google Geocoding API when configured, else Nominatim).
  * Kept for clients that predate GET /map/marketplace server-side geocoding.
  */
