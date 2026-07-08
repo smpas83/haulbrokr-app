@@ -48,6 +48,8 @@ const STATUS_COLOR: Record<string, string> = {
   en_route: "#e9a600",
 };
 
+const GOOGLE_MAPS_SCRIPT_ID = "haulbrokr-google-maps-script";
+
 declare global {
   interface Window {
     google?: any;
@@ -55,16 +57,57 @@ declare global {
   }
 }
 
+let mapsScriptPromise: Promise<void> | null = null;
+
 function loadGoogleMaps(): Promise<void> {
-  if (window.google?.maps) return Promise.resolve();
-  return resolveGoogleMapsApiKey().then((key) => new Promise((resolve, reject) => {
-    window.__haulbrokrWebMapInit = () => resolve();
-    const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__haulbrokrWebMapInit`;
-    s.async = true;
-    s.onerror = () => reject(new Error("Google Maps script failed"));
-    document.head.appendChild(s);
-  }));
+  if (window.google?.maps) {
+    return Promise.resolve();
+  }
+
+  if (mapsScriptPromise) {
+    return mapsScriptPromise;
+  }
+
+  mapsScriptPromise = resolveGoogleMapsApiKey().then(
+    (key) =>
+      new Promise<void>((resolve, reject) => {
+        const finish = () => {
+          console.log("Maps script loaded");
+          resolve();
+        };
+
+        if (window.google?.maps) {
+          finish();
+          return;
+        }
+
+        const existingScript = document.getElementById(GOOGLE_MAPS_SCRIPT_ID);
+        if (existingScript) {
+          if (window.google?.maps) {
+            finish();
+            return;
+          }
+
+          const previousCallback = window.__haulbrokrWebMapInit;
+          window.__haulbrokrWebMapInit = () => {
+            previousCallback?.();
+            finish();
+          };
+          return;
+        }
+
+        window.__haulbrokrWebMapInit = finish;
+
+        const script = document.createElement("script");
+        script.id = GOOGLE_MAPS_SCRIPT_ID;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__haulbrokrWebMapInit`;
+        script.async = true;
+        script.onerror = () => reject(new Error("Google Maps script failed"));
+        document.head.appendChild(script);
+      }),
+  );
+
+  return mapsScriptPromise;
 }
 
 async function fetchMarketplace(getToken: () => Promise<string | null>): Promise<MarketplaceMapData> {
@@ -104,9 +147,26 @@ export default function MapPage() {
   });
 
   useEffect(() => {
-    loadGoogleMaps()
-      .then(() => {
-        if (!mapDivRef.current || !window.google?.maps) return;
+    if (isLoading || isError || mapError || mapReady) return;
+
+    let cancelled = false;
+
+    const initMap = async () => {
+      try {
+        await loadGoogleMaps();
+        if (cancelled) return;
+
+        if (!window.google) {
+          throw new Error("Google Maps API not available (window.google is missing)");
+        }
+        if (!window.google.maps) {
+          throw new Error("Google Maps API not available (window.google.maps is missing)");
+        }
+        if (!mapDivRef.current) {
+          throw new Error("Map container element is not mounted");
+        }
+
+        console.log("Creating map");
         mapRef.current = new window.google.maps.Map(mapDivRef.current, {
           center: { lat: 39.8283, lng: -98.5795 },
           zoom: 4,
@@ -120,10 +180,22 @@ export default function MapPage() {
             { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a1628" }] },
           ],
         });
+        console.log("Map created");
         setMapReady(true);
-      })
-      .catch((err) => setMapError(err instanceof Error ? err.message : "Map failed"));
-  }, []);
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          setMapError(err instanceof Error ? err.message : String(err));
+        }
+      }
+    };
+
+    void initMap();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, isError, mapError, mapReady]);
 
   const renderUserLocation = useCallback(() => {
     if (!mapReady || !mapRef.current || !userCoords || !window.google?.maps) return;
@@ -161,58 +233,65 @@ export default function MapPage() {
 
   const renderMarkers = useCallback(() => {
     if (!mapReady || !mapRef.current || !data || !window.google?.maps) return;
-    overlaysRef.current.forEach((o) => o.setMap(null));
-    overlaysRef.current = [];
 
-    for (const load of data.loads) {
-      const marker = new window.google.maps.Marker({
-        map: mapRef.current,
-        position: { lat: load.latitude, lng: load.longitude },
-        title: load.projectName,
-        icon: {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          scale: 7,
-          fillColor: STATUS_COLOR[load.status] ?? "#e9a600",
-          fillOpacity: 1,
-          strokeColor: "#fff",
-          strokeWeight: 2,
-        },
-      });
-      overlaysRef.current.push(marker);
-    }
+    try {
+      console.log("Rendering markers");
+      overlaysRef.current.forEach((o) => o.setMap(null));
+      overlaysRef.current = [];
 
-    for (const truck of data.trucks) {
-      const marker = new window.google.maps.Marker({
-        map: mapRef.current,
-        position: { lat: truck.latitude, lng: truck.longitude },
-        title: `${truck.label} — ${truck.ownerCompany}`,
-        icon: {
-          path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 5,
-          fillColor: STATUS_COLOR[truck.status] ?? "#22c55e",
-          fillOpacity: 1,
-          strokeColor: "#fff",
+      for (const load of data.loads) {
+        const marker = new window.google.maps.Marker({
+          map: mapRef.current,
+          position: { lat: load.latitude, lng: load.longitude },
+          title: load.projectName,
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 7,
+            fillColor: STATUS_COLOR[load.status] ?? "#e9a600",
+            fillOpacity: 1,
+            strokeColor: "#fff",
+            strokeWeight: 2,
+          },
+        });
+        overlaysRef.current.push(marker);
+      }
+
+      for (const truck of data.trucks) {
+        const marker = new window.google.maps.Marker({
+          map: mapRef.current,
+          position: { lat: truck.latitude, lng: truck.longitude },
+          title: `${truck.label} — ${truck.ownerCompany}`,
+          icon: {
+            path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 5,
+            fillColor: STATUS_COLOR[truck.status] ?? "#22c55e",
+            fillOpacity: 1,
+            strokeColor: "#fff",
+            strokeWeight: 1,
+          },
+        });
+        overlaysRef.current.push(marker);
+      }
+
+      for (const zone of data.heatZones) {
+        const circle = new window.google.maps.Circle({
+          map: mapRef.current,
+          center: { lat: zone.latitude, lng: zone.longitude },
+          radius: zone.radius,
+          fillColor: "#f59e0b",
+          fillOpacity: 0.12 + zone.intensity * 0.08,
+          strokeColor: "#f59e0b",
+          strokeOpacity: 0.35,
           strokeWeight: 1,
-        },
-      });
-      overlaysRef.current.push(marker);
-    }
+        });
+        overlaysRef.current.push(circle);
+      }
 
-    for (const zone of data.heatZones) {
-      const circle = new window.google.maps.Circle({
-        map: mapRef.current,
-        center: { lat: zone.latitude, lng: zone.longitude },
-        radius: zone.radius,
-        fillColor: "#f59e0b",
-        fillOpacity: 0.12 + zone.intensity * 0.08,
-        strokeColor: "#f59e0b",
-        strokeOpacity: 0.35,
-        strokeWeight: 1,
-      });
-      overlaysRef.current.push(circle);
+      renderUserLocation();
+      console.log("Rendering complete");
+    } catch (err) {
+      console.error(err);
     }
-
-    renderUserLocation();
   }, [mapReady, data, renderUserLocation]);
 
   useEffect(() => {
@@ -301,9 +380,10 @@ export default function MapPage() {
           ) : (
             <>
               <div ref={mapDivRef} className={cn("w-full h-full min-h-[480px]", !mapReady && "opacity-0")} />
-              {!mapReady && (
-                <div className="absolute inset-0 flex items-center justify-center">
+              {!mapReady && !mapError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Loading map...</p>
                 </div>
               )}
 
