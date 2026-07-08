@@ -44,6 +44,18 @@ jobs:
         run: pnpm test
         working-directory: artifacts/haulbrokr-mobile
 
+      - name: Require EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "${EXPO_TOKEN}" ]; then
+            echo "::error::EXPO_TOKEN secret is missing."
+            echo "Add it under GitHub → Settings → Secrets and variables → Actions."
+            echo "Create a token at https://expo.dev/accounts/smpas83/settings/access-tokens"
+            echo "The Mobile TestFlight workflow cannot run EAS build or submit without EXPO_TOKEN."
+            exit 1
+          fi
+
       - name: Build iOS (production)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
