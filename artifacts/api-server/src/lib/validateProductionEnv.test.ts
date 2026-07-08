@@ -29,6 +29,7 @@ const VALID_PRODUCTION_ENV: Record<string, string> = {
   TICKET_QR_SECRET: "ticket-qr-secret-32-characters-minimum",
   STAFF_AUTH_SECRET: "staff-auth-secret-32-characters-min",
   ADMIN_USER_IDS: "user_admin_clerk_id",
+  GOOGLE_MAPS_API_KEY: "AIzaSyExampleGoogleMapsApiKey",
 };
 
 describe("validateProductionEnv", () => {

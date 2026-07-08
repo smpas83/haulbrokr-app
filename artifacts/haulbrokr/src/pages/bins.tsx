@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
+import { useReverseGeocode } from "@/hooks/useReverseGeocode";
 import { cn } from "@/lib/utils";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -95,42 +96,6 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-// ── Location Hook ─────────────────────────────────────────────────────────────
-
-function useReverseGeocode() {
-  const [loading, setLoading] = useState(false);
-
-  const getAddress = useCallback(async (): Promise<string | null> => {
-    if (!navigator.geolocation) return null;
-    setLoading(true);
-    try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
-      );
-      const { latitude, longitude } = pos.coords;
-      const resp = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const data = await resp.json();
-      const a = data.address || {};
-      const parts = [
-        a.house_number,
-        a.road,
-        a.city || a.town || a.village || a.county,
-        a.state,
-        a.postcode,
-      ].filter(Boolean);
-      return parts.join(", ") || data.display_name || null;
-    } catch {
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  return { getAddress, loading };
-}
 
 // ── Bin Card ──────────────────────────────────────────────────────────────────
 
@@ -180,7 +145,7 @@ function BinCard({ bin, selected, onSelect, type }: {
 export default function BinsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { getAddress, loading: geoLoading } = useReverseGeocode();
+  const { getAddressFromLocation, geoLoading } = useReverseGeocode();
 
   const [tab, setTab] = useState<"temporary" | "permanent">("temporary");
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -248,7 +213,7 @@ export default function BinsPage() {
   });
 
   const handleUseMyLocation = async () => {
-    const addr = await getAddress();
+    const addr = await getAddressFromLocation();
     if (addr) {
       setDeliveryAddress(addr);
       toast({ title: "Location detected", description: addr });

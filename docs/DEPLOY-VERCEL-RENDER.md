@@ -143,6 +143,7 @@ Optional later: [Cloudflare R2](https://www.cloudflare.com/products/r2/) for fil
 |----------|-------|
 | `VITE_CLERK_PUBLISHABLE_KEY` | Same Clerk publishable key |
 | `VITE_CLERK_PROXY_URL` | `/api/__clerk` |
+| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JavaScript API key (restrict by HTTP referrer: `haulbrokr.com/*`) |
 
 5. Deploy
 6. **Domains** → add `haulbrokr.com` and `www.haulbrokr.com`
@@ -245,6 +246,7 @@ Run through on production:
 | `CLERK_PUBLISHABLE_KEY` | ✅ | — | — |
 | `VITE_CLERK_PUBLISHABLE_KEY` | — | ✅ | — |
 | `VITE_CLERK_PROXY_URL` | — | ✅ (`/api/__clerk`) | — |
+| `VITE_GOOGLE_MAPS_API_KEY` | — | ✅ | — |
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | — | — | ✅ |
 | `EXPO_PUBLIC_DOMAIN` | — | — | ✅ (`haulbrokr.com`) |
 | `STRIPE_SECRET_KEY` | ✅ | — | — |
@@ -263,7 +265,7 @@ Run through on production:
 | `TICKET_QR_SECRET` | ✅ auto | — | — |
 | `PRIVATE_OBJECT_DIR` | ✅ | — | — |
 | `PUBLIC_OBJECT_SEARCH_PATHS` | ✅ | — | — |
-| `GOOGLE_MAPS_API_KEY` | — | — | ✅ |
+| `GOOGLE_MAPS_API_KEY` | ✅ (Geocoding API) | — | ✅ (Android Maps SDK) |
 
 ---
 

@@ -134,6 +134,7 @@ function validateEnv() {
     "ADMIN_USER_IDS",
     "EXPO_PUBLIC_DOMAIN",
     "GOOGLE_MAPS_API_KEY",
+    "VITE_GOOGLE_MAPS_API_KEY",
   ]) {
     requireEnv(name, "required deployment variable");
   }

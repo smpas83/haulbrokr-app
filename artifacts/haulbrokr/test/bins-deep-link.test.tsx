@@ -5,6 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import BinsPage from "@/pages/bins";
 
+vi.mock("@/hooks/useReverseGeocode", () => ({
+  useReverseGeocode: () => ({
+    getAddressFromLocation: vi.fn(async () => null),
+    geoLoading: false,
+  }),
+}));
+
 /**
  * The bins page is the deep-link target of a bin notification: tapping a
  * notification navigates to `/bins?order=<uuid>`. The page must read that param,

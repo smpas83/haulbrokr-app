@@ -52,11 +52,13 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   // Render (API host)
   { service: "render", variable: "PORT", required: true, description: "HTTP listen port (8080 on Render)." },
   { service: "render", variable: "NODE_ENV", required: true, description: "Must be production on Render." },
+  { service: "render", variable: "GOOGLE_MAPS_API_KEY", required: true, description: "Google Geocoding API key for server-side geocoding (required in production; no Nominatim fallback)." },
   { service: "render", variable: "CORS_ALLOWED_ORIGINS", required: false, description: "Optional comma-separated browser origins beyond haulbrokr.com/www/haulbrokr.vercel.app." },
 
   // Vercel (web app — validated at build/runtime on Vercel, documented for ops)
   { service: "vercel", variable: "VITE_CLERK_PUBLISHABLE_KEY", required: true, description: "Clerk publishable key baked into the Vercel web build." },
   { service: "vercel", variable: "VITE_CLERK_PROXY_URL", required: true, description: "Clerk proxy URL on the Vercel domain (https://your-domain/api/__clerk)." },
+  { service: "vercel", variable: "VITE_GOOGLE_MAPS_API_KEY", required: true, description: "Google Maps JavaScript API key for haulbrokr.com live map page." },
 
   // Core API secrets
   { service: "core", variable: "UPLOAD_TOKEN_SECRET", required: true, description: "HMAC secret for upload tokens (≥32 chars)." },
@@ -261,6 +263,13 @@ function validateRender(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): v
   if (env.NODE_ENV !== "production") {
     pushInvalid(issues, "render", "NODE_ENV", 'NODE_ENV must be "production" on Render.');
   }
+
+  const mapsKey = envValue(env, "GOOGLE_MAPS_API_KEY");
+  if (!mapsKey) {
+    pushMissing(issues, "render", "GOOGLE_MAPS_API_KEY");
+  } else if (!mapsKey.startsWith("AIza")) {
+    pushInvalid(issues, "render", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_API_KEY must start with AIza.");
+  }
 }
 
 function validateCoreSecrets(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
@@ -337,7 +346,7 @@ function formatIssues(issues: EnvValidationIssue[]): string {
   const lines: string[] = [
     "Production environment validation failed. Fix the following before starting the API server:",
     "",
-    "Vercel web app (haulbrokr.com) also requires VITE_CLERK_PUBLISHABLE_KEY and VITE_CLERK_PROXY_URL — set those in the Vercel project dashboard.",
+    "Vercel web app (haulbrokr.com) also requires VITE_CLERK_PUBLISHABLE_KEY, VITE_CLERK_PROXY_URL, and VITE_GOOGLE_MAPS_API_KEY — set those in the Vercel project dashboard.",
     "",
   ];
 
