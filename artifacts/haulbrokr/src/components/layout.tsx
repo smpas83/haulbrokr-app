@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Truck, ClipboardList, Briefcase, LayoutDashboard,
-  LogOut, Loader2, Settings, Menu, Trash2,
+  LogOut, Settings, Menu, Trash2,
   FolderOpen, DollarSign, Plug, ShieldCheck, Building2, MapPin,
   Sparkles, Radio
 } from "lucide-react";
@@ -112,18 +112,11 @@ export function Layout({ children }: { children: ReactNode }) {
   const { signOut } = useClerk();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
-  const { data: profile, isLoading } = useGetMyProfile();
+  const { data: profile } = useGetMyProfile();
   const { data: adminAccess } = useGetAdminAccess();
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading mission control...</p>
-        </div>
-      </div>
-    );
+  if (!profile) {
+    return null;
   }
 
   const isCustomer = profile?.role === "customer";

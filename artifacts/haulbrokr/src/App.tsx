@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import SupportPage from "./pages/support";
 import PrivacyPage from "./pages/privacy";
 
+const LandingPage = lazy(() => import("./pages/landing"));
 const AuthShell = lazy(() => import("./AuthShell"));
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -20,6 +21,11 @@ function AppLoader() {
 function PublicRouter() {
   return (
     <Switch>
+      <Route path="/">
+        <Suspense fallback={null}>
+          <LandingPage />
+        </Suspense>
+      </Route>
       <Route path="/support" component={SupportPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route>

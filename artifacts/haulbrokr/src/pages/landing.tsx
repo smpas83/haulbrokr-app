@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   ArrowRight, CheckCircle2, ClipboardCheck, DollarSign, FileText,
   HardHat, LayoutDashboard, MapPin, Navigation, Search, ShieldCheck,
@@ -5,7 +6,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { SurfacePanel, AnimatedNationMap, AiCopilotPreview, FaqSection } from "@/components/design";
+import { SurfacePanel } from "@/components/design";
+import { SignedInRedirect } from "@/components/signed-in-redirect";
 import logo from "@/assets/haulbrokr-logo.png";
 import logoWebp from "@/assets/haulbrokr-logo.webp";
 import heroTruck from "@/assets/hero-truck.png";
@@ -13,6 +15,16 @@ import heroTruckWebp from "@/assets/hero-truck.webp";
 import heroTruckSmWebp from "@/assets/hero-truck-sm.webp";
 import ctaTruck from "@/assets/cta-truck.png";
 import ctaTruckWebp from "@/assets/cta-truck.webp";
+
+const AnimatedNationMap = lazy(() =>
+  import("@/components/design/animated-nation-map").then((m) => ({ default: m.AnimatedNationMap }))
+);
+const AiCopilotPreview = lazy(() =>
+  import("@/components/design/ai-copilot-preview").then((m) => ({ default: m.AiCopilotPreview }))
+);
+const FaqSection = lazy(() =>
+  import("@/components/design/faq-section").then((m) => ({ default: m.FaqSection }))
+);
 
 const PLATFORM_HIGHLIGHTS = [
   { label: "Coverage", value: "Nationwide", detail: "All 50 states" },
@@ -155,6 +167,7 @@ const FAQ = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
+      <SignedInRedirect />
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:h-[4.5rem]">
@@ -220,7 +233,9 @@ export default function LandingPage() {
 
               <div className="relative animate-fade-in">
                 <SurfacePanel elevated className="p-1">
-                  <AnimatedNationMap className="h-[420px]" />
+                  <Suspense fallback={<div className="h-[420px] animate-pulse bg-muted/30 rounded-xl" />}>
+                    <AnimatedNationMap className="h-[420px]" />
+                  </Suspense>
                 </SurfacePanel>
               </div>
             </div>
@@ -267,7 +282,9 @@ export default function LandingPage() {
                   ))}
                 </div>
               </SurfacePanel>
-              <AiCopilotPreview />
+              <Suspense fallback={<div className="min-h-[320px] animate-pulse bg-muted/30 rounded-2xl" />}>
+                <AiCopilotPreview />
+              </Suspense>
             </div>
           </div>
         </section>
@@ -375,7 +392,9 @@ export default function LandingPage() {
                   ))}
                 </ul>
               </div>
-              <AiCopilotPreview className="min-h-[420px]" />
+              <Suspense fallback={<div className="min-h-[420px] animate-pulse bg-muted/30 rounded-2xl" />}>
+                <AiCopilotPreview className="min-h-[420px]" />
+              </Suspense>
             </div>
           </div>
         </section>
@@ -457,7 +476,9 @@ export default function LandingPage() {
               <p className="text-sm font-semibold uppercase tracking-wider text-primary">FAQ</p>
               <h2 className="mt-3 text-4xl font-bold tracking-tight">Questions from the jobsite</h2>
             </div>
-            <FaqSection items={FAQ} />
+            <Suspense fallback={<div className="space-y-3">{FAQ.map((item) => <div key={item.question} className="h-14 animate-pulse bg-muted/30 rounded-lg" />)}</div>}>
+              <FaqSection items={FAQ} />
+            </Suspense>
           </div>
         </section>
 

@@ -168,10 +168,14 @@ export default defineConfig(async ({ command }) => {
         notFound: path.resolve(import.meta.dirname, "404.html"),
       },
       output: {
-        manualChunks: {
-          "auth-shell": [
-            path.resolve(import.meta.dirname, "src/AuthShell.tsx"),
-          ],
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("@clerk")) return "vendor-clerk";
+          if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
+          if (id.includes("@tanstack/react-query")) return "vendor-query";
+          if (id.includes("@radix-ui")) return "vendor-radix";
+          if (id.includes("lucide-react")) return "vendor-icons";
+          if (id.includes("@stripe")) return "vendor-stripe";
         },
       },
     },

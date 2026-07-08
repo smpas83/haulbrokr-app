@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
+import { ClerkProvider, Show, useAuth, useClerk } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
@@ -7,9 +7,8 @@ import { Loader2 } from "lucide-react";
 
 import { Layout } from "./components/layout";
 import { Toaster } from "@/components/ui/toaster";
-import { useGetMyProfile } from "@workspace/api-client-react";
+import { getGetMyProfileQueryOptions, useGetMyProfile } from "@workspace/api-client-react";
 import { SignInPage, SignUpPage } from "./pages/auth";
-import LandingPage from "./pages/landing";
 
 const OnboardingPage = lazy(() => import("./pages/onboarding"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
@@ -35,7 +34,14 @@ const AdminPage = lazy(() => import("./pages/admin"));
 const AdminLoginPage = lazy(() => import("./pages/admin-login"));
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -117,6 +123,19 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
+function ProfilePrefetcher() {
+  const { isSignedIn, isLoaded } = useAuth();
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      void qc.prefetchQuery(getGetMyProfileQueryOptions());
+    }
+  }, [isLoaded, isSignedIn, qc]);
+
+  return null;
+}
+
 function RequireProfile({ children }: { children: React.ReactNode }) {
   const { data: profile, isLoading, error } = useGetMyProfile();
 
@@ -151,13 +170,10 @@ function AuthShellRoutes() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
+        <ProfilePrefetcher />
         <Suspense fallback={<AppLoader />}>
           <Switch>
             <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/">
-              <Show when="signed-in"><Redirect to="/dashboard" /></Show>
-              <Show when="signed-out"><LandingPage /></Show>
-            </Route>
             <Route path="/sign-up/*?" component={SignUpPage} />
 
             <Route path="/onboarding">
