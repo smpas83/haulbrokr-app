@@ -54,10 +54,45 @@ declare global {
   interface Window {
     google?: any;
     __haulbrokrWebMapInit?: () => void;
+    gm_authFailure?: () => void;
   }
 }
 
 let mapsScriptPromise: Promise<void> | null = null;
+
+function detectGoogleMapsRuntimeError(container: HTMLElement | null): string | null {
+  const errMessage = container?.querySelector(".gm-err-message");
+  const text = errMessage?.textContent?.trim();
+  return text || null;
+}
+
+function watchForGoogleMapsRuntimeError(
+  container: HTMLElement,
+  onError: (message: string) => void,
+): () => void {
+  const reportIfPresent = () => {
+    const message = detectGoogleMapsRuntimeError(container);
+    if (message) {
+      onError(message);
+      return true;
+    }
+    return false;
+  };
+
+  if (reportIfPresent()) return () => {};
+
+  const observer = new MutationObserver(() => {
+    reportIfPresent();
+  });
+  observer.observe(container, { childList: true, subtree: true });
+
+  const timeout = window.setTimeout(reportIfPresent, 1500);
+
+  return () => {
+    observer.disconnect();
+    window.clearTimeout(timeout);
+  };
+}
 
 function loadGoogleMaps(): Promise<void> {
   if (window.google?.maps) {
@@ -100,8 +135,9 @@ function loadGoogleMaps(): Promise<void> {
 
         const script = document.createElement("script");
         script.id = GOOGLE_MAPS_SCRIPT_ID;
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__haulbrokrWebMapInit`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&loading=async&callback=__haulbrokrWebMapInit`;
         script.async = true;
+        script.defer = true;
         script.onerror = () => reject(new Error("Google Maps script failed"));
         document.head.appendChild(script);
       }),
@@ -150,6 +186,26 @@ export default function MapPage() {
     if (isLoading || isError || mapError || mapReady) return;
 
     let cancelled = false;
+    let stopWatchingRuntimeError: (() => void) | undefined;
+    const previousAuthFailure = window.gm_authFailure;
+
+    const reportRuntimeMapError = (message: string) => {
+      if (cancelled) return;
+      const detail =
+        message.includes("ApiNotActivatedMapError") || message.toLowerCase().includes("can't load google maps")
+          ? "Enable the Maps JavaScript API for this API key in Google Cloud Console (APIs & Services → Library → Maps JavaScript API → Enable)."
+          : message;
+      console.error(detail);
+      setMapError(detail);
+      setMapReady(false);
+    };
+
+    window.gm_authFailure = () => {
+      previousAuthFailure?.();
+      reportRuntimeMapError(
+        "Google Maps authentication failed. Check API key restrictions and enable Maps JavaScript API.",
+      );
+    };
 
     const initMap = async () => {
       try {
@@ -182,6 +238,8 @@ export default function MapPage() {
         });
         console.log("Map created");
         setMapReady(true);
+
+        stopWatchingRuntimeError = watchForGoogleMapsRuntimeError(mapDivRef.current, reportRuntimeMapError);
       } catch (err) {
         console.error(err);
         if (!cancelled) {
@@ -194,6 +252,8 @@ export default function MapPage() {
 
     return () => {
       cancelled = true;
+      stopWatchingRuntimeError?.();
+      window.gm_authFailure = previousAuthFailure;
     };
   }, [isLoading, isError, mapError, mapReady]);
 
@@ -363,10 +423,14 @@ export default function MapPage() {
       <Card className="rounded-none border-2 flex-1 min-h-[480px] overflow-hidden">
         <CardContent className="p-0 h-full min-h-[480px] relative">
           {mapError ? (
-            <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-2 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-2 text-muted-foreground px-6 text-center">
               <MapPin className="h-10 w-10 opacity-40" />
               <p className="font-semibold text-destructive">{mapError}</p>
-              <p className="text-sm">Set VITE_GOOGLE_MAPS_API_KEY or configure GOOGLE_MAPS_API_KEY on the API server.</p>
+              <p className="text-sm">
+                {mapError.toLowerCase().includes("maps javascript api")
+                  ? "In Google Cloud Console, open APIs & Services → Library, search for Maps JavaScript API, and enable it for the project that owns this key."
+                  : "Set VITE_GOOGLE_MAPS_API_KEY or configure GOOGLE_MAPS_API_KEY on the API server."}
+              </p>
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center h-full min-h-[480px]">
