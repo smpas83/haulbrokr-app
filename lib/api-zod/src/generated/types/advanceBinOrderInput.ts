@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { AdvanceBinOrderInputStatus } from './advanceBinOrderInputStatus';
+import type { AdvanceBinOrderInputStatus } from "./advanceBinOrderInputStatus";
 
 export interface AdvanceBinOrderInput {
   /** The next lifecycle status to move the bin order to. */

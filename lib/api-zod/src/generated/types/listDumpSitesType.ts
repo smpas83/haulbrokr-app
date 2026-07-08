@@ -6,14 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type ListDumpSitesType = typeof ListDumpSitesType[keyof typeof ListDumpSitesType];
-
+export type ListDumpSitesType =
+  (typeof ListDumpSitesType)[keyof typeof ListDumpSitesType];
 
 export const ListDumpSitesType = {
-  landfill: 'landfill',
-  transfer_station: 'transfer_station',
-  recycling_center: 'recycling_center',
-  construction_debris: 'construction_debris',
-  hazardous_waste: 'hazardous_waste',
-  compost: 'compost',
+  landfill: "landfill",
+  transfer_station: "transfer_station",
+  recycling_center: "recycling_center",
+  construction_debris: "construction_debris",
+  hazardous_waste: "hazardous_waste",
+  compost: "compost",
 } as const;

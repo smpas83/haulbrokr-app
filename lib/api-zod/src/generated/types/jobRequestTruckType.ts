@@ -6,22 +6,22 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type JobRequestTruckType = typeof JobRequestTruckType[keyof typeof JobRequestTruckType];
-
+export type JobRequestTruckType =
+  (typeof JobRequestTruckType)[keyof typeof JobRequestTruckType];
 
 export const JobRequestTruckType = {
-  standard: 'standard',
-  articulated: 'articulated',
-  side_dump: 'side_dump',
-  bottom_dump: 'bottom_dump',
-  transfer: 'transfer',
-  dump_truck: 'dump_truck',
-  super_10: 'super_10',
-  end_dump: 'end_dump',
-  belly_dump: 'belly_dump',
-  lowboy: 'lowboy',
-  water_truck: 'water_truck',
-  excavator: 'excavator',
-  dozer: 'dozer',
-  skid_steer: 'skid_steer',
+  standard: "standard",
+  articulated: "articulated",
+  side_dump: "side_dump",
+  bottom_dump: "bottom_dump",
+  transfer: "transfer",
+  dump_truck: "dump_truck",
+  super_10: "super_10",
+  end_dump: "end_dump",
+  belly_dump: "belly_dump",
+  lowboy: "lowboy",
+  water_truck: "water_truck",
+  excavator: "excavator",
+  dozer: "dozer",
+  skid_steer: "skid_steer",
 } as const;

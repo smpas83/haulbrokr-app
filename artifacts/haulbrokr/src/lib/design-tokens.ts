@@ -1,12 +1,12 @@
 /** Shared design tokens for charts, status colors, and semantic UI */
 
 export const CHART_COLORS = [
-  "hsl(217 91% 60%)",  // electric blue
-  "hsl(24 95% 53%)",   // construction orange
-  "hsl(160 84% 39%)",  // emerald
-  "hsl(38 92% 50%)",   // amber
-  "hsl(0 72% 51%)",    // red
-  "hsl(262 83% 58%)",  // violet
+  "hsl(217 91% 60%)", // electric blue
+  "hsl(24 95% 53%)", // construction orange
+  "hsl(160 84% 39%)", // emerald
+  "hsl(38 92% 50%)", // amber
+  "hsl(0 72% 51%)", // red
+  "hsl(262 83% 58%)", // violet
 ] as const;
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -23,5 +23,7 @@ export const STATUS_COLORS: Record<string, string> = {
 };
 
 export function getStatusColor(status: string): string {
-  return STATUS_COLORS[status] ?? "bg-muted text-muted-foreground border-border";
+  return (
+    STATUS_COLORS[status] ?? "bg-muted text-muted-foreground border-border"
+  );
 }

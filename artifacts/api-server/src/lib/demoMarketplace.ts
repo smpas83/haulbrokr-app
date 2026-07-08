@@ -105,21 +105,63 @@ const US_CITIES: { city: string; state: string; lat: number; lng: number }[] = [
   { city: "Louisville", state: "KY", lat: 38.2527, lng: -85.7585 },
 ];
 
-const MATERIALS = ["dirt", "gravel", "concrete", "asphalt", "demolition", "sand", "topsoil", "fill"] as const;
-const LOAD_STATUSES = ["open", "bidding", "bid_received", "accepted", "in_progress"] as const;
-const TRUCK_TYPES = ["dump_truck", "end_dump", "belly_dump", "super_10", "transfer"] as const;
+const MATERIALS = [
+  "dirt",
+  "gravel",
+  "concrete",
+  "asphalt",
+  "demolition",
+  "sand",
+  "topsoil",
+  "fill",
+] as const;
+const LOAD_STATUSES = [
+  "open",
+  "bidding",
+  "bid_received",
+  "accepted",
+  "in_progress",
+] as const;
+const TRUCK_TYPES = [
+  "dump_truck",
+  "end_dump",
+  "belly_dump",
+  "super_10",
+  "transfer",
+] as const;
 const TRUCK_STATUSES = ["available", "assigned", "en_route"] as const;
 const CARRIER_NAMES = [
-  "Lone Star Hauling", "Metro Dirt Co", "Capitol Transport", "Sunbelt Trucking",
-  "Rocky Mountain Haulers", "Gulf Coast Carriers", "Midwest Express", "Pacific Dump Services",
-  "Southern Soil Movers", "Great Plains Fleet", "Desert Ridge Trucking", "Bay Area Haulers",
-  "Heartland Transport", "Prairie State Hauling", "Blue Ridge Carriers", "Delta Dirt Works",
+  "Lone Star Hauling",
+  "Metro Dirt Co",
+  "Capitol Transport",
+  "Sunbelt Trucking",
+  "Rocky Mountain Haulers",
+  "Gulf Coast Carriers",
+  "Midwest Express",
+  "Pacific Dump Services",
+  "Southern Soil Movers",
+  "Great Plains Fleet",
+  "Desert Ridge Trucking",
+  "Bay Area Haulers",
+  "Heartland Transport",
+  "Prairie State Hauling",
+  "Blue Ridge Carriers",
+  "Delta Dirt Works",
 ];
 
 const PROJECT_PREFIXES = [
-  "Highway Expansion", "Commercial Pad", "Residential Subdivision", "Quarry Run",
-  "Site Grading", "Foundation Excavation", "Parking Lot Demo", "Pipeline Trench",
-  "Retail Pad Build", "Industrial Park", "School Expansion", "Bridge Approach",
+  "Highway Expansion",
+  "Commercial Pad",
+  "Residential Subdivision",
+  "Quarry Run",
+  "Site Grading",
+  "Foundation Excavation",
+  "Parking Lot Demo",
+  "Pipeline Trench",
+  "Retail Pad Build",
+  "Industrial Park",
+  "School Expansion",
+  "Bridge Approach",
 ];
 
 function jitter(base: number, spread: number, seed: number): number {
@@ -133,7 +175,14 @@ function pick<T>(arr: readonly T[], seed: number): T {
 
 function streetAddress(seed: number): string {
   const num = 100 + (Math.abs(seed) % 8900);
-  const streets = ["Industrial Blvd", "Commerce Dr", "Quarry Rd", "Highway 75 Frontage", "Construction Way", "Haul Rd"];
+  const streets = [
+    "Industrial Blvd",
+    "Commerce Dr",
+    "Quarry Rd",
+    "Highway 75 Frontage",
+    "Construction Way",
+    "Haul Rd",
+  ];
   return `${num} ${pick(streets, seed)}`;
 }
 
@@ -148,8 +197,12 @@ export function buildDemoLoads(count = 250): MarketplaceLoad[] {
     const lng = jitter(city.lng, 0.35, i + 1000);
     const deliveryCity = pick(US_CITIES, i + 17);
     loads.push({
-      id: status === "in_progress" || status === "accepted" ? String(10000 + i) : `req-demo-${i + 1}`,
-      kind: status === "in_progress" || status === "accepted" ? "job" : "request",
+      id:
+        status === "in_progress" || status === "accepted"
+          ? String(10000 + i)
+          : `req-demo-${i + 1}`,
+      kind:
+        status === "in_progress" || status === "accepted" ? "job" : "request",
       status,
       projectName: `${pick(PROJECT_PREFIXES, i)} — ${city.city}`,
       material,
@@ -157,7 +210,8 @@ export function buildDemoLoads(count = 250): MarketplaceLoad[] {
       deliveryAddress: `${streetAddress(i + 500)}, ${deliveryCity.city}, ${deliveryCity.state}`,
       budgetPerHour: 85 + (i % 45),
       trucksNeeded: 1 + (i % 4),
-      bidsCount: status === "open" ? i % 8 : status === "bidding" ? 2 + (i % 6) : 0,
+      bidsCount:
+        status === "open" ? i % 8 : status === "bidding" ? 2 + (i % 6) : 0,
       latitude: lat,
       longitude: lng,
       scheduledDate: new Date(Date.now() + (i % 14) * 86400000).toISOString(),
@@ -184,19 +238,29 @@ export function buildDemoTrucks(count = 150): MarketplaceTruck[] {
       longitude: jitter(city.lng + motion * 0.7, 0.25, i + 300),
       ownerCompany: pick(CARRIER_NAMES, i),
       headingDegrees: (i * 37 + phase) % 360,
-      speedMph: status === "en_route" ? 28 + (i % 22) : status === "assigned" ? 0 : 0,
+      speedMph:
+        status === "en_route" ? 28 + (i % 22) : status === "assigned" ? 0 : 0,
     });
   }
   return trucks;
 }
 
 /** Surge heat zones anchored to high open-load density metros. */
-export function buildHeatZonesFromLoads(loads: MarketplaceLoad[]): MarketplaceHeatZone[] {
-  const openByCity = new Map<string, { lat: number; lng: number; count: number }>();
+export function buildHeatZonesFromLoads(
+  loads: MarketplaceLoad[],
+): MarketplaceHeatZone[] {
+  const openByCity = new Map<
+    string,
+    { lat: number; lng: number; count: number }
+  >();
   for (const load of loads) {
     if (!["open", "bidding", "bid_received"].includes(load.status)) continue;
     const key = `${load.latitude.toFixed(1)},${load.longitude.toFixed(1)}`;
-    const cur = openByCity.get(key) ?? { lat: load.latitude, lng: load.longitude, count: 0 };
+    const cur = openByCity.get(key) ?? {
+      lat: load.latitude,
+      lng: load.longitude,
+      count: 0,
+    };
     cur.count += 1;
     openByCity.set(key, cur);
   }
@@ -233,8 +297,12 @@ export function buildEmptyMarketplace(): MarketplacePayload {
 export function buildDemoMarketplace(): MarketplacePayload {
   const loads = buildDemoLoads(250);
   const trucks = buildDemoTrucks(150);
-  const openLoads = loads.filter((l) => ["open", "bidding", "bid_received"].includes(l.status)).length;
-  const activeJobs = loads.filter((l) => ["accepted", "in_progress"].includes(l.status)).length;
+  const openLoads = loads.filter((l) =>
+    ["open", "bidding", "bid_received"].includes(l.status),
+  ).length;
+  const activeJobs = loads.filter((l) =>
+    ["accepted", "in_progress"].includes(l.status),
+  ).length;
   return {
     demoMode: true,
     generatedAt: new Date().toISOString(),

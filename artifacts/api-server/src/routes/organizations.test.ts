@@ -56,7 +56,12 @@ function makeApp(): Express {
 
 beforeEach(() => {
   h.snapshotProfileId = null;
-  h.org = { id: ORG_ID, type: "provider", ownerProfileId: OWNER_PROFILE_ID, name: "Acme Hauling" };
+  h.org = {
+    id: ORG_ID,
+    type: "provider",
+    ownerProfileId: OWNER_PROFILE_ID,
+    name: "Acme Hauling",
+  };
   h.snapshot = {
     w9Status: "verified",
     insuranceStatus: "pending",
@@ -71,9 +76,16 @@ beforeEach(() => {
 
 describe("GET /organizations/compliance-status", () => {
   it("returns carrier compliance snapshot for the provider owner", async () => {
-    h.profile = { id: OWNER_PROFILE_ID, role: "provider", organizationId: ORG_ID, clerkId: "test-clerk" };
+    h.profile = {
+      id: OWNER_PROFILE_ID,
+      role: "provider",
+      organizationId: ORG_ID,
+      clerkId: "test-clerk",
+    };
 
-    const res = await request(makeApp()).get("/organizations/compliance-status");
+    const res = await request(makeApp()).get(
+      "/organizations/compliance-status",
+    );
     expect(res.status).toBe(200);
     expect(h.snapshotProfileId).toBe(OWNER_PROFILE_ID);
     expect(res.body).toMatchObject({
@@ -85,34 +97,72 @@ describe("GET /organizations/compliance-status", () => {
   });
 
   it("returns the same carrier snapshot for an org driver member", async () => {
-    h.profile = { id: 7, role: "driver", organizationId: ORG_ID, clerkId: "test-clerk" };
+    h.profile = {
+      id: 7,
+      role: "driver",
+      organizationId: ORG_ID,
+      clerkId: "test-clerk",
+    };
 
-    const res = await request(makeApp()).get("/organizations/compliance-status");
+    const res = await request(makeApp()).get(
+      "/organizations/compliance-status",
+    );
     expect(res.status).toBe(200);
     expect(h.snapshotProfileId).toBe(OWNER_PROFILE_ID);
     expect(res.body.insuranceStatus).toBe("pending");
   });
 
   it("returns 404 when user has no organization", async () => {
-    h.profile = { id: 7, role: "driver", organizationId: null, clerkId: "test-clerk" };
-    const res = await request(makeApp()).get("/organizations/compliance-status");
+    h.profile = {
+      id: 7,
+      role: "driver",
+      organizationId: null,
+      clerkId: "test-clerk",
+    };
+    const res = await request(makeApp()).get(
+      "/organizations/compliance-status",
+    );
     expect(res.status).toBe(404);
   });
 
   it("returns 404 for a customer organization", async () => {
-    h.profile = { id: 12, role: "supervisor", organizationId: ORG_ID, clerkId: "test-clerk" };
-    h.org = { id: ORG_ID, type: "customer", ownerProfileId: 50, name: "Builders Inc" };
+    h.profile = {
+      id: 12,
+      role: "supervisor",
+      organizationId: ORG_ID,
+      clerkId: "test-clerk",
+    };
+    h.org = {
+      id: ORG_ID,
+      type: "customer",
+      ownerProfileId: 50,
+      name: "Builders Inc",
+    };
 
-    const res = await request(makeApp()).get("/organizations/compliance-status");
+    const res = await request(makeApp()).get(
+      "/organizations/compliance-status",
+    );
     expect(res.status).toBe(404);
     expect(h.snapshotProfileId).toBeNull();
   });
 
   it("returns 404 when the provider org has no owner profile", async () => {
-    h.profile = { id: 7, role: "driver", organizationId: ORG_ID, clerkId: "test-clerk" };
-    h.org = { id: ORG_ID, type: "provider", ownerProfileId: null, name: "Acme Hauling" };
+    h.profile = {
+      id: 7,
+      role: "driver",
+      organizationId: ORG_ID,
+      clerkId: "test-clerk",
+    };
+    h.org = {
+      id: ORG_ID,
+      type: "provider",
+      ownerProfileId: null,
+      name: "Acme Hauling",
+    };
 
-    const res = await request(makeApp()).get("/organizations/compliance-status");
+    const res = await request(makeApp()).get(
+      "/organizations/compliance-status",
+    );
     expect(res.status).toBe(404);
   });
 });

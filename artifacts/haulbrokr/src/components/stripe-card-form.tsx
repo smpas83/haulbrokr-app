@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
-import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
 import { useCreatePaymentMethodSetupIntent } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -56,12 +61,17 @@ function CardCaptureForm({
     });
     setConfirming(false);
     if (result.error) {
-      setError(result.error.message ?? "Could not verify card. Please check the details and try again.");
+      setError(
+        result.error.message ??
+          "Could not verify card. Please check the details and try again.",
+      );
       return;
     }
     const pmId = result.setupIntent?.payment_method;
     if (typeof pmId !== "string") {
-      setError("Card was verified but no payment method was returned. Please try again.");
+      setError(
+        "Card was verified but no payment method was returned. Please try again.",
+      );
       return;
     }
     onSaved(pmId);
@@ -72,7 +82,10 @@ function CardCaptureForm({
   return (
     <div className="space-y-3">
       <div className="border-2 border-border bg-background p-3 rounded-none">
-        <CardElement options={CARD_ELEMENT_OPTIONS} onReady={() => setReady(true)} />
+        <CardElement
+          options={CARD_ELEMENT_OPTIONS}
+          onReady={() => setReady(true)}
+        />
       </div>
       {error && (
         <p className="text-sm text-destructive flex items-center gap-1.5">
@@ -90,7 +103,13 @@ function CardCaptureForm({
           {saveLabel ?? "Save card"}
         </Button>
         {onCancel && (
-          <Button type="button" variant="outline" className="rounded-none border-2 font-bold" onClick={onCancel} disabled={busy}>
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-none border-2 font-bold"
+            onClick={onCancel}
+            disabled={busy}
+          >
             Cancel
           </Button>
         )}
@@ -105,9 +124,15 @@ function CardCaptureForm({
  * renders a CardElement. We use CardElement + confirmCardSetup (not PaymentElement)
  * so no redirect/return_url is needed for the off-session card we're saving.
  */
-export function StripeCardForm({ onSaved, onCancel, saving, saveLabel }: StripeCardFormProps) {
+export function StripeCardForm({
+  onSaved,
+  onCancel,
+  saving,
+  saveLabel,
+}: StripeCardFormProps) {
   const setupIntent = useCreatePaymentMethodSetupIntent();
-  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [stripePromise, setStripePromise] =
+    useState<Promise<Stripe | null> | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
   const startedRef = useRef(false);
@@ -120,7 +145,11 @@ export function StripeCardForm({ onSaved, onCancel, saving, saveLabel }: StripeC
         setStripePromise(loadStripe(data.publishableKey));
       },
       onError: (err: unknown) =>
-        setInitError(err instanceof Error ? err.message : "Could not start secure card setup."),
+        setInitError(
+          err instanceof Error
+            ? err.message
+            : "Could not start secure card setup.",
+        ),
     });
   };
 
@@ -139,12 +168,24 @@ export function StripeCardForm({ onSaved, onCancel, saving, saveLabel }: StripeC
           <AlertCircle className="h-4 w-4 flex-shrink-0" /> {initError}
         </p>
         <div className="flex items-center gap-2">
-          <Button type="button" className="rounded-none font-bold" onClick={start} disabled={setupIntent.isPending}>
-            {setupIntent.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          <Button
+            type="button"
+            className="rounded-none font-bold"
+            onClick={start}
+            disabled={setupIntent.isPending}
+          >
+            {setupIntent.isPending && (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            )}
             Try again
           </Button>
           {onCancel && (
-            <Button type="button" variant="outline" className="rounded-none border-2 font-bold" onClick={onCancel}>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-none border-2 font-bold"
+              onClick={onCancel}
+            >
               Cancel
             </Button>
           )}

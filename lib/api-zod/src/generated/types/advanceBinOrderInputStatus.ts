@@ -9,11 +9,11 @@
 /**
  * The next lifecycle status to move the bin order to.
  */
-export type AdvanceBinOrderInputStatus = typeof AdvanceBinOrderInputStatus[keyof typeof AdvanceBinOrderInputStatus];
-
+export type AdvanceBinOrderInputStatus =
+  (typeof AdvanceBinOrderInputStatus)[keyof typeof AdvanceBinOrderInputStatus];
 
 export const AdvanceBinOrderInputStatus = {
-  confirmed: 'confirmed',
-  delivered: 'delivered',
-  picked_up: 'picked_up',
+  confirmed: "confirmed",
+  delivered: "delivered",
+  picked_up: "picked_up",
 } as const;

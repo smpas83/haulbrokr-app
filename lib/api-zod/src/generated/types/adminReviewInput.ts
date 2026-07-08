@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { AdminReviewInputAction } from './adminReviewInputAction';
+import type { AdminReviewInputAction } from "./adminReviewInputAction";
 
 export interface AdminReviewInput {
   action: AdminReviewInputAction;

@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type W9SubmissionTaxIdType = typeof W9SubmissionTaxIdType[keyof typeof W9SubmissionTaxIdType];
-
+export type W9SubmissionTaxIdType =
+  (typeof W9SubmissionTaxIdType)[keyof typeof W9SubmissionTaxIdType];
 
 export const W9SubmissionTaxIdType = {
-  ein: 'ein',
-  ssn: 'ssn',
+  ein: "ein",
+  ssn: "ssn",
 } as const;

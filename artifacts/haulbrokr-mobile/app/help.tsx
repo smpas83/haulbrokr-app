@@ -116,12 +116,39 @@ const FAQS = [
   },
 ];
 
-const CATEGORIES = ["All", "Getting Started", "Posting Jobs", "Bidding", "Payments", "Compliance", "Dump Sites", "Account"];
+const CATEGORIES = [
+  "All",
+  "Getting Started",
+  "Posting Jobs",
+  "Bidding",
+  "Payments",
+  "Compliance",
+  "Dump Sites",
+  "Account",
+];
 
 const CONTACT_OPTIONS = [
-  { id: "phone", icon: "phone", label: "Call Support", sub: "(214) 555-0100", action: "phone" },
-  { id: "email", icon: "mail", label: "Email Support", sub: "support@haulbrokr.com", action: "email" },
-  { id: "chat", icon: "message-circle", label: "Live Chat", sub: "Mon–Fri 8am–6pm CST", action: "chat" },
+  {
+    id: "phone",
+    icon: "phone",
+    label: "Call Support",
+    sub: "(214) 555-0100",
+    action: "phone",
+  },
+  {
+    id: "email",
+    icon: "mail",
+    label: "Email Support",
+    sub: "support@haulbrokr.com",
+    action: "email",
+  },
+  {
+    id: "chat",
+    icon: "message-circle",
+    label: "Live Chat",
+    sub: "Mon–Fri 8am–6pm CST",
+    action: "chat",
+  },
 ];
 
 export default function HelpScreen() {
@@ -134,11 +161,12 @@ export default function HelpScreen() {
 
   const filtered = useMemo(() => {
     let items = FAQS;
-    if (category !== "All") items = items.filter((f) => f.category === category);
+    if (category !== "All")
+      items = items.filter((f) => f.category === category);
     if (search.trim()) {
       const q = search.toLowerCase();
       items = items.filter(
-        (f) => f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q)
+        (f) => f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q),
       );
     }
     return items;
@@ -148,16 +176,18 @@ export default function HelpScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (action === "phone") {
       Linking.openURL(`tel:+12145550100`).catch(() =>
-        Alert.alert("Call Support", "Phone: (214) 555-0100")
+        Alert.alert("Call Support", "Phone: (214) 555-0100"),
       );
     } else if (action === "email") {
       Linking.openURL(`mailto:support@haulbrokr.com`).catch(() =>
-        Alert.alert("Email Support", "support@haulbrokr.com")
+        Alert.alert("Email Support", "support@haulbrokr.com"),
       );
     } else {
-      Alert.alert("Live Chat", "Live chat is available Mon–Fri, 8am–6pm CST.\n\nOpening chat...", [
-        { text: "OK" },
-      ]);
+      Alert.alert(
+        "Live Chat",
+        "Live chat is available Mon–Fri, 8am–6pm CST.\n\nOpening chat...",
+        [{ text: "OK" }],
+      );
     }
   };
 
@@ -167,16 +197,28 @@ export default function HelpScreen() {
       <View
         style={[
           styles.header,
-          { backgroundColor: colors.background, borderBottomColor: colors.border, paddingTop: topPad + 12 },
+          {
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+            paddingTop: topPad + 12,
+          },
         ]}
       >
         <Pressable
           onPress={() => router.back()}
-          style={[styles.backBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[
+            styles.backBtn,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
         >
           <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
+        <Text
+          style={[
+            styles.headerTitle,
+            { color: colors.foreground, fontFamily: "Inter_700Bold" },
+          ]}
+        >
           Help & Support
         </Text>
         <View style={{ width: 40 }} />
@@ -184,14 +226,35 @@ export default function HelpScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingBottom: 60 + insets.bottom }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: 60 + insets.bottom },
+        ]}
       >
         {/* Contact cards */}
-        <View style={[styles.contactSection, { backgroundColor: colors.primary + "10", borderColor: colors.border }]}>
-          <Text style={[styles.contactTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
+        <View
+          style={[
+            styles.contactSection,
+            {
+              backgroundColor: colors.primary + "10",
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.contactTitle,
+              { color: colors.foreground, fontFamily: "Inter_700Bold" },
+            ]}
+          >
             Contact Us
           </Text>
-          <Text style={[styles.contactSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+          <Text
+            style={[
+              styles.contactSub,
+              { color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
+            ]}
+          >
             Our team is ready to help with any issue.
           </Text>
           <View style={styles.contactCards}>
@@ -199,15 +262,43 @@ export default function HelpScreen() {
               <Pressable
                 key={opt.id}
                 onPress={() => handleContact(opt.action, opt.sub)}
-                style={[styles.contactCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                style={[
+                  styles.contactCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
               >
-                <View style={[styles.contactIcon, { backgroundColor: colors.primary + "18" }]}>
-                  <Feather name={opt.icon as any} size={20} color={colors.primary} />
+                <View
+                  style={[
+                    styles.contactIcon,
+                    { backgroundColor: colors.primary + "18" },
+                  ]}
+                >
+                  <Feather
+                    name={opt.icon as any}
+                    size={20}
+                    color={colors.primary}
+                  />
                 </View>
-                <Text style={[styles.contactLabel, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+                <Text
+                  style={[
+                    styles.contactLabel,
+                    {
+                      color: colors.foreground,
+                      fontFamily: "Inter_600SemiBold",
+                    },
+                  ]}
+                >
                   {opt.label}
                 </Text>
-                <Text style={[styles.contactSub2, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+                <Text
+                  style={[
+                    styles.contactSub2,
+                    {
+                      color: colors.mutedForeground,
+                      fontFamily: "Inter_400Regular",
+                    },
+                  ]}
+                >
                   {opt.sub}
                 </Text>
               </Pressable>
@@ -216,13 +307,26 @@ export default function HelpScreen() {
         </View>
 
         {/* Search */}
-        <Text style={[styles.faqTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
+        <Text
+          style={[
+            styles.faqTitle,
+            { color: colors.foreground, fontFamily: "Inter_700Bold" },
+          ]}
+        >
           Frequently Asked Questions
         </Text>
-        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.searchBar,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <Feather name="search" size={16} color={colors.mutedForeground} />
           <TextInput
-            style={[styles.searchInput, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}
+            style={[
+              styles.searchInput,
+              { color: colors.foreground, fontFamily: "Inter_400Regular" },
+            ]}
             placeholder="Search questions..."
             placeholderTextColor={colors.mutedForeground}
             value={search}
@@ -248,8 +352,10 @@ export default function HelpScreen() {
               style={[
                 styles.chip,
                 {
-                  backgroundColor: category === cat ? colors.primary : colors.card,
-                  borderColor: category === cat ? colors.primary : colors.border,
+                  backgroundColor:
+                    category === cat ? colors.primary : colors.card,
+                  borderColor:
+                    category === cat ? colors.primary : colors.border,
                 },
               ]}
             >
@@ -257,7 +363,10 @@ export default function HelpScreen() {
                 style={{
                   fontSize: 12,
                   fontFamily: "Inter_500Medium",
-                  color: category === cat ? colors.primaryForeground : colors.foreground,
+                  color:
+                    category === cat
+                      ? colors.primaryForeground
+                      : colors.foreground,
                 }}
               >
                 {cat}
@@ -267,7 +376,12 @@ export default function HelpScreen() {
         </ScrollView>
 
         {/* FAQ count */}
-        <Text style={[styles.count, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+        <Text
+          style={[
+            styles.count,
+            { color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
+          ]}
+        >
           {filtered.length} question{filtered.length !== 1 ? "s" : ""}
           {category !== "All" ? ` in ${category}` : ""}
         </Text>
@@ -275,8 +389,20 @@ export default function HelpScreen() {
         {/* FAQ list */}
         {filtered.length === 0 ? (
           <View style={styles.empty}>
-            <Feather name="help-circle" size={32} color={colors.mutedForeground} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+            <Feather
+              name="help-circle"
+              size={32}
+              color={colors.mutedForeground}
+            />
+            <Text
+              style={[
+                styles.emptyText,
+                {
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                },
+              ]}
+            >
               No results for "{search}"
             </Text>
           </View>
@@ -291,10 +417,22 @@ export default function HelpScreen() {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       setExpanded(open ? null : faq.id);
                     }}
-                    style={[styles.faqRow, { backgroundColor: open ? colors.primary + "08" : colors.card }]}
+                    style={[
+                      styles.faqRow,
+                      {
+                        backgroundColor: open
+                          ? colors.primary + "08"
+                          : colors.card,
+                      },
+                    ]}
                   >
                     <View style={styles.faqLeft}>
-                      <View style={[styles.catDot, { backgroundColor: colors.primary }]} />
+                      <View
+                        style={[
+                          styles.catDot,
+                          { backgroundColor: colors.primary },
+                        ]}
+                      />
                       <Text
                         style={[
                           styles.faqQ,
@@ -314,14 +452,32 @@ export default function HelpScreen() {
                     />
                   </Pressable>
                   {open && (
-                    <View style={[styles.faqAnswer, { backgroundColor: colors.card }]}>
-                      <Text style={[styles.answerText, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
+                    <View
+                      style={[
+                        styles.faqAnswer,
+                        { backgroundColor: colors.card },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.answerText,
+                          {
+                            color: colors.foreground,
+                            fontFamily: "Inter_400Regular",
+                          },
+                        ]}
+                      >
                         {faq.a}
                       </Text>
                     </View>
                   )}
                   {idx < filtered.length - 1 && (
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                    <View
+                      style={[
+                        styles.divider,
+                        { backgroundColor: colors.border },
+                      ]}
+                    />
                   )}
                 </View>
               );
@@ -330,13 +486,31 @@ export default function HelpScreen() {
         )}
 
         {/* Still need help */}
-        <View style={[styles.stillHelp, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.stillHelp,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <Feather name="life-buoy" size={20} color={colors.primary} />
           <View style={{ flex: 1 }}>
-            <Text style={[styles.stillHelpTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
+            <Text
+              style={[
+                styles.stillHelpTitle,
+                { color: colors.foreground, fontFamily: "Inter_600SemiBold" },
+              ]}
+            >
               Still need help?
             </Text>
-            <Text style={[styles.stillHelpSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
+            <Text
+              style={[
+                styles.stillHelpSub,
+                {
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                },
+              ]}
+            >
               Our support team typically responds within 2 business hours.
             </Text>
           </View>
@@ -344,7 +518,13 @@ export default function HelpScreen() {
             onPress={() => handleContact("email", "")}
             style={[styles.stillHelpBtn, { backgroundColor: colors.primary }]}
           >
-            <Text style={{ color: colors.primaryForeground, fontFamily: "Inter_600SemiBold", fontSize: 13 }}>
+            <Text
+              style={{
+                color: colors.primaryForeground,
+                fontFamily: "Inter_600SemiBold",
+                fontSize: 13,
+              }}
+            >
               Contact
             </Text>
           </Pressable>
@@ -364,8 +544,19 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     borderBottomWidth: 1,
   },
-  backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  headerTitle: { fontSize: 18, fontWeight: "700" as const, flex: 1, textAlign: "center" },
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    flex: 1,
+    textAlign: "center",
+  },
   content: { padding: 16, gap: 14 },
   contactSection: { padding: 16, borderWidth: 1, gap: 8 },
   contactTitle: { fontSize: 18, fontWeight: "700" as const },
@@ -378,8 +569,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  contactIcon: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  contactLabel: { fontSize: 12, fontWeight: "600" as const, textAlign: "center" },
+  contactIcon: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  contactLabel: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+    textAlign: "center",
+  },
   contactSub2: { fontSize: 10, textAlign: "center" },
   faqTitle: { fontSize: 20, fontWeight: "700" as const, marginTop: 4 },
   searchBar: {

@@ -1,4 +1,11 @@
-import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  integer,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -13,7 +20,10 @@ export const paymentMethodTypeEnum = pgEnum("payment_method_type", [
 
 export const paymentMethodsTable = pgTable("payment_methods", {
   id: serial("id").primaryKey(),
-  profileId: integer("profile_id").notNull().unique().references(() => profilesTable.id, { onDelete: "cascade" }),
+  profileId: integer("profile_id")
+    .notNull()
+    .unique()
+    .references(() => profilesTable.id, { onDelete: "cascade" }),
   methodType: paymentMethodTypeEnum("method_type").notNull(),
   // Stripe PaymentMethod id (pm_…) captured via SetupIntent. When set, this is a
   // real off-session-chargeable instrument; the card_* columns below are just
@@ -38,10 +48,17 @@ export const paymentMethodsTable = pgTable("payment_methods", {
   billingCity: text("billing_city"),
   billingState: text("billing_state"),
   billingZip: text("billing_zip"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
-export const insertPaymentMethodSchema = createInsertSchema(paymentMethodsTable).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPaymentMethodSchema = createInsertSchema(
+  paymentMethodsTable,
+).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
 export type PaymentMethod = typeof paymentMethodsTable.$inferSelect;

@@ -87,7 +87,9 @@ export function liveRequestToViewJob(live: LiveRequest): Job {
   const rate = live.budgetPerHour ?? 0;
   return {
     id: `req-${live.id}`,
-    projectName: live.materialType ? `${materialLabel(live.materialType)} Haul` : `Request #${live.id}`,
+    projectName: live.materialType
+      ? `${materialLabel(live.materialType)} Haul`
+      : `Request #${live.id}`,
     projectType: "Transport",
     material: materialLabel(live.materialType),
     quantity: live.quantityTons ?? 0,
@@ -212,7 +214,9 @@ export function liveJobToViewJob(live: LiveJob): Job {
   const rate = live.ratePerHour ?? 0;
   return {
     id: String(live.id),
-    projectName: live.materialType ? `${live.materialType} Haul` : `Job #${live.id}`,
+    projectName: live.materialType
+      ? `${live.materialType} Haul`
+      : `Job #${live.id}`,
     projectType: "Transport",
     material: live.materialType ?? "Material",
     quantity: 0,

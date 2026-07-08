@@ -19,13 +19,26 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { EmptyState } from "@/components/EmptyState";
 import { JobCard } from "@/components/JobCard";
-import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/RefreshingIndicator";
+import {
+  RefreshingIndicator,
+  isRefreshingPillVisible,
+} from "@/components/RefreshingIndicator";
 import { LastUpdated } from "@/components/LastUpdated";
 import { useApp } from "@/context/AppContext";
 import type { Job, JobStatus, ProjectType } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
-import { useLiveJobs, useLiveRequests, useCreateRequest, useMarketplaceMap } from "@/hooks/useLiveApi";
-import { liveJobToViewJob, liveRequestToViewJob, type LiveJob, type LiveRequest } from "@/lib/liveJob";
+import {
+  useLiveJobs,
+  useLiveRequests,
+  useCreateRequest,
+  useMarketplaceMap,
+} from "@/hooks/useLiveApi";
+import {
+  liveJobToViewJob,
+  liveRequestToViewJob,
+  type LiveJob,
+  type LiveRequest,
+} from "@/lib/liveJob";
 import { marketplaceLoadToJob } from "@/lib/marketplaceMap";
 
 type Filter = "all" | JobStatus;
@@ -62,14 +75,26 @@ const MATERIAL_TO_API: Record<string, string> = {
   "Scrap Metal": "other",
 };
 
-const PROJECT_TYPES: ProjectType[] = ["Transport", "Material & Transport", "Tracking", "Recycling"];
+const PROJECT_TYPES: ProjectType[] = [
+  "Transport",
+  "Material & Transport",
+  "Tracking",
+  "Recycling",
+];
 
 export default function JobsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
   const isProvider = profile.role === "provider";
-  const { data: liveJobsRaw, isLoading, isError, isFetching, refetch, dataUpdatedAt: jobsUpdatedAt } = useLiveJobs();
+  const {
+    data: liveJobsRaw,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+    dataUpdatedAt: jobsUpdatedAt,
+  } = useLiveJobs();
   const {
     data: liveRequestsRaw,
     isFetching: isFetchingRequests,
@@ -83,7 +108,8 @@ export default function JobsScreen() {
     dataUpdatedAt: openRequestsUpdatedAt,
   } = useLiveRequests({ mine: false, enabled: isProvider });
   const createRequest = useCreateRequest();
-  const { data: marketplace, refetch: refetchMarketplace } = useMarketplaceMap();
+  const { data: marketplace, refetch: refetchMarketplace } =
+    useMarketplaceMap();
 
   const jobs = useMemo<Job[]>(() => {
     const fromJobs = Array.isArray(liveJobsRaw)
@@ -92,18 +118,27 @@ export default function JobsScreen() {
     if (isProvider) {
       const fromOpenRequests = Array.isArray(liveOpenRequestsRaw)
         ? (liveOpenRequestsRaw as LiveRequest[])
-            .filter((r) => r.status === "open" || r.status === "bidding" || r.status === "bid_received")
+            .filter(
+              (r) =>
+                r.status === "open" ||
+                r.status === "bidding" ||
+                r.status === "bid_received",
+            )
             .map(liveRequestToViewJob)
         : [];
       const combined = [...fromOpenRequests, ...fromJobs];
       return combined;
     }
-    const fromRequests =
-      Array.isArray(liveRequestsRaw)
-        ? (liveRequestsRaw as LiveRequest[])
-            .filter((r) => r.status === "open" || r.status === "bidding" || r.status === "bid_received")
-            .map(liveRequestToViewJob)
-        : [];
+    const fromRequests = Array.isArray(liveRequestsRaw)
+      ? (liveRequestsRaw as LiveRequest[])
+          .filter(
+            (r) =>
+              r.status === "open" ||
+              r.status === "bidding" ||
+              r.status === "bid_received",
+          )
+          .map(liveRequestToViewJob)
+      : [];
     const combined = [...fromRequests, ...fromJobs];
     return combined;
   }, [liveJobsRaw, liveRequestsRaw, liveOpenRequestsRaw, isProvider]);
@@ -115,7 +150,12 @@ export default function JobsScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchRequests(), refetchOpenRequests(), refetchMarketplace()]);
+      await Promise.all([
+        refetch(),
+        refetchRequests(),
+        refetchOpenRequests(),
+        refetchMarketplace(),
+      ]);
     } finally {
       setRefreshing(false);
     }
@@ -131,7 +171,7 @@ export default function JobsScreen() {
           j.material.toLowerCase().includes(q) ||
           j.pickupAddress.toLowerCase().includes(q) ||
           j.deliveryAddress.toLowerCase().includes(q) ||
-          j.projectName.toLowerCase().includes(q)
+          j.projectName.toLowerCase().includes(q),
       );
     }
     return result;
@@ -160,7 +200,9 @@ export default function JobsScreen() {
 
   // Freshness of the load list: the most recent successful refetch across the
   // live queries feeding this screen.
-  const lastUpdated = Math.max(jobsUpdatedAt, requestsUpdatedAt, openRequestsUpdatedAt) || undefined;
+  const lastUpdated =
+    Math.max(jobsUpdatedAt, requestsUpdatedAt, openRequestsUpdatedAt) ||
+    undefined;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -179,12 +221,24 @@ export default function JobsScreen() {
         <View style={styles.headerRow}>
           <View>
             <Text
-              style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}
+              style={[
+                styles.title,
+                { color: colors.foreground, fontFamily: "Inter_700Bold" },
+              ]}
             >
               {isProvider ? "Load Board" : "My Requests"}
             </Text>
-            <Text style={[styles.subtitle, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-              {filtered.length} {filter === "all" ? "total" : filter.replace("_", " ")} loads
+            <Text
+              style={[
+                styles.subtitle,
+                {
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                },
+              ]}
+            >
+              {filtered.length}{" "}
+              {filter === "all" ? "total" : filter.replace("_", " ")} loads
             </Text>
             <LastUpdated timestamp={lastUpdated} style={{ marginTop: 2 }} />
           </View>
@@ -195,7 +249,13 @@ export default function JobsScreen() {
             >
               <Feather name="plus" size={18} color={colors.primaryForeground} />
               <Text
-                style={[styles.postBtnText, { color: colors.primaryForeground, fontFamily: "Inter_600SemiBold" }]}
+                style={[
+                  styles.postBtnText,
+                  {
+                    color: colors.primaryForeground,
+                    fontFamily: "Inter_600SemiBold",
+                  },
+                ]}
               >
                 Post Load
               </Text>
@@ -205,11 +265,17 @@ export default function JobsScreen() {
 
         {/* Search */}
         <View
-          style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}
+          style={[
+            styles.searchBar,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
         >
           <Feather name="search" size={16} color={colors.mutedForeground} />
           <TextInput
-            style={[styles.searchInput, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}
+            style={[
+              styles.searchInput,
+              { color: colors.foreground, fontFamily: "Inter_400Regular" },
+            ]}
             placeholder="Search material, project, location..."
             placeholderTextColor={colors.mutedForeground}
             value={search}
@@ -235,8 +301,10 @@ export default function JobsScreen() {
               style={[
                 styles.chip,
                 {
-                  backgroundColor: filter === item.key ? colors.primary : colors.card,
-                  borderColor: filter === item.key ? colors.primary : colors.border,
+                  backgroundColor:
+                    filter === item.key ? colors.primary : colors.card,
+                  borderColor:
+                    filter === item.key ? colors.primary : colors.border,
                 },
               ]}
             >
@@ -244,7 +312,10 @@ export default function JobsScreen() {
                 style={[
                   styles.chipText,
                   {
-                    color: filter === item.key ? colors.primaryForeground : colors.foreground,
+                    color:
+                      filter === item.key
+                        ? colors.primaryForeground
+                        : colors.foreground,
                     fontFamily: "Inter_500Medium",
                   },
                 ]}
@@ -267,7 +338,12 @@ export default function JobsScreen() {
           { paddingBottom: Platform.OS === "web" ? 100 : 100 + insets.bottom },
         ]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e9a600" colors={["#e9a600"]} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#e9a600"
+            colors={["#e9a600"]}
+          />
         }
         renderItem={({ item, index }) => (
           <Animated.View entering={FadeInDown.delay(index * 50).springify()}>
@@ -303,14 +379,18 @@ export default function JobsScreen() {
             <EmptyState
               icon="briefcase"
               title={
-                search ? "No results found" : isProvider ? "No active loads" : "No jobs yet"
+                search
+                  ? "No results found"
+                  : isProvider
+                    ? "No active loads"
+                    : "No jobs yet"
               }
               description={
                 search
                   ? "Try a different search term or clear filters"
                   : isProvider
-                  ? "Open loads appear here. Tap a load to place your bid."
-                  : "Jobs appear here once you hire a provider. Post a load to get started."
+                    ? "Open loads appear here. Tap a load to place your bid."
+                    : "Jobs appear here once you hire a provider. Post a load to get started."
               }
               actionLabel={!isProvider && !search ? "Post a Load" : undefined}
               onAction={!isProvider && !search ? handlePost : undefined}
@@ -341,11 +421,19 @@ export default function JobsScreen() {
               });
               await refetchRequests();
               setShowForm(false);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert("Posted!", "Your load request is live and receiving bids.");
+              Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success,
+              );
+              Alert.alert(
+                "Posted!",
+                "Your load request is live and receiving bids.",
+              );
             } catch (err: any) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              Alert.alert("Couldn't post load", err?.message ?? "Please try again.");
+              Alert.alert(
+                "Couldn't post load",
+                err?.message ?? "Please try again.",
+              );
             }
           }}
         />
@@ -365,7 +453,9 @@ function PostJobModal({
   insets: ReturnType<typeof useSafeAreaInsets>;
   submitting?: boolean;
   onClose: () => void;
-  onSubmit: (data: Omit<Job, "id" | "postedAt" | "bidsCount" | "bids" | "postedBy">) => void;
+  onSubmit: (
+    data: Omit<Job, "id" | "postedAt" | "bidsCount" | "bids" | "postedBy">,
+  ) => void;
 }) {
   const [matIdx, setMatIdx] = useState(0);
   const [typeIdx, setTypeIdx] = useState(0);
@@ -390,7 +480,10 @@ function PostJobModal({
 
   const handleSubmit = () => {
     if (!pickup.trim() || !delivery.trim()) {
-      Alert.alert("Missing Info", "Please fill in pickup and delivery addresses.");
+      Alert.alert(
+        "Missing Info",
+        "Please fill in pickup and delivery addresses.",
+      );
       return;
     }
     onSubmit({
@@ -415,7 +508,12 @@ function PostJobModal({
   };
 
   return (
-    <View style={[styles.modalOverlay, { backgroundColor: colors.background + "ee" }]}>
+    <View
+      style={[
+        styles.modalOverlay,
+        { backgroundColor: colors.background + "ee" },
+      ]}
+    >
       <View
         style={[
           styles.modal,
@@ -427,132 +525,274 @@ function PostJobModal({
         ]}
       >
         <View style={styles.modalHeader}>
-          <Text style={[styles.modalTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
+          <Text
+            style={[
+              styles.modalTitle,
+              { color: colors.foreground, fontFamily: "Inter_700Bold" },
+            ]}
+          >
             Post a Load Request
           </Text>
           <Pressable onPress={onClose}>
             <Feather name="x" size={22} color={colors.mutedForeground} />
           </Pressable>
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 8 }}>
-
-        {/* Project name */}
-        <Text style={[styles.fieldLabel, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
-          Project Name
-        </Text>
-        <TextInput
-          style={[styles.fieldInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground, fontFamily: "Inter_400Regular" }]}
-          placeholder="e.g. Waterfront Project"
-          placeholderTextColor={colors.mutedForeground}
-          value={projectName}
-          onChangeText={setProjectName}
-        />
-
-        {/* Project type */}
-        <Text style={[styles.fieldLabel, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
-          Project Type
-        </Text>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={PROJECT_TYPES}
-          keyExtractor={(t) => t}
-          contentContainerStyle={styles.materialChips}
-          renderItem={({ item, index }) => (
-            <Pressable
-              onPress={() => setTypeIdx(index)}
-              style={[
-                styles.materialChip,
-                {
-                  backgroundColor: typeIdx === index ? colors.primary : colors.background,
-                  borderColor: typeIdx === index ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: typeIdx === index ? colors.primaryForeground : colors.foreground }}>
-                {item}
-              </Text>
-            </Pressable>
-          )}
-        />
-
-        {/* Material picker */}
-        <Text style={[styles.fieldLabel, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
-          Material Type
-        </Text>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={MATERIALS}
-          keyExtractor={(m) => m}
-          contentContainerStyle={styles.materialChips}
-          renderItem={({ item, index }) => (
-            <Pressable
-              onPress={() => setMatIdx(index)}
-              style={[
-                styles.materialChip,
-                {
-                  backgroundColor: matIdx === index ? colors.primary : colors.background,
-                  borderColor: matIdx === index ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: matIdx === index ? colors.primaryForeground : colors.foreground }}>
-                {item}
-              </Text>
-            </Pressable>
-          )}
-        />
-
-        <View style={styles.row}>
-          <Field label="Quantity (tons)" value={quantity} onChangeText={setQuantity} keyboardType="numeric" colors={colors} style={{ flex: 1 }} />
-          <Field label="Trucks" value={trucks} onChangeText={setTrucks} keyboardType="numeric" colors={colors} style={{ flex: 1 }} />
-        </View>
-        <Field label="Pickup Address" value={pickup} onChangeText={setPickup} colors={colors} placeholder="123 Main St, Dallas, TX" />
-        <Field label="Delivery Address" value={delivery} onChangeText={setDelivery} colors={colors} placeholder="Landfill Rd, Dallas, TX" />
-        <View style={styles.row}>
-          <Field label="Preferred Rate ($/hr)" value={preferred} onChangeText={setPreferred} keyboardType="numeric" colors={colors} style={{ flex: 1 }} />
-          <Field label="Budget ($/hr)" value={budget} onChangeText={setBudget} keyboardType="numeric" colors={colors} style={{ flex: 1 }} />
-        </View>
-        <View style={styles.row}>
-          <Field label="Start Date" value={date} onChangeText={setDate} colors={colors} style={{ flex: 1 }} />
-          <Field label="End Date" value={endDate} onChangeText={setEndDate} colors={colors} style={{ flex: 1 }} />
-        </View>
-
-        <Pressable
-          onPress={() => setProviderSupplies((v) => !v)}
-          style={[styles.checkboxRow, { borderColor: colors.border }]}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 8 }}
         >
-          <View
+          {/* Project name */}
+          <Text
             style={[
-              styles.checkbox,
+              styles.fieldLabel,
+              { color: colors.mutedForeground, fontFamily: "Inter_500Medium" },
+            ]}
+          >
+            Project Name
+          </Text>
+          <TextInput
+            style={[
+              styles.fieldInput,
               {
-                borderColor: providerSupplies ? colors.primary : colors.border,
-                backgroundColor: providerSupplies ? colors.primary : "transparent",
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                color: colors.foreground,
+                fontFamily: "Inter_400Regular",
+              },
+            ]}
+            placeholder="e.g. Waterfront Project"
+            placeholderTextColor={colors.mutedForeground}
+            value={projectName}
+            onChangeText={setProjectName}
+          />
+
+          {/* Project type */}
+          <Text
+            style={[
+              styles.fieldLabel,
+              { color: colors.mutedForeground, fontFamily: "Inter_500Medium" },
+            ]}
+          >
+            Project Type
+          </Text>
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={PROJECT_TYPES}
+            keyExtractor={(t) => t}
+            contentContainerStyle={styles.materialChips}
+            renderItem={({ item, index }) => (
+              <Pressable
+                onPress={() => setTypeIdx(index)}
+                style={[
+                  styles.materialChip,
+                  {
+                    backgroundColor:
+                      typeIdx === index ? colors.primary : colors.background,
+                    borderColor:
+                      typeIdx === index ? colors.primary : colors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: "Inter_500Medium",
+                    color:
+                      typeIdx === index
+                        ? colors.primaryForeground
+                        : colors.foreground,
+                  }}
+                >
+                  {item}
+                </Text>
+              </Pressable>
+            )}
+          />
+
+          {/* Material picker */}
+          <Text
+            style={[
+              styles.fieldLabel,
+              { color: colors.mutedForeground, fontFamily: "Inter_500Medium" },
+            ]}
+          >
+            Material Type
+          </Text>
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={MATERIALS}
+            keyExtractor={(m) => m}
+            contentContainerStyle={styles.materialChips}
+            renderItem={({ item, index }) => (
+              <Pressable
+                onPress={() => setMatIdx(index)}
+                style={[
+                  styles.materialChip,
+                  {
+                    backgroundColor:
+                      matIdx === index ? colors.primary : colors.background,
+                    borderColor:
+                      matIdx === index ? colors.primary : colors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: "Inter_500Medium",
+                    color:
+                      matIdx === index
+                        ? colors.primaryForeground
+                        : colors.foreground,
+                  }}
+                >
+                  {item}
+                </Text>
+              </Pressable>
+            )}
+          />
+
+          <View style={styles.row}>
+            <Field
+              label="Quantity (tons)"
+              value={quantity}
+              onChangeText={setQuantity}
+              keyboardType="numeric"
+              colors={colors}
+              style={{ flex: 1 }}
+            />
+            <Field
+              label="Trucks"
+              value={trucks}
+              onChangeText={setTrucks}
+              keyboardType="numeric"
+              colors={colors}
+              style={{ flex: 1 }}
+            />
+          </View>
+          <Field
+            label="Pickup Address"
+            value={pickup}
+            onChangeText={setPickup}
+            colors={colors}
+            placeholder="123 Main St, Dallas, TX"
+          />
+          <Field
+            label="Delivery Address"
+            value={delivery}
+            onChangeText={setDelivery}
+            colors={colors}
+            placeholder="Landfill Rd, Dallas, TX"
+          />
+          <View style={styles.row}>
+            <Field
+              label="Preferred Rate ($/hr)"
+              value={preferred}
+              onChangeText={setPreferred}
+              keyboardType="numeric"
+              colors={colors}
+              style={{ flex: 1 }}
+            />
+            <Field
+              label="Budget ($/hr)"
+              value={budget}
+              onChangeText={setBudget}
+              keyboardType="numeric"
+              colors={colors}
+              style={{ flex: 1 }}
+            />
+          </View>
+          <View style={styles.row}>
+            <Field
+              label="Start Date"
+              value={date}
+              onChangeText={setDate}
+              colors={colors}
+              style={{ flex: 1 }}
+            />
+            <Field
+              label="End Date"
+              value={endDate}
+              onChangeText={setEndDate}
+              colors={colors}
+              style={{ flex: 1 }}
+            />
+          </View>
+
+          <Pressable
+            onPress={() => setProviderSupplies((v) => !v)}
+            style={[styles.checkboxRow, { borderColor: colors.border }]}
+          >
+            <View
+              style={[
+                styles.checkbox,
+                {
+                  borderColor: providerSupplies
+                    ? colors.primary
+                    : colors.border,
+                  backgroundColor: providerSupplies
+                    ? colors.primary
+                    : "transparent",
+                },
+              ]}
+            >
+              {providerSupplies && (
+                <Feather
+                  name="check"
+                  size={12}
+                  color={colors.primaryForeground}
+                />
+              )}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={[
+                  styles.checkboxLabel,
+                  { color: colors.foreground, fontFamily: "Inter_500Medium" },
+                ]}
+              >
+                Provider must supply trucks & equipment
+              </Text>
+              <Text
+                style={[
+                  styles.checkboxSub,
+                  {
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                  },
+                ]}
+              >
+                Provider brings all trucks and equipment to the job
+              </Text>
+            </View>
+          </Pressable>
+
+          <Pressable
+            onPress={handleSubmit}
+            disabled={submitting}
+            style={[
+              styles.submitBtn,
+              {
+                backgroundColor: colors.primary,
+                opacity: submitting ? 0.6 : 1,
               },
             ]}
           >
-            {providerSupplies && <Feather name="check" size={12} color={colors.primaryForeground} />}
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.checkboxLabel, { color: colors.foreground, fontFamily: "Inter_500Medium" }]}>
-              Provider must supply trucks & equipment
+            <Text
+              style={[
+                styles.submitText,
+                {
+                  color: colors.primaryForeground,
+                  fontFamily: "Inter_700Bold",
+                },
+              ]}
+            >
+              {submitting ? "Posting…" : "Post Load Request"}
             </Text>
-            <Text style={[styles.checkboxSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-              Provider brings all trucks and equipment to the job
-            </Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          onPress={handleSubmit}
-          disabled={submitting}
-          style={[styles.submitBtn, { backgroundColor: colors.primary, opacity: submitting ? 0.6 : 1 }]}
-        >
-          <Text style={[styles.submitText, { color: colors.primaryForeground, fontFamily: "Inter_700Bold" }]}>
-            {submitting ? "Posting…" : "Post Load Request"}
-          </Text>
-        </Pressable>
+          </Pressable>
         </ScrollView>
       </View>
     </View>
@@ -578,7 +818,12 @@ function Field({
 }) {
   return (
     <View style={[{ marginBottom: 12 }, style]}>
-      <Text style={[styles.fieldLabel, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
+      <Text
+        style={[
+          styles.fieldLabel,
+          { color: colors.mutedForeground, fontFamily: "Inter_500Medium" },
+        ]}
+      >
         {label}
       </Text>
       <TextInput

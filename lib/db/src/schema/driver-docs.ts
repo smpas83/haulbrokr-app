@@ -4,8 +4,10 @@ import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
 
 export const DRIVER_DOC_TYPES = [
-  "dl_front", "dl_back",
-  "cdl_front", "cdl_back",
+  "dl_front",
+  "dl_back",
+  "cdl_front",
+  "cdl_back",
   "dot_medical_card",
   "drug_test",
   "mvr",
@@ -33,13 +35,18 @@ export const DRIVER_DOC_TYPES = [
 export type DriverDocType = (typeof DRIVER_DOC_TYPES)[number];
 
 export const DRIVER_DOC_STATUSES = [
-  "missing", "uploaded", "verified", "rejected",
+  "missing",
+  "uploaded",
+  "verified",
+  "rejected",
 ] as const;
 export type DriverDocStatus = (typeof DRIVER_DOC_STATUSES)[number];
 
 export const driverDocumentsTable = pgTable("driver_documents", {
   id: serial("id").primaryKey(),
-  profileId: integer("profile_id").notNull().references(() => profilesTable.id),
+  profileId: integer("profile_id")
+    .notNull()
+    .references(() => profilesTable.id),
   docType: text("doc_type").notNull(),
   status: text("status").notNull().default("missing"),
   objectPath: text("object_path"),
@@ -52,10 +59,17 @@ export const driverDocumentsTable = pgTable("driver_documents", {
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }),
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
   rejectedAt: timestamp("rejected_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
-export const insertDriverDocumentSchema = createInsertSchema(driverDocumentsTable).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertDriverDocumentSchema = createInsertSchema(
+  driverDocumentsTable,
+).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertDriverDocument = z.infer<typeof insertDriverDocumentSchema>;
 export type DriverDocument = typeof driverDocumentsTable.$inferSelect;

@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type UpdateMemberRoleInputOrgRole = typeof UpdateMemberRoleInputOrgRole[keyof typeof UpdateMemberRoleInputOrgRole];
-
+export type UpdateMemberRoleInputOrgRole =
+  (typeof UpdateMemberRoleInputOrgRole)[keyof typeof UpdateMemberRoleInputOrgRole];
 
 export const UpdateMemberRoleInputOrgRole = {
-  admin: 'admin',
-  member: 'member',
+  admin: "admin",
+  member: "member",
 } as const;

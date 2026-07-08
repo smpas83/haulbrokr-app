@@ -100,7 +100,9 @@ async function ensureClerkReviewUser(): Promise<string> {
     console.log(`Updated Clerk user ${user.id}`);
   }
 
-  const emailId = user.email_addresses?.find((item) => item.email_address === REVIEW_EMAIL)?.id;
+  const emailId = user.email_addresses?.find(
+    (item) => item.email_address === REVIEW_EMAIL,
+  )?.id;
   if (emailId) {
     await clerkFetch(`/email_addresses/${emailId}`, {
       method: "PATCH",
@@ -119,7 +121,10 @@ function daysFromNow(days: number) {
 }
 
 async function ensureReviewProfile(clerkId: string) {
-  const [existing] = await db.select().from(profilesTable).where(eq(profilesTable.clerkId, clerkId));
+  const [existing] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.clerkId, clerkId));
   if (existing) {
     console.log(`Review profile already exists (id=${existing.id}).`);
     return existing;
@@ -153,9 +158,14 @@ async function ensureReviewProfile(clerkId: string) {
     })
     .returning();
 
-  await db.update(profilesTable).set({ organizationId: org.id, orgRole: "owner" }).where(eq(profilesTable.id, profile.id));
+  await db
+    .update(profilesTable)
+    .set({ organizationId: org.id, orgRole: "owner" })
+    .where(eq(profilesTable.id, profile.id));
 
-  console.log(`Created review profile id=${profile.id} with organization id=${org.id}`);
+  console.log(
+    `Created review profile id=${profile.id} with organization id=${org.id}`,
+  );
   return { ...profile, organizationId: org.id };
 }
 
@@ -163,7 +173,10 @@ async function seedDemoCustomers() {
   const customers = [];
   for (let i = 1; i <= 3; i++) {
     const clerkId = `${REVIEW_CLERK_MARKER}-customer-${i}`;
-    const [existing] = await db.select().from(profilesTable).where(eq(profilesTable.clerkId, clerkId));
+    const [existing] = await db
+      .select()
+      .from(profilesTable)
+      .where(eq(profilesTable.clerkId, clerkId));
     if (existing) {
       customers.push(existing);
       continue;
@@ -186,7 +199,10 @@ async function seedDemoCustomers() {
 }
 
 async function seedFleet(providerId: number) {
-  const [countRow] = await db.select().from(trucksTable).where(eq(trucksTable.ownerId, providerId));
+  const [countRow] = await db
+    .select()
+    .from(trucksTable)
+    .where(eq(trucksTable.ownerId, providerId));
   if (countRow) {
     console.log("Fleet already seeded for review provider.");
     return;
@@ -241,18 +257,36 @@ async function seedFleet(providerId: number) {
   console.log("Seeded 4 fleet trucks.");
 }
 
-async function seedJobsAndDispatches(providerId: number, customers: { id: number }[]) {
-  const [existingJob] = await db.select().from(jobsTable).where(eq(jobsTable.providerId, providerId)).limit(1);
+async function seedJobsAndDispatches(
+  providerId: number,
+  customers: { id: number }[],
+) {
+  const [existingJob] = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.providerId, providerId))
+    .limit(1);
   if (existingJob) {
     console.log("Jobs already seeded for review provider.");
     return;
   }
 
   const jobSpecs = [
-    { status: "in_progress" as const, material: "gravel", days: 0, hours: "8", rate: "120" },
+    {
+      status: "in_progress" as const,
+      material: "gravel",
+      days: 0,
+      hours: "8",
+      rate: "120",
+    },
     { status: "active" as const, material: "dirt", days: 2, rate: "115" },
     { status: "completed" as const, material: "sand", days: -3, rate: "118" },
-    { status: "completed" as const, material: "topsoil", days: -7, rate: "122" },
+    {
+      status: "completed" as const,
+      material: "topsoil",
+      days: -7,
+      rate: "122",
+    },
     { status: "accepted" as const, material: "fill", days: 4, rate: "125" },
   ];
 
@@ -264,7 +298,12 @@ async function seedJobsAndDispatches(providerId: number, customers: { id: number
       .insert(requestsTable)
       .values({
         customerId: customer.id,
-        materialType: spec.material as "gravel" | "dirt" | "sand" | "topsoil" | "fill",
+        materialType: spec.material as
+          | "gravel"
+          | "dirt"
+          | "sand"
+          | "topsoil"
+          | "fill",
         truckType: "dump_truck",
         quantityTons: "120",
         pickupAddress: "1200 Industrial Blvd, Dallas, TX",
@@ -316,23 +355,57 @@ async function seedJobsAndDispatches(providerId: number, customers: { id: number
 }
 
 async function seedNotifications(providerId: number) {
-  const [existing] = await db.select().from(activityTable).where(eq(activityTable.profileId, providerId)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(activityTable)
+    .where(eq(activityTable.profileId, providerId))
+    .limit(1);
   if (existing) {
     console.log("Notifications already seeded for review provider.");
     return;
   }
 
   const items = [
-    { type: "bid_awarded" as const, description: "Your bid was awarded on Gravel Run #AR-2401" },
-    { type: "job_accepted" as const, description: "Job accepted — 2 trucks scheduled for tomorrow" },
-    { type: "job_started" as const, description: "Driver AR-101 checked in at pickup site" },
-    { type: "job_completed" as const, description: "Sand haul completed — ticket uploaded" },
-    { type: "request_posted" as const, description: "New open load near Dallas (12 mi)" },
-    { type: "bid_placed" as const, description: "Competitor bid received on Fill Dirt #AR-2398" },
-    { type: "payout_delayed" as const, description: "Payout processing — funds expected in 2 business days" },
-    { type: "delivery_evidence_submitted" as const, description: "Delivery photo submitted for review" },
-    { type: "job_started" as const, description: "Dispatch: Truck AR-103 en route to job site" },
-    { type: "bid_accepted" as const, description: "Customer accepted your rate on Topsoil haul" },
+    {
+      type: "bid_awarded" as const,
+      description: "Your bid was awarded on Gravel Run #AR-2401",
+    },
+    {
+      type: "job_accepted" as const,
+      description: "Job accepted — 2 trucks scheduled for tomorrow",
+    },
+    {
+      type: "job_started" as const,
+      description: "Driver AR-101 checked in at pickup site",
+    },
+    {
+      type: "job_completed" as const,
+      description: "Sand haul completed — ticket uploaded",
+    },
+    {
+      type: "request_posted" as const,
+      description: "New open load near Dallas (12 mi)",
+    },
+    {
+      type: "bid_placed" as const,
+      description: "Competitor bid received on Fill Dirt #AR-2398",
+    },
+    {
+      type: "payout_delayed" as const,
+      description: "Payout processing — funds expected in 2 business days",
+    },
+    {
+      type: "delivery_evidence_submitted" as const,
+      description: "Delivery photo submitted for review",
+    },
+    {
+      type: "job_started" as const,
+      description: "Dispatch: Truck AR-103 en route to job site",
+    },
+    {
+      type: "bid_accepted" as const,
+      description: "Customer accepted your rate on Topsoil haul",
+    },
   ];
 
   await db.insert(activityTable).values(

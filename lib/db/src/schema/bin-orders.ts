@@ -1,4 +1,11 @@
-import { pgTable, text, uuid, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  uuid,
+  integer,
+  timestamp,
+  boolean,
+} from "drizzle-orm/pg-core";
 
 export const binOrders = pgTable("bin_orders", {
   id: uuid("id").defaultRandom().primaryKey(),

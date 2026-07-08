@@ -1,10 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/react";
 import { useQuery } from "@tanstack/react-query";
-import { Crosshair, Loader2, MapPin, Navigation, RefreshCw, Truck, Layers } from "lucide-react";
+import {
+  Crosshair,
+  Loader2,
+  MapPin,
+  Navigation,
+  RefreshCw,
+  Truck,
+  Layers,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useFindMyLocation } from "@/hooks/useFindMyLocation";
 import { resolveGoogleMapsApiKey } from "@/lib/googleMapsKey";
@@ -33,8 +47,18 @@ type MarketplaceMapData = {
     latitude: number;
     longitude: number;
   }>;
-  heatZones: Array<{ latitude: number; longitude: number; radius: number; intensity: number }>;
-  stats: { openLoads: number; activeJobs: number; availableTrucks: number; providers: number };
+  heatZones: Array<{
+    latitude: number;
+    longitude: number;
+    radius: number;
+    intensity: number;
+  }>;
+  stats: {
+    openLoads: number;
+    activeJobs: number;
+    availableTrucks: number;
+    providers: number;
+  };
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -110,7 +134,9 @@ function loadGoogleMaps(): Promise<void> {
   return mapsScriptPromise;
 }
 
-async function fetchMarketplace(getToken: () => Promise<string | null>): Promise<MarketplaceMapData> {
+async function fetchMarketplace(
+  getToken: () => Promise<string | null>,
+): Promise<MarketplaceMapData> {
   const token = await getToken();
   const res = await fetch("/api/map/marketplace", {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -157,10 +183,14 @@ export default function MapPage() {
         if (cancelled) return;
 
         if (!window.google) {
-          throw new Error("Google Maps API not available (window.google is missing)");
+          throw new Error(
+            "Google Maps API not available (window.google is missing)",
+          );
         }
         if (!window.google.maps) {
-          throw new Error("Google Maps API not available (window.google.maps is missing)");
+          throw new Error(
+            "Google Maps API not available (window.google.maps is missing)",
+          );
         }
         if (!mapDivRef.current) {
           throw new Error("Map container element is not mounted");
@@ -175,9 +205,20 @@ export default function MapPage() {
           fullscreenControl: true,
           styles: [
             { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
-            { elementType: "labels.text.fill", stylers: [{ color: "#6b7280" }] },
-            { featureType: "road", elementType: "geometry", stylers: [{ color: "#1c2333" }] },
-            { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a1628" }] },
+            {
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#6b7280" }],
+            },
+            {
+              featureType: "road",
+              elementType: "geometry",
+              stylers: [{ color: "#1c2333" }],
+            },
+            {
+              featureType: "water",
+              elementType: "geometry",
+              stylers: [{ color: "#0a1628" }],
+            },
           ],
         });
         console.log("Map created");
@@ -198,7 +239,8 @@ export default function MapPage() {
   }, [isLoading, isError, mapError, mapReady]);
 
   const renderUserLocation = useCallback(() => {
-    if (!mapReady || !mapRef.current || !userCoords || !window.google?.maps) return;
+    if (!mapReady || !mapRef.current || !userCoords || !window.google?.maps)
+      return;
 
     userMarkerRef.current?.setMap(null);
     userPulseRef.current?.setMap(null);
@@ -301,7 +343,10 @@ export default function MapPage() {
   useEffect(() => {
     if (!mapReady || !mapRef.current || !userCoords) return;
     if (following) {
-      mapRef.current.panTo({ lat: userCoords.latitude, lng: userCoords.longitude });
+      mapRef.current.panTo({
+        lat: userCoords.latitude,
+        lng: userCoords.longitude,
+      });
     }
   }, [mapReady, userCoords, following]);
 
@@ -331,12 +376,23 @@ export default function MapPage() {
             Live Operations Map
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Nationwide loads, fleet trucks, and demand heat zones from production data
+            Nationwide loads, fleet trucks, and demand heat zones from
+            production data
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="rounded-none border-2" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-none border-2"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            {isFetching ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
             <span className="ml-2">Refresh</span>
           </Button>
         </div>
@@ -344,10 +400,22 @@ export default function MapPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Open Loads", value: data?.stats.openLoads ?? "—", icon: MapPin },
-          { label: "Active Jobs", value: data?.stats.activeJobs ?? "—", icon: Layers },
+          {
+            label: "Open Loads",
+            value: data?.stats.openLoads ?? "—",
+            icon: MapPin,
+          },
+          {
+            label: "Active Jobs",
+            value: data?.stats.activeJobs ?? "—",
+            icon: Layers,
+          },
           { label: "Trucks", value: data?.trucks.length ?? "—", icon: Truck },
-          { label: "Carriers", value: data?.stats.providers ?? "—", icon: Truck },
+          {
+            label: "Carriers",
+            value: data?.stats.providers ?? "—",
+            icon: Truck,
+          },
         ].map((stat) => (
           <Card key={stat.label} className="rounded-none border-2">
             <CardHeader className="pb-2 pt-4 px-4">
@@ -366,7 +434,10 @@ export default function MapPage() {
             <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-2 text-muted-foreground">
               <MapPin className="h-10 w-10 opacity-40" />
               <p className="font-semibold text-destructive">{mapError}</p>
-              <p className="text-sm">Set VITE_GOOGLE_MAPS_API_KEY or configure GOOGLE_MAPS_API_KEY on the API server.</p>
+              <p className="text-sm">
+                Set VITE_GOOGLE_MAPS_API_KEY or configure GOOGLE_MAPS_API_KEY on
+                the API server.
+              </p>
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center h-full min-h-[480px]">
@@ -374,32 +445,54 @@ export default function MapPage() {
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center justify-center h-full min-h-[480px] gap-3">
-              <p className="text-destructive font-semibold">Failed to load marketplace data</p>
-              <Button variant="outline" onClick={() => refetch()}>Retry</Button>
+              <p className="text-destructive font-semibold">
+                Failed to load marketplace data
+              </p>
+              <Button variant="outline" onClick={() => refetch()}>
+                Retry
+              </Button>
             </div>
           ) : (
             <>
-              <div ref={mapDivRef} className={cn("w-full h-full min-h-[480px]", !mapReady && "opacity-0")} />
+              <div
+                ref={mapDivRef}
+                className={cn(
+                  "w-full h-full min-h-[480px]",
+                  !mapReady && "opacity-0",
+                )}
+              />
               {!mapReady && !mapError && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">Loading map...</p>
+                  <p className="text-sm text-muted-foreground">
+                    Loading map...
+                  </p>
                 </div>
               )}
 
               {isEmpty && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 max-w-md rounded-none border-2 border-border bg-background/95 px-4 py-3 text-center shadow-lg">
-                  <p className="font-semibold text-foreground">No loads available in your area yet</p>
+                  <p className="font-semibold text-foreground">
+                    No loads available in your area yet
+                  </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Use Find My Location to center the map, or check back when new haul requests are posted.
+                    Use Find My Location to center the map, or check back when
+                    new haul requests are posted.
                   </p>
                 </div>
               )}
 
               {locationError && (
                 <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 max-w-sm rounded-none border-2 border-destructive/40 bg-background/95 px-4 py-3 text-center shadow-lg">
-                  <p className="text-sm text-destructive font-medium">{locationError}</p>
-                  <Button variant="outline" size="sm" className="mt-2 rounded-none border-2" onClick={() => findLocation({ follow: following })}>
+                  <p className="text-sm text-destructive font-medium">
+                    {locationError}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 rounded-none border-2"
+                    onClick={() => findLocation({ follow: following })}
+                  >
                     Retry
                   </Button>
                 </div>
@@ -415,13 +508,20 @@ export default function MapPage() {
                     disabled={locating}
                     title="Re-center on my location"
                   >
-                    {locating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Crosshair className="h-5 w-5" />}
+                    {locating ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Crosshair className="h-5 w-5" />
+                    )}
                   </Button>
                 )}
                 <Button
                   size="icon"
                   variant={following ? "default" : "secondary"}
-                  className={cn("h-11 w-11 rounded-full border-2 shadow-lg", following && "ring-2 ring-blue-400/60")}
+                  className={cn(
+                    "h-11 w-11 rounded-full border-2 shadow-lg",
+                    following && "ring-2 ring-blue-400/60",
+                  )}
                   onClick={async () => {
                     if (following) {
                       stopFollowing();
@@ -430,9 +530,17 @@ export default function MapPage() {
                     await handleFindMe();
                   }}
                   disabled={locating}
-                  title={following ? "Stop following my location" : "Find my location"}
+                  title={
+                    following
+                      ? "Stop following my location"
+                      : "Find my location"
+                  }
                 >
-                  {locating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Navigation className="h-5 w-5" />}
+                  {locating ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Navigation className="h-5 w-5" />
+                  )}
                 </Button>
               </div>
             </>
@@ -445,16 +553,27 @@ export default function MapPage() {
           <Card className="rounded-none border-2">
             <CardHeader>
               <CardTitle className="text-base">Nearby Loads</CardTitle>
-              <CardDescription>{Math.min(data.loads.length, 8)} shown · {data.loads.length} total on map</CardDescription>
+              <CardDescription>
+                {Math.min(data.loads.length, 8)} shown · {data.loads.length}{" "}
+                total on map
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 max-h-64 overflow-y-auto">
               {data.loads.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">No open loads on the map yet.</p>
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No open loads on the map yet.
+                </p>
               ) : (
                 data.loads.slice(0, 8).map((load) => (
-                  <div key={load.id} className="text-sm border-b border-border pb-2">
+                  <div
+                    key={load.id}
+                    className="text-sm border-b border-border pb-2"
+                  >
                     <div className="font-semibold">{load.projectName}</div>
-                    <div className="text-muted-foreground text-xs">{load.material} · ${load.budgetPerHour}/hr · {load.bidsCount} bids</div>
+                    <div className="text-muted-foreground text-xs">
+                      {load.material} · ${load.budgetPerHour}/hr ·{" "}
+                      {load.bidsCount} bids
+                    </div>
                   </div>
                 ))
               )}
@@ -463,16 +582,26 @@ export default function MapPage() {
           <Card className="rounded-none border-2">
             <CardHeader>
               <CardTitle className="text-base">Fleet Trucks</CardTitle>
-              <CardDescription>{data.stats.availableTrucks} available · {data.trucks.length} on map</CardDescription>
+              <CardDescription>
+                {data.stats.availableTrucks} available · {data.trucks.length} on
+                map
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 max-h-64 overflow-y-auto">
               {data.trucks.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">No fleet trucks registered yet.</p>
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No fleet trucks registered yet.
+                </p>
               ) : (
                 data.trucks.slice(0, 8).map((truck) => (
-                  <div key={truck.id} className="text-sm border-b border-border pb-2 flex justify-between">
+                  <div
+                    key={truck.id}
+                    className="text-sm border-b border-border pb-2 flex justify-between"
+                  >
                     <span className="font-semibold">{truck.label}</span>
-                    <Badge variant="outline" className="rounded-none text-xs">{truck.status}</Badge>
+                    <Badge variant="outline" className="rounded-none text-xs">
+                      {truck.status}
+                    </Badge>
                   </div>
                 ))
               )}

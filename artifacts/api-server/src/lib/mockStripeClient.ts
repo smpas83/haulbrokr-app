@@ -12,7 +12,8 @@ import type Stripe from "stripe";
  * code changes required. This is intentionally a simulation: no money moves.
  */
 
-export const MOCK_PUBLISHABLE_KEY = "pk_test_mock_haulbrokr_no_stripe_connected";
+export const MOCK_PUBLISHABLE_KEY =
+  "pk_test_mock_haulbrokr_no_stripe_connected";
 
 function mockId(prefix: string): string {
   const rand = Math.random().toString(36).slice(2, 12);
@@ -113,7 +114,9 @@ export function createMockStripeClient(): Stripe {
         // Bounce straight to the return URL — onboarding "completes" instantly.
         return {
           object: "account_link",
-          url: params?.return_url ?? "https://example.com/mock-onboarding-complete",
+          url:
+            params?.return_url ??
+            "https://example.com/mock-onboarding-complete",
         };
       },
     },
@@ -137,7 +140,11 @@ export function createMockStripeClient(): Stripe {
         };
       },
       async attach(id: string, params: any) {
-        return { id, object: "payment_method", customer: params?.customer ?? null };
+        return {
+          id,
+          object: "payment_method",
+          customer: params?.customer ?? null,
+        };
       },
     },
 
@@ -175,9 +182,10 @@ export function createMockStripeClient(): Stripe {
           // Send the customer straight to the success URL (the route swaps the
           // {CHECKOUT_SESSION_ID} placeholder for the real id) so the hosted
           // Checkout step "completes" without a real Stripe page.
-          const successUrl = typeof params?.success_url === "string"
-            ? params.success_url.replace("{CHECKOUT_SESSION_ID}", id)
-            : "";
+          const successUrl =
+            typeof params?.success_url === "string"
+              ? params.success_url.replace("{CHECKOUT_SESSION_ID}", id)
+              : "";
           return {
             id,
             object: "checkout.session",

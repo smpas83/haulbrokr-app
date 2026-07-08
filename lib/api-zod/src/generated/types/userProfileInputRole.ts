@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type UserProfileInputRole = typeof UserProfileInputRole[keyof typeof UserProfileInputRole];
-
+export type UserProfileInputRole =
+  (typeof UserProfileInputRole)[keyof typeof UserProfileInputRole];
 
 export const UserProfileInputRole = {
-  customer: 'customer',
-  provider: 'provider',
-  driver: 'driver',
-  supervisor: 'supervisor',
+  customer: "customer",
+  provider: "provider",
+  driver: "driver",
+  supervisor: "supervisor",
 } as const;

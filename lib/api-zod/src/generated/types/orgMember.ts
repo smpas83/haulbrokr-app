@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { OrgMemberRole } from './orgMemberRole';
+import type { OrgMemberRole } from "./orgMemberRole";
 
 export interface OrgMember {
   id: number;

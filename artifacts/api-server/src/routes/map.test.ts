@@ -145,7 +145,9 @@ describe("POST /api/maps/geocode", () => {
   });
 
   it("returns 400 for invalid body", async () => {
-    const res = await request(app()).post("/api/maps/geocode").send({ address: "ab" });
+    const res = await request(app())
+      .post("/api/maps/geocode")
+      .send({ address: "ab" });
     expect(res.status).toBe(400);
   });
 });

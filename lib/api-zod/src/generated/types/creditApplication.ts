@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { CreditApplicationStatus } from './creditApplicationStatus';
+import type { CreditApplicationStatus } from "./creditApplicationStatus";
 
 export interface CreditApplication {
   id: number;

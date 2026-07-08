@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { PaymentMethodMethodType } from './paymentMethodMethodType';
+import type { PaymentMethodMethodType } from "./paymentMethodMethodType";
 
 export interface PaymentMethod {
   id: number;
@@ -16,9 +16,9 @@ export interface PaymentMethod {
   /** @nullable */
   stripePaymentMethodId?: string | null;
   /**
-     * null when nothing needs verifying (cards, net terms, instantly-verified ACH); "pending" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); "verified" once confirmed.
-     * @nullable
-     */
+   * null when nothing needs verifying (cards, net terms, instantly-verified ACH); "pending" when an ACH bank account is awaiting micro-deposit confirmation (not yet chargeable); "verified" once confirmed.
+   * @nullable
+   */
   verificationStatus?: string | null;
   /** @nullable */
   cardLast4?: string | null;

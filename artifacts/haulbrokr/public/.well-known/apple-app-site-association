@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "B7Z55AHC9L.com.haulbrokr.mobile",
+        "paths": [
+          "/job/*",
+          "/bin/*",
+          "/tracking/*",
+          "/invoice/*",
+          "/sign-in",
+          "/sign-up"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["B7Z55AHC9L.com.haulbrokr.mobile"]
+  }
+}

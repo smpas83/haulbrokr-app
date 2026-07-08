@@ -13,8 +13,6 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   req.log?.error?.({ err }, "Unhandled request error");
   const status = typeof err?.status === "number" ? err.status : 500;
   const message =
-    status < 500 && err?.message
-      ? err.message
-      : "Internal server error";
+    status < 500 && err?.message ? err.message : "Internal server error";
   res.status(status).json({ error: message });
 };

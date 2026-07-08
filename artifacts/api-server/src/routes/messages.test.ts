@@ -7,7 +7,10 @@ import request from "supertest";
  */
 const h = vi.hoisted(() => ({
   /** The profile injected by the mocked requireProfile middleware. */
-  profile: { id: 1, role: "customer", organizationId: null } as Record<string, unknown>,
+  profile: { id: 1, role: "customer", organizationId: null } as Record<
+    string,
+    unknown
+  >,
   /** Rows returned by the joined `db.select(...)...orderBy()` for the list query. */
   messageRows: [] as Record<string, unknown>[],
   /** Every payload passed to `db.insert(jobMessagesTable).values(...)`, in call order. */
@@ -85,7 +88,13 @@ function baseJob(overrides: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
-  h.profile = { id: CUSTOMER_ID, role: "customer", companyName: "Acme Co", contactName: "Alice", organizationId: null };
+  h.profile = {
+    id: CUSTOMER_ID,
+    role: "customer",
+    companyName: "Acme Co",
+    contactName: "Alice",
+    organizationId: null,
+  };
   h.messageRows = [];
   h.inserts = [];
   loadJobIfMember.mockReset();

@@ -5,12 +5,12 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { UpdateStaffRoleInputStaffRole } from './updateStaffRoleInputStaffRole';
+import type { UpdateStaffRoleInputStaffRole } from "./updateStaffRoleInputStaffRole";
 
 export interface UpdateStaffRoleInput {
   /**
-     * The staff role to assign, or null to remove staff access.
-     * @nullable
-     */
+   * The staff role to assign, or null to remove staff access.
+   * @nullable
+   */
   staffRole: UpdateStaffRoleInputStaffRole;
 }

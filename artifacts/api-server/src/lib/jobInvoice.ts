@@ -47,7 +47,9 @@ export type JobInvoiceData = {
 };
 
 /** Completed jobs and net-terms invoiced jobs may download a PDF invoice. */
-export function jobIsInvoiceEligible(job: Pick<Job, "status" | "paymentStatus">): boolean {
+export function jobIsInvoiceEligible(
+  job: Pick<Job, "status" | "paymentStatus">,
+): boolean {
   return job.status === "completed" || job.paymentStatus === "invoiced";
 }
 
@@ -65,7 +67,10 @@ export function formatPaymentStatusLabel(status: Job["paymentStatus"]): string {
   return labels[status] ?? status;
 }
 
-export function formatInvoiceNumber(jobId: number, referenceDate: Date): string {
+export function formatInvoiceNumber(
+  jobId: number,
+  referenceDate: Date,
+): string {
   return `INV-${referenceDate.getFullYear()}-${String(jobId).padStart(4, "0")}`;
 }
 
@@ -81,7 +86,10 @@ function formatMaterialLabel(materialType: string): string {
 }
 
 function formatUsd(amount: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount);
 }
 
 function formatDate(d: Date): string {
@@ -89,9 +97,16 @@ function formatDate(d: Date): string {
 }
 
 function computeInvoiceAmounts(job: Job) {
-  if (job.customerTotalAmount != null && job.providerNetAmount != null && job.platformFeeAmount != null) {
+  if (
+    job.customerTotalAmount != null &&
+    job.providerNetAmount != null &&
+    job.platformFeeAmount != null
+  ) {
     return {
-      workAmount: job.totalAmount != null ? parseFloat(job.totalAmount) : parseFloat(job.providerNetAmount),
+      workAmount:
+        job.totalAmount != null
+          ? parseFloat(job.totalAmount)
+          : parseFloat(job.providerNetAmount),
       platformFeeAmount: parseFloat(job.platformFeeAmount),
       providerNetAmount: parseFloat(job.providerNetAmount),
       customerTotalAmount: parseFloat(job.customerTotalAmount),
@@ -104,7 +119,8 @@ function computeInvoiceAmounts(job: Job) {
   const feeRate = parseFloat(job.platformFeeRate);
   const workAmount = Math.round(rate * hours * 100) / 100;
   const platformFeeAmount = Math.round(workAmount * feeRate * 100) / 100;
-  const customerTotalAmount = Math.round((workAmount + platformFeeAmount) * 100) / 100;
+  const customerTotalAmount =
+    Math.round((workAmount + platformFeeAmount) * 100) / 100;
   return {
     workAmount,
     platformFeeAmount,
@@ -127,11 +143,19 @@ function resolveIssueDate(job: Job): Date {
 
 function formatAddress(profile: Profile | undefined): string | null {
   if (!profile) return null;
-  const parts = [profile.address, profile.city, profile.state, profile.zip].filter(Boolean);
+  const parts = [
+    profile.address,
+    profile.city,
+    profile.state,
+    profile.zip,
+  ].filter(Boolean);
   return parts.length ? parts.join(", ") : null;
 }
 
-export async function canDownloadJobInvoice(job: Job, profile: Profile): Promise<boolean> {
+export async function canDownloadJobInvoice(
+  job: Job,
+  profile: Profile,
+): Promise<boolean> {
   if (profile.staffRole) return true;
   if (job.customerId === profile.id) return true;
   if (job.providerId === profile.id) return true;
@@ -155,24 +179,41 @@ export async function canDownloadJobInvoice(job: Job, profile: Profile): Promise
   return false;
 }
 
-export async function loadJobInvoiceData(jobId: number): Promise<JobInvoiceData | null> {
-  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+export async function loadJobInvoiceData(
+  jobId: number,
+): Promise<JobInvoiceData | null> {
+  const [job] = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, jobId));
   if (!job) return null;
 
-  const [customer] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.customerId));
-  const [provider] = await db.select().from(profilesTable).where(eq(profilesTable.id, job.providerId));
-  const [request] = await db.select().from(requestsTable).where(eq(requestsTable.id, job.requestId));
+  const [customer] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, job.customerId));
+  const [provider] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, job.providerId));
+  const [request] = await db
+    .select()
+    .from(requestsTable)
+    .where(eq(requestsTable.id, job.requestId));
 
   const issueDate = resolveIssueDate(job);
   const amounts = computeInvoiceAmounts(job);
-  const tons = request?.quantityTons != null ? parseFloat(request.quantityTons) : null;
+  const tons =
+    request?.quantityTons != null ? parseFloat(request.quantityTons) : null;
   const hours = job.totalHours != null ? parseFloat(job.totalHours) : null;
   const quantityParts: string[] = [];
-  if (tons != null && Number.isFinite(tons)) quantityParts.push(`${tons.toLocaleString("en-US")} tons`);
+  if (tons != null && Number.isFinite(tons))
+    quantityParts.push(`${tons.toLocaleString("en-US")} tons`);
   if (hours != null && Number.isFinite(hours)) {
     quantityParts.push(`${hours.toLocaleString("en-US")} hours`);
   }
-  if (job.trucksAssigned > 1) quantityParts.push(`${job.trucksAssigned} trucks`);
+  if (job.trucksAssigned > 1)
+    quantityParts.push(`${job.trucksAssigned} trucks`);
 
   return {
     invoiceNumber: formatInvoiceNumber(job.id, issueDate),
@@ -194,8 +235,13 @@ export async function loadJobInvoiceData(jobId: number): Promise<JobInvoiceData 
       id: job.id,
       materialType: formatMaterialLabel(job.materialType),
       truckType: formatTruckTypeLabel(job.truckType),
-      quantityTons: tons != null && Number.isFinite(tons) ? `${tons.toLocaleString("en-US")} tons` : null,
-      quantityLabel: quantityParts.length ? quantityParts.join(" · ") : `${job.trucksAssigned} truck(s)`,
+      quantityTons:
+        tons != null && Number.isFinite(tons)
+          ? `${tons.toLocaleString("en-US")} tons`
+          : null,
+      quantityLabel: quantityParts.length
+        ? quantityParts.join(" · ")
+        : `${job.trucksAssigned} truck(s)`,
       pickupAddress: job.pickupAddress,
       deliveryAddress: job.deliveryAddress,
       scheduledDate: formatDate(job.scheduledDate),
@@ -237,11 +283,25 @@ function drawLabelValue(
   labelSize = 9,
   valueSize = 11,
 ) {
-  page.drawText(label, { x, y, size: labelSize, font, color: rgb(0.45, 0.45, 0.45) });
-  page.drawText(value, { x, y: y - 14, size: valueSize, font: bold, color: rgb(0.1, 0.1, 0.1) });
+  page.drawText(label, {
+    x,
+    y,
+    size: labelSize,
+    font,
+    color: rgb(0.45, 0.45, 0.45),
+  });
+  page.drawText(value, {
+    x,
+    y: y - 14,
+    size: valueSize,
+    font: bold,
+    color: rgb(0.1, 0.1, 0.1),
+  });
 }
 
-export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8Array> {
+export async function generateJobInvoicePdf(
+  data: JobInvoiceData,
+): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([612, 792]);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
@@ -250,7 +310,13 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
   const width = page.getWidth();
   let y = page.getHeight() - margin;
 
-  page.drawText("HaulBrokr", { x: margin, y, size: 22, font: bold, color: rgb(0.91, 0.65, 0) });
+  page.drawText("HaulBrokr", {
+    x: margin,
+    y,
+    size: 22,
+    font: bold,
+    color: rgb(0.91, 0.65, 0),
+  });
   page.drawText("INVOICE", {
     x: width - margin - bold.widthOfTextAtSize("INVOICE", 18),
     y,
@@ -259,39 +325,108 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
     color: rgb(0.1, 0.1, 0.1),
   });
   y -= 28;
-  page.drawText("Professional Hauling Network", { x: margin, y, size: 10, font, color: rgb(0.45, 0.45, 0.45) });
+  page.drawText("Professional Hauling Network", {
+    x: margin,
+    y,
+    size: 10,
+    font,
+    color: rgb(0.45, 0.45, 0.45),
+  });
   y -= 32;
   drawLine(page, y, margin, width);
   y -= 24;
 
-  drawLabelValue(page, "INVOICE NUMBER", data.invoiceNumber, margin, y, font, bold);
-  drawLabelValue(page, "INVOICE DATE", data.invoiceDate, margin + 180, y, font, bold);
-  drawLabelValue(page, "DUE DATE", data.dueDate, width - margin - 140, y, font, bold);
+  drawLabelValue(
+    page,
+    "INVOICE NUMBER",
+    data.invoiceNumber,
+    margin,
+    y,
+    font,
+    bold,
+  );
+  drawLabelValue(
+    page,
+    "INVOICE DATE",
+    data.invoiceDate,
+    margin + 180,
+    y,
+    font,
+    bold,
+  );
+  drawLabelValue(
+    page,
+    "DUE DATE",
+    data.dueDate,
+    width - margin - 140,
+    y,
+    font,
+    bold,
+  );
   y -= 48;
   drawLine(page, y, margin, width);
   y -= 28;
 
-  page.drawText("CUSTOMER", { x: margin, y, size: 9, font: bold, color: rgb(0.45, 0.45, 0.45) });
-  page.drawText("HAULING COMPANY", { x: width / 2 + 8, y, size: 9, font: bold, color: rgb(0.45, 0.45, 0.45) });
+  page.drawText("CUSTOMER", {
+    x: margin,
+    y,
+    size: 9,
+    font: bold,
+    color: rgb(0.45, 0.45, 0.45),
+  });
+  page.drawText("HAULING COMPANY", {
+    x: width / 2 + 8,
+    y,
+    size: 9,
+    font: bold,
+    color: rgb(0.45, 0.45, 0.45),
+  });
   y -= 16;
-  page.drawText(data.customer.companyName, { x: margin, y, size: 12, font: bold });
-  page.drawText(data.hauler.companyName, { x: width / 2 + 8, y, size: 12, font: bold });
+  page.drawText(data.customer.companyName, {
+    x: margin,
+    y,
+    size: 12,
+    font: bold,
+  });
+  page.drawText(data.hauler.companyName, {
+    x: width / 2 + 8,
+    y,
+    size: 12,
+    font: bold,
+  });
   y -= 14;
   if (data.customer.contactName) {
     page.drawText(data.customer.contactName, { x: margin, y, size: 10, font });
   }
   if (data.hauler.contactName) {
-    page.drawText(data.hauler.contactName, { x: width / 2 + 8, y, size: 10, font });
+    page.drawText(data.hauler.contactName, {
+      x: width / 2 + 8,
+      y,
+      size: 10,
+      font,
+    });
   }
   y -= 14;
   if (data.customer.addressLine) {
-    page.drawText(data.customer.addressLine, { x: margin, y, size: 10, font, maxWidth: width / 2 - margin - 12 });
+    page.drawText(data.customer.addressLine, {
+      x: margin,
+      y,
+      size: 10,
+      font,
+      maxWidth: width / 2 - margin - 12,
+    });
   }
   y -= 32;
   drawLine(page, y, margin, width);
   y -= 24;
 
-  page.drawText("JOB DETAILS", { x: margin, y, size: 10, font: bold, color: rgb(0.45, 0.45, 0.45) });
+  page.drawText("JOB DETAILS", {
+    x: margin,
+    y,
+    size: 10,
+    font: bold,
+    color: rgb(0.45, 0.45, 0.45),
+  });
   y -= 20;
 
   const detailRows: Array<[string, string]> = [
@@ -304,7 +439,13 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
     ["Payment status", data.paymentStatus],
   ];
   for (const [label, value] of detailRows) {
-    page.drawText(label, { x: margin, y, size: 10, font, color: rgb(0.45, 0.45, 0.45) });
+    page.drawText(label, {
+      x: margin,
+      y,
+      size: 10,
+      font,
+      color: rgb(0.45, 0.45, 0.45),
+    });
     page.drawText(value, {
       x: margin + 110,
       y,
@@ -319,7 +460,13 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
   drawLine(page, y, margin, width);
   y -= 24;
 
-  page.drawText("SUMMARY", { x: margin, y, size: 10, font: bold, color: rgb(0.45, 0.45, 0.45) });
+  page.drawText("SUMMARY", {
+    x: margin,
+    y,
+    size: 10,
+    font: bold,
+    color: rgb(0.45, 0.45, 0.45),
+  });
   y -= 22;
 
   const feePct = `${Math.round(data.platformFeeRate * 1000) / 10}%`;
@@ -331,7 +478,12 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
   for (const [label, value] of summaryRows) {
     page.drawText(label, { x: margin, y, size: 10, font });
     const valueWidth = bold.widthOfTextAtSize(value, 11);
-    page.drawText(value, { x: width - margin - valueWidth, y, size: 11, font: bold });
+    page.drawText(value, {
+      x: width - margin - valueWidth,
+      y,
+      size: 11,
+      font: bold,
+    });
     y -= 18;
   }
 
@@ -357,7 +509,9 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
   return pdf.save();
 }
 
-export async function buildJobInvoicePdf(jobId: number): Promise<{ pdf: Uint8Array; invoiceNumber: string } | null> {
+export async function buildJobInvoicePdf(
+  jobId: number,
+): Promise<{ pdf: Uint8Array; invoiceNumber: string } | null> {
   const data = await loadJobInvoiceData(jobId);
   if (!data) return null;
   const pdf = await generateJobInvoicePdf(data);

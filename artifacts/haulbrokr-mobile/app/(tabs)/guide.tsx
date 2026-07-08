@@ -11,10 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
-import Animated, {
-  FadeInDown,
-  FadeInRight,
-} from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
@@ -166,7 +163,8 @@ export default function GuideScreen() {
           { color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
         ]}
       >
-        HaulBrokr connects construction companies with vetted dump truck providers — faster and smarter.
+        HaulBrokr connects construction companies with vetted dump truck
+        providers — faster and smarter.
       </Text>
 
       {/* Role Toggle */}
@@ -225,12 +223,7 @@ export default function GuideScreen() {
 
       {/* CTA */}
       <Animated.View entering={FadeInDown.delay(500).springify()}>
-        <View
-          style={[
-            styles.ctaCard,
-            { backgroundColor: colors.primary },
-          ]}
-        >
+        <View style={[styles.ctaCard, { backgroundColor: colors.primary }]}>
           <Text
             style={[
               styles.ctaTitle,
@@ -258,7 +251,9 @@ export default function GuideScreen() {
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push(role === "customer" ? "/(tabs)/jobs" : "/(tabs)/jobs");
+              router.push(
+                role === "customer" ? "/(tabs)/jobs" : "/(tabs)/jobs",
+              );
             }}
             style={[
               styles.ctaBtn,
@@ -273,11 +268,7 @@ export default function GuideScreen() {
             >
               {role === "customer" ? "Post a Job" : "Browse Jobs"}
             </Text>
-            <Feather
-              name="arrow-right"
-              size={16}
-              color={colors.primary}
-            />
+            <Feather name="arrow-right" size={16} color={colors.primary} />
           </Pressable>
         </View>
       </Animated.View>
@@ -359,9 +350,7 @@ function StepCard({
     >
       {/* Left: number + connector */}
       <View style={styles.stepLeft}>
-        <View
-          style={[styles.stepCircle, { backgroundColor: colors.primary }]}
-        >
+        <View style={[styles.stepCircle, { backgroundColor: colors.primary }]}>
           <Text
             style={[
               styles.stepNum,
@@ -409,10 +398,7 @@ function StepCard({
         </Text>
         {step.tip && (
           <View
-            style={[
-              styles.tipRow,
-              { backgroundColor: colors.primary + "12" },
-            ]}
+            style={[styles.tipRow, { backgroundColor: colors.primary + "12" }]}
           >
             <Feather name="info" size={12} color={colors.primary} />
             <Text

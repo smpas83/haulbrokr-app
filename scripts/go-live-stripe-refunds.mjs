@@ -10,7 +10,9 @@
  *   STRIPE_WEBHOOK_ID=we_...
  */
 
-const WEBHOOK_URL = (process.env.WEBHOOK_URL ?? "https://haulbrokr.com/api/webhooks/stripe").trim();
+const WEBHOOK_URL = (
+  process.env.WEBHOOK_URL ?? "https://haulbrokr.com/api/webhooks/stripe"
+).trim();
 const SECRET = (process.env.STRIPE_SECRET_KEY ?? "").trim();
 const WEBHOOK_ID = (process.env.STRIPE_WEBHOOK_ID ?? "").trim();
 
@@ -56,25 +58,36 @@ async function main() {
   console.log(`    Webhook URL: ${WEBHOOK_URL}`);
   console.log("");
 
-  for (const path of ["/api/admin/jobs/1/refund", "/api/admin/jobs/1/payment-history"]) {
+  for (const path of [
+    "/api/admin/jobs/1/refund",
+    "/api/admin/jobs/1/payment-history",
+  ]) {
     const method = path.endsWith("refund") ? "POST" : "GET";
     const res = await fetch(`https://haulbrokr.com${path}`, {
       method,
-      headers: method === "POST" ? { "Content-Type": "application/json" } : undefined,
+      headers:
+        method === "POST" ? { "Content-Type": "application/json" } : undefined,
       body: method === "POST" ? "{}" : undefined,
     });
-    if (res.status === 404) fail(`${path} returned 404 — API deploy may be incomplete`);
+    if (res.status === 404)
+      fail(`${path} returned 404 — API deploy may be incomplete`);
     ok(`${path} reachable (HTTP ${res.status})`);
   }
 
   const ready = await fetch("https://haulbrokr-api.onrender.com/api/readyz");
   if (!ready.ok) fail(`/api/readyz returned HTTP ${ready.status}`);
-  ok("/api/readyz healthy (includes refund schema after auto-migration deploy)");
+  ok(
+    "/api/readyz healthy (includes refund schema after auto-migration deploy)",
+  );
 
   if (!SECRET) {
     console.log("");
-    console.log("SKIP: STRIPE_SECRET_KEY not set — cannot auto-enable webhook events.");
-    console.log("Manual: Stripe Dashboard → Webhooks → enable charge.refunded, refund.created, refund.updated");
+    console.log(
+      "SKIP: STRIPE_SECRET_KEY not set — cannot auto-enable webhook events.",
+    );
+    console.log(
+      "Manual: Stripe Dashboard → Webhooks → enable charge.refunded, refund.created, refund.updated",
+    );
     return;
   }
 
@@ -87,16 +100,22 @@ async function main() {
     if (!endpoint) fail(`No webhook endpoint found for ${WEBHOOK_URL}`);
   }
 
-  const merged = [...new Set([...(endpoint.enabled_events ?? []), ...REFUND_EVENTS])];
+  const merged = [
+    ...new Set([...(endpoint.enabled_events ?? []), ...REFUND_EVENTS]),
+  ];
   const updated = await stripeRequest(
     `/webhook_endpoints/${endpoint.id}`,
     "POST",
     formBody({ enabled_events: merged }),
   );
 
-  ok(`Webhook ${updated.id} enabled events: ${updated.enabled_events.join(", ")}`);
+  ok(
+    `Webhook ${updated.id} enabled events: ${updated.enabled_events.join(", ")}`,
+  );
   console.log("");
-  console.log("Next: issue one live refund via POST /api/admin/jobs/:id/refund and verify payment-history.");
+  console.log(
+    "Next: issue one live refund via POST /api/admin/jobs/:id/refund and verify payment-history.",
+  );
 }
 
 main().catch((err) => {

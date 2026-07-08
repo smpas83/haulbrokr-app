@@ -43,7 +43,9 @@ const ORDERS = [
 ];
 
 function renderBins() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
     <QueryClientProvider client={client}>
       <BinsPage />
@@ -55,8 +57,14 @@ describe("Bins page — deep-linked order highlight", () => {
   beforeEach(() => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        ({ ok: true, status: 200, statusText: "OK", json: async () => ORDERS }) as Response,
+      vi.fn(
+        async () =>
+          ({
+            ok: true,
+            status: 200,
+            statusText: "OK",
+            json: async () => ORDERS,
+          }) as Response,
       ),
     );
   });
@@ -66,7 +74,9 @@ describe("Bins page — deep-linked order highlight", () => {
 
     renderBins();
 
-    const target = await screen.findByText("4500 Construction Blvd, Houston, TX");
+    const target = await screen.findByText(
+      "4500 Construction Blvd, Houston, TX",
+    );
     const targetCard = target.closest(".transition-colors") as HTMLElement;
     await waitFor(() => {
       expect(targetCard.className).toContain("border-violet-500");

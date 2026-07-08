@@ -6,13 +6,13 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type PaymentMethodInputMethodType = typeof PaymentMethodInputMethodType[keyof typeof PaymentMethodInputMethodType];
-
+export type PaymentMethodInputMethodType =
+  (typeof PaymentMethodInputMethodType)[keyof typeof PaymentMethodInputMethodType];
 
 export const PaymentMethodInputMethodType = {
-  credit_card: 'credit_card',
-  ach: 'ach',
-  net_15: 'net_15',
-  net_30: 'net_30',
-  net_45: 'net_45',
+  credit_card: "credit_card",
+  ach: "ach",
+  net_15: "net_15",
+  net_30: "net_30",
+  net_45: "net_45",
 } as const;

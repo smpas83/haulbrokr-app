@@ -5,9 +5,9 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { ListDumpSitesType } from './listDumpSitesType';
+import type { ListDumpSitesType } from "./listDumpSitesType";
 
 export type ListDumpSitesParams = {
-state?: string;
-type?: ListDumpSitesType;
+  state?: string;
+  type?: ListDumpSitesType;
 };

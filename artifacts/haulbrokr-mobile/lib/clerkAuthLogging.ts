@@ -6,7 +6,11 @@ type ClerkLikeError = {
 };
 
 /** Structured console logging for Clerk failures during App Store review debugging. */
-export function logClerkAuthError(scope: string, error: unknown, context?: Record<string, unknown>) {
+export function logClerkAuthError(
+  scope: string,
+  error: unknown,
+  context?: Record<string, unknown>,
+) {
   const err = error as ClerkLikeError;
   const clerkErrors = err?.errors?.map((item) => ({
     code: item.code,
@@ -21,7 +25,9 @@ export function logClerkAuthError(scope: string, error: unknown, context?: Recor
   });
 }
 
-export function clerkErrorMessage(error: ClerkLikeError | null | undefined): string {
+export function clerkErrorMessage(
+  error: ClerkLikeError | null | undefined,
+): string {
   if (!error) return "";
   if (error.errors?.length) {
     return error.errors
@@ -39,11 +45,17 @@ export function isInvalidVerificationCodeError(error: unknown): boolean {
     err?.message,
     err?.longMessage,
     err?.code,
-    ...(err?.errors ?? []).flatMap((item) => [item.message, item.longMessage, item.code]),
+    ...(err?.errors ?? []).flatMap((item) => [
+      item.message,
+      item.longMessage,
+      item.code,
+    ]),
   ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
 
-  return /incorrect|invalid|expired|wrong|mismatch|verification.*fail|code.*not.*valid/.test(haystack);
+  return /incorrect|invalid|expired|wrong|mismatch|verification.*fail|code.*not.*valid/.test(
+    haystack,
+  );
 }

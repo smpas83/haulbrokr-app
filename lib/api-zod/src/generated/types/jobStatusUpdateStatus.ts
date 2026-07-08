@@ -6,18 +6,18 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type JobStatusUpdateStatus = typeof JobStatusUpdateStatus[keyof typeof JobStatusUpdateStatus];
-
+export type JobStatusUpdateStatus =
+  (typeof JobStatusUpdateStatus)[keyof typeof JobStatusUpdateStatus];
 
 export const JobStatusUpdateStatus = {
-  en_route: 'en_route',
-  arrived: 'arrived',
-  loading: 'loading',
-  loaded: 'loaded',
-  dumping: 'dumping',
-  checked_in: 'checked_in',
-  started: 'started',
-  ticket_uploaded: 'ticket_uploaded',
-  photo_uploaded: 'photo_uploaded',
-  completed: 'completed',
+  en_route: "en_route",
+  arrived: "arrived",
+  loading: "loading",
+  loaded: "loaded",
+  dumping: "dumping",
+  checked_in: "checked_in",
+  started: "started",
+  ticket_uploaded: "ticket_uploaded",
+  photo_uploaded: "photo_uploaded",
+  completed: "completed",
 } as const;

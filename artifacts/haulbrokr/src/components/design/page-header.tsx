@@ -9,14 +9,29 @@ interface PageHeaderProps {
   className?: string;
 }
 
-export function PageHeader({ title, description, actions, badge, className }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+  badge,
+  className,
+}: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-col md:flex-row justify-between items-start md:items-center gap-4", className)}>
+    <div
+      className={cn(
+        "flex flex-col md:flex-row justify-between items-start md:items-center gap-4",
+        className,
+      )}
+    >
       <div className="space-y-1">
         {badge}
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">{title}</h1>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+          {title}
+        </h1>
         {description && (
-          <div className="text-muted-foreground text-base max-w-2xl">{description}</div>
+          <div className="text-muted-foreground text-base max-w-2xl">
+            {description}
+          </div>
         )}
       </div>
       {actions && <div className="flex gap-3 flex-shrink-0">{actions}</div>}

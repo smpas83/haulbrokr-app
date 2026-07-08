@@ -28,7 +28,9 @@ export interface StorageObject {
   setMetadata(opts: { metadata: Record<string, string> }): Promise<void>;
 }
 
-function mapS3Metadata(metadata: Record<string, string> | undefined): Record<string, string> {
+function mapS3Metadata(
+  metadata: Record<string, string> | undefined,
+): Record<string, string> {
   if (!metadata) return {};
   const mapped: Record<string, string> = {};
   for (const [key, value] of Object.entries(metadata)) {
@@ -41,7 +43,9 @@ function mapS3Metadata(metadata: Record<string, string> | undefined): Record<str
   return mapped;
 }
 
-function toS3Metadata(metadata: Record<string, string>): Record<string, string> {
+function toS3Metadata(
+  metadata: Record<string, string>,
+): Record<string, string> {
   const mapped: Record<string, string> = {};
   for (const [key, value] of Object.entries(metadata)) {
     if (key === ACL_POLICY_METADATA_KEY) {
@@ -68,8 +72,11 @@ export function createStorageObject(
         await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
         return [true];
       } catch (err: unknown) {
-        const code = (err as { name?: string; $metadata?: { httpStatusCode?: number } }).name;
-        const status = (err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+        const code = (
+          err as { name?: string; $metadata?: { httpStatusCode?: number } }
+        ).name;
+        const status = (err as { $metadata?: { httpStatusCode?: number } })
+          .$metadata?.httpStatusCode;
         if (code === "NotFound" || code === "NoSuchKey" || status === 404) {
           return [false];
         }
@@ -78,17 +85,23 @@ export function createStorageObject(
     },
 
     async getMetadata(): Promise<[ObjectMetadata]> {
-      const head = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
-      return [{
-        size: head.ContentLength,
-        contentType: head.ContentType,
-        generation: head.ETag?.replace(/^"|"$/g, ""),
-        metadata: mapS3Metadata(head.Metadata),
-      }];
+      const head = await client.send(
+        new HeadObjectCommand({ Bucket: bucket, Key: key }),
+      );
+      return [
+        {
+          size: head.ContentLength,
+          contentType: head.ContentType,
+          generation: head.ETag?.replace(/^"|"$/g, ""),
+          metadata: mapS3Metadata(head.Metadata),
+        },
+      ];
     },
 
     createReadStream(): Readable {
-      const bodyPromise = client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+      const bodyPromise = client.send(
+        new GetObjectCommand({ Bucket: bucket, Key: key }),
+      );
       const stream = new Readable({
         read() {},
       });
@@ -106,12 +119,17 @@ export function createStorageObject(
             body.on("error", (err) => stream.destroy(err));
             return;
           }
-          if (typeof (body as AsyncIterable<Uint8Array>)[Symbol.asyncIterator] === "function") {
+          if (
+            typeof (body as AsyncIterable<Uint8Array>)[Symbol.asyncIterator] ===
+            "function"
+          ) {
             void (async () => {
               try {
                 for await (const chunk of body as AsyncIterable<Uint8Array>) {
                   if (!stream.push(chunk)) {
-                    await new Promise<void>((resolve) => stream.once("drain", resolve));
+                    await new Promise<void>((resolve) =>
+                      stream.once("drain", resolve),
+                    );
                   }
                 }
                 stream.push(null);
@@ -132,16 +150,22 @@ export function createStorageObject(
       await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
     },
 
-    async setMetadata(opts: { metadata: Record<string, string> }): Promise<void> {
-      const head = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
-      await client.send(new CopyObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        CopySource: `${bucket}/${encodeURIComponent(key).replace(/%2F/g, "/")}`,
-        MetadataDirective: "REPLACE",
-        ContentType: head.ContentType,
-        Metadata: toS3Metadata(opts.metadata),
-      }));
+    async setMetadata(opts: {
+      metadata: Record<string, string>;
+    }): Promise<void> {
+      const head = await client.send(
+        new HeadObjectCommand({ Bucket: bucket, Key: key }),
+      );
+      await client.send(
+        new CopyObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          CopySource: `${bucket}/${encodeURIComponent(key).replace(/%2F/g, "/")}`,
+          MetadataDirective: "REPLACE",
+          ContentType: head.ContentType,
+          Metadata: toS3Metadata(opts.metadata),
+        }),
+      );
     },
   };
 }
@@ -155,20 +179,26 @@ export async function listStorageObjectsByPrefix(
   let continuationToken: string | undefined;
 
   do {
-    const response = await client.send(new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: prefix,
-      ContinuationToken: continuationToken,
-    }));
+    const response = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      }),
+    );
 
     for (const item of response.Contents ?? []) {
       if (!item.Key) continue;
-      objects.push(createStorageObject(client, bucket, item.Key, {
-        timeCreated: item.LastModified?.toISOString(),
-      }));
+      objects.push(
+        createStorageObject(client, bucket, item.Key, {
+          timeCreated: item.LastModified?.toISOString(),
+        }),
+      );
     }
 
-    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+    continuationToken = response.IsTruncated
+      ? response.NextContinuationToken
+      : undefined;
   } while (continuationToken);
 
   return objects;

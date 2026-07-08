@@ -6,15 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type W9InputBusinessType = typeof W9InputBusinessType[keyof typeof W9InputBusinessType];
-
+export type W9InputBusinessType =
+  (typeof W9InputBusinessType)[keyof typeof W9InputBusinessType];
 
 export const W9InputBusinessType = {
-  sole_proprietor: 'sole_proprietor',
-  single_member_llc: 'single_member_llc',
-  multi_member_llc: 'multi_member_llc',
-  partnership: 'partnership',
-  c_corporation: 'c_corporation',
-  s_corporation: 's_corporation',
-  other: 'other',
+  sole_proprietor: "sole_proprietor",
+  single_member_llc: "single_member_llc",
+  multi_member_llc: "multi_member_llc",
+  partnership: "partnership",
+  c_corporation: "c_corporation",
+  s_corporation: "s_corporation",
+  other: "other",
 } as const;

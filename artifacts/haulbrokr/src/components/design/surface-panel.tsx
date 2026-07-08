@@ -11,7 +11,12 @@ interface SurfacePanelProps {
 }
 
 /** Solid matte panel — no glass blur. Primary building block of the design system. */
-export function SurfacePanel({ children, className, elevated, interactive }: SurfacePanelProps) {
+export function SurfacePanel({
+  children,
+  className,
+  elevated,
+  interactive,
+}: SurfacePanelProps) {
   return (
     <div
       className={cn(

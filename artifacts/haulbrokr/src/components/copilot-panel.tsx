@@ -25,7 +25,9 @@ export function CopilotPanel({ open, onClose }: CopilotPanelProps) {
     if (!open) return;
     apiFetch<{ suggestions: string[] }>("/copilot/insights")
       .then((data) => setSuggestions(data.suggestions ?? []))
-      .catch(() => setSuggestions(["Summarize my active jobs", "Show open loads"]));
+      .catch(() =>
+        setSuggestions(["Summarize my active jobs", "Show open loads"]),
+      );
   }, [open]);
 
   useEffect(() => {
@@ -45,7 +47,13 @@ export function CopilotPanel({ open, onClose }: CopilotPanelProps) {
       });
       setMessages((m) => [...m, { role: "assistant", content: res.content }]);
     } catch (err) {
-      setMessages((m) => [...m, { role: "assistant", content: err instanceof Error ? err.message : "Something went wrong." }]);
+      setMessages((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content: err instanceof Error ? err.message : "Something went wrong.",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -55,7 +63,11 @@ export function CopilotPanel({ open, onClose }: CopilotPanelProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden
+      />
       <div className="relative w-full max-w-md h-full surface-panel-elevated border-l border-border/60 flex flex-col animate-slide-up">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
           <div className="flex items-center gap-3">
@@ -64,29 +76,49 @@ export function CopilotPanel({ open, onClose }: CopilotPanelProps) {
             </div>
             <div>
               <p className="text-sm font-semibold">HaulBrokr AI</p>
-              <p className="text-xs text-emerald-400 flex items-center gap-1"><Sparkles className="h-3 w-3" />Live</p>
+              <p className="text-xs text-emerald-400 flex items-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                Live
+              </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close copilot">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            aria-label="Close copilot"
+          >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {messages.length === 0 && (
-            <p className="text-sm text-muted-foreground">Ask about open loads, active jobs, fleet utilization, or dispatch steps.</p>
+            <p className="text-sm text-muted-foreground">
+              Ask about open loads, active jobs, fleet utilization, or dispatch
+              steps.
+            </p>
           )}
           {messages.map((msg, i) => (
-            <div key={i} className={cn("flex", msg.role === "user" && "justify-end")}>
-              <div className={cn(
-                "rounded-xl px-4 py-2.5 max-w-[85%] text-sm leading-relaxed",
-                msg.role === "assistant" ? "bg-muted/50" : "bg-primary/15"
-              )}>
+            <div
+              key={i}
+              className={cn("flex", msg.role === "user" && "justify-end")}
+            >
+              <div
+                className={cn(
+                  "rounded-xl px-4 py-2.5 max-w-[85%] text-sm leading-relaxed",
+                  msg.role === "assistant" ? "bg-muted/50" : "bg-primary/15",
+                )}
+              >
                 {msg.content}
               </div>
             </div>
           ))}
-          {loading && <p className="text-xs text-muted-foreground animate-pulse">Thinking…</p>}
+          {loading && (
+            <p className="text-xs text-muted-foreground animate-pulse">
+              Thinking…
+            </p>
+          )}
           <div ref={bottomRef} />
         </div>
 
@@ -108,7 +140,10 @@ export function CopilotPanel({ open, onClose }: CopilotPanelProps) {
         <div className="px-5 pb-5 border-t border-border/50 pt-4">
           <form
             className="flex items-center gap-2 rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5"
-            onSubmit={(e) => { e.preventDefault(); send(input); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              send(input);
+            }}
           >
             <input
               value={input}
@@ -117,7 +152,12 @@ export function CopilotPanel({ open, onClose }: CopilotPanelProps) {
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               aria-label="Copilot message"
             />
-            <Button type="submit" size="icon" className="h-8 w-8 shrink-0" disabled={loading || !input.trim()}>
+            <Button
+              type="submit"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              disabled={loading || !input.trim()}
+            >
               <Send className="h-4 w-4" />
             </Button>
           </form>

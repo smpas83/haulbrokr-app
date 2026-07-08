@@ -88,7 +88,11 @@ export default function Slide05HowItWorks1() {
               marginBottom: "3vh",
             }}
           >
-            <span style={{ fontSize: "2.5vw", fontWeight: 200, color: "#A0785A" }}>01</span>
+            <span
+              style={{ fontSize: "2.5vw", fontWeight: 200, color: "#A0785A" }}
+            >
+              01
+            </span>
           </div>
           <div
             style={{
@@ -109,7 +113,8 @@ export default function Slide05HowItWorks1() {
               lineHeight: 1.6,
             }}
           >
-            Contractor opens the app and enters material type, pickup location, drop site, and load count. Done in under 60 seconds.
+            Contractor opens the app and enters material type, pickup location,
+            drop site, and load count. Done in under 60 seconds.
           </div>
         </div>
 
@@ -145,7 +150,11 @@ export default function Slide05HowItWorks1() {
               marginBottom: "3vh",
             }}
           >
-            <span style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}>02</span>
+            <span
+              style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}
+            >
+              02
+            </span>
           </div>
           <div
             style={{
@@ -166,7 +175,8 @@ export default function Slide05HowItWorks1() {
               lineHeight: 1.6,
             }}
           >
-            The platform instantly surfaces the nearest available, verified operators — sorted by proximity, rating, and truck type.
+            The platform instantly surfaces the nearest available, verified
+            operators — sorted by proximity, rating, and truck type.
           </div>
         </div>
 
@@ -202,7 +212,11 @@ export default function Slide05HowItWorks1() {
               marginBottom: "3vh",
             }}
           >
-            <span style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}>03</span>
+            <span
+              style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}
+            >
+              03
+            </span>
           </div>
           <div
             style={{
@@ -223,7 +237,8 @@ export default function Slide05HowItWorks1() {
               lineHeight: 1.6,
             }}
           >
-            Trucks are tracked in real time. Digital load tickets are generated at each dump cycle — no paper, no disputes.
+            Trucks are tracked in real time. Digital load tickets are generated
+            at each dump cycle — no paper, no disputes.
           </div>
         </div>
 
@@ -259,7 +274,11 @@ export default function Slide05HowItWorks1() {
               marginBottom: "3vh",
             }}
           >
-            <span style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}>04</span>
+            <span
+              style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}
+            >
+              04
+            </span>
           </div>
           <div
             style={{
@@ -280,7 +299,8 @@ export default function Slide05HowItWorks1() {
               lineHeight: 1.6,
             }}
           >
-            When the job closes, the platform auto-generates an itemized invoice. Contractors pay in-app; operators receive same-day deposit.
+            When the job closes, the platform auto-generates an itemized
+            invoice. Contractors pay in-app; operators receive same-day deposit.
           </div>
         </div>
       </div>
@@ -301,7 +321,9 @@ export default function Slide05HowItWorks1() {
           letterSpacing: "0.2em",
         }}
       >
-        <span>HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026</span>
+        <span>
+          HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026
+        </span>
         <span style={{ color: "#A0785A" }}>05</span>
       </div>
     </div>

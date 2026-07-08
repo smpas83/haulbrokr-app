@@ -22,7 +22,12 @@ const BIN_ORDER_ID = "11111111-2222-3333-4444-555555555555";
 vi.mock("@workspace/api-client-react", () => ({
   useGetMyProfile: () => ({ data: { role: "customer", contactName: "Jamie" } }),
   useGetDashboardStats: () => ({
-    data: { openRequests: 1, activeJobs: 2, completedJobs: 3, totalSpent: 4200 },
+    data: {
+      openRequests: 1,
+      activeJobs: 2,
+      completedJobs: 3,
+      totalSpent: 4200,
+    },
     isLoading: false,
   }),
   useGetDashboardActivity: () => ({

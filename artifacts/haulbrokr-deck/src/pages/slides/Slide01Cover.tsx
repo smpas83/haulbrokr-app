@@ -30,7 +30,8 @@ export default function Slide01Cover() {
         style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(to bottom, rgba(20,20,20,0.3) 0%, rgba(20,20,20,0.85) 60%, #141414 100%)",
+          background:
+            "linear-gradient(to bottom, rgba(20,20,20,0.3) 0%, rgba(20,20,20,0.85) 60%, #141414 100%)",
         }}
       />
 
@@ -117,7 +118,8 @@ export default function Slide01Cover() {
             lineHeight: 1.6,
           }}
         >
-          Connecting contractors with licensed dump truck operators across Texas — on demand, in real time.
+          Connecting contractors with licensed dump truck operators across Texas
+          — on demand, in real time.
         </p>
       </div>
 

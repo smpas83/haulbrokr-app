@@ -5,9 +5,9 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { JobRequestMaterialType } from './jobRequestMaterialType';
-import type { JobRequestStatus } from './jobRequestStatus';
-import type { JobRequestTruckType } from './jobRequestTruckType';
+import type { JobRequestMaterialType } from "./jobRequestMaterialType";
+import type { JobRequestStatus } from "./jobRequestStatus";
+import type { JobRequestTruckType } from "./jobRequestTruckType";
 
 export interface JobRequest {
   id: number;

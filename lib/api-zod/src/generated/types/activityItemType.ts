@@ -6,26 +6,26 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type ActivityItemType = typeof ActivityItemType[keyof typeof ActivityItemType];
-
+export type ActivityItemType =
+  (typeof ActivityItemType)[keyof typeof ActivityItemType];
 
 export const ActivityItemType = {
-  request_posted: 'request_posted',
-  bid_placed: 'bid_placed',
-  bid_awarded: 'bid_awarded',
-  bid_accepted: 'bid_accepted',
-  job_accepted: 'job_accepted',
-  job_declined: 'job_declined',
-  job_started: 'job_started',
-  job_completed: 'job_completed',
-  payment_failed: 'payment_failed',
-  payment_requires_action: 'payment_requires_action',
-  application_approved: 'application_approved',
-  application_rejected: 'application_rejected',
-  payout_delayed: 'payout_delayed',
-  payout_stuck_alert: 'payout_stuck_alert',
-  bin_confirmed: 'bin_confirmed',
-  bin_delivered: 'bin_delivered',
-  bin_picked_up: 'bin_picked_up',
-  bin_cancelled: 'bin_cancelled',
+  request_posted: "request_posted",
+  bid_placed: "bid_placed",
+  bid_awarded: "bid_awarded",
+  bid_accepted: "bid_accepted",
+  job_accepted: "job_accepted",
+  job_declined: "job_declined",
+  job_started: "job_started",
+  job_completed: "job_completed",
+  payment_failed: "payment_failed",
+  payment_requires_action: "payment_requires_action",
+  application_approved: "application_approved",
+  application_rejected: "application_rejected",
+  payout_delayed: "payout_delayed",
+  payout_stuck_alert: "payout_stuck_alert",
+  bin_confirmed: "bin_confirmed",
+  bin_delivered: "bin_delivered",
+  bin_picked_up: "bin_picked_up",
+  bin_cancelled: "bin_cancelled",
 } as const;

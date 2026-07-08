@@ -6,14 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type JobPaymentStatus = typeof JobPaymentStatus[keyof typeof JobPaymentStatus];
-
+export type JobPaymentStatus =
+  (typeof JobPaymentStatus)[keyof typeof JobPaymentStatus];
 
 export const JobPaymentStatus = {
-  unpaid: 'unpaid',
-  invoiced: 'invoiced',
-  paid: 'paid',
-  released: 'released',
-  failed: 'failed',
-  requires_action: 'requires_action',
+  unpaid: "unpaid",
+  invoiced: "invoiced",
+  paid: "paid",
+  released: "released",
+  failed: "failed",
+  requires_action: "requires_action",
 } as const;

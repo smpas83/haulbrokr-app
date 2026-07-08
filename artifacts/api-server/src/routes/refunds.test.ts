@@ -10,7 +10,10 @@ const h = vi.hoisted(() => ({
   refundCreate: vi.fn(),
   piRetrieve: vi.fn(),
   staffRole: "accounting" as string | null,
-  profile: { id: 99, role: "customer", staffRole: "accounting" } as Record<string, unknown>,
+  profile: { id: 99, role: "customer", staffRole: "accounting" } as Record<
+    string,
+    unknown
+  >,
 }));
 
 vi.mock("@workspace/db", () => {
@@ -21,7 +24,9 @@ vi.mock("@workspace/db", () => {
   const activityTable = makeTable("activity");
   const profilesTable = makeTable("profiles");
   const refundSum = () => {
-    const persisted = (h.rows.get(paymentRefundsTable) ?? []) as Array<Record<string, unknown>>;
+    const persisted = (h.rows.get(paymentRefundsTable) ?? []) as Array<
+      Record<string, unknown>
+    >;
     const pending = h.inserts.filter((i) => i.amount != null);
     const sum = [...persisted, ...pending]
       .filter((r) => ["pending", "succeeded"].includes(String(r.status)))
@@ -105,11 +110,14 @@ vi.mock("../middlewares/requireAuth", () => ({
 }));
 
 vi.mock("../middlewares/requireAdmin", async (importActual) => {
-  const actual = await importActual<typeof import("../middlewares/requireAdmin")>();
+  const actual =
+    await importActual<typeof import("../middlewares/requireAdmin")>();
   return {
     ...actual,
     getStaffRole: vi.fn(async () => h.staffRole),
-    hasPermission: vi.fn(async (_req: any, perm: string) => perm === "payouts" && !!h.staffRole),
+    hasPermission: vi.fn(
+      async (_req: any, perm: string) => perm === "payouts" && !!h.staffRole,
+    ),
     requirePermission: (perm: string) => (req: any, res: any, next: any) => {
       if (perm === "payouts" && h.staffRole) {
         next();
@@ -185,7 +193,9 @@ beforeEach(() => {
 describe("deriveJobPaymentStatusAfterRefund", () => {
   it("maps full and partial refunds", () => {
     expect(deriveJobPaymentStatusAfterRefund("115.00", 0)).toBe("released");
-    expect(deriveJobPaymentStatusAfterRefund("115.00", 50)).toBe("partially_refunded");
+    expect(deriveJobPaymentStatusAfterRefund("115.00", 50)).toBe(
+      "partially_refunded",
+    );
     expect(deriveJobPaymentStatusAfterRefund("115.00", 115)).toBe("refunded");
   });
 });
@@ -317,8 +327,12 @@ describe("refund webhooks", () => {
     } as any);
 
     expect(result).toEqual({ handled: true, action: "refund_succeeded" });
-    expect(h.inserts.some((i) => i.stripeRefundId === "re_webhook_1")).toBe(true);
-    expect(h.updates.some((u) => u.paymentStatus === "partially_refunded")).toBe(true);
+    expect(h.inserts.some((i) => i.stripeRefundId === "re_webhook_1")).toBe(
+      true,
+    );
+    expect(
+      h.updates.some((u) => u.paymentStatus === "partially_refunded"),
+    ).toBe(true);
   });
 
   it("ignores duplicate refund.updated deliveries safely", async () => {
@@ -337,7 +351,9 @@ describe("refund webhooks", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    h.rows.set(jobsTable, [baseJob({ refundedAmount: "50.00", paymentStatus: "partially_refunded" })]);
+    h.rows.set(jobsTable, [
+      baseJob({ refundedAmount: "50.00", paymentStatus: "partially_refunded" }),
+    ]);
     h.rows.set(paymentRefundsTable, [existing]);
 
     const result = await upsertRefundFromStripe({
@@ -350,7 +366,9 @@ describe("refund webhooks", () => {
     } as any);
 
     expect(result?.stripeRefundId).toBe("re_webhook_1");
-    expect(h.inserts.filter((i) => i.stripeRefundId === "re_webhook_1")).toHaveLength(0);
+    expect(
+      h.inserts.filter((i) => i.stripeRefundId === "re_webhook_1"),
+    ).toHaveLength(0);
   });
 
   it("handles charge.refunded and updates database state", async () => {
@@ -393,7 +411,9 @@ describe("refund webhooks", () => {
 
 describe("GET /admin/jobs/:id/payment-history", () => {
   it("returns original payment, refunds, balance, and timeline", async () => {
-    h.rows.set(jobsTable, [baseJob({ refundedAmount: "50.00", paymentStatus: "partially_refunded" })]);
+    h.rows.set(jobsTable, [
+      baseJob({ refundedAmount: "50.00", paymentStatus: "partially_refunded" }),
+    ]);
     h.rows.set(paymentRefundsTable, [
       {
         id: 1,

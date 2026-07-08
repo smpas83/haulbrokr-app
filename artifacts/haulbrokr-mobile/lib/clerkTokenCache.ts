@@ -33,7 +33,10 @@ async function deleteToken(key: string) {
 
 async function readClientJwt() {
   try {
-    return await SecureStore.getItemAsync(CLERK_CLIENT_JWT_KEY, secureStoreOpts);
+    return await SecureStore.getItemAsync(
+      CLERK_CLIENT_JWT_KEY,
+      secureStoreOpts,
+    );
   } catch {
     try {
       return await SecureStore.getItemAsync(CLERK_CLIENT_JWT_KEY);
@@ -103,7 +106,9 @@ function isBenignSignOutError(err: unknown) {
     (err as any)?.errors?.[0]?.longMessage ??
     (err as any)?.message ??
     "";
-  return /signed out|signed_out|already signed|session.*not found|not signed in/i.test(msg);
+  return /signed out|signed_out|already signed|session.*not found|not signed in/i.test(
+    msg,
+  );
 }
 
 /**
@@ -132,26 +137,31 @@ export async function signOutAndClearLocalState(signOut: () => Promise<void>) {
  * re-prompt on every password login.
  */
 export async function recoverStaleClientJwtOnStartup() {
-  const [pendingSignOut, hasActiveSession, hasTrustedClient, clientJwt] = await Promise.all([
-    AsyncStorage.getItem(CLERK_SIGNOUT_PENDING_KEY),
-    AsyncStorage.getItem(CLERK_ACTIVE_SESSION_KEY),
-    AsyncStorage.getItem(CLERK_TRUSTED_CLIENT_KEY),
-    readClientJwt(),
-  ]);
+  const [pendingSignOut, hasActiveSession, hasTrustedClient, clientJwt] =
+    await Promise.all([
+      AsyncStorage.getItem(CLERK_SIGNOUT_PENDING_KEY),
+      AsyncStorage.getItem(CLERK_ACTIVE_SESSION_KEY),
+      AsyncStorage.getItem(CLERK_TRUSTED_CLIENT_KEY),
+      readClientJwt(),
+    ]);
 
   if (pendingSignOut === "1") {
     await resetAllClerkLocalState();
     return;
   }
 
-  const orphanedJwt = !!clientJwt && hasActiveSession !== "1" && hasTrustedClient !== "1";
+  const orphanedJwt =
+    !!clientJwt && hasActiveSession !== "1" && hasTrustedClient !== "1";
   if (orphanedJwt) {
     await resetAllClerkLocalState();
   }
 }
 
 /** After Clerk loads for a signed-in user, persist the session marker. */
-export async function syncClerkSessionStorage(isLoaded: boolean, isSignedIn: boolean) {
+export async function syncClerkSessionStorage(
+  isLoaded: boolean,
+  isSignedIn: boolean,
+) {
   if (!isLoaded || !isSignedIn) return;
   await markClerkActiveSession();
 }

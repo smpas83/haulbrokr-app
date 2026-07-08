@@ -7,7 +7,10 @@ import request from "supertest";
  */
 const h = vi.hoisted(() => ({
   /** The profile injected by the mocked requireProfile middleware. */
-  profile: { id: 1, role: "customer", organizationId: null } as Record<string, unknown>,
+  profile: { id: 1, role: "customer", organizationId: null } as Record<
+    string,
+    unknown
+  >,
   /** Rows returned by `db.select().from(ratingsTable).where()`. */
   ratingRows: [] as Record<string, unknown>[],
   /** Every payload passed to `db.insert(ratingsTable).values(...)`, in call order. */
@@ -35,7 +38,12 @@ vi.mock("@workspace/db", () => {
             return {
               returning: () =>
                 Promise.resolve([
-                  { id: 99, createdAt: new Date("2026-06-01T00:00:00Z"), ...vals, ...cfg.set },
+                  {
+                    id: 99,
+                    createdAt: new Date("2026-06-01T00:00:00Z"),
+                    ...vals,
+                    ...cfg.set,
+                  },
                 ]),
             };
           },
@@ -170,7 +178,10 @@ describe("POST /jobs/:id/rating", () => {
     expect(res.status).toBe(200);
     // The route uses onConflictDoUpdate keyed on (jobId, raterProfileId).
     expect(h.conflicts).toHaveLength(1);
-    expect(h.conflicts[0]).toMatchObject({ stars: 2, comment: "changed my mind" });
+    expect(h.conflicts[0]).toMatchObject({
+      stars: 2,
+      comment: "changed my mind",
+    });
   });
 });
 

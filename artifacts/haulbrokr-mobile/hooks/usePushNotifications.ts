@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
+import { router } from "expo-router";
 import { useAuth } from "@clerk/expo";
+
 const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
   : "/api";
@@ -53,6 +55,21 @@ async function resolveExpoPushToken(): Promise<string | null> {
   return token.data;
 }
 
+function navigateFromPushData(data: Record<string, unknown> | undefined) {
+  if (!data) return;
+
+  const binOrderId = data.relatedBinOrderId;
+  if (binOrderId != null && binOrderId !== "") {
+    router.push(`/bin/${binOrderId}`);
+    return;
+  }
+
+  const relatedId = data.relatedId;
+  if (relatedId != null && relatedId !== "") {
+    router.push(`/job/${relatedId}`);
+  }
+}
+
 /** Register this device for OS push notifications when the user is signed in. */
 export function usePushNotifications(enabled: boolean) {
   const { isSignedIn, getToken } = useAuth();
@@ -76,4 +93,25 @@ export function usePushNotifications(enabled: boolean) {
       cancelled = true;
     };
   }, [enabled, isSignedIn, getToken]);
+
+  useEffect(() => {
+    if (!enabled || Platform.OS === "web") return;
+
+    const handleResponse = (
+      response: Notifications.NotificationResponse | null,
+    ) => {
+      if (!response) return;
+      const data = response.notification.request.content.data as
+        | Record<string, unknown>
+        | undefined;
+      navigateFromPushData(data);
+    };
+
+    const subscription =
+      Notifications.addNotificationResponseReceivedListener(handleResponse);
+
+    void Notifications.getLastNotificationResponseAsync().then(handleResponse);
+
+    return () => subscription.remove();
+  }, [enabled]);
 }

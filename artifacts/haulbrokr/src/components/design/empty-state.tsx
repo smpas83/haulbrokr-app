@@ -11,29 +11,37 @@ interface EmptyStateProps {
   children?: ReactNode;
 }
 
-export function EmptyState({ icon: Icon, title, description, action, className, children }: EmptyStateProps) {
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+  className,
+  children,
+}: EmptyStateProps) {
   return (
     <div
       className={cn(
         "flex flex-col items-center justify-center py-16 px-8 text-center rounded-xl border border-dashed border-border/60 bg-card/50",
-        className
+        className,
       )}
     >
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 mb-5">
         <Icon className="h-8 w-8 text-muted-foreground/60" />
       </div>
       <h3 className="text-xl font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-muted-foreground max-w-md mb-6 text-sm leading-relaxed">{description}</p>
+      <p className="text-muted-foreground max-w-md mb-6 text-sm leading-relaxed">
+        {description}
+      </p>
       {children}
-      {action && (
-        action.href ? (
+      {action &&
+        (action.href ? (
           <Button asChild>
             <a href={action.href}>{action.label}</a>
           </Button>
         ) : (
           <Button onClick={action.onClick}>{action.label}</Button>
-        )
-      )}
+        ))}
     </div>
   );
 }

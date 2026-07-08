@@ -21,10 +21,12 @@ export async function sweepOrphanedUploads(): Promise<void> {
       objectPath: uploadSessionsTable.objectPath,
     })
     .from(uploadSessionsTable)
-    .where(and(
-      isNull(uploadSessionsTable.usedAt),
-      lt(uploadSessionsTable.expiresAt, now),
-    ));
+    .where(
+      and(
+        isNull(uploadSessionsTable.usedAt),
+        lt(uploadSessionsTable.expiresAt, now),
+      ),
+    );
 
   if (expired.length === 0) return;
 
@@ -32,14 +34,22 @@ export async function sweepOrphanedUploads(): Promise<void> {
 
   for (const session of expired) {
     try {
-      const objectFile = await objectStorageService.getObjectEntityFile(session.objectPath);
+      const objectFile = await objectStorageService.getObjectEntityFile(
+        session.objectPath,
+      );
       await objectFile.delete();
-      logger.debug({ objectPath: session.objectPath }, "Deleted orphaned upload object");
+      logger.debug(
+        { objectPath: session.objectPath },
+        "Deleted orphaned upload object",
+      );
     } catch (err) {
       if (err instanceof ObjectNotFoundError) {
         // Object was never uploaded or already cleaned up — that's fine.
       } else {
-        logger.warn({ err, objectPath: session.objectPath }, "Failed to delete orphaned upload object");
+        logger.warn(
+          { err, objectPath: session.objectPath },
+          "Failed to delete orphaned upload object",
+        );
       }
     }
 
@@ -48,12 +58,17 @@ export async function sweepOrphanedUploads(): Promise<void> {
       // by a concurrent request between our SELECT and DELETE.
       await db
         .delete(uploadSessionsTable)
-        .where(and(
-          eq(uploadSessionsTable.id, session.id),
-          isNull(uploadSessionsTable.usedAt),
-        ));
+        .where(
+          and(
+            eq(uploadSessionsTable.id, session.id),
+            isNull(uploadSessionsTable.usedAt),
+          ),
+        );
     } catch (err) {
-      logger.warn({ err, sessionId: session.id }, "Failed to delete orphaned upload session row");
+      logger.warn(
+        { err, sessionId: session.id },
+        "Failed to delete orphaned upload session row",
+      );
     }
   }
 }

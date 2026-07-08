@@ -44,10 +44,16 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
 
   try {
     const result = await handleStripeEvent(event);
-    logger.info({ eventId: event.id, eventType: event.type, result }, "Stripe webhook processed");
+    logger.info(
+      { eventId: event.id, eventType: event.type, result },
+      "Stripe webhook processed",
+    );
     res.json({ received: true, ...result });
   } catch (err) {
-    logger.error({ err, eventId: event.id, eventType: event.type }, "Stripe webhook handler failed");
+    logger.error(
+      { err, eventId: event.id, eventType: event.type },
+      "Stripe webhook handler failed",
+    );
     res.status(500).json({ error: "Webhook handler failed." });
   }
 });

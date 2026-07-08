@@ -52,7 +52,10 @@ export function EmptyState({
           <Text
             style={[
               styles.buttonText,
-              { color: colors.primaryForeground, fontFamily: "Inter_600SemiBold" },
+              {
+                color: colors.primaryForeground,
+                fontFamily: "Inter_600SemiBold",
+              },
             ]}
           >
             {actionLabel}

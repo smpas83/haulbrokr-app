@@ -43,7 +43,10 @@ export async function sendExpoPushToProfile(
 
     if (!res.ok) {
       const text = await res.text();
-      logger.warn({ profileId, status: res.status, text }, "Expo push send failed");
+      logger.warn(
+        { profileId, status: res.status, text },
+        "Expo push send failed",
+      );
     }
   } catch (err) {
     logger.error({ err, profileId }, "Failed to send Expo push notification");

@@ -5,8 +5,8 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { UserProfilePaymentTerms } from './userProfilePaymentTerms';
-import type { UserProfileRole } from './userProfileRole';
+import type { UserProfilePaymentTerms } from "./userProfilePaymentTerms";
+import type { UserProfileRole } from "./userProfileRole";
 
 export interface UserProfile {
   id: number;

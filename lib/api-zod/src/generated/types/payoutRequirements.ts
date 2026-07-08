@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { PayoutRequirement } from './payoutRequirement';
+import type { PayoutRequirement } from "./payoutRequirement";
 
 export interface PayoutRequirements {
   /** Steps the provider must complete now to keep payouts flowing. */
@@ -13,13 +13,13 @@ export interface PayoutRequirements {
   /** Items Stripe is actively reviewing — nothing for the provider to do. */
   pendingVerification: PayoutRequirement[];
   /**
-     * Stripe's machine reason payouts are disabled, if any.
-     * @nullable
-     */
+   * Stripe's machine reason payouts are disabled, if any.
+   * @nullable
+   */
   disabledReason: string | null;
   /**
-     * Unix seconds by which currentlyDue items must be resolved, if Stripe set a deadline.
-     * @nullable
-     */
+   * Unix seconds by which currentlyDue items must be resolved, if Stripe set a deadline.
+   * @nullable
+   */
   currentDeadline: number | null;
 }

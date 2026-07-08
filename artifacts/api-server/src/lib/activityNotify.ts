@@ -17,6 +17,9 @@ export async function recordActivity(activity: InsertActivity): Promise<void> {
       },
     );
   } catch (err) {
-    logger.error({ err, type: activity.type, profileId: activity.profileId }, "Failed to record activity");
+    logger.error(
+      { err, type: activity.type, profileId: activity.profileId },
+      "Failed to record activity",
+    );
   }
 }
