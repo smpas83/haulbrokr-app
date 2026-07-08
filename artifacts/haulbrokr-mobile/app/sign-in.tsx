@@ -1,7 +1,8 @@
 import { useAuth, useClerk, useSignIn, useSignUp, useSSO } from "@clerk/expo";
+import { useSignInWithApple } from "@clerk/expo/apple";
+import { useSignInWithGoogle } from "@clerk/expo/google";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
-import * as AuthSession from "expo-auth-session";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useRef, useState } from "react";
@@ -20,6 +21,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  clerkOAuthRedirectUri,
+  clerkOAuthUserMessage,
+  isOAuthUserCancelled,
+  logClerkOAuthDebug,
+  type ClerkOAuthAuthPath,
+} from "@/lib/clerkOAuth";
 import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
@@ -40,6 +48,8 @@ export default function SignInScreen() {
   const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
+  const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
+  const { startAppleAuthenticationFlow } = useSignInWithApple();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
 
@@ -56,28 +66,115 @@ export default function SignInScreen() {
     }
   }, [authLoaded, isSignedIn]);
 
+  const completeOAuthSession = async (
+    createdSessionId: string | null | undefined,
+    setActive: ((args: { session: string }) => Promise<void>) | undefined,
+    provider: "google" | "apple",
+  ) => {
+    if (createdSessionId && setActive) {
+      await setActive({ session: createdSessionId });
+      await markClerkActiveSession();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace("/" as any);
+      return true;
+    }
+    setError(`Sign-in with ${provider} couldn't complete. Please try again.`);
+    return false;
+  };
+
+  const runNativeOAuth = async (
+    provider: "google" | "apple",
+    authPath: ClerkOAuthAuthPath,
+    startFlow: () => Promise<{ createdSessionId?: string | null; setActive?: (args: { session: string }) => Promise<void> }>,
+  ): Promise<boolean> => {
+    logClerkOAuthDebug({
+      authPath,
+      strategy: provider === "google" ? "oauth_google" : "oauth_apple",
+      phase: "start",
+    });
+    try {
+      const { createdSessionId, setActive } = await startFlow();
+      const ok = await completeOAuthSession(createdSessionId, setActive, provider);
+      logClerkOAuthDebug({
+        authPath,
+        strategy: provider === "google" ? "oauth_google" : "oauth_apple",
+        phase: ok ? "success" : "error",
+        message: ok ? "Native OAuth session activated" : "Native OAuth returned without session",
+      });
+      return ok;
+    } catch (err) {
+      if (isOAuthUserCancelled(err)) {
+        logClerkOAuthDebug({
+          authPath,
+          strategy: provider === "google" ? "oauth_google" : "oauth_apple",
+          phase: "cancelled",
+        });
+        return true;
+      }
+      logClerkOAuthDebug({
+        authPath,
+        strategy: provider === "google" ? "oauth_google" : "oauth_apple",
+        phase: "error",
+        error: err,
+      });
+      return false;
+    }
+  };
+
+  const runSsoOAuth = async (provider: "google" | "apple") => {
+    const strategy = provider === "google" ? "oauth_google" : "oauth_apple";
+    const redirectUrl = clerkOAuthRedirectUri("sso-callback");
+
+    logClerkOAuthDebug({
+      authPath: "startSSOFlow",
+      strategy,
+      redirectUrl,
+      phase: "start",
+    });
+
+    const { createdSessionId, setActive } = await startSSOFlow({
+      strategy,
+      redirectUrl,
+    });
+
+    const ok = await completeOAuthSession(createdSessionId, setActive, provider);
+    logClerkOAuthDebug({
+      authPath: "startSSOFlow",
+      strategy,
+      redirectUrl,
+      phase: ok ? "success" : "error",
+      message: ok ? "SSO session activated" : "SSO flow returned without session",
+    });
+    return ok;
+  };
+
   const handleSSO = async (strategy: "oauth_google" | "oauth_apple") => {
     const which = strategy === "oauth_google" ? "google" : "apple";
     setSsoBusy(which);
     setError("");
     try {
-      const { createdSessionId, setActive } = await startSSOFlow({
-        strategy,
-        redirectUrl: AuthSession.makeRedirectUri(),
-      });
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
-        await markClerkActiveSession();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        router.replace("/" as any);
-      } else {
-        setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+      if (which === "google" && (Platform.OS === "ios" || Platform.OS === "android")) {
+        const nativeOk = await runNativeOAuth(
+          "google",
+          "startGoogleAuthenticationFlow",
+          () => startGoogleAuthenticationFlow(),
+        );
+        if (nativeOk) return;
       }
+
+      if (which === "apple" && Platform.OS === "ios") {
+        const nativeOk = await runNativeOAuth(
+          "apple",
+          "startAppleAuthenticationFlow",
+          () => startAppleAuthenticationFlow(),
+        );
+        if (nativeOk) return;
+      }
+
+      await runSsoOAuth(which);
     } catch (err: any) {
-      const msg = err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? err?.message ?? "";
-      if (/not enabled|provider.*not.*configured|strategy.*not.*allowed/i.test(msg)) {
-        setError(`Sign in with ${which === "google" ? "Google" : "Apple"} isn't enabled yet — turn it on in the Auth pane.`);
-      } else if (msg) {
+      const msg = clerkOAuthUserMessage(err, which);
+      if (msg) {
         setError(msg);
       }
     } finally {
