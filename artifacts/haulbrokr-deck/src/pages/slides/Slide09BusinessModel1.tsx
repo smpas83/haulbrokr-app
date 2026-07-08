@@ -110,18 +110,62 @@ export default function Slide09BusinessModel1() {
               Of gross job value — flat rate, primary revenue driver
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.5vh" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}>
-              <div style={{ width: "0.4vw", height: "0.4vw", backgroundColor: "#A0785A", marginTop: "0.8vh", flexShrink: 0 }} />
-              <span style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>Charged on every dispatched job, nationwide</span>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "1.5vh" }}
+          >
+            <div
+              style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}
+            >
+              <div
+                style={{
+                  width: "0.4vw",
+                  height: "0.4vw",
+                  backgroundColor: "#A0785A",
+                  marginTop: "0.8vh",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Charged on every dispatched job, nationwide
+              </span>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}>
-              <div style={{ width: "0.4vw", height: "0.4vw", backgroundColor: "#A0785A", marginTop: "0.8vh", flexShrink: 0 }} />
-              <span style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>Flat 15% on gross — simple, transparent pricing</span>
+            <div
+              style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}
+            >
+              <div
+                style={{
+                  width: "0.4vw",
+                  height: "0.4vw",
+                  backgroundColor: "#A0785A",
+                  marginTop: "0.8vh",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Flat 15% on gross — simple, transparent pricing
+              </span>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}>
-              <div style={{ width: "0.4vw", height: "0.4vw", backgroundColor: "#A0785A", marginTop: "0.8vh", flexShrink: 0 }} />
-              <span style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>Scales with GMV — no per-seat pricing</span>
+            <div
+              style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}
+            >
+              <div
+                style={{
+                  width: "0.4vw",
+                  height: "0.4vw",
+                  backgroundColor: "#A0785A",
+                  marginTop: "0.8vh",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Scales with GMV — no per-seat pricing
+              </span>
             </div>
           </div>
         </div>
@@ -170,18 +214,62 @@ export default function Slide09BusinessModel1() {
               Per month — white-label broker subscriptions
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.5vh" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}>
-              <div style={{ width: "0.4vw", height: "0.4vw", backgroundColor: "#888888", marginTop: "0.8vh", flexShrink: 0 }} />
-              <span style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>Regional dispatch firms using our stack</span>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "1.5vh" }}
+          >
+            <div
+              style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}
+            >
+              <div
+                style={{
+                  width: "0.4vw",
+                  height: "0.4vw",
+                  backgroundColor: "#888888",
+                  marginTop: "0.8vh",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Regional dispatch firms using our stack
+              </span>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}>
-              <div style={{ width: "0.4vw", height: "0.4vw", backgroundColor: "#888888", marginTop: "0.8vh", flexShrink: 0 }} />
-              <span style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>Tiered by driver seat count</span>
+            <div
+              style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}
+            >
+              <div
+                style={{
+                  width: "0.4vw",
+                  height: "0.4vw",
+                  backgroundColor: "#888888",
+                  marginTop: "0.8vh",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Tiered by driver seat count
+              </span>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}>
-              <div style={{ width: "0.4vw", height: "0.4vw", backgroundColor: "#888888", marginTop: "0.8vh", flexShrink: 0 }} />
-              <span style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>High-margin recurring ARR</span>
+            <div
+              style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}
+            >
+              <div
+                style={{
+                  width: "0.4vw",
+                  height: "0.4vw",
+                  backgroundColor: "#888888",
+                  marginTop: "0.8vh",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                High-margin recurring ARR
+              </span>
             </div>
           </div>
         </div>
@@ -230,18 +318,62 @@ export default function Slide09BusinessModel1() {
               Embedded financial products for operators
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.5vh" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}>
-              <div style={{ width: "0.4vw", height: "0.4vw", backgroundColor: "#888888", marginTop: "0.8vh", flexShrink: 0 }} />
-              <span style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>Invoice factoring and early pay</span>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "1.5vh" }}
+          >
+            <div
+              style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}
+            >
+              <div
+                style={{
+                  width: "0.4vw",
+                  height: "0.4vw",
+                  backgroundColor: "#888888",
+                  marginTop: "0.8vh",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Invoice factoring and early pay
+              </span>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}>
-              <div style={{ width: "0.4vw", height: "0.4vw", backgroundColor: "#888888", marginTop: "0.8vh", flexShrink: 0 }} />
-              <span style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>Commercial auto insurance marketplace</span>
+            <div
+              style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}
+            >
+              <div
+                style={{
+                  width: "0.4vw",
+                  height: "0.4vw",
+                  backgroundColor: "#888888",
+                  marginTop: "0.8vh",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Commercial auto insurance marketplace
+              </span>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}>
-              <div style={{ width: "0.4vw", height: "0.4vw", backgroundColor: "#888888", marginTop: "0.8vh", flexShrink: 0 }} />
-              <span style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}>Fuel card and maintenance financing</span>
+            <div
+              style={{ display: "flex", alignItems: "flex-start", gap: "1vw" }}
+            >
+              <div
+                style={{
+                  width: "0.4vw",
+                  height: "0.4vw",
+                  backgroundColor: "#888888",
+                  marginTop: "0.8vh",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.5 }}
+              >
+                Fuel card and maintenance financing
+              </span>
             </div>
           </div>
         </div>
@@ -263,7 +395,9 @@ export default function Slide09BusinessModel1() {
           letterSpacing: "0.2em",
         }}
       >
-        <span>HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026</span>
+        <span>
+          HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026
+        </span>
         <span style={{ color: "#A0785A" }}>09</span>
       </div>
     </div>

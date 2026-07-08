@@ -9,20 +9,46 @@
       "source": "/api/:path*",
       "destination": "https://haulbrokr-api.onrender.com/api/:path*"
     },
-    {
-      "source": "/support",
-      "destination": "/support.html"
-    },
-    {
-      "source": "/privacy",
-      "destination": "/privacy.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/support", "destination": "/support.html" },
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/sign-in", "destination": "/index.html" },
+    { "source": "/sign-in/:path*", "destination": "/index.html" },
+    { "source": "/sign-up", "destination": "/index.html" },
+    { "source": "/sign-up/:path*", "destination": "/index.html" },
+    { "source": "/onboarding", "destination": "/index.html" },
+    { "source": "/dashboard", "destination": "/index.html" },
+    { "source": "/requests", "destination": "/index.html" },
+    { "source": "/requests/new", "destination": "/index.html" },
+    { "source": "/requests/:id", "destination": "/index.html" },
+    { "source": "/fleet", "destination": "/index.html" },
+    { "source": "/fleet/new", "destination": "/index.html" },
+    { "source": "/fleet/:id/edit", "destination": "/index.html" },
+    { "source": "/dispatch", "destination": "/index.html" },
+    { "source": "/jobs", "destination": "/index.html" },
+    { "source": "/jobs/:id", "destination": "/index.html" },
+    { "source": "/map", "destination": "/index.html" },
+    { "source": "/account", "destination": "/index.html" },
+    { "source": "/mobile-payment", "destination": "/index.html" },
+    { "source": "/company", "destination": "/index.html" },
+    { "source": "/bins", "destination": "/index.html" },
+    { "source": "/bins/:id", "destination": "/index.html" },
+    { "source": "/projects", "destination": "/index.html" },
+    { "source": "/projects/:id", "destination": "/index.html" },
+    { "source": "/factoring", "destination": "/index.html" },
+    { "source": "/integrations", "destination": "/index.html" },
+    { "source": "/admin/login", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" }
   ],
   "headers": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [

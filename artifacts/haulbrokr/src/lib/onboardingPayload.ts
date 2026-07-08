@@ -30,7 +30,9 @@ const num = (v?: string) => (v && v.trim() !== "" ? Number(v) : undefined);
 const str = (v?: string) => (v && v.trim() !== "" ? v.trim() : undefined);
 
 /** Maps onboarding form values to POST /profiles body (mirrors web onboarding submit). */
-export function buildCreateProfilePayload(values: OnboardingFormValues): Record<string, unknown> {
+export function buildCreateProfilePayload(
+  values: OnboardingFormValues,
+): Record<string, unknown> {
   if (values.role === "driver" || values.role === "supervisor") {
     return {
       role: values.role,
@@ -63,7 +65,9 @@ export function buildCreateProfilePayload(values: OnboardingFormValues): Record<
       countiesServed: str(values.countiesServed),
       hourlyRate: num(values.hourlyRate),
       minimumHours: num(values.minimumHours),
-      equipmentTypes: values.equipmentTypes?.length ? values.equipmentTypes.join(",") : undefined,
+      equipmentTypes: values.equipmentTypes?.length
+        ? values.equipmentTypes.join(",")
+        : undefined,
     });
   } else {
     Object.assign(base, {

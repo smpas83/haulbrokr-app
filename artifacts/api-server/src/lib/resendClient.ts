@@ -45,7 +45,10 @@ async function getCredentials() {
 }
 
 // WARNING: Never cache this client. Always call this fresh — tokens expire.
-export async function getUncachableResendClient(): Promise<{ client: Resend; fromEmail: string }> {
+export async function getUncachableResendClient(): Promise<{
+  client: Resend;
+  fromEmail: string;
+}> {
   const { apiKey, fromEmail } = await getCredentials();
   return { client: new Resend(apiKey), fromEmail };
 }

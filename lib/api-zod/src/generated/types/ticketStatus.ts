@@ -6,12 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type TicketStatus = typeof TicketStatus[keyof typeof TicketStatus];
-
+export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus];
 
 export const TicketStatus = {
-  pending: 'pending',
-  in_progress: 'in_progress',
-  completed: 'completed',
-  verified: 'verified',
+  pending: "pending",
+  in_progress: "in_progress",
+  completed: "completed",
+  verified: "verified",
 } as const;

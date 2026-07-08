@@ -86,10 +86,16 @@ export function marketplaceLoadToJob(load: MarketplaceLoad): Job {
   };
 }
 
-export function coordFromMarketplace(load: MarketplaceLoad): { latitude: number; longitude: number } {
+export function coordFromMarketplace(load: MarketplaceLoad): {
+  latitude: number;
+  longitude: number;
+} {
   return { latitude: load.latitude, longitude: load.longitude };
 }
 
-export function coordFromTruck(truck: MarketplaceTruck): { latitude: number; longitude: number } {
+export function coordFromTruck(truck: MarketplaceTruck): {
+  latitude: number;
+  longitude: number;
+} {
   return { latitude: truck.latitude, longitude: truck.longitude };
 }

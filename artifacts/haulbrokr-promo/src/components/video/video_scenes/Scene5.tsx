@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 export function Scene5() {
   const [phase, setPhase] = useState(0);
@@ -9,15 +9,15 @@ export function Scene5() {
       setTimeout(() => setPhase(1), 500),
       setTimeout(() => setPhase(2), 1500),
     ];
-    return () => timers.forEach(t => clearTimeout(t));
+    return () => timers.forEach((t) => clearTimeout(t));
   }, []);
 
   return (
-    <motion.div 
+    <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center z-10"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.1, filter: 'blur(20px)' }}
+      exit={{ opacity: 0, scale: 1.1, filter: "blur(20px)" }}
       transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
     >
       <motion.div
@@ -32,7 +32,7 @@ export function Scene5() {
         </div>
       </motion.div>
 
-      <motion.h1 
+      <motion.h1
         className="text-[7vw] font-display font-bold text-white tracking-tight leading-none mb-6"
         initial={{ opacity: 0, y: 30 }}
         animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
@@ -41,10 +41,10 @@ export function Scene5() {
         HaulBrokr
       </motion.h1>
 
-      <motion.p 
+      <motion.p
         className="text-[2vw] text-text-muted font-medium tracking-wide"
-        initial={{ opacity: 0, filter: 'blur(10px)' }}
-        animate={phase >= 2 ? { opacity: 1, filter: 'blur(0px)' } : {}}
+        initial={{ opacity: 0, filter: "blur(10px)" }}
+        animate={phase >= 2 ? { opacity: 1, filter: "blur(0px)" } : {}}
         transition={{ duration: 1 }}
       >
         Moving materials, made simple.

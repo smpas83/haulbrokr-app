@@ -3,7 +3,10 @@ import express, { type Express } from "express";
 import request from "supertest";
 
 const h = vi.hoisted(() => ({
-  profile: { id: 2, role: "provider", companyName: "Haul Co" } as Record<string, unknown>,
+  profile: { id: 2, role: "provider", companyName: "Haul Co" } as Record<
+    string,
+    unknown
+  >,
   requests: [] as Record<string, unknown>[],
   bids: [] as Record<string, unknown>[],
   nextBidId: 1,
@@ -57,7 +60,14 @@ vi.mock("@workspace/db", () => {
     }),
   };
 
-  return { db, requestsTable, bidsTable, activityTable, profilesTable: makeTable("profiles"), jobsTable: makeTable("jobs") };
+  return {
+    db,
+    requestsTable,
+    bidsTable,
+    activityTable,
+    profilesTable: makeTable("profiles"),
+    jobsTable: makeTable("jobs"),
+  };
 });
 
 vi.mock("../middlewares/requireAuth", () => ({
@@ -86,23 +96,25 @@ beforeEach(() => {
   h.bids = [];
   h.nextBidId = 1;
   h.profile = { id: 2, role: "provider", companyName: "Haul Co" };
-  h.requests = [{
-    id: 5,
-    customerId: 99,
-    status: "open",
-    materialType: "dirt",
-    truckType: "dump_truck",
-    quantityTons: "30",
-    pickupAddress: "A",
-    deliveryAddress: "B",
-    scheduledDate: new Date(),
-    startTime: "08:00",
-    estimatedHours: "8",
-    trucksNeeded: 1,
-    notes: "Scale ticket required on exit.",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }];
+  h.requests = [
+    {
+      id: 5,
+      customerId: 99,
+      status: "open",
+      materialType: "dirt",
+      truckType: "dump_truck",
+      quantityTons: "30",
+      pickupAddress: "A",
+      deliveryAddress: "B",
+      scheduledDate: new Date(),
+      startTime: "08:00",
+      estimatedHours: "8",
+      trucksNeeded: 1,
+      notes: "Scale ticket required on exit.",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
   h.compliance = {
     w9Status: "verified",
     insuranceStatus: "verified",
@@ -142,9 +154,13 @@ describe("POST /requests/:requestId/bids canBid gate", () => {
       .send({ ratePerHour: 140, trucksOffered: 1 });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toContain("Cannot place a bid until compliance and payout requirements are met");
+    expect(res.body.error).toContain(
+      "Cannot place a bid until compliance and payout requirements are met",
+    );
     expect(res.body.error).toContain("W-9 approval (currently pending)");
-    expect(res.body.error).toContain("verified payout account (currently pending)");
+    expect(res.body.error).toContain(
+      "verified payout account (currently pending)",
+    );
     expect(h.bids).toHaveLength(0);
   });
 });

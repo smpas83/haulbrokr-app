@@ -11,10 +11,10 @@
  */
 export interface VerifyMicrodepositsInput {
   /**
-     * The two micro-deposit amounts in cents, e.g. [32, 45].
-     * @minItems 2
-     * @maxItems 2
-     */
+   * The two micro-deposit amounts in cents, e.g. [32, 45].
+   * @minItems 2
+   * @maxItems 2
+   */
   amounts?: number[];
   /** The descriptor code (e.g. "SM11AA") from the verification deposit. */
   descriptorCode?: string;

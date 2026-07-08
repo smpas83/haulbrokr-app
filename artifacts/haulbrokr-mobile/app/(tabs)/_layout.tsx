@@ -34,7 +34,12 @@ export default function TabLayout() {
             <View style={{ position: "relative" }}>
               <Feather name="home" size={22} color={color} />
               {isProvider && (
-                <View style={[styles.onlineDot, { backgroundColor: isOnline ? "#16a34a" : "#6b7280" }]} />
+                <View
+                  style={[
+                    styles.onlineDot,
+                    { backgroundColor: isOnline ? "#16a34a" : "#6b7280" },
+                  ]}
+                />
               )}
             </View>
           ),
@@ -42,25 +47,50 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="jobs"
-        options={{ title: "Loads", tabBarIcon: ({ color }) => <Feather name="briefcase" size={22} color={color} /> }}
+        options={{
+          title: "Loads",
+          tabBarIcon: ({ color }) => (
+            <Feather name="briefcase" size={22} color={color} />
+          ),
+        }}
       />
       {!isProvider && (
         <Tabs.Screen
           name="projects"
-          options={{ title: "Projects", tabBarIcon: ({ color }) => <Feather name="folder" size={22} color={color} /> }}
+          options={{
+            title: "Projects",
+            tabBarIcon: ({ color }) => (
+              <Feather name="folder" size={22} color={color} />
+            ),
+          }}
         />
       )}
       <Tabs.Screen
         name="map"
-        options={{ title: "Map", tabBarIcon: ({ color }) => <Feather name="map" size={22} color={color} /> }}
+        options={{
+          title: "Map",
+          tabBarIcon: ({ color }) => (
+            <Feather name="map" size={22} color={color} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="bins"
-        options={{ title: "Bins", tabBarIcon: ({ color }) => <Feather name="package" size={22} color={color} /> }}
+        options={{
+          title: "Bins",
+          tabBarIcon: ({ color }) => (
+            <Feather name="package" size={22} color={color} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="account"
-        options={{ title: "Account", tabBarIcon: ({ color }) => <Feather name="user" size={22} color={color} /> }}
+        options={{
+          title: "Account",
+          tabBarIcon: ({ color }) => (
+            <Feather name="user" size={22} color={color} />
+          ),
+        }}
       />
       <Tabs.Screen name="guide" options={{ href: null }} />
       {isProvider && <Tabs.Screen name="projects" options={{ href: null }} />}
@@ -70,7 +100,13 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   onlineDot: {
-    position: "absolute", top: -2, right: -4,
-    width: 8, height: 8, borderRadius: 4, borderWidth: 1.5, borderColor: "#0f172a",
+    position: "absolute",
+    top: -2,
+    right: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: "#0f172a",
   },
 });

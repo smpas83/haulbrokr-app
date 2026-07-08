@@ -52,6 +52,8 @@ const knownSpaRoutes = new Set([
   "/requests",
   "/fleet",
   "/jobs",
+  "/map",
+  "/dispatch",
   "/account",
   "/company",
   "/bins",
@@ -60,6 +62,7 @@ const knownSpaRoutes = new Set([
   "/integrations",
   "/mobile-payment",
   "/admin",
+  "/admin/login",
 ]);
 
 const knownSpaPrefixes = [
@@ -78,6 +81,8 @@ const knownSpaPrefixes = [
   "/integrations/",
   "/mobile-payment/",
   "/admin/",
+  "/map/",
+  "/dispatch/",
 ];
 
 /**
@@ -99,6 +104,18 @@ function publicRoutesDevMiddleware(): Plugin {
         }
         if (stripped === "/privacy" || stripped === "/privacy/") {
           req.url = "/privacy.html";
+          return next();
+        }
+        if (stripped === "/terms" || stripped === "/terms/") {
+          req.url = "/terms.html";
+          return next();
+        }
+        if (stripped === "/about" || stripped === "/about/") {
+          req.url = "/about.html";
+          return next();
+        }
+        if (stripped === "/contact" || stripped === "/contact/") {
+          req.url = "/contact.html";
           return next();
         }
 
@@ -129,74 +146,84 @@ export default defineConfig(async ({ command }) => {
   const basePath = resolveBasePath(isServe);
 
   return {
-  base: basePath,
-  plugins: [
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
-    publicRoutesDevMiddleware(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
-    },
-    dedupe: ["react", "react-dom"],
-  },
-  root: path.resolve(import.meta.dirname),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: path.resolve(import.meta.dirname, "index.html"),
-        support: path.resolve(import.meta.dirname, "support.html"),
-        privacy: path.resolve(import.meta.dirname, "privacy.html"),
-        notFound: path.resolve(import.meta.dirname, "404.html"),
+    base: basePath,
+    plugins: [
+      react(),
+      tailwindcss(),
+      runtimeErrorOverlay(),
+      publicRoutesDevMiddleware(),
+      ...(process.env.NODE_ENV !== "production" &&
+      process.env.REPL_ID !== undefined
+        ? [
+            await import("@replit/vite-plugin-cartographer").then((m) =>
+              m.cartographer({
+                root: path.resolve(import.meta.dirname, ".."),
+              }),
+            ),
+            await import("@replit/vite-plugin-dev-banner").then((m) =>
+              m.devBanner(),
+            ),
+          ]
+        : []),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(import.meta.dirname, "src"),
+        "@assets": path.resolve(
+          import.meta.dirname,
+          "..",
+          "..",
+          "attached_assets",
+        ),
       },
-      output: {
-        manualChunks: {
-          "auth-shell": [
-            path.resolve(import.meta.dirname, "src/AuthShell.tsx"),
-          ],
+      dedupe: ["react", "react-dom"],
+    },
+    root: path.resolve(import.meta.dirname),
+    build: {
+      outDir: path.resolve(import.meta.dirname, "dist/public"),
+      emptyOutDir: true,
+      rollupOptions: {
+        input: {
+          main: path.resolve(import.meta.dirname, "index.html"),
+          support: path.resolve(import.meta.dirname, "support.html"),
+          privacy: path.resolve(import.meta.dirname, "privacy.html"),
+          terms: path.resolve(import.meta.dirname, "terms.html"),
+          about: path.resolve(import.meta.dirname, "about.html"),
+          contact: path.resolve(import.meta.dirname, "contact.html"),
+          notFound: path.resolve(import.meta.dirname, "404.html"),
+          serverError: path.resolve(import.meta.dirname, "500.html"),
+        },
+        output: {
+          manualChunks: {
+            "auth-shell": [
+              path.resolve(import.meta.dirname, "src/AuthShell.tsx"),
+            ],
+          },
         },
       },
     },
-  },
-  server: {
-    port,
-    strictPort: true,
-    host: "0.0.0.0",
-    allowedHosts: true,
-    fs: {
-      strict: true,
+    server: {
+      port,
+      strictPort: true,
+      host: "0.0.0.0",
+      allowedHosts: true,
+      fs: {
+        strict: true,
+      },
+      proxy: isServe
+        ? {
+            "/api": {
+              target:
+                process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:8080",
+              changeOrigin: true,
+            },
+          }
+        : undefined,
     },
-    proxy: isServe
-      ? {
-          "/api": {
-            target: process.env.VITE_API_PROXY_TARGET ?? "http://127.0.0.1:8080",
-            changeOrigin: true,
-          },
-        }
-      : undefined,
-  },
-  preview: {
-    port,
-    host: "0.0.0.0",
-    allowedHosts: true,
-  },
+    preview: {
+      port,
+      host: "0.0.0.0",
+      allowedHosts: true,
+    },
   };
 });

@@ -34,10 +34,25 @@ export default function Slide14Team1() {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5vh" }}>
-          <div style={{ fontSize: "0.75vw", fontWeight: 500, color: "#A0785A", textTransform: "uppercase", letterSpacing: "0.25em" }}>
+          <div
+            style={{
+              fontSize: "0.75vw",
+              fontWeight: 500,
+              color: "#A0785A",
+              textTransform: "uppercase",
+              letterSpacing: "0.25em",
+            }}
+          >
             08 — The Team
           </div>
-          <h2 style={{ fontSize: "2.4vw", fontWeight: 300, margin: 0, letterSpacing: "0.02em" }}>
+          <h2
+            style={{
+              fontSize: "2.4vw",
+              fontWeight: 300,
+              margin: 0,
+              letterSpacing: "0.02em",
+            }}
+          >
             The Founding Team
           </h2>
         </div>
@@ -76,15 +91,46 @@ export default function Slide14Team1() {
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: "2.5vw", fontWeight: 200, color: "#A0785A" }}>CEO</span>
+              <span
+                style={{ fontSize: "2.5vw", fontWeight: 200, color: "#A0785A" }}
+              >
+                CEO
+              </span>
             </div>
-            <div style={{ fontSize: "1.5vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "0.5vh" }}>Founder &amp; CEO</div>
-            <div style={{ fontSize: "1vw", color: "#A0785A", marginBottom: "2.5vh" }}>Operations &amp; Industry</div>
+            <div
+              style={{
+                fontSize: "1.5vw",
+                fontWeight: 500,
+                color: "#FFFFFF",
+                marginBottom: "0.5vh",
+              }}
+            >
+              Founder &amp; CEO
+            </div>
+            <div
+              style={{
+                fontSize: "1vw",
+                color: "#A0785A",
+                marginBottom: "2.5vh",
+              }}
+            >
+              Operations &amp; Industry
+            </div>
             <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.6 }}>
-              10 years in heavy construction logistics. Previously operations director at a regional excavation firm managing $30M/yr in subcontractor hauling. Built the relationship network that seeds our operator supply.
+              10 years in heavy construction logistics. Previously operations
+              director at a regional excavation firm managing $30M/yr in
+              subcontractor hauling. Built the relationship network that seeds
+              our operator supply.
             </div>
           </div>
-          <div style={{ fontSize: "0.9vw", color: "#555555", borderTop: "0.1vh solid #2A2A2A", paddingTop: "2vh" }}>
+          <div
+            style={{
+              fontSize: "0.9vw",
+              color: "#555555",
+              borderTop: "0.1vh solid #2A2A2A",
+              paddingTop: "2vh",
+            }}
+          >
             Equity — 70% (Founders' Pool)
           </div>
         </div>
@@ -114,15 +160,46 @@ export default function Slide14Team1() {
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}>CTO</span>
+              <span
+                style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}
+              >
+                CTO
+              </span>
             </div>
-            <div style={{ fontSize: "1.5vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "0.5vh" }}>Co-Founder &amp; CTO</div>
-            <div style={{ fontSize: "1vw", color: "#888888", marginBottom: "2.5vh" }}>Engineering &amp; Product</div>
+            <div
+              style={{
+                fontSize: "1.5vw",
+                fontWeight: 500,
+                color: "#FFFFFF",
+                marginBottom: "0.5vh",
+              }}
+            >
+              Co-Founder &amp; CTO
+            </div>
+            <div
+              style={{
+                fontSize: "1vw",
+                color: "#888888",
+                marginBottom: "2.5vh",
+              }}
+            >
+              Engineering &amp; Product
+            </div>
             <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.6 }}>
-              Former senior engineer at a gig-economy logistics startup (acquired 2023). Architected real-time dispatch systems handling 50,000+ daily jobs. Leads all product development and infrastructure decisions.
+              Former senior engineer at a gig-economy logistics startup
+              (acquired 2023). Architected real-time dispatch systems handling
+              50,000+ daily jobs. Leads all product development and
+              infrastructure decisions.
             </div>
           </div>
-          <div style={{ fontSize: "0.9vw", color: "#555555", borderTop: "0.1vh solid #2A2A2A", paddingTop: "2vh" }}>
+          <div
+            style={{
+              fontSize: "0.9vw",
+              color: "#555555",
+              borderTop: "0.1vh solid #2A2A2A",
+              paddingTop: "2vh",
+            }}
+          >
             Equity partner — 5%
           </div>
         </div>
@@ -152,15 +229,46 @@ export default function Slide14Team1() {
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}>CFO</span>
+              <span
+                style={{ fontSize: "2.5vw", fontWeight: 200, color: "#888888" }}
+              >
+                CFO
+              </span>
             </div>
-            <div style={{ fontSize: "1.5vw", fontWeight: 500, color: "#FFFFFF", marginBottom: "0.5vh" }}>Co-Founder &amp; CFO</div>
-            <div style={{ fontSize: "1vw", color: "#888888", marginBottom: "2.5vh" }}>Finance &amp; Strategy</div>
+            <div
+              style={{
+                fontSize: "1.5vw",
+                fontWeight: 500,
+                color: "#FFFFFF",
+                marginBottom: "0.5vh",
+              }}
+            >
+              Co-Founder &amp; CFO
+            </div>
+            <div
+              style={{
+                fontSize: "1vw",
+                color: "#888888",
+                marginBottom: "2.5vh",
+              }}
+            >
+              Finance &amp; Strategy
+            </div>
             <div style={{ fontSize: "1vw", color: "#888888", lineHeight: 1.6 }}>
-              CPA and former investment banking analyst with experience in transportation M&amp;A. Structured two marketplace financing rounds prior to HaulBrokr. Leads financial modeling, investor relations, and compliance.
+              CPA and former investment banking analyst with experience in
+              transportation M&amp;A. Structured two marketplace financing
+              rounds prior to HaulBrokr. Leads financial modeling, investor
+              relations, and compliance.
             </div>
           </div>
-          <div style={{ fontSize: "0.9vw", color: "#555555", borderTop: "0.1vh solid #2A2A2A", paddingTop: "2vh" }}>
+          <div
+            style={{
+              fontSize: "0.9vw",
+              color: "#555555",
+              borderTop: "0.1vh solid #2A2A2A",
+              paddingTop: "2vh",
+            }}
+          >
             Equity partner — 5%
           </div>
         </div>
@@ -182,7 +290,9 @@ export default function Slide14Team1() {
           letterSpacing: "0.2em",
         }}
       >
-        <span>HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026</span>
+        <span>
+          HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026
+        </span>
         <span style={{ color: "#A0785A" }}>14</span>
       </div>
     </div>

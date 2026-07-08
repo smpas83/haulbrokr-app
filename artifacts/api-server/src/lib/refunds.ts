@@ -11,7 +11,11 @@ import { getUncachableStripeClient } from "./stripeClient";
 import { recordActivity } from "./activityNotify";
 import { logger } from "./logger";
 
-const REFUNDABLE_PAYMENT_STATUSES = new Set(["released", "paid", "partially_refunded"]);
+const REFUNDABLE_PAYMENT_STATUSES = new Set([
+  "released",
+  "paid",
+  "partially_refunded",
+]);
 
 export type IssueRefundInput = {
   job: Job;
@@ -35,7 +39,12 @@ function centsToDollars(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
-export function isRefundAuthorized(profile: { role?: string | null; staffRole?: string | null } | null | undefined): boolean {
+export function isRefundAuthorized(
+  profile:
+    | { role?: string | null; staffRole?: string | null }
+    | null
+    | undefined,
+): boolean {
   if (!profile) return false;
   if (profile.staffRole) return true;
   return false;
@@ -56,13 +65,21 @@ export async function sumRefundedForJob(jobId: number): Promise<number> {
   return parseFloat(row?.total ?? "0");
 }
 
-async function chargeIdFromPaymentIntent(stripe: Stripe, paymentIntentId: string): Promise<string> {
+async function chargeIdFromPaymentIntent(
+  stripe: Stripe,
+  paymentIntentId: string,
+): Promise<string> {
   const pi = await stripe.paymentIntents.retrieve(paymentIntentId, {
     expand: ["latest_charge"],
   });
   const charge = pi.latest_charge;
   if (typeof charge === "string") return charge;
-  if (charge && typeof charge === "object" && "id" in charge && typeof charge.id === "string") {
+  if (
+    charge &&
+    typeof charge === "object" &&
+    "id" in charge &&
+    typeof charge.id === "string"
+  ) {
     return charge.id;
   }
   throw new Error("Payment intent has no charge to refund.");
@@ -72,18 +89,25 @@ export function deriveJobPaymentStatusAfterRefund(
   customerTotalAmount: string | null,
   refundedAmount: number,
 ): "released" | "partially_refunded" | "refunded" {
-  const gross = customerTotalAmount != null ? parseFloat(customerTotalAmount) : 0;
+  const gross =
+    customerTotalAmount != null ? parseFloat(customerTotalAmount) : 0;
   if (gross <= 0 || refundedAmount <= 0) return "released";
   if (refundedAmount >= gross - 0.005) return "refunded";
   return "partially_refunded";
 }
 
 export async function syncJobRefundTotals(jobId: number): Promise<void> {
-  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+  const [job] = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, jobId));
   if (!job) return;
 
   const refunded = await sumRefundedForJob(jobId);
-  const paymentStatus = deriveJobPaymentStatusAfterRefund(job.customerTotalAmount, refunded);
+  const paymentStatus = deriveJobPaymentStatusAfterRefund(
+    job.customerTotalAmount,
+    refunded,
+  );
 
   await db
     .update(jobsTable)
@@ -94,7 +118,11 @@ export async function syncJobRefundTotals(jobId: number): Promise<void> {
     .where(eq(jobsTable.id, jobId));
 }
 
-async function notifyRefund(job: Job, amount: string, full: boolean): Promise<void> {
+async function notifyRefund(
+  job: Job,
+  amount: string,
+  full: boolean,
+): Promise<void> {
   await recordActivity({
     profileId: job.customerId,
     type: "payment_refunded",
@@ -105,14 +133,30 @@ async function notifyRefund(job: Job, amount: string, full: boolean): Promise<vo
   });
 }
 
-export async function issueJobRefund(input: IssueRefundInput): Promise<IssueRefundResult> {
-  const { job, reason, createdByProfileId, createdByStaffUsername, idempotencyKey } = input;
+export async function issueJobRefund(
+  input: IssueRefundInput,
+): Promise<IssueRefundResult> {
+  const {
+    job,
+    reason,
+    createdByProfileId,
+    createdByStaffUsername,
+    idempotencyKey,
+  } = input;
 
   if (!job.stripePaymentIntentId) {
-    return { ok: false, code: "missing_payment_intent", message: "Job has no Stripe payment intent." };
+    return {
+      ok: false,
+      code: "missing_payment_intent",
+      message: "Job has no Stripe payment intent.",
+    };
   }
   if (job.paymentStatus === "refunded") {
-    return { ok: false, code: "already_refunded", message: "Job has already been fully refunded." };
+    return {
+      ok: false,
+      code: "already_refunded",
+      message: "Job has already been fully refunded.",
+    };
   }
   if (!REFUNDABLE_PAYMENT_STATUSES.has(job.paymentStatus)) {
     return {
@@ -122,9 +166,14 @@ export async function issueJobRefund(input: IssueRefundInput): Promise<IssueRefu
     };
   }
 
-  const gross = job.customerTotalAmount != null ? parseFloat(job.customerTotalAmount) : 0;
+  const gross =
+    job.customerTotalAmount != null ? parseFloat(job.customerTotalAmount) : 0;
   if (gross <= 0) {
-    return { ok: false, code: "missing_amount", message: "Job has no customer total amount." };
+    return {
+      ok: false,
+      code: "missing_amount",
+      message: "Job has no customer total amount.",
+    };
   }
 
   const [existing] = await db
@@ -138,7 +187,11 @@ export async function issueJobRefund(input: IssueRefundInput): Promise<IssueRefu
   const alreadyRefunded = await sumRefundedForJob(job.id);
   const remaining = gross - alreadyRefunded;
   if (remaining <= 0) {
-    return { ok: false, code: "already_refunded", message: "No refundable balance remains on this job." };
+    return {
+      ok: false,
+      code: "already_refunded",
+      message: "No refundable balance remains on this job.",
+    };
   }
 
   const refundDollars = input.amountDollars ?? remaining;
@@ -152,17 +205,24 @@ export async function issueJobRefund(input: IssueRefundInput): Promise<IssueRefu
 
   const refundCents = dollarsToCents(refundDollars);
   const stripe = await getUncachableStripeClient();
-  const chargeId = await chargeIdFromPaymentIntent(stripe, job.stripePaymentIntentId);
+  const chargeId = await chargeIdFromPaymentIntent(
+    stripe,
+    job.stripePaymentIntentId,
+  );
 
   const stripeRefund = await stripe.refunds.create(
     {
       charge: chargeId,
       amount: refundCents,
-      reason: reason === "duplicate" || reason === "fraudulent" ? reason : "requested_by_customer",
+      reason:
+        reason === "duplicate" || reason === "fraudulent"
+          ? reason
+          : "requested_by_customer",
       metadata: {
         jobId: String(job.id),
         operatorReason: reason ?? "",
-        createdByProfileId: createdByProfileId != null ? String(createdByProfileId) : "",
+        createdByProfileId:
+          createdByProfileId != null ? String(createdByProfileId) : "",
         createdByStaffUsername: createdByStaffUsername ?? "",
       },
       reverse_transfer: true,
@@ -204,7 +264,9 @@ export async function issueJobRefund(input: IssueRefundInput): Promise<IssueRefu
   return { ok: true, refund: record, duplicate: false };
 }
 
-export function mapStripeRefundStatus(status: string | null | undefined): PaymentRefund["status"] {
+export function mapStripeRefundStatus(
+  status: string | null | undefined,
+): PaymentRefund["status"] {
   switch (status) {
     case "succeeded":
       return "succeeded";
@@ -217,21 +279,28 @@ export function mapStripeRefundStatus(status: string | null | undefined): Paymen
   }
 }
 
-export async function upsertRefundFromStripe(refund: Stripe.Refund): Promise<PaymentRefund | null> {
+export async function upsertRefundFromStripe(
+  refund: Stripe.Refund,
+): Promise<PaymentRefund | null> {
   const jobIdRaw = refund.metadata?.jobId;
   if (!jobIdRaw) return null;
   const jobId = parseInt(jobIdRaw, 10);
   if (!Number.isFinite(jobId)) return null;
 
-  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+  const [job] = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, jobId));
   if (!job) return null;
 
   const paymentIntentId =
     typeof refund.payment_intent === "string"
       ? refund.payment_intent
-      : refund.payment_intent?.id ?? job.stripePaymentIntentId ?? "";
+      : (refund.payment_intent?.id ?? job.stripePaymentIntentId ?? "");
   const chargeId =
-    typeof refund.charge === "string" ? refund.charge : refund.charge?.id ?? "";
+    typeof refund.charge === "string"
+      ? refund.charge
+      : (refund.charge?.id ?? "");
 
   const status = mapStripeRefundStatus(refund.status);
   const amount = centsToDollars(refund.amount ?? 0);
@@ -251,7 +320,10 @@ export async function upsertRefundFromStripe(refund: Stripe.Refund): Promise<Pay
       .returning();
     await syncJobRefundTotals(jobId);
     if (!wasSucceeded && status === "succeeded") {
-      const gross = job.customerTotalAmount != null ? parseFloat(job.customerTotalAmount) : 0;
+      const gross =
+        job.customerTotalAmount != null
+          ? parseFloat(job.customerTotalAmount)
+          : 0;
       const refunded = await sumRefundedForJob(jobId);
       await notifyRefund(job, amount, refunded >= gross - 0.005);
     }
@@ -278,7 +350,8 @@ export async function upsertRefundFromStripe(refund: Stripe.Refund): Promise<Pay
 
   await syncJobRefundTotals(jobId);
   if (status === "succeeded") {
-    const gross = job.customerTotalAmount != null ? parseFloat(job.customerTotalAmount) : 0;
+    const gross =
+      job.customerTotalAmount != null ? parseFloat(job.customerTotalAmount) : 0;
     const refunded = await sumRefundedForJob(jobId);
     await notifyRefund(job, amount, refunded >= gross - 0.005);
   }
@@ -286,7 +359,9 @@ export async function upsertRefundFromStripe(refund: Stripe.Refund): Promise<Pay
   return record;
 }
 
-export async function handleChargeRefunded(charge: Stripe.Charge): Promise<{ jobId: number | null }> {
+export async function handleChargeRefunded(
+  charge: Stripe.Charge,
+): Promise<{ jobId: number | null }> {
   const jobIdRaw = charge.metadata?.jobId;
   if (!jobIdRaw) {
     const pi =
@@ -294,14 +369,20 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<{ job
         ? charge.payment_intent
         : charge.payment_intent?.id;
     if (!pi) return { jobId: null };
-    const [job] = await db.select().from(jobsTable).where(eq(jobsTable.stripePaymentIntentId, pi));
+    const [job] = await db
+      .select()
+      .from(jobsTable)
+      .where(eq(jobsTable.stripePaymentIntentId, pi));
     if (!job) return { jobId: null };
     const refundedDollars = centsToDollars(charge.amount_refunded ?? 0);
     await db
       .update(jobsTable)
       .set({
         refundedAmount: refundedDollars,
-        paymentStatus: deriveJobPaymentStatusAfterRefund(job.customerTotalAmount, parseFloat(refundedDollars)),
+        paymentStatus: deriveJobPaymentStatusAfterRefund(
+          job.customerTotalAmount,
+          parseFloat(refundedDollars),
+        ),
       })
       .where(eq(jobsTable.id, job.id));
     return { jobId: job.id };
@@ -310,7 +391,10 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<{ job
   const jobId = parseInt(jobIdRaw, 10);
   if (!Number.isFinite(jobId)) return { jobId: null };
 
-  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+  const [job] = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, jobId));
   if (!job) return { jobId: null };
 
   const refundedDollars = centsToDollars(charge.amount_refunded ?? 0);
@@ -318,7 +402,10 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<{ job
     .update(jobsTable)
     .set({
       refundedAmount: refundedDollars,
-      paymentStatus: deriveJobPaymentStatusAfterRefund(job.customerTotalAmount, parseFloat(refundedDollars)),
+      paymentStatus: deriveJobPaymentStatusAfterRefund(
+        job.customerTotalAmount,
+        parseFloat(refundedDollars),
+      ),
     })
     .where(eq(jobsTable.id, jobId));
 
@@ -360,8 +447,13 @@ export type JobPaymentHistory = {
   timeline: PaymentHistoryEntry[];
 };
 
-export async function getJobPaymentHistory(jobId: number): Promise<JobPaymentHistory | null> {
-  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+export async function getJobPaymentHistory(
+  jobId: number,
+): Promise<JobPaymentHistory | null> {
+  const [job] = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, jobId));
   if (!job) return null;
 
   const refunds = await db
@@ -370,8 +462,10 @@ export async function getJobPaymentHistory(jobId: number): Promise<JobPaymentHis
     .where(eq(paymentRefundsTable.jobId, jobId))
     .orderBy(paymentRefundsTable.createdAt);
 
-  const gross = job.customerTotalAmount != null ? parseFloat(job.customerTotalAmount) : 0;
-  const refunded = job.refundedAmount != null ? parseFloat(job.refundedAmount) : 0;
+  const gross =
+    job.customerTotalAmount != null ? parseFloat(job.customerTotalAmount) : 0;
+  const refunded =
+    job.refundedAmount != null ? parseFloat(job.refundedAmount) : 0;
 
   const refundRows = refunds.map((r) => ({
     id: r.id,

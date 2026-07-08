@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type BidUpdateStatus = typeof BidUpdateStatus[keyof typeof BidUpdateStatus];
-
+export type BidUpdateStatus =
+  (typeof BidUpdateStatus)[keyof typeof BidUpdateStatus];
 
 export const BidUpdateStatus = {
-  accepted: 'accepted',
-  rejected: 'rejected',
-  withdrawn: 'withdrawn',
+  accepted: "accepted",
+  rejected: "rejected",
+  withdrawn: "withdrawn",
 } as const;

@@ -194,7 +194,9 @@ describe("downloadBundlesAndManifests", () => {
       build.downloadBundlesAndManifests("123-1", {
         downloadBundle: async () => {},
         downloadManifest: async () => {
-          throw new Error("Manifest download timeout after 5m for platform: ios");
+          throw new Error(
+            "Manifest download timeout after 5m for platform: ios",
+          );
         },
       }),
     ).rejects.toThrow(/Download failed: Manifest download timeout/);

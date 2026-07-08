@@ -1,4 +1,11 @@
-import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  integer,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -22,7 +29,10 @@ export const verificationStatusEnum = pgEnum("verification_status", [
 
 export const w9SubmissionsTable = pgTable("w9_submissions", {
   id: serial("id").primaryKey(),
-  profileId: integer("profile_id").notNull().unique().references(() => profilesTable.id, { onDelete: "cascade" }),
+  profileId: integer("profile_id")
+    .notNull()
+    .unique()
+    .references(() => profilesTable.id, { onDelete: "cascade" }),
   legalName: text("legal_name").notNull(),
   businessName: text("business_name"),
   businessType: businessTypeEnum("business_type").notNull(),
@@ -36,10 +46,20 @@ export const w9SubmissionsTable = pgTable("w9_submissions", {
   agreedToTerms: text("agreed_to_terms").notNull().default("false"),
   status: verificationStatusEnum("status").notNull().default("pending"),
   reviewNote: text("review_note"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
-export const insertW9Schema = createInsertSchema(w9SubmissionsTable).omit({ id: true, createdAt: true, updatedAt: true, status: true });
+export const insertW9Schema = createInsertSchema(w9SubmissionsTable).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
+});
 export type InsertW9 = z.infer<typeof insertW9Schema>;
 export type W9Submission = typeof w9SubmissionsTable.$inferSelect;

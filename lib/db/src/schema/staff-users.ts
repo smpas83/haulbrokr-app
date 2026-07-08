@@ -9,8 +9,13 @@ export const staffUsersTable = pgTable("staff_users", {
   staffRole: staffRoleEnum("staff_role").notNull(),
   displayName: text("display_name").notNull(),
   active: boolean("active").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export type StaffUser = typeof staffUsersTable.$inferSelect;

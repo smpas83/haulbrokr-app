@@ -1,31 +1,78 @@
 import { useState, type ReactNode } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import {
-  Loader2, CheckCircle2, AlertCircle, Clock, ShieldAlert,
-  ShieldCheck, CreditCard, Truck, Building2, X, Banknote, ArrowRight, RotateCcw,
-  Users, UserCog, Package, MapPin, Calendar, PackageCheck,
-  LayoutDashboard, DollarSign, TrendingUp, Briefcase, Activity, UserPlus, Lock,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  ShieldAlert,
+  ShieldCheck,
+  CreditCard,
+  Truck,
+  Building2,
+  X,
+  Banknote,
+  ArrowRight,
+  RotateCcw,
+  Users,
+  UserCog,
+  Package,
+  MapPin,
+  Calendar,
+  PackageCheck,
+  LayoutDashboard,
+  DollarSign,
+  TrendingUp,
+  Briefcase,
+  Activity,
+  UserPlus,
+  Lock,
 } from "lucide-react";
 import { AdminInsights } from "@/components/admin-insights";
 import {
   useGetAdminAccess,
-  useGetAdminOverview, getGetAdminOverviewQueryKey,
-  useListAdminCompliance, useReviewCompliance, getListAdminComplianceQueryKey,
-  useReviewProviderW9, useReviewProviderInsurance, useReviewProviderComplianceDocument,
-  useListAdminCreditApplications, useReviewCreditApplication, getListAdminCreditApplicationsQueryKey,
-  useListStuckPayouts, useRetryStuckPayout, useResetStuckPayoutFailures, getListStuckPayoutsQueryKey,
-  useListAdminStaff, useUpdateStaffRole, getListAdminStaffQueryKey,
-  useListAdminBinOrders, useAdvanceBinOrderStatus, getListAdminBinOrdersQueryKey,
-  type AdminProviderCompliance, type AdminUploadedComplianceDocument,
-  type AdminCreditApplicationItem, type StuckPayoutItem,
-  type StaffMember, type BinOrder, type AdvanceBinOrderInput, type AdminOverview,
+  useGetAdminOverview,
+  getGetAdminOverviewQueryKey,
+  useListAdminCompliance,
+  useReviewCompliance,
+  getListAdminComplianceQueryKey,
+  useReviewProviderW9,
+  useReviewProviderInsurance,
+  useReviewProviderComplianceDocument,
+  useListAdminCreditApplications,
+  useReviewCreditApplication,
+  getListAdminCreditApplicationsQueryKey,
+  useListStuckPayouts,
+  useRetryStuckPayout,
+  useResetStuckPayoutFailures,
+  getListStuckPayoutsQueryKey,
+  useListAdminStaff,
+  useUpdateStaffRole,
+  getListAdminStaffQueryKey,
+  useListAdminBinOrders,
+  useAdvanceBinOrderStatus,
+  getListAdminBinOrdersQueryKey,
+  type AdminProviderCompliance,
+  type AdminUploadedComplianceDocument,
+  type AdminCreditApplicationItem,
+  type StuckPayoutItem,
+  type StaffMember,
+  type BinOrder,
+  type AdvanceBinOrderInput,
+  type AdminOverview,
   type UpdateStaffRoleInput,
 } from "@workspace/api-client-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/apiFetch";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +110,8 @@ function ReviewActions({
     <div className="space-y-3 pt-2 border-t">
       {reviewNote && status === "rejected" && (
         <div className="text-xs bg-destructive/10 text-destructive border border-destructive/30 px-3 py-2">
-          <span className="font-semibold">Rejection reason: </span>{reviewNote}
+          <span className="font-semibold">Rejection reason: </span>
+          {reviewNote}
         </div>
       )}
       {rejecting ? (
@@ -82,14 +130,21 @@ function ReviewActions({
               disabled={isPending || !note.trim()}
               onClick={() => onSubmit("reject", note.trim())}
             >
-              {isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <AlertCircle className="w-4 h-4 mr-1" />}
+              {isPending ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <AlertCircle className="w-4 h-4 mr-1" />
+              )}
               Confirm Rejection
             </Button>
             <Button
               variant="ghost"
               className="rounded-xl"
               disabled={isPending}
-              onClick={() => { setRejecting(false); setNote(""); }}
+              onClick={() => {
+                setRejecting(false);
+                setNote("");
+              }}
             >
               <X className="w-4 h-4 mr-1" /> Cancel
             </Button>
@@ -102,7 +157,11 @@ function ReviewActions({
             disabled={isPending || approveDisabled}
             onClick={() => onSubmit("approve")}
           >
-            {isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : approveIcon}
+            {isPending ? (
+              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+            ) : (
+              approveIcon
+            )}
             {approveLabel}
           </Button>
           <Button
@@ -121,22 +180,43 @@ function ReviewActions({
 
 function ReviewBadge({ status }: { status: string }) {
   if (status === "verified" || status === "approved") {
-    return <Badge className="bg-green-500 hover:bg-green-600 rounded-xl"><CheckCircle2 className="w-3 h-3 mr-1" /> {status === "verified" ? "Verified" : "Approved"}</Badge>;
+    return (
+      <Badge className="bg-green-500 hover:bg-green-600 rounded-xl">
+        <CheckCircle2 className="w-3 h-3 mr-1" />{" "}
+        {status === "verified" ? "Verified" : "Approved"}
+      </Badge>
+    );
   }
   if (status === "pending") {
-    return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl"><Clock className="w-3 h-3 mr-1" /> Pending Review</Badge>;
+    return (
+      <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl">
+        <Clock className="w-3 h-3 mr-1" /> Pending Review
+      </Badge>
+    );
   }
   if (status === "rejected") {
-    return <Badge variant="destructive" className="rounded-xl"><AlertCircle className="w-3 h-3 mr-1" /> Rejected</Badge>;
+    return (
+      <Badge variant="destructive" className="rounded-xl">
+        <AlertCircle className="w-3 h-3 mr-1" /> Rejected
+      </Badge>
+    );
   }
-  return <Badge variant="secondary" className="rounded-xl text-muted-foreground">{status.replace(/_/g, " ")}</Badge>;
+  return (
+    <Badge variant="secondary" className="rounded-xl text-muted-foreground">
+      {status.replace(/_/g, " ")}
+    </Badge>
+  );
 }
 
 function Field({ label, value }: { label: string; value?: ReactNode }) {
   return (
     <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="text-sm font-medium">{value === null || value === undefined || value === "" ? "â" : value}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="text-sm font-medium">
+        {value === null || value === undefined || value === "" ? "â" : value}
+      </div>
     </div>
   );
 }
@@ -147,10 +227,17 @@ function docTypeLabel(docType: string) {
 
 const W9_UPLOAD_DOC_TYPES = new Set(["w9"]);
 const COI_UPLOAD_DOC_TYPES = new Set(["coi"]);
-const DOT_UPLOAD_DOC_TYPES = new Set(["dot_authority", "dot_medical_card", "mc_authority"]);
+const DOT_UPLOAD_DOC_TYPES = new Set([
+  "dot_authority",
+  "dot_medical_card",
+  "mc_authority",
+]);
 const CDL_UPLOAD_DOC_TYPES = new Set(["cdl_front", "cdl_back"]);
 const GROUPED_UPLOAD_DOC_TYPES = new Set([
-  ...W9_UPLOAD_DOC_TYPES, ...COI_UPLOAD_DOC_TYPES, ...DOT_UPLOAD_DOC_TYPES, ...CDL_UPLOAD_DOC_TYPES,
+  ...W9_UPLOAD_DOC_TYPES,
+  ...COI_UPLOAD_DOC_TYPES,
+  ...DOT_UPLOAD_DOC_TYPES,
+  ...CDL_UPLOAD_DOC_TYPES,
 ]);
 
 function normalizeUploadStatus(status: string) {
@@ -163,7 +250,10 @@ function UploadedDocReview({
   anyPending,
 }: {
   doc: AdminUploadedComplianceDocument;
-  makeAct: (kind: "doc", docType: string) => (action: "approve" | "reject", note?: string) => void;
+  makeAct: (
+    kind: "doc",
+    docType: string,
+  ) => (action: "approve" | "reject", note?: string) => void;
   anyPending: boolean;
 }) {
   return (
@@ -180,7 +270,9 @@ function UploadedDocReview({
         <Field label="File" value={doc.fileName} />
         {doc.objectPath && (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">View</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              View
+            </div>
             <a
               href={`/api/storage${doc.objectPath}`}
               target="_blank"
@@ -245,65 +337,118 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
   const reviewDoc = useReviewProviderComplianceDocument();
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: getListAdminComplianceQueryKey() });
+    queryClient.invalidateQueries({
+      queryKey: getListAdminComplianceQueryKey(),
+    });
     queryClient.invalidateQueries({ queryKey: getGetAdminOverviewQueryKey() });
     queryClient.invalidateQueries({ queryKey: ["admin-documents"] });
     queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
   };
 
-  const makeAct = (
-    kind: "w9" | "insurance" | "dotCdl" | "doc",
-    docType?: string,
-  ) => (action: "approve" | "reject", note?: string) => {
-    const data = { action, ...(note ? { note } : {}) };
-    const onSuccess = () => {
-      invalidate();
-      const labels = { w9: "W-9", insurance: "Insurance", dotCdl: "DOT/CDL", doc: docTypeLabel(docType ?? "document") };
-      toast({ title: action === "approve" ? `${labels[kind]} approved` : `${labels[kind]} rejected` });
+  const makeAct =
+    (kind: "w9" | "insurance" | "dotCdl" | "doc", docType?: string) =>
+    (action: "approve" | "reject", note?: string) => {
+      const data = { action, ...(note ? { note } : {}) };
+      const onSuccess = () => {
+        invalidate();
+        const labels = {
+          w9: "W-9",
+          insurance: "Insurance",
+          dotCdl: "DOT/CDL",
+          doc: docTypeLabel(docType ?? "document"),
+        };
+        toast({
+          title:
+            action === "approve"
+              ? `${labels[kind]} approved`
+              : `${labels[kind]} rejected`,
+        });
+      };
+      const onError = () =>
+        toast({ title: "Action failed", variant: "destructive" });
+      if (kind === "w9")
+        reviewW9.mutate(
+          { profileId: item.profileId, data },
+          { onSuccess, onError },
+        );
+      else if (kind === "insurance")
+        reviewInsurance.mutate(
+          { profileId: item.profileId, data },
+          { onSuccess, onError },
+        );
+      else if (kind === "doc")
+        reviewDoc.mutate(
+          { profileId: item.profileId, docType: docType!, data },
+          { onSuccess, onError },
+        );
+      else
+        reviewDotCdl.mutate(
+          { profileId: item.profileId, data },
+          { onSuccess, onError },
+        );
     };
-    const onError = () => toast({ title: "Action failed", variant: "destructive" });
-    if (kind === "w9") reviewW9.mutate({ profileId: item.profileId, data }, { onSuccess, onError });
-    else if (kind === "insurance") reviewInsurance.mutate({ profileId: item.profileId, data }, { onSuccess, onError });
-    else if (kind === "doc") reviewDoc.mutate({ profileId: item.profileId, docType: docType!, data }, { onSuccess, onError });
-    else reviewDotCdl.mutate({ profileId: item.profileId, data }, { onSuccess, onError });
-  };
 
-  const anyPending = reviewDotCdl.isPending || reviewW9.isPending || reviewInsurance.isPending || reviewDoc.isPending;
+  const anyPending =
+    reviewDotCdl.isPending ||
+    reviewW9.isPending ||
+    reviewInsurance.isPending ||
+    reviewDoc.isPending;
 
-  const w9Uploads = item.uploadedDocuments.filter((d) => W9_UPLOAD_DOC_TYPES.has(d.docType));
-  const coiUploads = item.uploadedDocuments.filter((d) => COI_UPLOAD_DOC_TYPES.has(d.docType));
-  const dotUploads = item.uploadedDocuments.filter((d) => DOT_UPLOAD_DOC_TYPES.has(d.docType));
-  const cdlUploads = item.uploadedDocuments.filter((d) => CDL_UPLOAD_DOC_TYPES.has(d.docType));
-  const otherUploads = item.uploadedDocuments.filter((d) => !GROUPED_UPLOAD_DOC_TYPES.has(d.docType));
+  const w9Uploads = item.uploadedDocuments.filter((d) =>
+    W9_UPLOAD_DOC_TYPES.has(d.docType),
+  );
+  const coiUploads = item.uploadedDocuments.filter((d) =>
+    COI_UPLOAD_DOC_TYPES.has(d.docType),
+  );
+  const dotUploads = item.uploadedDocuments.filter((d) =>
+    DOT_UPLOAD_DOC_TYPES.has(d.docType),
+  );
+  const cdlUploads = item.uploadedDocuments.filter((d) =>
+    CDL_UPLOAD_DOC_TYPES.has(d.docType),
+  );
+  const otherUploads = item.uploadedDocuments.filter(
+    (d) => !GROUPED_UPLOAD_DOC_TYPES.has(d.docType),
+  );
 
   return (
     <Card className="rounded-xl border-2">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Truck className="w-4 h-4 text-primary" /> {item.profile.companyName}
+            <Truck className="w-4 h-4 text-primary" />{" "}
+            {item.profile.companyName}
           </CardTitle>
           <CardDescription>
             {item.profile.contactName || "â"}
             {item.profile.email ? ` Â· ${item.profile.email}` : ""}
-            {item.profile.city ? ` Â· ${item.profile.city}, ${item.profile.state ?? ""}` : ""}
+            {item.profile.city
+              ? ` Â· ${item.profile.city}, ${item.profile.state ?? ""}`
+              : ""}
           </CardDescription>
         </div>
         <div className="flex flex-col items-end gap-2">
           {item.canBid ? (
-            <Badge className="bg-green-500 hover:bg-green-600 rounded-xl"><CheckCircle2 className="w-3 h-3 mr-1" /> Can bid</Badge>
+            <Badge className="bg-green-500 hover:bg-green-600 rounded-xl">
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Can bid
+            </Badge>
           ) : (
-            <Badge variant="secondary" className="rounded-xl">Not eligible to bid</Badge>
+            <Badge variant="secondary" className="rounded-xl">
+              Not eligible to bid
+            </Badge>
           )}
           {item.hasPendingReview && (
-            <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl"><Clock className="w-3 h-3 mr-1" /> Review needed</Badge>
+            <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl">
+              <Clock className="w-3 h-3 mr-1" /> Review needed
+            </Badge>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {(item.w9 || w9Uploads.length > 0) && (
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">W-9 Documents</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              W-9 Documents
+            </h4>
             {item.w9 && (
               <DocumentReviewSection
                 title="W-9 (tax form)"
@@ -317,19 +462,29 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <Field label="Legal name" value={item.w9.legalName} />
                   <Field label="Business name" value={item.w9.businessName} />
-                  <Field label="Tax ID" value={`${item.w9.taxIdType?.toUpperCase() ?? "?"} Â·Â·Â·Â·${item.w9.taxIdLast4 ?? "????"}`} />
+                  <Field
+                    label="Tax ID"
+                    value={`${item.w9.taxIdType?.toUpperCase() ?? "?"} Â·Â·Â·Â·${item.w9.taxIdLast4 ?? "????"}`}
+                  />
                 </div>
               </DocumentReviewSection>
             )}
             {w9Uploads.map((doc) => (
-              <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
+              <UploadedDocReview
+                key={doc.docType}
+                doc={doc}
+                makeAct={makeAct}
+                anyPending={anyPending}
+              />
             ))}
           </div>
         )}
 
         {(item.insurance || coiUploads.length > 0) && (
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Insurance / COI Documents</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Insurance / COI Documents
+            </h4>
             {item.insurance && (
               <DocumentReviewSection
                 title="Insurance / bonding (form)"
@@ -342,21 +497,43 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
               >
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <Field label="GL carrier" value={item.insurance.glCarrier} />
-                  <Field label="Policy #" value={item.insurance.glPolicyNumber} />
-                  <Field label="Coverage" value={`$${item.insurance.glCoverageAmount.toLocaleString()}`} />
-                  <Field label="Expires" value={item.insurance.glExpirationDate ? new Date(item.insurance.glExpirationDate).toLocaleDateString() : null} />
+                  <Field
+                    label="Policy #"
+                    value={item.insurance.glPolicyNumber}
+                  />
+                  <Field
+                    label="Coverage"
+                    value={`$${item.insurance.glCoverageAmount.toLocaleString()}`}
+                  />
+                  <Field
+                    label="Expires"
+                    value={
+                      item.insurance.glExpirationDate
+                        ? new Date(
+                            item.insurance.glExpirationDate,
+                          ).toLocaleDateString()
+                        : null
+                    }
+                  />
                 </div>
               </DocumentReviewSection>
             )}
             {coiUploads.map((doc) => (
-              <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
+              <UploadedDocReview
+                key={doc.docType}
+                doc={doc}
+                makeAct={makeAct}
+                anyPending={anyPending}
+              />
             ))}
           </div>
         )}
 
         {(item.dotCdl || dotUploads.length > 0) && (
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">DOT Documents</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              DOT Documents
+            </h4>
             {item.dotCdl && (
               <DocumentReviewSection
                 title="DOT registration & authority"
@@ -370,20 +547,33 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <Field label="DOT #" value={item.dotCdl.dotNumber} />
                   <Field label="MC #" value={item.dotCdl.mcNumber} />
-                  <Field label="FMCSA authority" value={item.dotCdl.fmcsaAuthority} />
-                  <Field label="Operating status" value={item.dotCdl.dotOperatingStatus} />
+                  <Field
+                    label="FMCSA authority"
+                    value={item.dotCdl.fmcsaAuthority}
+                  />
+                  <Field
+                    label="Operating status"
+                    value={item.dotCdl.dotOperatingStatus}
+                  />
                 </div>
               </DocumentReviewSection>
             )}
             {dotUploads.map((doc) => (
-              <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
+              <UploadedDocReview
+                key={doc.docType}
+                doc={doc}
+                makeAct={makeAct}
+                anyPending={anyPending}
+              />
             ))}
           </div>
         )}
 
         {(item.dotCdl || cdlUploads.length > 0) && (
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Documents</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              CDL Documents
+            </h4>
             {item.dotCdl && (
               <div className="border border-border p-4 space-y-3">
                 <div className="flex items-center justify-between gap-3">
@@ -392,22 +582,49 @@ function ProviderComplianceCard({ item }: { item: AdminProviderCompliance }) {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <Field label="CDL #" value={item.dotCdl.cdlNumber} />
-                  <Field label="CDL state / class" value={[item.dotCdl.cdlState, item.dotCdl.cdlClass].filter(Boolean).join(" Â· ") || null} />
-                  <Field label="CDL expiry" value={item.dotCdl.cdlExpiry ? new Date(item.dotCdl.cdlExpiry).toLocaleDateString() : null} />
+                  <Field
+                    label="CDL state / class"
+                    value={
+                      [item.dotCdl.cdlState, item.dotCdl.cdlClass]
+                        .filter(Boolean)
+                        .join(" Â· ") || null
+                    }
+                  />
+                  <Field
+                    label="CDL expiry"
+                    value={
+                      item.dotCdl.cdlExpiry
+                        ? new Date(item.dotCdl.cdlExpiry).toLocaleDateString()
+                        : null
+                    }
+                  />
                 </div>
-                {item.dotCdl.reviewNote && item.dotCdl.status === "rejected" && (
-                  <p className="text-sm text-destructive">Rejection reason: {item.dotCdl.reviewNote}</p>
-                )}
+                {item.dotCdl.reviewNote &&
+                  item.dotCdl.status === "rejected" && (
+                    <p className="text-sm text-destructive">
+                      Rejection reason: {item.dotCdl.reviewNote}
+                    </p>
+                  )}
               </div>
             )}
             {cdlUploads.map((doc) => (
-              <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
+              <UploadedDocReview
+                key={doc.docType}
+                doc={doc}
+                makeAct={makeAct}
+                anyPending={anyPending}
+              />
             ))}
           </div>
         )}
 
         {otherUploads.map((doc: AdminUploadedComplianceDocument) => (
-          <UploadedDocReview key={doc.docType} doc={doc} makeAct={makeAct} anyPending={anyPending} />
+          <UploadedDocReview
+            key={doc.docType}
+            doc={doc}
+            makeAct={makeAct}
+            anyPending={anyPending}
+          />
         ))}
       </CardContent>
     </Card>
@@ -421,13 +638,21 @@ function CreditCard_({ item }: { item: AdminCreditApplicationItem }) {
 
   function act(action: "approve" | "reject", note?: string) {
     review.mutate(
-      { profileId: item.profileId, data: { action, ...(note ? { note } : {}) } },
+      {
+        profileId: item.profileId,
+        data: { action, ...(note ? { note } : {}) },
+      },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListAdminCreditApplicationsQueryKey() });
-          toast({ title: action === "approve" ? "Credit approved" : "Credit rejected" });
+          queryClient.invalidateQueries({
+            queryKey: getListAdminCreditApplicationsQueryKey(),
+          });
+          toast({
+            title: action === "approve" ? "Credit approved" : "Credit rejected",
+          });
         },
-        onError: () => toast({ title: "Action failed", variant: "destructive" }),
+        onError: () =>
+          toast({ title: "Action failed", variant: "destructive" }),
       },
     );
   }
@@ -437,7 +662,8 @@ function CreditCard_({ item }: { item: AdminCreditApplicationItem }) {
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Building2 className="w-4 h-4 text-primary" /> {item.profile.companyName}
+            <Building2 className="w-4 h-4 text-primary" />{" "}
+            {item.profile.companyName}
           </CardTitle>
           <CardDescription>
             {item.profile.contactName || "â"}
@@ -448,10 +674,17 @@ function CreditCard_({ item }: { item: AdminCreditApplicationItem }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Field label="Wants Invoicing" value={item.wantsInvoicing ? "Yes" : "No"} />
+          <Field
+            label="Wants Invoicing"
+            value={item.wantsInvoicing ? "Yes" : "No"}
+          />
           <Field
             label="Est. Monthly Spend"
-            value={item.estimatedMonthlySpend != null ? `$${item.estimatedMonthlySpend.toLocaleString()}` : null}
+            value={
+              item.estimatedMonthlySpend != null
+                ? `$${item.estimatedMonthlySpend.toLocaleString()}`
+                : null
+            }
           />
           <Field label="Bank Reference" value={item.bankReference} />
           <div className="col-span-2 md:col-span-3">
@@ -484,15 +717,28 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
       { id: item.id },
       {
         onSuccess: (result) => {
-          queryClient.invalidateQueries({ queryKey: getListStuckPayoutsQueryKey() });
+          queryClient.invalidateQueries({
+            queryKey: getListStuckPayoutsQueryKey(),
+          });
           if (result.outcome === "released") {
-            toast({ title: "Payout released", description: `Job #${item.id} â ${item.providerCompany} has been paid.` });
+            toast({
+              title: "Payout released",
+              description: `Job #${item.id} â ${item.providerCompany} has been paid.`,
+            });
           } else {
-            toast({ title: "Payout not released", description: result.message });
+            toast({
+              title: "Payout not released",
+              description: result.message,
+            });
           }
         },
         onError: () =>
-          toast({ title: "Retry failed", description: "The transfer couldn't be completed. Try again shortly.", variant: "destructive" }),
+          toast({
+            title: "Retry failed",
+            description:
+              "The transfer couldn't be completed. Try again shortly.",
+            variant: "destructive",
+          }),
       },
     );
   }
@@ -502,11 +748,20 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
       { id: item.id },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListStuckPayoutsQueryKey() });
-          toast({ title: "Failures reset", description: `Job #${item.id} â failure count and alert cleared.` });
+          queryClient.invalidateQueries({
+            queryKey: getListStuckPayoutsQueryKey(),
+          });
+          toast({
+            title: "Failures reset",
+            description: `Job #${item.id} â failure count and alert cleared.`,
+          });
         },
         onError: () =>
-          toast({ title: "Reset failed", description: "Couldn't clear the failure count. Try again shortly.", variant: "destructive" }),
+          toast({
+            title: "Reset failed",
+            description: "Couldn't clear the failure count. Try again shortly.",
+            variant: "destructive",
+          }),
       },
     );
   }
@@ -516,10 +771,12 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
       <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Banknote className="w-4 h-4 text-primary" /> Job #{item.id} Â· {item.materialType}
+            <Banknote className="w-4 h-4 text-primary" /> Job #{item.id} Â·{" "}
+            {item.materialType}
           </CardTitle>
           <CardDescription className="flex items-center gap-1.5">
-            {item.customerCompany} <ArrowRight className="w-3 h-3" /> {item.providerCompany}
+            {item.customerCompany} <ArrowRight className="w-3 h-3" />{" "}
+            {item.providerCompany}
           </CardDescription>
         </div>
         <div className="flex flex-col items-end gap-1.5">
@@ -537,17 +794,31 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Field
             label="Provider Net"
-            value={item.providerNetAmount != null ? `$${item.providerNetAmount.toLocaleString()}` : null}
+            value={
+              item.providerNetAmount != null
+                ? `$${item.providerNetAmount.toLocaleString()}`
+                : null
+            }
           />
           <Field
             label="Customer Paid"
-            value={item.customerTotalAmount != null ? `$${item.customerTotalAmount.toLocaleString()}` : null}
+            value={
+              item.customerTotalAmount != null
+                ? `$${item.customerTotalAmount.toLocaleString()}`
+                : null
+            }
           />
           <Field label="Attempts" value={item.paymentAttempts} />
           <Field
             label="Retry Failures"
             value={
-              <span className={item.payoutRetryFailures > 0 ? "text-red-600 font-semibold" : undefined}>
+              <span
+                className={
+                  item.payoutRetryFailures > 0
+                    ? "text-red-600 font-semibold"
+                    : undefined
+                }
+              >
                 {item.payoutRetryFailures}
               </span>
             }
@@ -555,12 +826,21 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
         </div>
         <div className="pt-2 border-t">
           <p className="text-xs text-muted-foreground mb-3">
-            The customer's payment already went through â only the provider transfer is pending. Releasing
-            retries the transfer; the customer is never re-charged.
+            The customer's payment already went through â only the provider
+            transfer is pending. Releasing retries the transfer; the customer is
+            never re-charged.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button className="rounded-xl" disabled={retry.isPending} onClick={release}>
-              {retry.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Banknote className="w-4 h-4 mr-1" />}
+            <Button
+              className="rounded-xl"
+              disabled={retry.isPending}
+              onClick={release}
+            >
+              {retry.isPending ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <Banknote className="w-4 h-4 mr-1" />
+              )}
               Release Payout
             </Button>
             <Button
@@ -570,7 +850,11 @@ function StuckPayoutCard({ item }: { item: StuckPayoutItem }) {
               onClick={acknowledge}
               title="Clear the failure count and alert after resolving the underlying issue"
             >
-              {reset.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-1" />}
+              {reset.isPending ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <RotateCcw className="w-4 h-4 mr-1" />
+              )}
               Reset Failures
             </Button>
           </div>
@@ -595,14 +879,28 @@ const STAFF_ROLE_LABELS: Record<string, string> = {
   ar: "Accounting (legacy AR)",
 };
 
-const STAFF_ROLE_OPTIONS = ["ceo", "president", "cfo", "cto", "accounting", "it", "programmer"] as const;
+const STAFF_ROLE_OPTIONS = [
+  "ceo",
+  "president",
+  "cfo",
+  "cto",
+  "accounting",
+  "it",
+  "programmer",
+] as const;
 
 function roleLabel(role?: string | null): string {
   if (!role) return "\u2014";
   return STAFF_ROLE_LABELS[role] ?? role.toUpperCase();
 }
 
-function StaffRow({ member, canManage }: { member: StaffMember; canManage: boolean }) {
+function StaffRow({
+  member,
+  canManage,
+}: {
+  member: StaffMember;
+  canManage: boolean;
+}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const update = useUpdateStaffRole();
@@ -610,16 +908,22 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
   function setRole(staffRole: string | null) {
     if (staffRole === (member.staffRole ?? null)) return;
     update.mutate(
-      { profileId: member.id, data: { staffRole: staffRole as UpdateStaffRoleInput["staffRole"] } },
+      {
+        profileId: member.id,
+        data: { staffRole: staffRole as UpdateStaffRoleInput["staffRole"] },
+      },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListAdminStaffQueryKey() });
+          queryClient.invalidateQueries({
+            queryKey: getListAdminStaffQueryKey(),
+          });
           toast({
             title: staffRole ? "Role updated" : "Staff access removed",
             description: `${member.companyName}${staffRole ? ` is now ${roleLabel(staffRole)}` : ""}.`,
           });
         },
-        onError: () => toast({ title: "Couldn't update role", variant: "destructive" }),
+        onError: () =>
+          toast({ title: "Couldn't update role", variant: "destructive" }),
       },
     );
   }
@@ -658,7 +962,11 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
               onClick={() => setRole(null)}
               title="Remove staff access"
             >
-              {update.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+              {update.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <X className="w-4 h-4" />
+              )}
             </Button>
           </div>
         ) : (
@@ -672,9 +980,14 @@ function StaffRow({ member, canManage }: { member: StaffMember; canManage: boole
 }
 
 interface StaffSearchResult {
-  id: number; role: string | null; staffRole: string | null;
-  companyName: string | null; contactName: string | null; email: string | null;
-  city: string | null; state: string | null;
+  id: number;
+  role: string | null;
+  staffRole: string | null;
+  companyName: string | null;
+  contactName: string | null;
+  email: string | null;
+  city: string | null;
+  state: string | null;
 }
 
 // Search any user and grant them a staff role. Only rendered for manage_staff users.
@@ -686,20 +999,32 @@ function AddStaffPanel() {
 
   const search = useQuery({
     queryKey: ["admin-staff-search", term],
-    queryFn: () => apiFetch<StaffSearchResult[]>(`/admin/staff/search?q=${encodeURIComponent(term)}`),
+    queryFn: () =>
+      apiFetch<StaffSearchResult[]>(
+        `/admin/staff/search?q=${encodeURIComponent(term)}`,
+      ),
     enabled: term.trim().length >= 2,
   });
 
   function assign(member: StaffSearchResult, staffRole: string) {
     update.mutate(
-      { profileId: member.id, data: { staffRole: staffRole as UpdateStaffRoleInput["staffRole"] } },
+      {
+        profileId: member.id,
+        data: { staffRole: staffRole as UpdateStaffRoleInput["staffRole"] },
+      },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListAdminStaffQueryKey() });
+          queryClient.invalidateQueries({
+            queryKey: getListAdminStaffQueryKey(),
+          });
           queryClient.invalidateQueries({ queryKey: ["admin-staff-search"] });
-          toast({ title: "Staff added", description: `${member.companyName ?? member.contactName ?? "User"} is now ${roleLabel(staffRole)}.` });
+          toast({
+            title: "Staff added",
+            description: `${member.companyName ?? member.contactName ?? "User"} is now ${roleLabel(staffRole)}.`,
+          });
         },
-        onError: () => toast({ title: "Couldn't assign role", variant: "destructive" }),
+        onError: () =>
+          toast({ title: "Couldn't assign role", variant: "destructive" }),
       },
     );
   }
@@ -708,8 +1033,13 @@ function AddStaffPanel() {
   return (
     <Card className="rounded-xl border-2 border-dashed">
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2"><UserPlus className="w-4 h-4 text-primary" /> Add a staff member</CardTitle>
-        <CardDescription>Search any registered user by name, company, or email, then assign them a staff role.</CardDescription>
+        <CardTitle className="text-base flex items-center gap-2">
+          <UserPlus className="w-4 h-4 text-primary" /> Add a staff member
+        </CardTitle>
+        <CardDescription>
+          Search any registered user by name, company, or email, then assign
+          them a staff role.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <input
@@ -720,25 +1050,46 @@ function AddStaffPanel() {
           className="w-full border-2 rounded-xl bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         {term.trim().length < 2 ? (
-          <p className="text-xs text-muted-foreground">Type at least 2 characters to search.</p>
+          <p className="text-xs text-muted-foreground">
+            Type at least 2 characters to search.
+          </p>
         ) : search.isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : results.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No users match “{term}”.</p>
+          <p className="text-sm text-muted-foreground">
+            No users match “{term}”.
+          </p>
         ) : (
           <div className="space-y-2">
             {results.map((m) => (
-              <div key={m.id} className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-2 p-3">
+              <div
+                key={m.id}
+                className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-2 p-3"
+              >
                 <div className="min-w-0">
-                  <div className="font-medium text-sm truncate">{m.companyName || m.contactName || "Unnamed"}</div>
+                  <div className="font-medium text-sm truncate">
+                    {m.companyName || m.contactName || "Unnamed"}
+                  </div>
                   <div className="text-xs text-muted-foreground truncate">
-                    {m.contactName && m.companyName ? `${m.contactName} \u00b7 ` : ""}{m.email || ""}
-                    {m.staffRole ? ` \u00b7 currently ${roleLabel(m.staffRole)}` : ""}
+                    {m.contactName && m.companyName
+                      ? `${m.contactName} \u00b7 `
+                      : ""}
+                    {m.email || ""}
+                    {m.staffRole
+                      ? ` \u00b7 currently ${roleLabel(m.staffRole)}`
+                      : ""}
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {STAFF_ROLE_OPTIONS.map((role) => (
-                    <Button key={role} size="sm" variant={m.staffRole === role ? "default" : "outline"} className="rounded-xl border-2" disabled={update.isPending} onClick={() => assign(m, role)}>
+                    <Button
+                      key={role}
+                      size="sm"
+                      variant={m.staffRole === role ? "default" : "outline"}
+                      className="rounded-xl border-2"
+                      disabled={update.isPending}
+                      onClick={() => assign(m, role)}
+                    >
                       {STAFF_ROLE_LABELS[role]}
                     </Button>
                   ))}
@@ -752,21 +1103,34 @@ function AddStaffPanel() {
   );
 }
 
-function StaffPanel({ enabled, canManage }: { enabled: boolean; canManage: boolean }) {
-  const staff = useListAdminStaff({ query: { enabled, queryKey: getListAdminStaffQueryKey() } });
+function StaffPanel({
+  enabled,
+  canManage,
+}: {
+  enabled: boolean;
+  canManage: boolean;
+}) {
+  const staff = useListAdminStaff({
+    query: { enabled, queryKey: getListAdminStaffQueryKey() },
+  });
   const members = staff.data ?? [];
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         {canManage ? (
           <>
-            Assign each HaulBrokr staff member a role. <strong>Accounting</strong> reviews payouts,
-            credit, and carrier compliance; <strong>CFO</strong> adds team management;{" "}
-            <strong>CTO</strong> and <strong>IT</strong> have full superadmin access; and{" "}
-            <strong>CEO</strong> sees everything but can't edit roles.
+            Assign each HaulBrokr staff member a role.{" "}
+            <strong>Accounting</strong> reviews payouts, credit, and carrier
+            compliance; <strong>CFO</strong> adds team management;{" "}
+            <strong>CTO</strong> and <strong>IT</strong> have full superadmin
+            access; and <strong>CEO</strong> sees everything but can't edit
+            roles.
           </>
         ) : (
-          <>You can view the HaulBrokr team roster. Editing staff roles is reserved for CFO, CTO, and IT.</>
+          <>
+            You can view the HaulBrokr team roster. Editing staff roles is
+            reserved for CFO, CTO, and IT.
+          </>
         )}
       </p>
       {canManage && <AddStaffPanel />}
@@ -775,7 +1139,9 @@ function StaffPanel({ enabled, canManage }: { enabled: boolean; canManage: boole
       ) : members.length === 0 ? (
         <EmptyState label="No staff members yet. Staff appear here once assigned a role." />
       ) : (
-        members.map((m) => <StaffRow key={m.id} member={m} canManage={canManage} />)
+        members.map((m) => (
+          <StaffRow key={m.id} member={m} canManage={canManage} />
+        ))
       )}
     </div>
   );
@@ -797,17 +1163,41 @@ const BIN_NEXT_ACTION: Record<
 function BinStatusBadge({ displayStatus }: { displayStatus: string }) {
   switch (displayStatus) {
     case "pending":
-      return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+      return (
+        <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl">
+          <Clock className="w-3 h-3 mr-1" /> Pending
+        </Badge>
+      );
     case "confirmed":
-      return <Badge className="bg-blue-500 hover:bg-blue-600 rounded-xl"><CheckCircle2 className="w-3 h-3 mr-1" /> Confirmed</Badge>;
+      return (
+        <Badge className="bg-blue-500 hover:bg-blue-600 rounded-xl">
+          <CheckCircle2 className="w-3 h-3 mr-1" /> Confirmed
+        </Badge>
+      );
     case "active":
-      return <Badge className="bg-green-500 hover:bg-green-600 rounded-xl"><Truck className="w-3 h-3 mr-1" /> Delivered</Badge>;
+      return (
+        <Badge className="bg-green-500 hover:bg-green-600 rounded-xl">
+          <Truck className="w-3 h-3 mr-1" /> Delivered
+        </Badge>
+      );
     case "completed":
-      return <Badge variant="secondary" className="rounded-xl"><PackageCheck className="w-3 h-3 mr-1" /> Picked Up</Badge>;
+      return (
+        <Badge variant="secondary" className="rounded-xl">
+          <PackageCheck className="w-3 h-3 mr-1" /> Picked Up
+        </Badge>
+      );
     case "cancelled":
-      return <Badge variant="destructive" className="rounded-xl"><X className="w-3 h-3 mr-1" /> Cancelled</Badge>;
+      return (
+        <Badge variant="destructive" className="rounded-xl">
+          <X className="w-3 h-3 mr-1" /> Cancelled
+        </Badge>
+      );
     default:
-      return <Badge variant="secondary" className="rounded-xl">{displayStatus.replace(/_/g, " ")}</Badge>;
+      return (
+        <Badge variant="secondary" className="rounded-xl">
+          {displayStatus.replace(/_/g, " ")}
+        </Badge>
+      );
   }
 }
 
@@ -816,7 +1206,11 @@ function formatBinDate(value?: string | null): string {
   const d = new Date(value);
   return Number.isNaN(d.getTime())
     ? "â"
-    : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    : d.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
 }
 
 function BinOrderCard({ order }: { order: BinOrder }) {
@@ -831,10 +1225,17 @@ function BinOrderCard({ order }: { order: BinOrder }) {
       { id: order.id, data: { status: next.status } },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListAdminBinOrdersQueryKey() });
-          toast({ title: next.label.replace(/^Mark /, "Marked ").replace(/^Confirm /, "Confirmed ") });
+          queryClient.invalidateQueries({
+            queryKey: getListAdminBinOrdersQueryKey(),
+          });
+          toast({
+            title: next.label
+              .replace(/^Mark /, "Marked ")
+              .replace(/^Confirm /, "Confirmed "),
+          });
         },
-        onError: () => toast({ title: "Couldn't update the order", variant: "destructive" }),
+        onError: () =>
+          toast({ title: "Couldn't update the order", variant: "destructive" }),
       },
     );
   }
@@ -845,10 +1246,13 @@ function BinOrderCard({ order }: { order: BinOrder }) {
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Package className="w-4 h-4 text-primary" />
-            {order.quantity > 1 ? `${order.quantity}Ã ` : ""}{order.binSizeLabel} {order.binTypeLabel}
+            {order.quantity > 1 ? `${order.quantity}Ã ` : ""}
+            {order.binSizeLabel} {order.binTypeLabel}
           </CardTitle>
           <CardDescription className="flex items-center gap-1.5">
-            <Building2 className="w-3 h-3" /> {order.customerCompany || "Customer"} Â· {order.serviceType === "temporary" ? "Temporary" : "Permanent"}
+            <Building2 className="w-3 h-3" />{" "}
+            {order.customerCompany || "Customer"} Â·{" "}
+            {order.serviceType === "temporary" ? "Temporary" : "Permanent"}
           </CardDescription>
         </div>
         <BinStatusBadge displayStatus={order.displayStatus} />
@@ -856,26 +1260,58 @@ function BinOrderCard({ order }: { order: BinOrder }) {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="col-span-2">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> Delivery Address</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <MapPin className="w-3 h-3" /> Delivery Address
+            </div>
             <div className="text-sm font-medium">{order.deliveryAddress}</div>
           </div>
-          <Field label="Waste Type" value={order.wasteType.replace(/_/g, " ")} />
+          <Field
+            label="Waste Type"
+            value={order.wasteType.replace(/_/g, " ")}
+          />
           <Field label="Est. Cost" value={order.estimatedCost} />
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> Delivery</div>
-            <div className="text-sm font-medium">{formatBinDate(order.deliveryDate)}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <Calendar className="w-3 h-3" /> Delivery
+            </div>
+            <div className="text-sm font-medium">
+              {formatBinDate(order.deliveryDate)}
+            </div>
           </div>
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> Pickup</div>
-            <div className="text-sm font-medium">{formatBinDate(order.pickupDate)}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <Calendar className="w-3 h-3" /> Pickup
+            </div>
+            <div className="text-sm font-medium">
+              {formatBinDate(order.pickupDate)}
+            </div>
           </div>
-          <Field label="Preferred Hauler" value={order.preferredProvider && order.preferredProvider !== "any" ? order.preferredProvider.replace(/_/g, " ") : "Any"} />
-          {order.notes && <div className="col-span-2 md:col-span-4"><Field label="Notes" value={order.notes} /></div>}
+          <Field
+            label="Preferred Hauler"
+            value={
+              order.preferredProvider && order.preferredProvider !== "any"
+                ? order.preferredProvider.replace(/_/g, " ")
+                : "Any"
+            }
+          />
+          {order.notes && (
+            <div className="col-span-2 md:col-span-4">
+              <Field label="Notes" value={order.notes} />
+            </div>
+          )}
         </div>
         <div className="pt-2 border-t">
           {next ? (
-            <Button className="rounded-xl" disabled={advance.isPending} onClick={move}>
-              {advance.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ArrowRight className="w-4 h-4 mr-1" />}
+            <Button
+              className="rounded-xl"
+              disabled={advance.isPending}
+              onClick={move}
+            >
+              {advance.isPending ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <ArrowRight className="w-4 h-4 mr-1" />
+              )}
               {next.label}
             </Button>
           ) : (
@@ -892,13 +1328,15 @@ function BinOrderCard({ order }: { order: BinOrder }) {
 }
 
 function BinOrdersPanel({ enabled }: { enabled: boolean }) {
-  const orders = useListAdminBinOrders({ query: { enabled, queryKey: getListAdminBinOrdersQueryKey() } });
+  const orders = useListAdminBinOrders({
+    query: { enabled, queryKey: getListAdminBinOrdersQueryKey() },
+  });
   const items = orders.data ?? [];
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Track incoming bin orders and move each one forward as it's dropped off and hauled away.
-        Only the valid next step is offered per order.
+        Track incoming bin orders and move each one forward as it's dropped off
+        and hauled away. Only the valid next step is offered per order.
       </p>
       {orders.isLoading ? (
         <Skeleton className="h-48 w-full" />
@@ -925,7 +1363,11 @@ function money(n: number): string {
 }
 
 function StatCard({
-  icon, label, value, hint, accent,
+  icon,
+  label,
+  value,
+  hint,
+  accent,
 }: {
   icon: ReactNode;
   label: string;
@@ -939,8 +1381,14 @@ function StatCard({
         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {icon} {label}
         </div>
-        <div className={`mt-2 text-2xl font-bold tracking-tight ${accent ? "text-primary" : ""}`}>{value}</div>
-        {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
+        <div
+          className={`mt-2 text-2xl font-bold tracking-tight ${accent ? "text-primary" : ""}`}
+        >
+          {value}
+        </div>
+        {hint && (
+          <div className="text-xs text-muted-foreground mt-1">{hint}</div>
+        )}
       </CardContent>
     </Card>
   );
@@ -948,7 +1396,10 @@ function StatCard({
 
 // A pending-review tile that doubles as a jump link into the relevant tab.
 function ReviewQueueTile({
-  icon, label, count, onClick,
+  icon,
+  label,
+  count,
+  onClick,
 }: {
   icon: ReactNode;
   label: string;
@@ -966,20 +1417,30 @@ function ReviewQueueTile({
           {icon} {label}
         </div>
         {count > 0 ? (
-          <Badge className="bg-amber-500 text-amber-950 rounded-xl">{count}</Badge>
+          <Badge className="bg-amber-500 text-amber-950 rounded-xl">
+            {count}
+          </Badge>
         ) : (
-          <Badge variant="secondary" className="rounded-xl text-muted-foreground">0</Badge>
+          <Badge
+            variant="secondary"
+            className="rounded-xl text-muted-foreground"
+          >
+            0
+          </Badge>
         )}
       </div>
       <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-        {count > 0 ? "Needs review" : "All clear"} <ArrowRight className="w-3 h-3" />
+        {count > 0 ? "Needs review" : "All clear"}{" "}
+        <ArrowRight className="w-3 h-3" />
       </div>
     </button>
   );
 }
 
 function OverviewPanel({
-  enabled, onJump, canBins,
+  enabled,
+  onJump,
+  canBins,
 }: {
   enabled: boolean;
   onJump: (tab: string) => void;
@@ -993,7 +1454,9 @@ function OverviewPanel({
   if (overview.isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-28 w-full" />
+        ))}
       </div>
     );
   }
@@ -1056,7 +1519,9 @@ function OverviewPanel({
             icon={<Banknote className="w-3.5 h-3.5" />}
             label="Stuck Payouts"
             value={
-              <span className={data.stuckPayouts > 0 ? "text-red-600" : undefined}>
+              <span
+                className={data.stuckPayouts > 0 ? "text-red-600" : undefined}
+              >
                 {data.stuckPayouts.toLocaleString()}
               </span>
             }
@@ -1121,7 +1586,10 @@ function RefundOperationsPanel() {
       const data = await apiFetch(`/admin/jobs/${id}/payment-history`);
       setHistory(data);
     } catch (e: any) {
-      toast({ title: e.message ?? "Failed to load history", variant: "destructive" });
+      toast({
+        title: e.message ?? "Failed to load history",
+        variant: "destructive",
+      });
     } finally {
       setBusy(false);
     }
@@ -1142,7 +1610,10 @@ function RefundOperationsPanel() {
         body: JSON.stringify(body),
         headers: { "Idempotency-Key": `admin-refund:${id}:${Date.now()}` },
       });
-      toast({ title: "Refund issued", description: `Job #${id} refund submitted to Stripe.` });
+      toast({
+        title: "Refund issued",
+        description: `Job #${id} refund submitted to Stripe.`,
+      });
       await loadHistory();
     } catch (e: any) {
       toast({ title: e.message ?? "Refund failed", variant: "destructive" });
@@ -1157,7 +1628,9 @@ function RefundOperationsPanel() {
         <CardTitle className="flex items-center gap-2 text-lg">
           <RotateCcw className="w-4 h-4 text-primary" /> Refunds
         </CardTitle>
-        <CardDescription>Issue full or partial Stripe refunds for released jobs.</CardDescription>
+        <CardDescription>
+          Issue full or partial Stripe refunds for released jobs.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1182,18 +1655,34 @@ function RefundOperationsPanel() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button className="rounded-xl" disabled={busy} onClick={issueRefund}>
-            {busy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-1" />}
+            {busy ? (
+              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+            ) : (
+              <RotateCcw className="w-4 h-4 mr-1" />
+            )}
             Issue refund
           </Button>
-          <Button variant="outline" className="rounded-xl" disabled={busy} onClick={loadHistory}>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            disabled={busy}
+            onClick={loadHistory}
+          >
             View payment history
           </Button>
         </div>
         {history && (
           <div className="rounded-xl border p-4 text-sm space-y-2">
-            <p><strong>Balance:</strong> ${history.currentBalance?.toFixed?.(2) ?? history.currentBalance}</p>
-            <p><strong>Status:</strong> {history.refundStatus}</p>
-            <p><strong>Refunds:</strong> {history.refunds?.length ?? 0}</p>
+            <p>
+              <strong>Balance:</strong> $
+              {history.currentBalance?.toFixed?.(2) ?? history.currentBalance}
+            </p>
+            <p>
+              <strong>Status:</strong> {history.refundStatus}
+            </p>
+            <p>
+              <strong>Refunds:</strong> {history.refunds?.length ?? 0}
+            </p>
           </div>
         )}
       </CardContent>
@@ -1224,7 +1713,9 @@ function FactoringPanel() {
     try {
       await apiFetch(`/factoring/${id}/${action}`, { method: "PATCH" });
       qc.invalidateQueries({ queryKey: ["admin-factoring"] });
-      toast({ title: action === "approve" ? "Advance approved" : "Advance rejected" });
+      toast({
+        title: action === "approve" ? "Advance approved" : "Advance rejected",
+      });
     } catch (e: any) {
       toast({ title: e.message ?? "Action failed", variant: "destructive" });
     }
@@ -1239,23 +1730,48 @@ function FactoringPanel() {
         <CardTitle className="flex items-center gap-2 text-lg">
           <DollarSign className="w-4 h-4 text-primary" /> Factoring advances
         </CardTitle>
-        <CardDescription>Review provider requests for same-day invoice advances.</CardDescription>
+        <CardDescription>
+          Review provider requests for same-day invoice advances.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : pending.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No pending factoring requests.</p>
+          <p className="text-sm text-muted-foreground">
+            No pending factoring requests.
+          </p>
         ) : (
           pending.map((item) => (
-            <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
+            <div
+              key={item.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3"
+            >
               <div>
-                <p className="font-semibold">Job #{item.jobId} · {item.materialType ?? "—"}</p>
-                <p className="text-sm text-muted-foreground">{item.providerCompany} · Net ${item.netAmount.toLocaleString()}</p>
+                <p className="font-semibold">
+                  Job #{item.jobId} · {item.materialType ?? "—"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {item.providerCompany} · Net $
+                  {item.netAmount.toLocaleString()}
+                </p>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="rounded-xl" onClick={() => act(item.id, "approve")}>Approve</Button>
-                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => act(item.id, "reject")}>Reject</Button>
+                <Button
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => act(item.id, "approve")}
+                >
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-xl"
+                  onClick={() => act(item.id, "reject")}
+                >
+                  Reject
+                </Button>
               </div>
             </div>
           ))
@@ -1279,10 +1795,16 @@ export default function AdminPage() {
   const [tab, setTab] = useState<string | null>(null);
 
   const compliance = useListAdminCompliance({
-    query: { enabled: canCompliance, queryKey: getListAdminComplianceQueryKey() },
+    query: {
+      enabled: canCompliance,
+      queryKey: getListAdminComplianceQueryKey(),
+    },
   });
   const credit = useListAdminCreditApplications({
-    query: { enabled: canCredit, queryKey: getListAdminCreditApplicationsQueryKey() },
+    query: {
+      enabled: canCredit,
+      queryKey: getListAdminCreditApplicationsQueryKey(),
+    },
   });
   const payouts = useListStuckPayouts({
     query: { enabled: canPayouts, queryKey: getListStuckPayoutsQueryKey() },
@@ -1306,10 +1828,14 @@ export default function AdminPage() {
           <ShieldAlert className="h-4 w-4" />
           <AlertTitle>Access restricted</AlertTitle>
           <AlertDescription>
-            This area is for HaulBrokr staff only. Sign in with your staff credentials or use a Clerk account with an assigned staff role.
+            This area is for HaulBrokr staff only. Sign in with your staff
+            credentials or use a Clerk account with an assigned staff role.
           </AlertDescription>
         </Alert>
-        <Button className="rounded-xl" onClick={() => window.location.assign("/admin/login")}>
+        <Button
+          className="rounded-xl"
+          onClick={() => window.location.assign("/admin/login")}
+        >
           <Lock className="h-4 w-4 mr-2" /> Staff login
         </Button>
       </div>
@@ -1320,19 +1846,29 @@ export default function AdminPage() {
   const creditItems = credit.data ?? [];
   const payoutItems = payouts.data ?? [];
   const binItems = binOrders.data ?? [];
-  const pendingCompliance = complianceItems.filter((i) => i.hasPendingReview).length;
-  const pendingCredit = creditItems.filter((i) => i.status === "pending").length;
+  const pendingCompliance = complianceItems.filter(
+    (i) => i.hasPendingReview,
+  ).length;
+  const pendingCredit = creditItems.filter(
+    (i) => i.status === "pending",
+  ).length;
   // Orders still needing a staff action (anything not yet terminal).
-  const openBins = binItems.filter((o) => o.status !== "picked_up" && o.status !== "cancelled").length;
+  const openBins = binItems.filter(
+    (o) => o.status !== "picked_up" && o.status !== "cancelled",
+  ).length;
   // Overview is the default landing tab for every role; fall back to the first
   // tab the role can access if (somehow) it lacks the overview permission.
   const defaultTab = canOverview
     ? "overview"
-    : canCompliance ? "compliance"
-    : canCredit ? "credit"
-    : canPayouts ? "payouts"
-    : canBins ? "bins"
-    : "staff";
+    : canCompliance
+      ? "compliance"
+      : canCredit
+        ? "credit"
+        : canPayouts
+          ? "payouts"
+          : canBins
+            ? "bins"
+            : "staff";
   const activeTab = tab ?? defaultTab;
 
   return (
@@ -1343,7 +1879,8 @@ export default function AdminPage() {
             <ShieldCheck className="w-7 h-7 text-primary" /> Command Center
           </h1>
           <p className="text-muted-foreground mt-1">
-            Platform overview, carrier &amp; credit review, payouts, bin orders, and team management.
+            Platform overview, carrier &amp; credit review, payouts, bin orders,
+            and team management.
             {(access as { staffDisplayName?: string | null }).staffDisplayName
               ? ` Â· Signed in as ${(access as { staffDisplayName?: string | null }).staffDisplayName}`
               : ""}
@@ -1354,7 +1891,10 @@ export default function AdminPage() {
             variant="outline"
             className="rounded-xl border-2 shrink-0"
             onClick={async () => {
-              await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
+              await fetch("/api/admin/logout", {
+                method: "POST",
+                credentials: "include",
+              });
               window.location.assign("/admin/login");
             }}
           >
@@ -1374,7 +1914,9 @@ export default function AdminPage() {
             <TabsTrigger value="compliance" className="rounded-xl gap-2">
               <Truck className="w-4 h-4" /> Carriers
               {pendingCompliance > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">{pendingCompliance}</Badge>
+                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">
+                  {pendingCompliance}
+                </Badge>
               )}
             </TabsTrigger>
           )}
@@ -1382,7 +1924,9 @@ export default function AdminPage() {
             <TabsTrigger value="credit" className="rounded-xl gap-2">
               <CreditCard className="w-4 h-4" /> Credit
               {pendingCredit > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">{pendingCredit}</Badge>
+                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">
+                  {pendingCredit}
+                </Badge>
               )}
             </TabsTrigger>
           )}
@@ -1390,7 +1934,9 @@ export default function AdminPage() {
             <TabsTrigger value="payouts" className="rounded-xl gap-2">
               <Banknote className="w-4 h-4" /> Payouts
               {payoutItems.length > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">{payoutItems.length}</Badge>
+                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">
+                  {payoutItems.length}
+                </Badge>
               )}
             </TabsTrigger>
           )}
@@ -1398,13 +1944,20 @@ export default function AdminPage() {
             <TabsTrigger value="bins" className="rounded-xl gap-2">
               <Package className="w-4 h-4" /> Bin Orders
               {openBins > 0 && (
-                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">{openBins}</Badge>
+                <Badge className="bg-amber-500 text-amber-950 rounded-xl ml-1">
+                  {openBins}
+                </Badge>
               )}
             </TabsTrigger>
           )}
           {canViewStaff && (
             <TabsTrigger value="staff" className="rounded-xl gap-2">
-              {canManageStaff ? <Users className="w-4 h-4" /> : <Lock className="w-4 h-4" />} Team
+              {canManageStaff ? (
+                <Users className="w-4 h-4" />
+              ) : (
+                <Lock className="w-4 h-4" />
+              )}{" "}
+              Team
             </TabsTrigger>
           )}
         </TabsList>
@@ -1422,7 +1975,9 @@ export default function AdminPage() {
             ) : complianceItems.length === 0 ? (
               <EmptyState label="No carrier compliance records submitted yet." />
             ) : (
-              complianceItems.map((item) => <ProviderComplianceCard key={item.profileId} item={item} />)
+              complianceItems.map((item) => (
+                <ProviderComplianceCard key={item.profileId} item={item} />
+              ))
             )}
           </TabsContent>
         )}
@@ -1435,7 +1990,9 @@ export default function AdminPage() {
             ) : creditItems.length === 0 ? (
               <EmptyState label="No credit applications submitted yet." />
             ) : (
-              creditItems.map((item) => <CreditCard_ key={item.id} item={item} />)
+              creditItems.map((item) => (
+                <CreditCard_ key={item.id} item={item} />
+              ))
             )}
           </TabsContent>
         )}
@@ -1448,7 +2005,9 @@ export default function AdminPage() {
             ) : payoutItems.length === 0 ? (
               <EmptyState label="No stuck payouts â all provider transfers are settled." />
             ) : (
-              payoutItems.map((item) => <StuckPayoutCard key={item.id} item={item} />)
+              payoutItems.map((item) => (
+                <StuckPayoutCard key={item.id} item={item} />
+              ))
             )}
           </TabsContent>
         )}

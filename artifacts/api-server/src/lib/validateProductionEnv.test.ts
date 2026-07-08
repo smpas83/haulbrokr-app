@@ -9,7 +9,8 @@ import {
 const VALID_PRODUCTION_ENV: Record<string, string> = {
   NODE_ENV: "production",
   PORT: "8080",
-  DATABASE_URL: "postgresql://haulbrokr:secret@ep-damp-boat-aftkv449.us-east-2.aws.neon.tech/neondb?sslmode=require",
+  DATABASE_URL:
+    "postgresql://haulbrokr:secret@ep-damp-boat-aftkv449.us-east-2.aws.neon.tech/neondb?sslmode=require",
   CLERK_SECRET_KEY: "sk_live_clerk_secret",
   CLERK_PUBLISHABLE_KEY: "pk_live_clerk_publishable",
   STRIPE_SECRET_KEY: "sk_live_stripe_secret",
@@ -33,7 +34,9 @@ const VALID_PRODUCTION_ENV: Record<string, string> = {
 
 describe("validateProductionEnv", () => {
   it("documents required variables for each production integration", () => {
-    const services = new Set(PRODUCTION_ENV_REQUIREMENTS.map((req) => req.service));
+    const services = new Set(
+      PRODUCTION_ENV_REQUIREMENTS.map((req) => req.service),
+    );
     expect(services.has("neon")).toBe(true);
     expect(services.has("clerk")).toBe(true);
     expect(services.has("stripe")).toBe(true);
@@ -58,7 +61,10 @@ describe("validateProductionEnv", () => {
   });
 
   it("collects missing Neon, Clerk, Stripe, Resend, R2, Render, and core secrets", () => {
-    const issues = collectProductionEnvIssues({ NODE_ENV: "production", PORT: "8080" });
+    const issues = collectProductionEnvIssues({
+      NODE_ENV: "production",
+      PORT: "8080",
+    });
     const variables = issues.map((issue) => issue.variable);
 
     expect(variables).toContain("DATABASE_URL");
@@ -75,30 +81,45 @@ describe("validateProductionEnv", () => {
       ...VALID_PRODUCTION_ENV,
       PAYMENTS_MOCK_MODE: "true",
     });
-    expect(issues.some((issue) => issue.variable === "PAYMENTS_MOCK_MODE")).toBe(true);
+    expect(
+      issues.some((issue) => issue.variable === "PAYMENTS_MOCK_MODE"),
+    ).toBe(true);
   });
 
   it("rejects Neon URLs without sslmode=require", () => {
     const issues = collectProductionEnvIssues({
       ...VALID_PRODUCTION_ENV,
-      DATABASE_URL: "postgresql://user:pass@ep-real-host.us-east-2.aws.neon.tech/neondb",
+      DATABASE_URL:
+        "postgresql://user:pass@ep-real-host.us-east-2.aws.neon.tech/neondb",
     });
-    expect(issues.some((issue) => issue.service === "neon" && issue.variable === "DATABASE_URL")).toBe(true);
+    expect(
+      issues.some(
+        (issue) =>
+          issue.service === "neon" && issue.variable === "DATABASE_URL",
+      ),
+    ).toBe(true);
   });
 
   it("rejects placeholder DATABASE_URL values", () => {
     const issues = collectProductionEnvIssues({
       ...VALID_PRODUCTION_ENV,
-      DATABASE_URL: "postgresql://user:pass@ep-xxxxx.neon.tech/neondb?sslmode=require",
+      DATABASE_URL:
+        "postgresql://user:pass@ep-xxxxx.neon.tech/neondb?sslmode=require",
     });
-    expect(issues.some((issue) => issue.variable === "DATABASE_URL")).toBe(true);
+    expect(issues.some((issue) => issue.variable === "DATABASE_URL")).toBe(
+      true,
+    );
   });
 
   it("throws a grouped error message on startup validation failure", () => {
-    expect(() => validateProductionEnv({ NODE_ENV: "production", PORT: "8080" })).toThrow(
-      /Production environment validation failed/,
-    );
-    expect(() => validateProductionEnv({ NODE_ENV: "production", PORT: "8080" })).toThrow(/\[NEON\]/);
-    expect(() => validateProductionEnv({ NODE_ENV: "production", PORT: "8080" })).toThrow(/VITE_CLERK_PUBLISHABLE_KEY/);
+    expect(() =>
+      validateProductionEnv({ NODE_ENV: "production", PORT: "8080" }),
+    ).toThrow(/Production environment validation failed/);
+    expect(() =>
+      validateProductionEnv({ NODE_ENV: "production", PORT: "8080" }),
+    ).toThrow(/\[NEON\]/);
+    expect(() =>
+      validateProductionEnv({ NODE_ENV: "production", PORT: "8080" }),
+    ).toThrow(/VITE_CLERK_PUBLISHABLE_KEY/);
   });
 });

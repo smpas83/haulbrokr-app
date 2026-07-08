@@ -9,11 +9,12 @@
 /**
  * @nullable
  */
-export type JobCompletionApproval = typeof JobCompletionApproval[keyof typeof JobCompletionApproval] | null;
-
+export type JobCompletionApproval =
+  | (typeof JobCompletionApproval)[keyof typeof JobCompletionApproval]
+  | null;
 
 export const JobCompletionApproval = {
-  pending: 'pending',
-  approved: 'approved',
-  flagged: 'flagged',
+  pending: "pending",
+  approved: "approved",
+  flagged: "flagged",
 } as const;

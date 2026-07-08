@@ -7,7 +7,7 @@ async function apiFetch(
   getToken: () => Promise<string | null>,
   method: string,
   path: string,
-  body?: object
+  body?: object,
 ) {
   const token = await getToken();
   const res = await fetch(`${API_BASE}${path}`, {
@@ -220,7 +220,8 @@ export function useChargeJob() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (jobId: number) => apiFetch(getToken, "POST", `/jobs/${jobId}/charge`),
+    mutationFn: (jobId: number) =>
+      apiFetch(getToken, "POST", `/jobs/${jobId}/charge`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
   });
 }
@@ -229,7 +230,8 @@ export function useReleaseJobPayment() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (jobId: number) => apiFetch(getToken, "POST", `/jobs/${jobId}/release`),
+    mutationFn: (jobId: number) =>
+      apiFetch(getToken, "POST", `/jobs/${jobId}/release`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
   });
 }
@@ -238,7 +240,9 @@ export function useCreateJobCheckoutSession() {
   const { getToken } = useAuth();
   return useMutation({
     mutationFn: ({ jobId, returnTo }: { jobId: number; returnTo: string }) =>
-      apiFetch(getToken, "POST", `/jobs/${jobId}/checkout-session`, { returnTo }) as Promise<{ url: string }>,
+      apiFetch(getToken, "POST", `/jobs/${jobId}/checkout-session`, {
+        returnTo,
+      }) as Promise<{ url: string }>,
   });
 }
 
@@ -247,7 +251,9 @@ export function useVerifyJobCheckout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ jobId, sessionId }: { jobId: number; sessionId: string }) =>
-      apiFetch(getToken, "POST", `/jobs/${jobId}/verify-checkout`, { sessionId }),
+      apiFetch(getToken, "POST", `/jobs/${jobId}/verify-checkout`, {
+        sessionId,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
   });
 }
@@ -265,19 +271,30 @@ export function useSubmitEvidence() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { jobId: number; photoUrl?: string; photoCaption?: string; siteNotes?: string }) =>
+    mutationFn: (data: {
+      jobId: number;
+      photoUrl?: string;
+      photoCaption?: string;
+      siteNotes?: string;
+    }) =>
       apiFetch(getToken, "POST", `/jobs/${data.jobId}/evidence`, {
         photoUrl: data.photoUrl,
         photoCaption: data.photoCaption,
         siteNotes: data.siteNotes,
       }),
-    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ["evidence", vars.jobId] }),
+    onSuccess: (_data, vars) =>
+      qc.invalidateQueries({ queryKey: ["evidence", vars.jobId] }),
   });
 }
 
 // ── Job status-update timeline (driver / foreman) ──────────────────────────
 export type JobStatusUpdateStatus =
-  | "en_route" | "arrived" | "loading" | "loaded" | "dumping" | "completed";
+  | "en_route"
+  | "arrived"
+  | "loading"
+  | "loaded"
+  | "dumping"
+  | "completed";
 
 export type JobStatusUpdate = {
   id: number;
@@ -303,7 +320,12 @@ export function useCreateJobStatusUpdate() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { jobId: number; status: JobStatusUpdateStatus; ticketId?: number; note?: string }) =>
+    mutationFn: (data: {
+      jobId: number;
+      status: JobStatusUpdateStatus;
+      ticketId?: number;
+      note?: string;
+    }) =>
       apiFetch(getToken, "POST", `/jobs/${data.jobId}/status-updates`, {
         status: data.status,
         ticketId: data.ticketId,
@@ -321,7 +343,8 @@ export function useApproveCompletion() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (jobId: number) => apiFetch(getToken, "POST", `/jobs/${jobId}/approve-completion`),
+    mutationFn: (jobId: number) =>
+      apiFetch(getToken, "POST", `/jobs/${jobId}/approve-completion`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
   });
 }
@@ -331,7 +354,9 @@ export function useFlagCompletion() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: { jobId: number; reason: string }) =>
-      apiFetch(getToken, "POST", `/jobs/${data.jobId}/flag-completion`, { reason: data.reason }),
+      apiFetch(getToken, "POST", `/jobs/${data.jobId}/flag-completion`, {
+        reason: data.reason,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
   });
 }
@@ -390,12 +415,17 @@ export type MarketplaceMapData = {
 };
 
 /** Nationwide map payload from the production database. */
-export function useMarketplaceMap(opts?: { lat?: number; lng?: number; radiusMiles?: number }) {
+export function useMarketplaceMap(opts?: {
+  lat?: number;
+  lng?: number;
+  radiusMiles?: number;
+}) {
   const { getToken, isSignedIn } = useAuth();
   const qs = new URLSearchParams();
   if (opts?.lat != null) qs.set("lat", String(opts.lat));
   if (opts?.lng != null) qs.set("lng", String(opts.lng));
-  if (opts?.radiusMiles != null) qs.set("radiusMiles", String(opts.radiusMiles));
+  if (opts?.radiusMiles != null)
+    qs.set("radiusMiles", String(opts.radiusMiles));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return useQuery<MarketplaceMapData>({
     queryKey: ["map", "marketplace", opts ?? {}],
@@ -409,8 +439,21 @@ export function useMarketplaceMap(opts?: { lat?: number; lng?: number; radiusMil
 export type JobTrackingData = {
   jobId: number;
   status: string;
-  latest: { lat: number; lng: number; at: string; source?: string; status?: string } | null;
-  trail: Array<{ lat: number; lng: number; at?: string; createdAt?: string; source?: string; status?: string }>;
+  latest: {
+    lat: number;
+    lng: number;
+    at: string;
+    source?: string;
+    status?: string;
+  } | null;
+  trail: Array<{
+    lat: number;
+    lng: number;
+    at?: string;
+    createdAt?: string;
+    source?: string;
+    status?: string;
+  }>;
 };
 
 /** Live vehicle GPS trail for an active job. */
@@ -487,7 +530,11 @@ export function useUpdateRequest() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { requestId: number; status?: string; notes?: string }) => {
+    mutationFn: (data: {
+      requestId: number;
+      status?: string;
+      notes?: string;
+    }) => {
       const { requestId, ...body } = data;
       return apiFetch(getToken, "PATCH", `/requests/${requestId}`, body);
     },
@@ -517,7 +564,12 @@ export function useUpdateJob() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { jobId: number; status: "in_progress" | "completed"; totalHours?: number; notes?: string }) => {
+    mutationFn: (data: {
+      jobId: number;
+      status: "in_progress" | "completed";
+      totalHours?: number;
+      notes?: string;
+    }) => {
       const { jobId, ...body } = data;
       return apiFetch(getToken, "PATCH", `/jobs/${jobId}`, body);
     },
@@ -572,13 +624,19 @@ export function useCreateTicket() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { jobId: number; weightTons?: number; notes?: string; photoUrl?: string }) =>
+    mutationFn: (data: {
+      jobId: number;
+      weightTons?: number;
+      notes?: string;
+      photoUrl?: string;
+    }) =>
       apiFetch(getToken, "POST", `/jobs/${data.jobId}/tickets`, {
         weightTons: data.weightTons,
         notes: data.notes,
         photoUrl: data.photoUrl,
       }),
-    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: ["tickets", vars.jobId] }),
+    onSuccess: (_d, vars) =>
+      qc.invalidateQueries({ queryKey: ["tickets", vars.jobId] }),
   });
 }
 
@@ -586,7 +644,8 @@ export function useTicketClockIn() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (ticketId: number) => apiFetch(getToken, "POST", `/tickets/${ticketId}/clock-in`),
+    mutationFn: (ticketId: number) =>
+      apiFetch(getToken, "POST", `/tickets/${ticketId}/clock-in`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tickets"] }),
   });
 }
@@ -595,7 +654,8 @@ export function useTicketClockOut() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (ticketId: number) => apiFetch(getToken, "POST", `/tickets/${ticketId}/clock-out`),
+    mutationFn: (ticketId: number) =>
+      apiFetch(getToken, "POST", `/tickets/${ticketId}/clock-out`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tickets"] }),
   });
 }
@@ -604,7 +664,9 @@ export function useIssueTicketQR() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (ticketId: number): Promise<{ token: string; expiresAt: string; ticket: any }> =>
+    mutationFn: (
+      ticketId: number,
+    ): Promise<{ token: string; expiresAt: string; ticket: any }> =>
       apiFetch(getToken, "POST", `/tickets/${ticketId}/qr`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tickets"] }),
   });
@@ -614,7 +676,9 @@ export function useVerifyTicket() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (token: string): Promise<{ ok: boolean; ticket: any; verifierName: string }> =>
+    mutationFn: (
+      token: string,
+    ): Promise<{ ok: boolean; ticket: any; verifierName: string }> =>
       apiFetch(getToken, "POST", `/tickets/verify`, { token }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tickets"] }),
   });
@@ -679,24 +743,42 @@ export function useDeleteDriverDoc() {
 export function useUploadFile() {
   const { getToken } = useAuth();
   return useMutation({
-    mutationFn: async (asset: { uri: string; name: string; mimeType: string }) => {
+    mutationFn: async (asset: {
+      uri: string;
+      name: string;
+      mimeType: string;
+    }) => {
       const blob = await (await fetch(asset.uri)).blob();
-      const presign = (await apiFetch(getToken, "POST", "/storage/uploads/request-url", {
-        name: asset.name,
-        size: blob.size,
-        contentType: asset.mimeType,
-      })) as { uploadURL: string; objectPath: string; uploadToken: string };
+      const presign = (await apiFetch(
+        getToken,
+        "POST",
+        "/storage/uploads/request-url",
+        {
+          name: asset.name,
+          size: blob.size,
+          contentType: asset.mimeType,
+        },
+      )) as { uploadURL: string; objectPath: string; uploadToken: string };
       const put = await fetch(presign.uploadURL, {
         method: "PUT",
         headers: { "Content-Type": asset.mimeType },
         body: blob,
       });
       if (!put.ok) throw new Error(`Upload failed (${put.status})`);
-      const finalized = (await apiFetch(getToken, "POST", "/storage/uploads/finalize", {
-        objectPath: presign.objectPath,
-        uploadToken: presign.uploadToken,
-      })) as { storageToken: string; objectPath: string };
-      return { objectPath: finalized.objectPath, storageToken: finalized.storageToken, size: blob.size };
+      const finalized = (await apiFetch(
+        getToken,
+        "POST",
+        "/storage/uploads/finalize",
+        {
+          objectPath: presign.objectPath,
+          uploadToken: presign.uploadToken,
+        },
+      )) as { storageToken: string; objectPath: string };
+      return {
+        objectPath: finalized.objectPath,
+        storageToken: finalized.storageToken,
+        size: blob.size,
+      };
     },
   });
 }
@@ -737,7 +819,12 @@ export function useConnectStripe() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (vars?: { returnTo?: string }) =>
-      apiFetch(getToken, "POST", "/payouts/connect-link", vars?.returnTo ? { returnTo: vars.returnTo } : undefined) as Promise<{ url: string; stripeAccountId: string }>,
+      apiFetch(
+        getToken,
+        "POST",
+        "/payouts/connect-link",
+        vars?.returnTo ? { returnTo: vars.returnTo } : undefined,
+      ) as Promise<{ url: string; stripeAccountId: string }>,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["payout-status"] }),
   });
 }
@@ -916,7 +1003,8 @@ export function useCreateTruck() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateTruckInput) => apiFetch(getToken, "POST", "/trucks", data),
+    mutationFn: (data: CreateTruckInput) =>
+      apiFetch(getToken, "POST", "/trucks", data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["trucks"] }),
   });
 }
@@ -937,7 +1025,9 @@ export type DumpSite = {
 /** Public dump-site directory (no auth required). */
 export function useDumpSites(opts?: { state?: string }) {
   const state = opts?.state;
-  const path = state ? `/dump-sites?state=${encodeURIComponent(state)}` : "/dump-sites";
+  const path = state
+    ? `/dump-sites?state=${encodeURIComponent(state)}`
+    : "/dump-sites";
   return useQuery<DumpSite[]>({
     queryKey: ["dump-sites", { state }],
     queryFn: () => apiFetch(() => Promise.resolve(null), "GET", path),
@@ -961,7 +1051,11 @@ export function usePaymentMethod() {
       try {
         return await apiFetch(getToken, "GET", "/account/payment-method");
       } catch (err: any) {
-        if (err?.message?.includes("not found") || err?.message?.includes("404")) return null;
+        if (
+          err?.message?.includes("not found") ||
+          err?.message?.includes("404")
+        )
+          return null;
         throw err;
       }
     },
@@ -979,11 +1073,22 @@ export type AdminPermission =
   | "bins"
   | "view_staff"
   | "manage_staff";
-export type AdminStaffRole = "ap" | "ar" | "cfo" | "cto" | "ceo" | "accounting" | "it";
+export type AdminStaffRole =
+  | "ap"
+  | "ar"
+  | "cfo"
+  | "cto"
+  | "ceo"
+  | "accounting"
+  | "it";
 
 export function useAdminAccess() {
   const { getToken, isSignedIn } = useAuth();
-  return useQuery<{ isAdmin: boolean; staffRole: AdminStaffRole | null; permissions: AdminPermission[] }>({
+  return useQuery<{
+    isAdmin: boolean;
+    staffRole: AdminStaffRole | null;
+    permissions: AdminPermission[];
+  }>({
     queryKey: ["admin", "access"],
     queryFn: () => apiFetch(getToken, "GET", "/admin/access"),
     enabled: !!isSignedIn,
@@ -1017,7 +1122,10 @@ export type ResetPayoutFailuresResult = {
   payoutAlertSentAt: string | null;
 };
 
-export function useStuckPayouts(opts?: { enabled?: boolean; refetchInterval?: number | false }) {
+export function useStuckPayouts(opts?: {
+  enabled?: boolean;
+  refetchInterval?: number | false;
+}) {
   const { getToken, isSignedIn } = useAuth();
   return useQuery<StuckPayoutItem[]>({
     queryKey: ["admin", "stuck-payouts"],
@@ -1036,7 +1144,8 @@ export function useRetryStuckPayout() {
   return useMutation<RetryPayoutResult, Error, number>({
     mutationFn: (id: number) =>
       apiFetch(getToken, "POST", `/admin/stuck-payouts/${id}/retry`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "stuck-payouts"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["admin", "stuck-payouts"] }),
   });
 }
 
@@ -1051,7 +1160,8 @@ export function useResetPayoutFailures() {
   return useMutation<ResetPayoutFailuresResult, Error, number>({
     mutationFn: (id: number) =>
       apiFetch(getToken, "POST", `/admin/stuck-payouts/${id}/reset-failures`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "stuck-payouts"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["admin", "stuck-payouts"] }),
   });
 }
 
@@ -1100,11 +1210,21 @@ export function useReviewCompliance() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { profileId: number; action: "approve" | "reject"; note?: string }) => {
+    mutationFn: (data: {
+      profileId: number;
+      action: "approve" | "reject";
+      note?: string;
+    }) => {
       const { profileId, ...body } = data;
-      return apiFetch(getToken, "PATCH", `/admin/compliance/${profileId}`, body);
+      return apiFetch(
+        getToken,
+        "PATCH",
+        `/admin/compliance/${profileId}`,
+        body,
+      );
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "compliance"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["admin", "compliance"] }),
   });
 }
 
@@ -1135,11 +1255,21 @@ export function useReviewCreditApplication() {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { profileId: number; action: "approve" | "reject"; note?: string }) => {
+    mutationFn: (data: {
+      profileId: number;
+      action: "approve" | "reject";
+      note?: string;
+    }) => {
       const { profileId, ...body } = data;
-      return apiFetch(getToken, "PATCH", `/admin/credit-applications/${profileId}`, body);
+      return apiFetch(
+        getToken,
+        "PATCH",
+        `/admin/credit-applications/${profileId}`,
+        body,
+      );
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "credit-applications"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["admin", "credit-applications"] }),
   });
 }
 
@@ -1157,7 +1287,11 @@ export type Wallet = {
   availableBalance: number;
   pendingBalance: number;
   lifetimeEarnings: number;
-  payoutAccount: { connected: boolean; payoutsEnabled: boolean; bankLast4: string | null };
+  payoutAccount: {
+    connected: boolean;
+    payoutsEnabled: boolean;
+    bankLast4: string | null;
+  };
   transactions: WalletTransaction[];
 };
 
@@ -1180,7 +1314,10 @@ export type JobMessage = {
   createdAt: string;
 };
 
-export function useJobMessages(jobId: number | null, opts?: { enabled?: boolean }) {
+export function useJobMessages(
+  jobId: number | null,
+  opts?: { enabled?: boolean },
+) {
   const { getToken, isSignedIn } = useAuth();
   return useQuery<JobMessage[]>({
     queryKey: ["job", jobId, "messages"],
@@ -1194,8 +1331,10 @@ export function useSendJobMessage(jobId: number | null) {
   const { getToken } = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) => apiFetch(getToken, "POST", `/jobs/${jobId}/messages`, { body }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["job", jobId, "messages"] }),
+    mutationFn: (body: string) =>
+      apiFetch(getToken, "POST", `/jobs/${jobId}/messages`, { body }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["job", jobId, "messages"] }),
   });
 }
 
@@ -1210,7 +1349,10 @@ export type JobRating = {
   createdAt: string;
 };
 
-export function useJobRating(jobId: number | null, opts?: { enabled?: boolean }) {
+export function useJobRating(
+  jobId: number | null,
+  opts?: { enabled?: boolean },
+) {
   const { getToken, isSignedIn } = useAuth();
   return useQuery<{ mine: JobRating | null; theirs: JobRating | null }>({
     queryKey: ["job", jobId, "rating"],
@@ -1225,6 +1367,7 @@ export function useSubmitJobRating(jobId: number | null) {
   return useMutation({
     mutationFn: (data: { stars: number; comment?: string }) =>
       apiFetch(getToken, "POST", `/jobs/${jobId}/rating`, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["job", jobId, "rating"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["job", jobId, "rating"] }),
   });
 }

@@ -43,9 +43,12 @@ export function humanizeRequirement(code: string): string {
     "business_profile.url": "Add a business website or product description",
     "business_profile.mcc": "Select your business category",
     "business_profile.product_description": "Describe what your business does",
-    "individual.verification.document": "Upload a photo of your ID (driver's license or passport)",
-    "individual.verification.additional_document": "Upload an additional identity document",
-    "individual.id_number": "Provide your full Social Security or tax ID number",
+    "individual.verification.document":
+      "Upload a photo of your ID (driver's license or passport)",
+    "individual.verification.additional_document":
+      "Upload an additional identity document",
+    "individual.id_number":
+      "Provide your full Social Security or tax ID number",
     "individual.ssn_last_4": "Provide the last 4 digits of your SSN",
     "individual.phone": "Add a phone number",
     "individual.email": "Add an email address",
@@ -76,10 +79,7 @@ export function humanizeRequirement(code: string): string {
 
   // Fallback: humanize the dotted key (e.g. "person.relationship.title" →
   // "Provide person relationship title").
-  const readable = code
-    .replace(/_/g, " ")
-    .replace(/\./g, " ")
-    .trim();
+  const readable = code.replace(/_/g, " ").replace(/\./g, " ").trim();
   return `Provide ${readable}`;
 }
 
@@ -115,8 +115,10 @@ export function buildPayoutRequirements(acct: any): PayoutRequirements {
   return {
     currentlyDue: toRequirements(dueCodes),
     pendingVerification: toRequirements(pendingCodes),
-    disabledReason: typeof reqs.disabled_reason === "string" ? reqs.disabled_reason : null,
-    currentDeadline: typeof reqs.current_deadline === "number" ? reqs.current_deadline : null,
+    disabledReason:
+      typeof reqs.disabled_reason === "string" ? reqs.disabled_reason : null,
+    currentDeadline:
+      typeof reqs.current_deadline === "number" ? reqs.current_deadline : null,
   };
 }
 
@@ -124,7 +126,10 @@ export function buildPayoutRequirements(acct: any): PayoutRequirements {
  * Refresh a connected account's capability flags from Stripe and persist them.
  * Returns the live Stripe account.
  */
-export async function syncStripeStatus(stripeAccountId: string, profileId: number) {
+export async function syncStripeStatus(
+  stripeAccountId: string,
+  profileId: number,
+) {
   const stripe = await getUncachableStripeClient();
   const acct = await stripe.accounts.retrieve(stripeAccountId);
   await db
@@ -159,7 +164,11 @@ export async function checkProviderPayoutReadiness(
 
   // Never connected: no Stripe Connect account exists for this provider.
   if (!row?.stripeAccountId) {
-    return { ok: false, reason: "not_connected", message: PAYOUTS_NOT_CONNECTED_MSG };
+    return {
+      ok: false,
+      reason: "not_connected",
+      message: PAYOUTS_NOT_CONNECTED_MSG,
+    };
   }
 
   // Connected: confirm payouts are actually enabled, preferring live Stripe data.
@@ -172,7 +181,11 @@ export async function checkProviderPayoutReadiness(
   }
 
   if (!payoutsEnabled) {
-    return { ok: false, reason: "not_enabled", message: PAYOUTS_NOT_ENABLED_MSG };
+    return {
+      ok: false,
+      reason: "not_enabled",
+      message: PAYOUTS_NOT_ENABLED_MSG,
+    };
   }
   return { ok: true, stripeAccountId: row.stripeAccountId };
 }

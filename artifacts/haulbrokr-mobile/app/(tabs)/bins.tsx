@@ -19,7 +19,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { BinCard } from "@/components/BinCard";
-import { RefreshingIndicator, isRefreshingPillVisible } from "@/components/RefreshingIndicator";
+import {
+  RefreshingIndicator,
+  isRefreshingPillVisible,
+} from "@/components/RefreshingIndicator";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useColors } from "@/hooks/useColors";
 import {
@@ -72,7 +75,11 @@ export default function BinsScreen() {
   // screens.
   const isFetching = binsQuery.isFetching || ordersQuery.isFetching;
   const isLoading = binsQuery.isLoading || ordersQuery.isLoading;
-  const isUpdating = isRefreshingPillVisible({ isFetching, isLoading, refreshing });
+  const isUpdating = isRefreshingPillVisible({
+    isFetching,
+    isLoading,
+    refreshing,
+  });
 
   const catalog = binsQuery.data ?? [];
   const bins = catalog.filter((b) => b.serviceType === tab);
@@ -85,7 +92,9 @@ export default function BinsScreen() {
   const { order: deepLinkOrderId } = useLocalSearchParams<{ order?: string }>();
   const scrollRef = useRef<ScrollView>(null);
   const orderOffsets = useRef<Record<string, number>>({});
-  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!deepLinkOrderId || binOrders.length === 0) return;
@@ -94,7 +103,8 @@ export default function BinsScreen() {
     setHighlightedOrderId(deepLinkOrderId);
     const t = setTimeout(() => {
       const y = orderOffsets.current[deepLinkOrderId];
-      if (y != null) scrollRef.current?.scrollTo({ y: Math.max(y - 24, 0), animated: true });
+      if (y != null)
+        scrollRef.current?.scrollTo({ y: Math.max(y - 24, 0), animated: true });
     }, 350);
     const clear = setTimeout(() => setHighlightedOrderId(null), 2600);
     return () => {
@@ -137,20 +147,20 @@ export default function BinsScreen() {
             try {
               await cancelBinOrder.mutateAsync(order.id);
               Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Success
+                Haptics.NotificationFeedbackType.Success,
               );
             } catch (err: any) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
               Alert.alert(
                 "Couldn't Cancel",
-                err?.message ?? "Please try again."
+                err?.message ?? "Please try again.",
               );
             } finally {
               setCancellingId(null);
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -227,12 +237,16 @@ export default function BinsScreen() {
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingBottom:
-              Platform.OS === "web" ? 100 : 100 + insets.bottom,
+            paddingBottom: Platform.OS === "web" ? 100 : 100 + insets.bottom,
           },
         ]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e9a600" colors={["#e9a600"]} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#e9a600"
+            colors={["#e9a600"]}
+          />
         }
       >
         {/* Bin grid */}
@@ -245,7 +259,10 @@ export default function BinsScreen() {
             <Text
               style={[
                 styles.stateText,
-                { color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
+                {
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                },
               ]}
             >
               Couldn&apos;t load bin sizes. Pull down to retry.
@@ -381,7 +398,11 @@ export default function BinsScreen() {
                           },
                         ]}
                       >
-                        <Feather name="edit-2" size={14} color={colors.foreground} />
+                        <Feather
+                          name="edit-2"
+                          size={14}
+                          color={colors.foreground}
+                        />
                         <Text
                           style={[
                             styles.editText,
@@ -406,10 +427,17 @@ export default function BinsScreen() {
                         ]}
                       >
                         {cancellingId === order.id ? (
-                          <ActivityIndicator size="small" color={colors.destructive} />
+                          <ActivityIndicator
+                            size="small"
+                            color={colors.destructive}
+                          />
                         ) : (
                           <>
-                            <Feather name="x-circle" size={14} color={colors.destructive} />
+                            <Feather
+                              name="x-circle"
+                              size={14}
+                              color={colors.destructive}
+                            />
                             <Text
                               style={[
                                 styles.cancelText,
@@ -452,10 +480,12 @@ export default function BinsScreen() {
                 deliveryDate: date,
               });
               closeForm();
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success,
+              );
               Alert.alert(
                 "Bin Ordered!",
-                `Your ${selectedBin.size} ${selectedBin.type} has been requested. We'll confirm delivery within 24 hours.`
+                `Your ${selectedBin.size} ${selectedBin.type} has been requested. We'll confirm delivery within 24 hours.`,
               );
             } catch (err: any) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -487,10 +517,12 @@ export default function BinsScreen() {
                 deliveryDate: date,
               });
               closeForm();
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success,
+              );
               Alert.alert(
                 "Order Updated",
-                "Your delivery details have been updated. We'll confirm the new schedule shortly."
+                "Your delivery details have been updated. We'll confirm the new schedule shortly.",
               );
             } catch (err: any) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -544,7 +576,8 @@ function OrderForm({
     return d.toISOString().split("T")[0];
   });
 
-  const headerTitle = title ?? (bin ? `Order ${bin.size} ${bin.type}` : "Order");
+  const headerTitle =
+    title ?? (bin ? `Order ${bin.size} ${bin.type}` : "Order");
   const headerSubtitle =
     subtitle ??
     (bin
@@ -694,7 +727,10 @@ function OrderForm({
           onPress={() => {
             if (submitting) return;
             if (!address.trim()) {
-              Alert.alert("Address Required", "Please enter a delivery address.");
+              Alert.alert(
+                "Address Required",
+                "Please enter a delivery address.",
+              );
               return;
             }
             onSubmit(address, WASTE_TYPES[wasteIdx], date);

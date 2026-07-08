@@ -6,15 +6,27 @@ import { jobsTable } from "./jobs";
 
 export const deliveryEvidenceTable = pgTable("delivery_evidence", {
   id: serial("id").primaryKey(),
-  jobId: integer("job_id").notNull().references(() => jobsTable.id),
-  uploadedByProfileId: integer("uploaded_by_profile_id").notNull().references(() => profilesTable.id),
+  jobId: integer("job_id")
+    .notNull()
+    .references(() => jobsTable.id),
+  uploadedByProfileId: integer("uploaded_by_profile_id")
+    .notNull()
+    .references(() => profilesTable.id),
   photoUrl: text("photo_url"),
   photoCaption: text("photo_caption"),
   siteNotes: text("site_notes"),
-  uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  uploadedAt: timestamp("uploaded_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
-export const insertDeliveryEvidenceSchema = createInsertSchema(deliveryEvidenceTable).omit({ id: true, createdAt: true });
-export type InsertDeliveryEvidence = z.infer<typeof insertDeliveryEvidenceSchema>;
+export const insertDeliveryEvidenceSchema = createInsertSchema(
+  deliveryEvidenceTable,
+).omit({ id: true, createdAt: true });
+export type InsertDeliveryEvidence = z.infer<
+  typeof insertDeliveryEvidenceSchema
+>;
 export type DeliveryEvidence = typeof deliveryEvidenceTable.$inferSelect;

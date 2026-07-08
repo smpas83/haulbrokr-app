@@ -55,7 +55,12 @@ vi.mock("@workspace/db", () => {
         return {
           returning: () =>
             Promise.resolve([
-              { id: "bin_1", createdAt: new Date(), updatedAt: new Date(), ...vals },
+              {
+                id: "bin_1",
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                ...vals,
+              },
             ]),
         };
       },
@@ -166,7 +171,9 @@ describe("GET /bins", () => {
     expect(res.status).toBe(200);
     const expected = BIN_CATALOG.filter((b) => b.serviceType === "temporary");
     expect(res.body).toHaveLength(expected.length);
-    expect(res.body.every((b: any) => b.serviceType === "temporary")).toBe(true);
+    expect(res.body.every((b: any) => b.serviceType === "temporary")).toBe(
+      true,
+    );
   });
 
   it("filters the catalog by ?serviceType=permanent", async () => {
@@ -175,7 +182,9 @@ describe("GET /bins", () => {
     expect(res.status).toBe(200);
     const expected = BIN_CATALOG.filter((b) => b.serviceType === "permanent");
     expect(res.body).toHaveLength(expected.length);
-    expect(res.body.every((b: any) => b.serviceType === "permanent")).toBe(true);
+    expect(res.body.every((b: any) => b.serviceType === "permanent")).toBe(
+      true,
+    );
   });
 
   it("returns an empty list for an unknown serviceType filter", async () => {
@@ -269,7 +278,11 @@ describe("GET /admin/bin-orders", () => {
   it("returns all customers' orders in the enriched shape", async () => {
     h.rows = [
       baseOrder({ id: "bin_a", customerId: "user_1" }),
-      baseOrder({ id: "bin_b", customerId: "someone_else", status: "delivered" }),
+      baseOrder({
+        id: "bin_b",
+        customerId: "someone_else",
+        status: "delivered",
+      }),
     ];
 
     const res = await request(makeApp()).get("/admin/bin-orders");
@@ -277,7 +290,10 @@ describe("GET /admin/bin-orders", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(2);
     // Orders from other customers are included, not just the caller's own.
-    expect(res.body.map((o: any) => o.customerId)).toEqual(["user_1", "someone_else"]);
+    expect(res.body.map((o: any) => o.customerId)).toEqual([
+      "user_1",
+      "someone_else",
+    ]);
     expect(res.body[0]).toMatchObject({
       binSizeLabel: "10-Yard",
       binTypeLabel: "Roll-Off",
@@ -289,9 +305,17 @@ describe("GET /admin/bin-orders", () => {
   });
 
   it("filters by a valid ?status=", async () => {
-    h.rows = [baseOrder({ id: "bin_b", customerId: "someone_else", status: "delivered" })];
+    h.rows = [
+      baseOrder({
+        id: "bin_b",
+        customerId: "someone_else",
+        status: "delivered",
+      }),
+    ];
 
-    const res = await request(makeApp()).get("/admin/bin-orders?status=delivered");
+    const res = await request(makeApp()).get(
+      "/admin/bin-orders?status=delivered",
+    );
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
@@ -300,7 +324,9 @@ describe("GET /admin/bin-orders", () => {
   });
 
   it("rejects an unknown ?status= filter (400)", async () => {
-    const res = await request(makeApp()).get("/admin/bin-orders?status=shipped");
+    const res = await request(makeApp()).get(
+      "/admin/bin-orders?status=shipped",
+    );
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe("Invalid status");
@@ -395,7 +421,9 @@ describe("POST /bin-orders", () => {
   });
 
   it("defaults quantity to 1 when omitted", async () => {
-    const res = await request(makeApp()).post("/bin-orders").send(validOrderBody());
+    const res = await request(makeApp())
+      .post("/bin-orders")
+      .send(validOrderBody());
 
     expect(res.status).toBe(201);
     expect(h.inserts[0].quantity).toBe(1);
@@ -406,7 +434,11 @@ describe("POST /bin-orders", () => {
     const res = await request(makeApp())
       .post("/bin-orders")
       .send(
-        validOrderBody({ serviceType: "permanent", binSize: "4_yard", binType: "front_load" }),
+        validOrderBody({
+          serviceType: "permanent",
+          binSize: "4_yard",
+          binType: "front_load",
+        }),
       );
 
     expect(res.status).toBe(201);
@@ -440,7 +472,9 @@ describe("POST /bin-orders", () => {
   it("rejects a request that is missing required fields (400)", async () => {
     const { binType, ...withoutBinType } = validOrderBody();
 
-    const res = await request(makeApp()).post("/bin-orders").send(withoutBinType);
+    const res = await request(makeApp())
+      .post("/bin-orders")
+      .send(withoutBinType);
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe("Missing required fields");
@@ -460,7 +494,9 @@ describe("POST /bin-orders", () => {
   it("is gated by requireAuth (401 when unauthenticated)", async () => {
     h.userId = null;
 
-    const res = await request(makeApp()).post("/bin-orders").send(validOrderBody());
+    const res = await request(makeApp())
+      .post("/bin-orders")
+      .send(validOrderBody());
 
     expect(res.status).toBe(401);
     expect(h.inserts).toHaveLength(0);
@@ -472,7 +508,9 @@ describe("PATCH /bin-orders/:id/cancel", () => {
     h.rows = [baseOrder()];
     h.updateBase = baseOrder();
 
-    const res = await request(makeApp()).patch("/bin-orders/bin_existing/cancel");
+    const res = await request(makeApp()).patch(
+      "/bin-orders/bin_existing/cancel",
+    );
 
     expect(res.status).toBe(200);
     expect(h.updates).toHaveLength(1);
@@ -510,7 +548,9 @@ describe("PATCH /bin-orders/:id/cancel", () => {
   it("returns 404 when the order belongs to another customer", async () => {
     h.rows = [baseOrder({ customerId: "someone_else" })];
 
-    const res = await request(makeApp()).patch("/bin-orders/bin_existing/cancel");
+    const res = await request(makeApp()).patch(
+      "/bin-orders/bin_existing/cancel",
+    );
 
     expect(res.status).toBe(404);
     expect(res.body.error).toBe("Order not found");
@@ -520,7 +560,9 @@ describe("PATCH /bin-orders/:id/cancel", () => {
   it("refuses to cancel a delivered order (400)", async () => {
     h.rows = [baseOrder({ status: "delivered" })];
 
-    const res = await request(makeApp()).patch("/bin-orders/bin_existing/cancel");
+    const res = await request(makeApp()).patch(
+      "/bin-orders/bin_existing/cancel",
+    );
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe("Cannot cancel a delivered order");
@@ -530,7 +572,9 @@ describe("PATCH /bin-orders/:id/cancel", () => {
   it("is gated by requireAuth (401 when unauthenticated)", async () => {
     h.userId = null;
 
-    const res = await request(makeApp()).patch("/bin-orders/bin_existing/cancel");
+    const res = await request(makeApp()).patch(
+      "/bin-orders/bin_existing/cancel",
+    );
 
     expect(res.status).toBe(401);
     expect(h.updates).toHaveLength(0);
@@ -549,7 +593,9 @@ describe("PATCH /bin-orders/:id", () => {
     expect(res.status).toBe(200);
     expect(h.updates).toHaveLength(1);
     expect(h.updates[0].deliveryDate).toBeInstanceOf(Date);
-    expect((h.updates[0].deliveryDate as Date).toISOString()).toContain("2026-08-15");
+    expect((h.updates[0].deliveryDate as Date).toISOString()).toContain(
+      "2026-08-15",
+    );
     expect(h.updates[0].updatedAt).toBeInstanceOf(Date);
   });
 
@@ -598,7 +644,7 @@ describe("PATCH /bin-orders/:id", () => {
 
       expect(res.status).toBe(400);
       expect(h.updates).toHaveLength(0);
-    }
+    },
   );
 
   it("rejects an invalid delivery date", async () => {

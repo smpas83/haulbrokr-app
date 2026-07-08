@@ -32,7 +32,7 @@ export default function LanguageScreen() {
       (l) =>
         l.name.toLowerCase().includes(q) ||
         l.nativeName.toLowerCase().includes(q) ||
-        l.code.toLowerCase().includes(q)
+        l.code.toLowerCase().includes(q),
     );
   }, [search]);
 
@@ -79,7 +79,10 @@ export default function LanguageScreen() {
       <View
         style={[
           styles.searchWrap,
-          { backgroundColor: colors.background, borderBottomColor: colors.border },
+          {
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+          },
         ]}
       >
         <View
@@ -144,7 +147,9 @@ export default function LanguageScreen() {
                     style={[
                       styles.code,
                       {
-                        color: isSelected ? colors.primary : colors.mutedForeground,
+                        color: isSelected
+                          ? colors.primary
+                          : colors.mutedForeground,
                         fontFamily: "Inter_600SemiBold",
                       },
                     ]}
@@ -158,7 +163,9 @@ export default function LanguageScreen() {
                       styles.langName,
                       {
                         color: isSelected ? colors.primary : colors.foreground,
-                        fontFamily: isSelected ? "Inter_600SemiBold" : "Inter_400Regular",
+                        fontFamily: isSelected
+                          ? "Inter_600SemiBold"
+                          : "Inter_400Regular",
                       },
                     ]}
                   >
@@ -167,7 +174,10 @@ export default function LanguageScreen() {
                   <Text
                     style={[
                       styles.nativeName,
-                      { color: colors.mutedForeground, fontFamily: "Inter_400Regular" },
+                      {
+                        color: colors.mutedForeground,
+                        fontFamily: "Inter_400Regular",
+                      },
                     ]}
                   >
                     {item.nativeName}

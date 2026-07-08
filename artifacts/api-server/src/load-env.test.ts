@@ -14,22 +14,33 @@ STAFF_DEFAULT_PASSWORD=secret
 
   it("does not overwrite an exported DATABASE_URL from .env", () => {
     const env: NodeJS.ProcessEnv = {
-      DATABASE_URL: "postgresql://exported@ep-real.neon.tech/neondb?sslmode=require",
+      DATABASE_URL:
+        "postgresql://exported@ep-real.neon.tech/neondb?sslmode=require",
     };
     applyEnvFile(
-      { DATABASE_URL: "postgresql://placeholder@ep-xxxxx.neon.tech/neondb?sslmode=require" },
+      {
+        DATABASE_URL:
+          "postgresql://placeholder@ep-xxxxx.neon.tech/neondb?sslmode=require",
+      },
       env,
     );
-    expect(env.DATABASE_URL).toBe("postgresql://exported@ep-real.neon.tech/neondb?sslmode=require");
+    expect(env.DATABASE_URL).toBe(
+      "postgresql://exported@ep-real.neon.tech/neondb?sslmode=require",
+    );
   });
 
   it("fills DATABASE_URL from .env when not exported", () => {
     const env: NodeJS.ProcessEnv = {};
     applyEnvFile(
-      { DATABASE_URL: "postgresql://from-file@ep-real.neon.tech/neondb?sslmode=require" },
+      {
+        DATABASE_URL:
+          "postgresql://from-file@ep-real.neon.tech/neondb?sslmode=require",
+      },
       env,
     );
-    expect(env.DATABASE_URL).toBe("postgresql://from-file@ep-real.neon.tech/neondb?sslmode=require");
+    expect(env.DATABASE_URL).toBe(
+      "postgresql://from-file@ep-real.neon.tech/neondb?sslmode=require",
+    );
   });
 
   it("does not overwrite exported STAFF_DEFAULT_PASSWORD", () => {

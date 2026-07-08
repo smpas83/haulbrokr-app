@@ -5,8 +5,8 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { W9InputBusinessType } from './w9InputBusinessType';
-import type { W9InputTaxIdType } from './w9InputTaxIdType';
+import type { W9InputBusinessType } from "./w9InputBusinessType";
+import type { W9InputTaxIdType } from "./w9InputTaxIdType";
 
 export interface W9Input {
   legalName: string;

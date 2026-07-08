@@ -43,11 +43,16 @@ function SlideEditor() {
       if (event.key === " ") {
         event.preventDefault();
       }
-      if ((event.key === "ArrowLeft" || event.key === "ArrowUp") && currentIndex > 0) {
+      if (
+        (event.key === "ArrowLeft" || event.key === "ArrowUp") &&
+        currentIndex > 0
+      ) {
         navigate(`/slide${slides[currentIndex - 1].position}`);
       }
       if (
-        (event.key === "ArrowRight" || event.key === "ArrowDown" || event.key === " ") &&
+        (event.key === "ArrowRight" ||
+          event.key === "ArrowDown" ||
+          event.key === " ") &&
         currentIndex < slides.length - 1
       ) {
         navigate(`/slide${slides[currentIndex + 1].position}`);
@@ -181,10 +186,19 @@ function SlideViewer() {
 
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== " ") return;
+      if (
+        event.key !== "ArrowLeft" &&
+        event.key !== "ArrowRight" &&
+        event.key !== " "
+      )
+        return;
       if (event.key === " ") event.preventDefault();
       iframeRef.current?.contentWindow?.dispatchEvent(
-        new KeyboardEvent("keydown", { key: event.key, code: event.code, bubbles: true }),
+        new KeyboardEvent("keydown", {
+          key: event.key,
+          code: event.code,
+          bubbles: true,
+        }),
       );
     };
     window.addEventListener("keydown", onKeyDown);

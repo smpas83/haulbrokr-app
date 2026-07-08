@@ -7,5 +7,5 @@
  */
 
 export type ListTrucksParams = {
-available?: boolean;
+  available?: boolean;
 };

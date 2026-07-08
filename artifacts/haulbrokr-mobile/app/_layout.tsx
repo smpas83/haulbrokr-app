@@ -8,11 +8,22 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import { resourceCache } from "@clerk/expo/resource-cache";
-import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  focusManager,
+} from "@tanstack/react-query";
 import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, AppState, type AppStateStatus, Platform, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  AppState,
+  type AppStateStatus,
+  Platform,
+  Text,
+  View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -23,7 +34,11 @@ import { ClerkAuthProvider } from "@/context/ClerkAuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { useMyProfile } from "@/hooks/useLiveApi";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { recoverStaleClientJwtOnStartup, syncClerkSessionStorage, tokenCache } from "@/lib/clerkTokenCache";
+import {
+  recoverStaleClientJwtOnStartup,
+  syncClerkSessionStorage,
+  tokenCache,
+} from "@/lib/clerkTokenCache";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -61,7 +76,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useAuth();
   const profileQuery = useMyProfile();
   const segments = useSegments();
-  const isPublicRoute = segments[0] === "sign-in" || segments[0] === "onboarding";
+  const isPublicRoute =
+    segments[0] === "sign-in" || segments[0] === "onboarding";
 
   useEffect(() => {
     if (!isLoaded) {
@@ -91,7 +107,14 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!isLoaded) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#1e2235", alignItems: "center", justifyContent: "center" }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#1e2235",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <ActivityIndicator size="large" color="#e9a600" />
       </View>
     );
@@ -120,7 +143,9 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    void recoverStaleClientJwtOnStartup().finally(() => setAuthStorageReady(true));
+    void recoverStaleClientJwtOnStartup().finally(() =>
+      setAuthStorageReady(true),
+    );
   }, []);
 
   useEffect(() => {
@@ -142,12 +167,36 @@ export default function RootLayout() {
 
   if (clerkKeyInvalid) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#1e2235", justifyContent: "center", padding: 24 }}>
-        <Text style={{ color: "#f87171", fontFamily: "Inter_600SemiBold", fontSize: 16, textAlign: "center", marginBottom: 12 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#1e2235",
+          justifyContent: "center",
+          padding: 24,
+        }}
+      >
+        <Text
+          style={{
+            color: "#f87171",
+            fontFamily: "Inter_600SemiBold",
+            fontSize: 16,
+            textAlign: "center",
+            marginBottom: 12,
+          }}
+        >
           Clerk key missing or invalid
         </Text>
-        <Text style={{ color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21 }}>
-          Set exactly one EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in .env to your real pk_live_... or pk_test_... value, then restart Expo with --clear.
+        <Text
+          style={{
+            color: "#8ba0b8",
+            fontFamily: "Inter_400Regular",
+            fontSize: 14,
+            textAlign: "center",
+            lineHeight: 21,
+          }}
+        >
+          Set exactly one EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in .env to your real
+          pk_live_... or pk_test_... value, then restart Expo with --clear.
         </Text>
       </View>
     );
@@ -171,8 +220,14 @@ export default function RootLayout() {
                       <AuthGate>
                         <Stack screenOptions={{ headerShown: false }}>
                           <Stack.Screen name="(tabs)" />
-                          <Stack.Screen name="sign-in" options={{ animation: "fade" }} />
-                          <Stack.Screen name="onboarding" options={{ animation: "slide_from_bottom" }} />
+                          <Stack.Screen
+                            name="sign-in"
+                            options={{ animation: "fade" }}
+                          />
+                          <Stack.Screen
+                            name="onboarding"
+                            options={{ animation: "slide_from_bottom" }}
+                          />
                           <Stack.Screen name="job/[id]" />
                           <Stack.Screen name="bin/[id]" />
                           <Stack.Screen name="dump-sites" />

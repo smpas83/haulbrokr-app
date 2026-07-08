@@ -1,8 +1,12 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
-import { shadcn } from '@clerk/themes';
-import { Switch, Route, useLocation, Redirect } from 'wouter';
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
+import { shadcn } from "@clerk/themes";
+import { Switch, Route, useLocation, Redirect } from "wouter";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 import { Layout } from "./components/layout";
@@ -40,10 +44,12 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 function stripBase(path: string): string {
-  return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || "/" : path;
+  return basePath && path.startsWith(basePath)
+    ? path.slice(basePath.length) || "/"
+    : path;
 }
 
-if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
+if (!clerkPubKey) throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
 
 const clerkAppearance = {
   theme: shadcn,
@@ -67,7 +73,8 @@ const clerkAppearance = {
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox: "bg-card border border-border/60 shadow-2xl shadow-black/40 rounded-xl w-[440px] max-w-full overflow-hidden",
+    cardBox:
+      "bg-card border border-border/60 shadow-2xl shadow-black/40 rounded-xl w-[440px] max-w-full overflow-hidden",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
     headerTitle: "text-2xl font-bold tracking-tight text-foreground",
@@ -76,19 +83,25 @@ const clerkAppearance = {
     formFieldLabel: "font-semibold text-foreground",
     footerActionLink: "text-primary font-semibold hover:underline",
     footerActionText: "text-muted-foreground",
-    dividerText: "text-muted-foreground font-mono text-xs uppercase tracking-wider",
+    dividerText:
+      "text-muted-foreground font-mono text-xs uppercase tracking-wider",
     identityPreviewEditButton: "text-primary",
     formFieldSuccessText: "text-emerald-400",
     alertText: "text-destructive",
     logoBox: "mb-6 flex justify-center",
     logoImage: "h-12 w-auto",
-    socialButtonsBlockButton: "rounded-lg border border-border hover:bg-muted font-semibold h-11",
-    formButtonPrimary: "rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-11 shadow-sm",
-    formFieldInput: "rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary h-11 bg-muted/30",
+    socialButtonsBlockButton:
+      "rounded-lg border border-border hover:bg-muted font-semibold h-11",
+    formButtonPrimary:
+      "rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-11 shadow-sm",
+    formFieldInput:
+      "rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary h-11 bg-muted/30",
     footerAction: "mt-6 border-t border-border pt-6",
     dividerLine: "bg-border",
-    alert: "rounded-xl border border-destructive/50 bg-destructive/10 text-destructive",
-    otpCodeFieldInput: "rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary",
+    alert:
+      "rounded-xl border border-destructive/50 bg-destructive/10 text-destructive",
+    otpCodeFieldInput:
+      "rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary",
     formFieldRow: "mb-4",
     main: "p-8",
   },
@@ -109,7 +122,11 @@ function ClerkQueryClientCacheInvalidator() {
   useEffect(() => {
     const unsubscribe = addListener(({ user }) => {
       const userId = user?.id ?? null;
-      if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) qc.clear();
+      if (
+        prevUserIdRef.current !== undefined &&
+        prevUserIdRef.current !== userId
+      )
+        qc.clear();
       prevUserIdRef.current = userId;
     });
     return unsubscribe;
@@ -155,8 +172,12 @@ function AuthShellRoutes() {
           <Switch>
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/">
-              <Show when="signed-in"><Redirect to="/dashboard" /></Show>
-              <Show when="signed-out"><LandingPage /></Show>
+              <Show when="signed-in">
+                <Redirect to="/dashboard" />
+              </Show>
+              <Show when="signed-out">
+                <LandingPage />
+              </Show>
             </Route>
             <Route path="/sign-up/*?" component={SignUpPage} />
 
@@ -170,103 +191,223 @@ function AuthShellRoutes() {
             </Route>
 
             <Route path="/dashboard">
-              <Show when="signed-in"><RequireProfile><DashboardPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <DashboardPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/requests/new">
-              <Show when="signed-in"><RequireProfile><NewRequestPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <NewRequestPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/requests/:id">
-              <Show when="signed-in"><RequireProfile><RequestDetailPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <RequestDetailPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/requests">
-              <Show when="signed-in"><RequireProfile><RequestsPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <RequestsPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/fleet/new">
-              <Show when="signed-in"><RequireProfile><NewTruckPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <NewTruckPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/fleet/:id/edit">
-              <Show when="signed-in"><RequireProfile><NewTruckPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <NewTruckPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/fleet">
-              <Show when="signed-in"><RequireProfile><FleetPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <FleetPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/dispatch">
-              <Show when="signed-in"><RequireProfile><DispatchPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <DispatchPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/jobs/:id">
-              <Show when="signed-in"><RequireProfile><JobDetailPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <JobDetailPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/jobs">
-              <Show when="signed-in"><RequireProfile><JobsPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <JobsPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/map">
-              <Show when="signed-in"><RequireProfile><MapPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <MapPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/account">
-              <Show when="signed-in"><RequireProfile><AccountPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <AccountPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/mobile-payment">
-              <Show when="signed-in"><RequireProfile><MobilePaymentPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <MobilePaymentPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/company">
-              <Show when="signed-in"><RequireProfile><CompanyPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <CompanyPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/bins/:id">
-              <Show when="signed-in"><RequireProfile><BinDetailPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <BinDetailPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/bins">
-              <Show when="signed-in"><RequireProfile><BinsPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <BinsPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/projects/:id">
-              <Show when="signed-in"><RequireProfile><ProjectDetailPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <ProjectDetailPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/projects">
-              <Show when="signed-in"><RequireProfile><ProjectsPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <ProjectsPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/factoring">
-              <Show when="signed-in"><RequireProfile><FactoringPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <FactoringPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/integrations">
-              <Show when="signed-in"><RequireProfile><IntegrationsPage /></RequireProfile></Show>
-              <Show when="signed-out"><Redirect to="/sign-in" /></Show>
+              <Show when="signed-in">
+                <RequireProfile>
+                  <IntegrationsPage />
+                </RequireProfile>
+              </Show>
+              <Show when="signed-out">
+                <Redirect to="/sign-in" />
+              </Show>
             </Route>
 
             <Route path="/admin/login">
@@ -276,7 +417,6 @@ function AuthShellRoutes() {
             <Route path="/admin">
               <AdminPage />
             </Route>
-
 
             <Route component={NotFoundPage} />
           </Switch>

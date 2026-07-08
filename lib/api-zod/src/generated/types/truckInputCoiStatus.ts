@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type TruckInputCoiStatus = typeof TruckInputCoiStatus[keyof typeof TruckInputCoiStatus];
-
+export type TruckInputCoiStatus =
+  (typeof TruckInputCoiStatus)[keyof typeof TruckInputCoiStatus];
 
 export const TruckInputCoiStatus = {
-  none: 'none',
-  pending: 'pending',
-  active: 'active',
-  expired: 'expired',
+  none: "none",
+  pending: "pending",
+  active: "active",
+  expired: "expired",
 } as const;

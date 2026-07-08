@@ -25,13 +25,20 @@ export const ALERT_AFTER_FAILURES = 3;
  * Throws if the transfer or the DB write fails — callers decide how to surface it.
  */
 export async function settleConfirmedPayout(
-  job: { id: number; providerNetAmount: string; paymentAttempts?: number | null },
+  job: {
+    id: number;
+    providerNetAmount: string;
+    paymentAttempts?: number | null;
+  },
   stripeAccountId: string,
   pi: { id: string; latest_charge?: string | { id: string } | null },
 ) {
   const stripe = await getUncachableStripeClient();
   const netCents = Math.round(parseFloat(job.providerNetAmount) * 100);
-  const chargeId = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge?.id;
+  const chargeId =
+    typeof pi.latest_charge === "string"
+      ? pi.latest_charge
+      : pi.latest_charge?.id;
   // The attempt is UNCHANGED — this is the same logical settlement, only the
   // transfer leg is being (re)tried. Bumping it would change the idempotency key
   // and defeat Stripe's dedupe protection against a double transfer.
@@ -132,7 +139,10 @@ async function emailAdminsOfStuckPayout(
       html,
     });
     if (error) {
-      logger.error({ jobId: job.id, error }, "Resend rejected the stuck-payout admin email");
+      logger.error(
+        { jobId: job.id, error },
+        "Resend rejected the stuck-payout admin email",
+      );
       return;
     }
     logger.info(
@@ -140,7 +150,10 @@ async function emailAdminsOfStuckPayout(
       "Emailed admins about a stuck payout",
     );
   } catch (err) {
-    logger.error({ err, jobId: job.id }, "Failed to email admins about a stuck payout");
+    logger.error(
+      { err, jobId: job.id },
+      "Failed to email admins about a stuck payout",
+    );
   }
 }
 
@@ -196,13 +209,19 @@ async function notifyAdminsOfStuckPayout(
         relatedId: job.id,
       })),
     );
-    logger.info({ jobId: job.id, admins: admins.length, failures }, "Alerted admins to a stuck payout");
+    logger.info(
+      { jobId: job.id, admins: admins.length, failures },
+      "Alerted admins to a stuck payout",
+    );
     // Off-app escalation: also email admins so the alert reaches anyone who
     // isn't logged in. Fired under the same gate as the in-app alert, so it's
     // sent at most once per stuck job. Best-effort — never breaks the sweep.
     await emailAdminsOfStuckPayout(job, admins, providerName, failures, reason);
   } catch (err) {
-    logger.error({ err, jobId: job.id }, "Failed to record stuck-payout admin alert");
+    logger.error(
+      { err, jobId: job.id },
+      "Failed to record stuck-payout admin alert",
+    );
   }
 }
 
@@ -216,7 +235,13 @@ async function notifyAdminsOfStuckPayout(
  * `retryStuckPayout`'s never-throw contract intact.
  */
 async function recordPayoutTransferFailure(
-  job: { id: number; providerId: number; materialType?: string | null; payoutRetryFailures?: number | null; payoutAlertSentAt?: Date | null },
+  job: {
+    id: number;
+    providerId: number;
+    materialType?: string | null;
+    payoutRetryFailures?: number | null;
+    payoutAlertSentAt?: Date | null;
+  },
   reason: string,
 ): Promise<void> {
   try {
@@ -234,7 +259,10 @@ async function recordPayoutTransferFailure(
       await notifyAdminsOfStuckPayout(job, failures, reason);
     }
   } catch (err) {
-    logger.error({ err, jobId: job.id }, "Failed to record stuck-payout failure count");
+    logger.error(
+      { err, jobId: job.id },
+      "Failed to record stuck-payout failure count",
+    );
   }
 }
 
@@ -264,10 +292,18 @@ export async function retryStuckPayout(job: any): Promise<RetryResult> {
   const jobId = job.id as number;
 
   if (job.paymentStatus !== "requires_action" || !job.stripePaymentIntentId) {
-    return { jobId, outcome: "skipped", message: "Job is not awaiting a payout release." };
+    return {
+      jobId,
+      outcome: "skipped",
+      message: "Job is not awaiting a payout release.",
+    };
   }
   if (job.providerNetAmount == null) {
-    return { jobId, outcome: "skipped", message: "Job has no computed payout amount." };
+    return {
+      jobId,
+      outcome: "skipped",
+      message: "Job has no computed payout amount.",
+    };
   }
 
   try {
@@ -276,7 +312,11 @@ export async function retryStuckPayout(job: any): Promise<RetryResult> {
     if (pi.status !== "succeeded") {
       // The charge hasn't completed (still needs the customer to authenticate) —
       // there is nothing safe to release yet, so leave it untouched.
-      return { jobId, outcome: "skipped", message: "Customer charge has not succeeded yet." };
+      return {
+        jobId,
+        outcome: "skipped",
+        message: "Customer charge has not succeeded yet.",
+      };
     }
 
     const readiness = await checkProviderPayoutReadiness(job.providerId);
@@ -292,7 +332,10 @@ export async function retryStuckPayout(job: any): Promise<RetryResult> {
     // leave the job in `requires_action` (never `failed`) so it is never routed
     // back through /charge and re-billed — the next sweep just tries the
     // transfer again under the same idempotency key.
-    logger.error({ err, jobId }, "Failed to auto-release stuck provider payout");
+    logger.error(
+      { err, jobId },
+      "Failed to auto-release stuck provider payout",
+    );
     const message = err?.message ?? "Releasing the provider payout failed.";
     // Count this consecutive failure and, once it crosses the threshold, alert
     // admins once so a silently-failing payout can't slip past the sweep forever.
@@ -310,7 +353,12 @@ export async function findStuckPayoutJobs() {
   return db
     .select()
     .from(jobsTable)
-    .where(and(eq(jobsTable.paymentStatus, "requires_action"), isNotNull(jobsTable.stripePaymentIntentId)));
+    .where(
+      and(
+        eq(jobsTable.paymentStatus, "requires_action"),
+        isNotNull(jobsTable.stripePaymentIntentId),
+      ),
+    );
 }
 
 /**
@@ -329,6 +377,9 @@ export async function sweepStuckPayouts(): Promise<RetryResult[]> {
   const released = results.filter((r) => r.outcome === "released").length;
   const failed = results.filter((r) => r.outcome === "failed").length;
   const skipped = results.filter((r) => r.outcome === "skipped").length;
-  logger.info({ total: results.length, released, failed, skipped }, "Stuck-payout sweep complete");
+  logger.info(
+    { total: results.length, released, failed, skipped },
+    "Stuck-payout sweep complete",
+  );
   return results;
 }

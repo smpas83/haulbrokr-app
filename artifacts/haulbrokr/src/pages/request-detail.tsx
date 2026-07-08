@@ -3,13 +3,26 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { 
-  ArrowLeft, MapPin, Calendar, Truck, HardHat, FileText, 
-  DollarSign, Clock, ShieldCheck, Loader2 
+import {
+  ArrowLeft,
+  MapPin,
+  Calendar,
+  Truck,
+  HardHat,
+  FileText,
+  DollarSign,
+  Clock,
+  ShieldCheck,
+  Loader2,
 } from "lucide-react";
-import { 
-  useGetRequest, useListBids, useCreateBid, useUpdateBid, 
-  useGetMyProfile, getGetRequestQueryKey, getListBidsQueryKey 
+import {
+  useGetRequest,
+  useListBids,
+  useCreateBid,
+  useUpdateBid,
+  useGetMyProfile,
+  getGetRequestQueryKey,
+  getListBidsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -21,15 +34,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 
 const bidSchema = z.object({
   ratePerHour: z.coerce.number().positive("Rate must be positive."),
-  trucksOffered: z.coerce.number().int().positive("Must offer at least 1 truck."),
+  trucksOffered: z.coerce
+    .number()
+    .int()
+    .positive("Must offer at least 1 truck."),
   estimatedHours: z.coerce.number().positive().optional().or(z.literal("")),
   message: z.string().optional(),
 });
@@ -55,10 +81,10 @@ export default function RequestDetailPage() {
 
   const { data: profile } = useGetMyProfile();
   const { data: request, isLoading: requestLoading } = useGetRequest(id, {
-    query: { enabled: !!id } as any
+    query: { enabled: !!id } as any,
   });
   const { data: bids, isLoading: bidsLoading } = useListBids(id, {
-    query: { enabled: !!id } as any
+    query: { enabled: !!id } as any,
   });
 
   const createBid = useCreateBid();
@@ -66,10 +92,13 @@ export default function RequestDetailPage() {
 
   const isCustomer = profile?.role === "customer";
   const isProvider = profile?.role === "provider";
-  
+
   // A provider has already bid if they have a bid in the list
-  const existingBid = bids?.find(b => b.providerId === profile?.id);
-  const requestOpenForBids = request?.status === "open" || request?.status === "bid_received" || request?.status === "bidding";
+  const existingBid = bids?.find((b) => b.providerId === profile?.id);
+  const requestOpenForBids =
+    request?.status === "open" ||
+    request?.status === "bid_received" ||
+    request?.status === "bidding";
   const canBid = isProvider && requestOpenForBids && !existingBid;
 
   const form = useForm<z.infer<typeof bidSchema>>({
@@ -84,30 +113,34 @@ export default function RequestDetailPage() {
 
   const onBidSubmit = (values: z.infer<typeof bidSchema>) => {
     createBid.mutate(
-      { 
+      {
         requestId: id,
         data: {
           ratePerHour: Number(values.ratePerHour),
           trucksOffered: Number(values.trucksOffered),
-          estimatedHours: values.estimatedHours ? Number(values.estimatedHours) : undefined,
-          message: values.message
-        } 
+          estimatedHours: values.estimatedHours
+            ? Number(values.estimatedHours)
+            : undefined,
+          message: values.message,
+        },
       },
       {
         onSuccess: () => {
           toast({ title: "Bid submitted successfully" });
           queryClient.invalidateQueries({ queryKey: getListBidsQueryKey(id) });
-          queryClient.invalidateQueries({ queryKey: getGetRequestQueryKey(id) });
+          queryClient.invalidateQueries({
+            queryKey: getGetRequestQueryKey(id),
+          });
           // Dialog will close automatically if we control open state, but for now we let it reload
         },
         onError: (err) => {
-          toast({ 
-            title: "Failed to submit bid", 
+          toast({
+            title: "Failed to submit bid",
             description: err instanceof Error ? err.message : "Unknown error",
-            variant: "destructive"
+            variant: "destructive",
           });
-        }
-      }
+        },
+      },
     );
   };
 
@@ -117,7 +150,9 @@ export default function RequestDetailPage() {
       {
         onSuccess: () => {
           toast({ title: "Bid awarded. Awaiting hauler acceptance." });
-          queryClient.invalidateQueries({ queryKey: getGetRequestQueryKey(id) });
+          queryClient.invalidateQueries({
+            queryKey: getGetRequestQueryKey(id),
+          });
           queryClient.invalidateQueries({ queryKey: getListBidsQueryKey(id) });
         },
         onError: (err) => {
@@ -138,8 +173,8 @@ export default function RequestDetailPage() {
         onSuccess: () => {
           toast({ title: "Bid rejected." });
           queryClient.invalidateQueries({ queryKey: getListBidsQueryKey(id) });
-        }
-      }
+        },
+      },
     );
   };
 
@@ -159,14 +194,20 @@ export default function RequestDetailPage() {
     return (
       <div className="max-w-6xl mx-auto text-center py-20">
         <h2 className="text-2xl font-bold">Request not found</h2>
-        <Button className="mt-4" onClick={() => setLocation("/requests")}>Back to Requests</Button>
+        <Button className="mt-4" onClick={() => setLocation("/requests")}>
+          Back to Requests
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 page-enter pb-12">
-      <Button variant="ghost" className="mb-2 -ml-4" onClick={() => setLocation("/requests")}>
+      <Button
+        variant="ghost"
+        className="mb-2 -ml-4"
+        onClick={() => setLocation("/requests")}
+      >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
       </Button>
@@ -175,42 +216,76 @@ export default function RequestDetailPage() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl font-bold tracking-tight uppercase">
-              JOB-{request.id.toString().padStart(4, '0')}
+              JOB-{request.id.toString().padStart(4, "0")}
             </h1>
-            <Badge variant="outline" className="border-2 font-bold uppercase text-xs px-3 py-1">
-              {request.status.replace('_', ' ')}
+            <Badge
+              variant="outline"
+              className="border-2 font-bold uppercase text-xs px-3 py-1"
+            >
+              {request.status.replace("_", " ")}
             </Badge>
           </div>
           <p className="text-xl font-medium text-muted-foreground">
-            {request.quantityTons} Tons of <span className="capitalize">{request.materialType}</span>
-            {" · "}{formatTruckType(request.truckType)}
+            {request.quantityTons} Tons of{" "}
+            <span className="capitalize">{request.materialType}</span>
+            {" · "}
+            {formatTruckType(request.truckType)}
           </p>
         </div>
 
         {canBid && (
           <Dialog>
             <DialogTrigger asChild>
-              <Button size="lg" className="font-bold rounded-xl h-12 px-8 shadow-md border-2 border-transparent hover:border-foreground" data-testid="btn-place-bid">
+              <Button
+                size="lg"
+                className="font-bold rounded-xl h-12 px-8 shadow-md border-2 border-transparent hover:border-foreground"
+                data-testid="btn-place-bid"
+              >
                 Place a Bid
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px] border-2 rounded-xl p-0">
               <div className="bg-primary/10 border-b-2 border-border p-6">
-                <DialogTitle className="text-2xl font-bold">Submit Bid</DialogTitle>
+                <DialogTitle className="text-2xl font-bold">
+                  Submit Bid
+                </DialogTitle>
                 <DialogDescription className="text-foreground/80 mt-2 font-medium space-y-2">
-                  <p>You are bidding on {request.quantityTons} tons of {request.materialType} for {request.customerCompany}.</p>
+                  <p>
+                    You are bidding on {request.quantityTons} tons of{" "}
+                    {request.materialType} for {request.customerCompany}.
+                  </p>
                   <div className="text-sm bg-muted/50 border border-border p-3 space-y-1 not-italic">
-                    <p><strong>Truck:</strong> {formatTruckType(request.truckType)} · <strong>Trucks needed:</strong> {request.trucksNeeded}</p>
-                    <p><strong>When:</strong> {format(new Date(request.scheduledDate), "MMM d, yyyy")} at {formatStartTime(request.startTime)} · ~{request.estimatedHours}h</p>
-                    <p><strong>Pickup:</strong> {request.pickupAddress}</p>
-                    <p><strong>Drop-off:</strong> {request.deliveryAddress}</p>
-                    {request.notes && <p><strong>Notes:</strong> {request.notes}</p>}
+                    <p>
+                      <strong>Truck:</strong>{" "}
+                      {formatTruckType(request.truckType)} ·{" "}
+                      <strong>Trucks needed:</strong> {request.trucksNeeded}
+                    </p>
+                    <p>
+                      <strong>When:</strong>{" "}
+                      {format(new Date(request.scheduledDate), "MMM d, yyyy")}{" "}
+                      at {formatStartTime(request.startTime)} · ~
+                      {request.estimatedHours}h
+                    </p>
+                    <p>
+                      <strong>Pickup:</strong> {request.pickupAddress}
+                    </p>
+                    <p>
+                      <strong>Drop-off:</strong> {request.deliveryAddress}
+                    </p>
+                    {request.notes && (
+                      <p>
+                        <strong>Notes:</strong> {request.notes}
+                      </p>
+                    )}
                   </div>
                 </DialogDescription>
               </div>
               <div className="p-6">
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onBidSubmit)} className="space-y-6">
+                  <form
+                    onSubmit={form.handleSubmit(onBidSubmit)}
+                    className="space-y-6"
+                  >
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -219,7 +294,12 @@ export default function RequestDetailPage() {
                           <FormItem>
                             <FormLabel>Rate ($/Hour)</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="125" {...field} className="h-12 border-2 rounded-xl font-bold text-lg" />
+                              <Input
+                                type="number"
+                                placeholder="125"
+                                {...field}
+                                className="h-12 border-2 rounded-xl font-bold text-lg"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -232,7 +312,12 @@ export default function RequestDetailPage() {
                           <FormItem>
                             <FormLabel>Trucks Offered</FormLabel>
                             <FormControl>
-                              <Input type="number" min="1" {...field} className="h-12 border-2 rounded-xl" />
+                              <Input
+                                type="number"
+                                min="1"
+                                {...field}
+                                className="h-12 border-2 rounded-xl"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -246,7 +331,12 @@ export default function RequestDetailPage() {
                         <FormItem>
                           <FormLabel>Est. Total Hours (Optional)</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="e.g. 8" {...field} className="h-12 border-2 rounded-xl" />
+                            <Input
+                              type="number"
+                              placeholder="e.g. 8"
+                              {...field}
+                              className="h-12 border-2 rounded-xl"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -259,14 +349,24 @@ export default function RequestDetailPage() {
                         <FormItem>
                           <FormLabel>Message (Optional)</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Any terms or notes for the customer..." className="border-2 rounded-xl resize-none" {...field} />
+                            <Textarea
+                              placeholder="Any terms or notes for the customer..."
+                              className="border-2 rounded-xl resize-none"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full h-12 font-bold rounded-xl" disabled={createBid.isPending}>
-                      {createBid.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button
+                      type="submit"
+                      className="w-full h-12 font-bold rounded-xl"
+                      disabled={createBid.isPending}
+                    >
+                      {createBid.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
                       Submit Bid
                     </Button>
                   </form>
@@ -285,66 +385,88 @@ export default function RequestDetailPage() {
               <FileText className="h-5 w-5 text-primary" />
               Job Specifications
             </h2>
-            
+
             <div className="grid sm:grid-cols-2 gap-y-6 gap-x-12">
               <div>
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Customer</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Customer
+                </p>
                 <p className="font-medium flex items-center gap-2">
                   <HardHat className="h-4 w-4 text-primary" />
                   {request.customerCompany}
                 </p>
               </div>
-              
+
               <div>
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Material</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Material
+                </p>
                 <p className="font-medium capitalize">{request.materialType}</p>
               </div>
 
               <div>
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Truck Type</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Truck Type
+                </p>
                 <p className="font-medium flex items-center gap-2">
                   <Truck className="h-4 w-4 text-primary" />
                   {formatTruckType(request.truckType)}
                 </p>
               </div>
-              
+
               <div>
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Job Date</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Job Date
+                </p>
                 <p className="font-medium flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
-                  {format(new Date(request.scheduledDate), "EEEE, MMMM d, yyyy")}
+                  {format(
+                    new Date(request.scheduledDate),
+                    "EEEE, MMMM d, yyyy",
+                  )}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Start Time</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Start Time
+                </p>
                 <p className="font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4 text-primary" />
                   {formatStartTime(request.startTime)}
                 </p>
               </div>
-              
+
               <div>
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Trucks Needed</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Trucks Needed
+                </p>
                 <p className="font-medium flex items-center gap-2">
                   <Truck className="h-4 w-4 text-primary" />
-                  {request.trucksNeeded} Truck{request.trucksNeeded > 1 ? 's' : ''}
+                  {request.trucksNeeded} Truck
+                  {request.trucksNeeded > 1 ? "s" : ""}
                 </p>
               </div>
 
               <div>
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Estimated Hours</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Estimated Hours
+                </p>
                 <p className="font-medium flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                  ~{request.estimatedHours} hours
+                  <Clock className="h-4 w-4 text-primary" />~
+                  {request.estimatedHours} hours
                 </p>
               </div>
-              
+
               <div>
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Target Budget</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                  Target Budget
+                </p>
                 <p className="font-medium flex items-center gap-2 text-lg">
                   <DollarSign className="h-5 w-5 text-primary" />
-                  {request.budgetPerHour ? `$${request.budgetPerHour} / hour` : 'Open to Bids'}
+                  {request.budgetPerHour
+                    ? `$${request.budgetPerHour} / hour`
+                    : "Open to Bids"}
                 </p>
               </div>
             </div>
@@ -354,19 +476,25 @@ export default function RequestDetailPage() {
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-primary" /> Pickup Location
                 </p>
-                <p className="font-medium whitespace-pre-line">{request.pickupAddress}</p>
+                <p className="font-medium whitespace-pre-line">
+                  {request.pickupAddress}
+                </p>
               </div>
               <div className="bg-muted/50 p-4 border border-border">
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-primary" /> Delivery Location
                 </p>
-                <p className="font-medium whitespace-pre-line">{request.deliveryAddress}</p>
+                <p className="font-medium whitespace-pre-line">
+                  {request.deliveryAddress}
+                </p>
               </div>
             </div>
 
             {request.notes && (
               <div className="mt-8 border-t-2 border-border pt-6">
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3">Special Instructions</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                  Special Instructions
+                </p>
                 <p className="text-foreground/90 whitespace-pre-line bg-yellow-50 dark:bg-yellow-900/20 p-4 border-l-4 border-yellow-400">
                   {request.notes}
                 </p>
@@ -384,68 +512,100 @@ export default function RequestDetailPage() {
                 Bids ({bids?.length || 0})
               </h2>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/10">
               {bidsLoading ? (
-                Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+                Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <Skeleton key={i} className="h-32 w-full rounded-xl" />
+                  ))
               ) : bids && bids.length > 0 ? (
                 bids.map((bid) => (
-                  <div key={bid.id} className={`border-2 p-4 bg-card ${bid.status === 'awarded' || bid.status === 'accepted' ? 'border-primary shadow-md' : 'border-border'}`}>
+                  <div
+                    key={bid.id}
+                    className={`border-2 p-4 bg-card ${bid.status === "awarded" || bid.status === "accepted" ? "border-primary shadow-md" : "border-border"}`}
+                  >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="font-bold text-lg">{bid.providerCompany}</p>
-                        <p className="text-sm text-muted-foreground">{format(new Date(bid.createdAt), "MMM d, h:mm a")}</p>
+                        <p className="font-bold text-lg">
+                          {bid.providerCompany}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(bid.createdAt), "MMM d, h:mm a")}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-black text-xl">${bid.ratePerHour}<span className="text-sm text-muted-foreground font-medium">/hr</span></p>
-                        <Badge variant="outline" className={`rounded-xl mt-1 uppercase text-[10px] font-bold ${
-                          bid.status === 'awarded' || bid.status === 'accepted' ? 'bg-primary/20 text-primary border-primary' : 
-                          bid.status === 'rejected' ? 'bg-destructive/10 text-destructive border-destructive/20' : 
-                          'bg-secondary text-secondary-foreground border-secondary-foreground/20'
-                        }`}>
+                        <p className="font-black text-xl">
+                          ${bid.ratePerHour}
+                          <span className="text-sm text-muted-foreground font-medium">
+                            /hr
+                          </span>
+                        </p>
+                        <Badge
+                          variant="outline"
+                          className={`rounded-xl mt-1 uppercase text-[10px] font-bold ${
+                            bid.status === "awarded" ||
+                            bid.status === "accepted"
+                              ? "bg-primary/20 text-primary border-primary"
+                              : bid.status === "rejected"
+                                ? "bg-destructive/10 text-destructive border-destructive/20"
+                                : "bg-secondary text-secondary-foreground border-secondary-foreground/20"
+                          }`}
+                        >
                           {bid.status}
                         </Badge>
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-4 text-sm font-medium mb-3 bg-muted/50 p-2">
-                      <div className="flex items-center gap-1.5"><Truck className="h-4 w-4" /> {bid.trucksOffered}</div>
+                      <div className="flex items-center gap-1.5">
+                        <Truck className="h-4 w-4" /> {bid.trucksOffered}
+                      </div>
                       {bid.estimatedHours && (
-                        <div className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> ~{bid.estimatedHours}h</div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-4 w-4" /> ~{bid.estimatedHours}h
+                        </div>
                       )}
                     </div>
-                    
+
                     {bid.message && (
-                      <p className="text-sm text-muted-foreground italic mb-4">"{bid.message}"</p>
+                      <p className="text-sm text-muted-foreground italic mb-4">
+                        "{bid.message}"
+                      </p>
                     )}
-                    
-                    {isCustomer && requestOpenForBids && bid.status === "pending" && (
-                      <div className="flex gap-2 pt-3 border-t border-border">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="flex-1 rounded-xl border-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
-                          onClick={() => handleRejectBid(bid.id)}
-                          disabled={updateBid.isPending}
-                        >
-                          Decline
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1 rounded-xl font-bold"
-                          onClick={() => handleAwardBid(bid.id)}
-                          disabled={updateBid.isPending}
-                          data-testid={`btn-award-bid-${bid.id}`}
-                        >
-                          Award Bid
-                        </Button>
-                      </div>
-                    )}
+
+                    {isCustomer &&
+                      requestOpenForBids &&
+                      bid.status === "pending" && (
+                        <div className="flex gap-2 pt-3 border-t border-border">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 rounded-xl border-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+                            onClick={() => handleRejectBid(bid.id)}
+                            disabled={updateBid.isPending}
+                          >
+                            Decline
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="flex-1 rounded-xl font-bold"
+                            onClick={() => handleAwardBid(bid.id)}
+                            disabled={updateBid.isPending}
+                            data-testid={`btn-award-bid-${bid.id}`}
+                          >
+                            Award Bid
+                          </Button>
+                        </div>
+                      )}
                   </div>
                 ))
               ) : (
                 <div className="text-center py-10">
-                  <p className="text-muted-foreground font-medium">No bids placed yet.</p>
+                  <p className="text-muted-foreground font-medium">
+                    No bids placed yet.
+                  </p>
                 </div>
               )}
             </div>

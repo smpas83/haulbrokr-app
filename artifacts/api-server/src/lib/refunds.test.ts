@@ -16,7 +16,9 @@ describe("refunds lib helpers", () => {
 
   it("derives payment status from refunded totals", () => {
     expect(deriveJobPaymentStatusAfterRefund("100.00", 100)).toBe("refunded");
-    expect(deriveJobPaymentStatusAfterRefund("100.00", 40)).toBe("partially_refunded");
+    expect(deriveJobPaymentStatusAfterRefund("100.00", 40)).toBe(
+      "partially_refunded",
+    );
     expect(deriveJobPaymentStatusAfterRefund("100.00", 0)).toBe("released");
   });
 });

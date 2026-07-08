@@ -16,16 +16,35 @@ import {
 } from "@workspace/db";
 import { buildDemoLoads, buildDemoTrucks } from "../src/lib/demoMarketplace";
 
-const MATERIALS = ["dirt", "gravel", "concrete", "asphalt", "demolition", "sand", "topsoil", "fill"] as const;
-const TRUCK_TYPES = ["dump_truck", "end_dump", "belly_dump", "super_10", "transfer"] as const;
+const MATERIALS = [
+  "dirt",
+  "gravel",
+  "concrete",
+  "asphalt",
+  "demolition",
+  "sand",
+  "topsoil",
+  "fill",
+] as const;
+const TRUCK_TYPES = [
+  "dump_truck",
+  "end_dump",
+  "belly_dump",
+  "super_10",
+  "transfer",
+] as const;
 
 async function seedDumpSitesIfEmpty() {
-  const existing = await db.select({ count: sql<number>`count(*)` }).from(dumpSitesTable);
+  const existing = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(dumpSitesTable);
   if (Number(existing[0]?.count ?? 0) > 0) {
     console.log("Dump sites already seeded — skipping.");
     return;
   }
-  console.log("Dump sites empty — run: pnpm --filter @workspace/api-server exec tsx src/seed/dump-sites.ts");
+  console.log(
+    "Dump sites empty — run: pnpm --filter @workspace/api-server exec tsx src/seed/dump-sites.ts",
+  );
 }
 
 async function seedProfiles() {
@@ -33,55 +52,81 @@ async function seedProfiles() {
   const existing = await db
     .select({ count: sql<number>`count(*)` })
     .from(profilesTable)
-    .where(sql`${profilesTable.clerkId} like ${marker + '%'}`);
+    .where(sql`${profilesTable.clerkId} like ${marker + "%"}`);
   if (Number(existing[0]?.count ?? 0) >= 80) {
-    console.log("Marketplace seed profiles already exist — skipping profile creation.");
-    const providers = await db.select().from(profilesTable).where(sql`${profilesTable.clerkId} like ${'demo-seed-provider-%'}`);
-    const customers = await db.select().from(profilesTable).where(sql`${profilesTable.clerkId} like ${'demo-seed-customer-%'}`);
+    console.log(
+      "Marketplace seed profiles already exist — skipping profile creation.",
+    );
+    const providers = await db
+      .select()
+      .from(profilesTable)
+      .where(sql`${profilesTable.clerkId} like ${"demo-seed-provider-%"}`);
+    const customers = await db
+      .select()
+      .from(profilesTable)
+      .where(sql`${profilesTable.clerkId} like ${"demo-seed-customer-%"}`);
     return { providers, customers };
   }
 
   const providers = [];
   for (let i = 1; i <= 50; i++) {
-    const [row] = await db.insert(profilesTable).values({
-      clerkId: `demo-seed-provider-${i}`,
-      role: "provider",
-      companyName: `Demo Carrier ${i}`,
-      contactName: `Owner ${i}`,
-      city: "Dallas",
-      state: "TX",
-      email: `demo-carrier-${i}@haulbrokr-seed.local`,
-    }).onConflictDoNothing().returning();
+    const [row] = await db
+      .insert(profilesTable)
+      .values({
+        clerkId: `demo-seed-provider-${i}`,
+        role: "provider",
+        companyName: `Demo Carrier ${i}`,
+        contactName: `Owner ${i}`,
+        city: "Dallas",
+        state: "TX",
+        email: `demo-carrier-${i}@haulbrokr-seed.local`,
+      })
+      .onConflictDoNothing()
+      .returning();
     if (row) providers.push(row);
   }
 
   const customers = [];
   for (let i = 1; i <= 30; i++) {
-    const [row] = await db.insert(profilesTable).values({
-      clerkId: `demo-seed-customer-${i}`,
-      role: "customer",
-      companyName: `Demo Contractor ${i}`,
-      contactName: `PM ${i}`,
-      city: "Dallas",
-      state: "TX",
-      email: `demo-customer-${i}@haulbrokr-seed.local`,
-    }).onConflictDoNothing().returning();
+    const [row] = await db
+      .insert(profilesTable)
+      .values({
+        clerkId: `demo-seed-customer-${i}`,
+        role: "customer",
+        companyName: `Demo Contractor ${i}`,
+        contactName: `PM ${i}`,
+        city: "Dallas",
+        state: "TX",
+        email: `demo-customer-${i}@haulbrokr-seed.local`,
+      })
+      .onConflictDoNothing()
+      .returning();
     if (row) customers.push(row);
   }
 
   const allProviders = providers.length
     ? providers
-    : await db.select().from(profilesTable).where(sql`${profilesTable.clerkId} like ${'demo-seed-provider-%'}`);
+    : await db
+        .select()
+        .from(profilesTable)
+        .where(sql`${profilesTable.clerkId} like ${"demo-seed-provider-%"}`);
   const allCustomers = customers.length
     ? customers
-    : await db.select().from(profilesTable).where(sql`${profilesTable.clerkId} like ${'demo-seed-customer-%'}`);
+    : await db
+        .select()
+        .from(profilesTable)
+        .where(sql`${profilesTable.clerkId} like ${"demo-seed-customer-%"}`);
 
-  console.log(`Profiles ready: ${allProviders.length} providers, ${allCustomers.length} customers.`);
+  console.log(
+    `Profiles ready: ${allProviders.length} providers, ${allCustomers.length} customers.`,
+  );
   return { providers: allProviders, customers: allCustomers };
 }
 
 async function seedRequests(customers: { id: number }[]) {
-  const existing = await db.select({ count: sql<number>`count(*)` }).from(requestsTable);
+  const existing = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(requestsTable);
   if (Number(existing[0]?.count ?? 0) >= 250) {
     console.log("Requests already seeded — skipping.");
     return;
@@ -96,7 +141,7 @@ async function seedRequests(customers: { id: number }[]) {
         const customer = customers[(i + idx) % customers.length];
         return {
           customerId: customer.id,
-          materialType: load.material as typeof MATERIALS[number],
+          materialType: load.material as (typeof MATERIALS)[number],
           truckType: TRUCK_TYPES[(i + idx) % TRUCK_TYPES.length],
           quantityTons: String(80 + ((i + idx) % 120)),
           pickupAddress: load.pickupAddress,
@@ -104,7 +149,10 @@ async function seedRequests(customers: { id: number }[]) {
           scheduledDate: new Date(load.scheduledDate),
           startTime: "07:00",
           estimatedHours: "8",
-          status: load.status === "in_progress" || load.status === "accepted" ? "open" : load.status as "open" | "bidding" | "bid_received",
+          status:
+            load.status === "in_progress" || load.status === "accepted"
+              ? "open"
+              : (load.status as "open" | "bidding" | "bid_received"),
           trucksNeeded: load.trucksNeeded,
           budgetPerHour: String(load.budgetPerHour),
         };
@@ -116,7 +164,9 @@ async function seedRequests(customers: { id: number }[]) {
 }
 
 async function seedTrucks(providers: { id: number }[]) {
-  const existing = await db.select({ count: sql<number>`count(*)` }).from(trucksTable);
+  const existing = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(trucksTable);
   if (Number(existing[0]?.count ?? 0) >= 150) {
     console.log("Trucks already seeded — skipping.");
     return;
@@ -127,7 +177,7 @@ async function seedTrucks(providers: { id: number }[]) {
     demoTrucks.map((t, i) => ({
       ownerId: providers[i % providers.length].id,
       truckNumber: t.label,
-      truckType: t.truckType as typeof TRUCK_TYPES[number],
+      truckType: t.truckType as (typeof TRUCK_TYPES)[number],
       capacityTons: String(18 + (i % 12)),
       ratePerHour: String(95 + (i % 40)),
       isAvailable: t.status === "available",
@@ -143,10 +193,13 @@ async function main() {
   if (!process.env.DATABASE_URL?.trim()) {
     throw new Error("DATABASE_URL is required.");
   }
-  if (process.env.NODE_ENV === "production" && process.env.SEED_MARKETPLACE_FORCE !== "1") {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.SEED_MARKETPLACE_FORCE !== "1"
+  ) {
     console.error(
       "Refusing to seed marketplace demo data in production.\n" +
-      "Set SEED_MARKETPLACE_FORCE=1 only if you intentionally want synthetic rows in a production database.",
+        "Set SEED_MARKETPLACE_FORCE=1 only if you intentionally want synthetic rows in a production database.",
     );
     process.exit(1);
   }

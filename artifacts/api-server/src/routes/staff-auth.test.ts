@@ -17,7 +17,10 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@workspace/db", () => {
-  const staffUsersTable = new Proxy({}, { get: (_t, p) => `staffUsers.${String(p)}` });
+  const staffUsersTable = new Proxy(
+    {},
+    { get: (_t, p) => `staffUsers.${String(p)}` },
+  );
   const db = {
     select: () => ({
       from: (table: unknown) => ({
@@ -32,10 +35,16 @@ vi.mock("@workspace/db", () => {
 });
 
 vi.mock("../middlewares/requireAuth", () => ({
-  attachClerkProfileIfPresent: (_req: unknown, _res: unknown, next: () => void) => next(),
+  attachClerkProfileIfPresent: (
+    _req: unknown,
+    _res: unknown,
+    next: () => void,
+  ) => next(),
 }));
 
-import staffAuthRouter, { __resetStaffLoginRateLimitForTests } from "./staff-auth";
+import staffAuthRouter, {
+  __resetStaffLoginRateLimitForTests,
+} from "./staff-auth";
 import adminRouter from "./admin";
 
 async function makeApp(): Promise<Express> {

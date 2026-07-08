@@ -5,16 +5,16 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { AdminAccessPermissionsItem } from './adminAccessPermissionsItem';
-import type { AdminAccessStaffRole } from './adminAccessStaffRole';
+import type { AdminAccessPermissionsItem } from "./adminAccessPermissionsItem";
+import type { AdminAccessStaffRole } from "./adminAccessStaffRole";
 
 export interface AdminAccess {
   /** True when the caller has any staff role (at least one permission). */
   isAdmin: boolean;
   /**
-     * The caller's resolved HaulBrokr staff role, or null if not staff.
-     * @nullable
-     */
+   * The caller's resolved HaulBrokr staff role, or null if not staff.
+   * @nullable
+   */
   staffRole?: AdminAccessStaffRole;
   /** The exact capabilities this staff role unlocks. */
   permissions: AdminAccessPermissionsItem[];

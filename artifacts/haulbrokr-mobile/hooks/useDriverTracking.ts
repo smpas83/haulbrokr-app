@@ -27,7 +27,9 @@ export function useDriverLocationPing(jobId: number | null, enabled: boolean) {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted" || cancelled) return;
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
         const now = Date.now();
         if (now - lastPing.current < 25_000) return;
         lastPing.current = now;
@@ -39,7 +41,10 @@ export function useDriverLocationPing(jobId: number | null, enabled: boolean) {
 
     tick();
     const id = setInterval(tick, 30_000);
-    return () => { cancelled = true; clearInterval(id); };
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, [jobId, enabled]);
 }
 

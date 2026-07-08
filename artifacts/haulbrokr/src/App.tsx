@@ -1,9 +1,13 @@
 import { lazy, Suspense } from "react";
-import { Switch, Route, Router as WouterRouter } from 'wouter';
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { Loader2 } from "lucide-react";
 
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import SupportPage from "./pages/support";
 import PrivacyPage from "./pages/privacy";
+import TermsPage from "./pages/terms";
+import AboutPage from "./pages/about";
+import ContactPage from "./pages/contact";
 
 const AuthShell = lazy(() => import("./AuthShell"));
 
@@ -22,6 +26,9 @@ function PublicRouter() {
     <Switch>
       <Route path="/support" component={SupportPage} />
       <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/contact" component={ContactPage} />
       <Route>
         <Suspense fallback={<AppLoader />}>
           <AuthShell />
@@ -33,9 +40,11 @@ function PublicRouter() {
 
 function App() {
   return (
-    <WouterRouter base={basePath}>
-      <PublicRouter />
-    </WouterRouter>
+    <ErrorBoundary>
+      <WouterRouter base={basePath}>
+        <PublicRouter />
+      </WouterRouter>
+    </ErrorBoundary>
   );
 }
 export default App;

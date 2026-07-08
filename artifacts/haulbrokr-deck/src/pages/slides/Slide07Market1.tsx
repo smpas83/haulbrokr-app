@@ -119,7 +119,9 @@ export default function Slide07Market1() {
               margin: 0,
             }}
           >
-            Growing at 5.2% CAGR driven by infrastructure spending, housing starts, and the IIJA federal bill allocating $110B to roads and bridges.
+            Growing at 5.2% CAGR driven by infrastructure spending, housing
+            starts, and the IIJA federal bill allocating $110B to roads and
+            bridges.
           </p>
         </div>
 
@@ -175,7 +177,9 @@ export default function Slide07Market1() {
               margin: 0,
             }}
           >
-            Every U.S. state has active construction and dump truck demand. No national platform exists — all 50 states operate on legacy dispatch, phone calls, and paper tickets today.
+            Every U.S. state has active construction and dump truck demand. No
+            national platform exists — all 50 states operate on legacy dispatch,
+            phone calls, and paper tickets today.
           </p>
         </div>
 
@@ -231,7 +235,9 @@ export default function Slide07Market1() {
               margin: 0,
             }}
           >
-            Capturing 1% of the national short-haul market in 36 months via a Texas-first rollout scaling to all 50 states, with Canada, Mexico, and global markets as subsequent phases.
+            Capturing 1% of the national short-haul market in 36 months via a
+            Texas-first rollout scaling to all 50 states, with Canada, Mexico,
+            and global markets as subsequent phases.
           </p>
         </div>
       </div>
@@ -252,7 +258,9 @@ export default function Slide07Market1() {
           letterSpacing: "0.2em",
         }}
       >
-        <span>HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026</span>
+        <span>
+          HaulBrokr&nbsp;&bull;&nbsp;Confidential&nbsp;&bull;&nbsp;2026
+        </span>
         <span style={{ color: "#A0785A" }}>07</span>
       </div>
     </div>

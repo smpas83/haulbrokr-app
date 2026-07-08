@@ -106,8 +106,24 @@ function makeApp(): Express {
 function seedInvoiceFixtures(jobOverrides: Record<string, unknown> = {}) {
   h.rows.set(jobsTable, [baseJob(jobOverrides)]);
   h.profileSelectQueue = [
-    [{ id: CUSTOMER_ID, companyName: "Acme Construction", contactName: "Pat Customer", address: "1 Site Rd", city: "Dallas", state: "TX", zip: "75201" }],
-    [{ id: PROVIDER_ID, companyName: "Big Haul LLC", contactName: "Sam Hauler" }],
+    [
+      {
+        id: CUSTOMER_ID,
+        companyName: "Acme Construction",
+        contactName: "Pat Customer",
+        address: "1 Site Rd",
+        city: "Dallas",
+        state: "TX",
+        zip: "75201",
+      },
+    ],
+    [
+      {
+        id: PROVIDER_ID,
+        companyName: "Big Haul LLC",
+        contactName: "Sam Hauler",
+      },
+    ],
   ];
   h.profileSelectIndex = 0;
   h.rows.set(requestsTable, [{ id: 5, quantityTons: "24.5" }]);
@@ -118,21 +134,40 @@ beforeEach(() => {
   h.profileSelectQueue = [];
   h.profileSelectIndex = 0;
   h.isAdminResult = false;
-  h.profile = { id: CUSTOMER_ID, role: "customer", companyName: "Acme Construction" };
+  h.profile = {
+    id: CUSTOMER_ID,
+    role: "customer",
+    companyName: "Acme Construction",
+  };
   vi.mocked(isAdmin).mockClear();
 });
 
 describe("jobIsInvoiceEligible", () => {
   it("allows completed jobs", () => {
-    expect(jobIsInvoiceEligible({ status: "completed", paymentStatus: "unpaid" } as any)).toBe(true);
+    expect(
+      jobIsInvoiceEligible({
+        status: "completed",
+        paymentStatus: "unpaid",
+      } as any),
+    ).toBe(true);
   });
 
   it("allows invoiced payment status", () => {
-    expect(jobIsInvoiceEligible({ status: "in_progress", paymentStatus: "invoiced" } as any)).toBe(true);
+    expect(
+      jobIsInvoiceEligible({
+        status: "in_progress",
+        paymentStatus: "invoiced",
+      } as any),
+    ).toBe(true);
   });
 
   it("rejects in-progress unpaid jobs", () => {
-    expect(jobIsInvoiceEligible({ status: "in_progress", paymentStatus: "unpaid" } as any)).toBe(false);
+    expect(
+      jobIsInvoiceEligible({
+        status: "in_progress",
+        paymentStatus: "unpaid",
+      } as any),
+    ).toBe(false);
   });
 });
 
@@ -184,19 +219,39 @@ describe("generateJobInvoicePdf", () => {
 
 describe("canDownloadJobInvoice", () => {
   it("allows the direct customer", async () => {
-    expect(await canDownloadJobInvoice(baseJob() as any, { id: CUSTOMER_ID, role: "customer" } as any)).toBe(true);
+    expect(
+      await canDownloadJobInvoice(
+        baseJob() as any,
+        { id: CUSTOMER_ID, role: "customer" } as any,
+      ),
+    ).toBe(true);
   });
 
   it("allows the assigned hauling company", async () => {
-    expect(await canDownloadJobInvoice(baseJob() as any, { id: PROVIDER_ID, role: "provider" } as any)).toBe(true);
+    expect(
+      await canDownloadJobInvoice(
+        baseJob() as any,
+        { id: PROVIDER_ID, role: "provider" } as any,
+      ),
+    ).toBe(true);
   });
 
   it("allows staff admins", async () => {
-    expect(await canDownloadJobInvoice(baseJob() as any, { id: OUTSIDER_ID, role: "provider", staffRole: "ceo" } as any)).toBe(true);
+    expect(
+      await canDownloadJobInvoice(
+        baseJob() as any,
+        { id: OUTSIDER_ID, role: "provider", staffRole: "ceo" } as any,
+      ),
+    ).toBe(true);
   });
 
   it("denies unrelated users", async () => {
-    expect(await canDownloadJobInvoice(baseJob() as any, { id: OUTSIDER_ID, role: "customer" } as any)).toBe(false);
+    expect(
+      await canDownloadJobInvoice(
+        baseJob() as any,
+        { id: OUTSIDER_ID, role: "customer" } as any,
+      ),
+    ).toBe(false);
   });
 });
 
@@ -255,7 +310,9 @@ describe("GET /jobs/:id/invoice", () => {
 
 describe("formatInvoiceNumber", () => {
   it("uses INV-YYYY-#### pattern", () => {
-    expect(formatInvoiceNumber(10, new Date("2026-06-20T12:00:00Z"))).toBe("INV-2026-0010");
+    expect(formatInvoiceNumber(10, new Date("2026-06-20T12:00:00Z"))).toBe(
+      "INV-2026-0010",
+    );
   });
 });
 

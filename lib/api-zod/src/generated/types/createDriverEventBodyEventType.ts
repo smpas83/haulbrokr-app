@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CreateDriverEventBodyEventType = typeof CreateDriverEventBodyEventType[keyof typeof CreateDriverEventBodyEventType];
-
+export type CreateDriverEventBodyEventType =
+  (typeof CreateDriverEventBodyEventType)[keyof typeof CreateDriverEventBodyEventType];
 
 export const CreateDriverEventBodyEventType = {
-  checkin: 'checkin',
-  checkout: 'checkout',
-  pickup: 'pickup',
-  delivery: 'delivery',
+  checkin: "checkin",
+  checkout: "checkout",
+  pickup: "pickup",
+  delivery: "delivery",
 } as const;

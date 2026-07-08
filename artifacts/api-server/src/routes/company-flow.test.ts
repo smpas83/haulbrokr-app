@@ -20,12 +20,18 @@ const actor = vi.hoisted(() => ({ current: null as any }));
 
 vi.mock("../middlewares/requireAuth", () => ({
   requireAuth: (req: any, res: any, next: any) => {
-    if (!actor.current) { res.status(401).json({ error: "No actor" }); return; }
+    if (!actor.current) {
+      res.status(401).json({ error: "No actor" });
+      return;
+    }
     req.clerkId = actor.current.clerkId;
     next();
   },
   requireProfile: (req: any, res: any, next: any) => {
-    if (!actor.current) { res.status(401).json({ error: "No actor" }); return; }
+    if (!actor.current) {
+      res.status(401).json({ error: "No actor" });
+      return;
+    }
     req.profile = actor.current;
     req.clerkId = actor.current.clerkId;
     next();
@@ -65,14 +71,16 @@ function makeApp(): Express {
 }
 
 const app = makeApp();
-function as(profile: any) { actor.current = profile; }
+function as(profile: any) {
+  actor.current = profile;
+}
 
 // Seeded entities (filled in beforeAll).
-let customerOwner: any;   // role customer, org owner of customer org
-let providerOwner: any;   // role provider, org owner of provider org
-let driver: any;          // role driver, member of provider org
-let foreman: any;         // role supervisor, member of customer org
-let foreman2: any;        // role supervisor, member of customer org, NOT assigned
+let customerOwner: any; // role customer, org owner of customer org
+let providerOwner: any; // role provider, org owner of provider org
+let driver: any; // role driver, member of provider org
+let foreman: any; // role supervisor, member of customer org
+let foreman2: any; // role supervisor, member of customer org, NOT assigned
 let customerOrgId: number;
 let providerOrgId: number;
 let project: any;
@@ -84,62 +92,138 @@ let ticketId: number;
 
 beforeAll(async () => {
   // Two org "owner" accounts. organizationId points at the owner's own id.
-  [customerOwner] = await db.insert(profilesTable).values({
-    clerkId: `${TAG}-cust`, role: "customer", companyName: `${TAG} Builders`,
-    contactName: "Carol Customer", orgRole: "owner",
-  }).returning();
+  [customerOwner] = await db
+    .insert(profilesTable)
+    .values({
+      clerkId: `${TAG}-cust`,
+      role: "customer",
+      companyName: `${TAG} Builders`,
+      contactName: "Carol Customer",
+      orgRole: "owner",
+    })
+    .returning();
   customerOrgId = customerOwner.id;
-  [customerOwner] = await db.update(profilesTable)
-    .set({ organizationId: customerOrgId }).where(eq(profilesTable.id, customerOwner.id)).returning();
+  [customerOwner] = await db
+    .update(profilesTable)
+    .set({ organizationId: customerOrgId })
+    .where(eq(profilesTable.id, customerOwner.id))
+    .returning();
 
-  [providerOwner] = await db.insert(profilesTable).values({
-    clerkId: `${TAG}-prov`, role: "provider", companyName: `${TAG} Hauling`,
-    contactName: "Pat Provider", orgRole: "owner",
-  }).returning();
+  [providerOwner] = await db
+    .insert(profilesTable)
+    .values({
+      clerkId: `${TAG}-prov`,
+      role: "provider",
+      companyName: `${TAG} Hauling`,
+      contactName: "Pat Provider",
+      orgRole: "owner",
+    })
+    .returning();
   providerOrgId = providerOwner.id;
-  [providerOwner] = await db.update(profilesTable)
-    .set({ organizationId: providerOrgId }).where(eq(profilesTable.id, providerOwner.id)).returning();
+  [providerOwner] = await db
+    .update(profilesTable)
+    .set({ organizationId: providerOrgId })
+    .where(eq(profilesTable.id, providerOwner.id))
+    .returning();
 
   // Team members.
-  [driver] = await db.insert(profilesTable).values({
-    clerkId: `${TAG}-drv`, role: "driver", companyName: `${TAG} Hauling`,
-    contactName: "Dave Driver", organizationId: providerOrgId, orgRole: "member",
-  }).returning();
-  [foreman] = await db.insert(profilesTable).values({
-    clerkId: `${TAG}-fore`, role: "supervisor", companyName: `${TAG} Builders`,
-    contactName: "Fran Foreman", organizationId: customerOrgId, orgRole: "member",
-  }).returning();
-  [foreman2] = await db.insert(profilesTable).values({
-    clerkId: `${TAG}-fore2`, role: "supervisor", companyName: `${TAG} Builders`,
-    contactName: "Fred Foreman", organizationId: customerOrgId, orgRole: "member",
-  }).returning();
+  [driver] = await db
+    .insert(profilesTable)
+    .values({
+      clerkId: `${TAG}-drv`,
+      role: "driver",
+      companyName: `${TAG} Hauling`,
+      contactName: "Dave Driver",
+      organizationId: providerOrgId,
+      orgRole: "member",
+    })
+    .returning();
+  [foreman] = await db
+    .insert(profilesTable)
+    .values({
+      clerkId: `${TAG}-fore`,
+      role: "supervisor",
+      companyName: `${TAG} Builders`,
+      contactName: "Fran Foreman",
+      organizationId: customerOrgId,
+      orgRole: "member",
+    })
+    .returning();
+  [foreman2] = await db
+    .insert(profilesTable)
+    .values({
+      clerkId: `${TAG}-fore2`,
+      role: "supervisor",
+      companyName: `${TAG} Builders`,
+      contactName: "Fred Foreman",
+      organizationId: customerOrgId,
+      orgRole: "member",
+    })
+    .returning();
 
   // Project (customer site), request, bid, then job.
-  [project] = await db.insert(projectsTable).values({
-    customerId: customerOwner.id, name: `${TAG} Site`, siteAddress: "1 Dirt Rd",
-  }).returning();
-  [request_] = await db.insert(requestsTable).values({
-    customerId: customerOwner.id, materialType: "dirt", truckType: "dump_truck", quantityTons: "100",
-    pickupAddress: "1 Pit Rd", deliveryAddress: "1 Dirt Rd", scheduledDate: new Date(),
-    startTime: "08:00", estimatedHours: "8",
-    projectId: project.id, status: "accepted",
-  }).returning();
-  [bid] = await db.insert(bidsTable).values({
-    requestId: request_.id, providerId: providerOwner.id, ratePerHour: "100", status: "accepted",
-  }).returning();
-  [job] = await db.insert(jobsTable).values({
-    requestId: request_.id, bidId: bid.id, customerId: customerOwner.id, providerId: providerOwner.id,
-    projectId: project.id, ratePerHour: "100", materialType: "dirt", truckType: "dump_truck",
-    pickupAddress: "1 Pit Rd", deliveryAddress: "1 Dirt Rd", scheduledDate: new Date(),
-    startTime: "08:00", estimatedHours: "8",
-    status: "completed",
-  }).returning();
+  [project] = await db
+    .insert(projectsTable)
+    .values({
+      customerId: customerOwner.id,
+      name: `${TAG} Site`,
+      siteAddress: "1 Dirt Rd",
+    })
+    .returning();
+  [request_] = await db
+    .insert(requestsTable)
+    .values({
+      customerId: customerOwner.id,
+      materialType: "dirt",
+      truckType: "dump_truck",
+      quantityTons: "100",
+      pickupAddress: "1 Pit Rd",
+      deliveryAddress: "1 Dirt Rd",
+      scheduledDate: new Date(),
+      startTime: "08:00",
+      estimatedHours: "8",
+      projectId: project.id,
+      status: "accepted",
+    })
+    .returning();
+  [bid] = await db
+    .insert(bidsTable)
+    .values({
+      requestId: request_.id,
+      providerId: providerOwner.id,
+      ratePerHour: "100",
+      status: "accepted",
+    })
+    .returning();
+  [job] = await db
+    .insert(jobsTable)
+    .values({
+      requestId: request_.id,
+      bidId: bid.id,
+      customerId: customerOwner.id,
+      providerId: providerOwner.id,
+      projectId: project.id,
+      ratePerHour: "100",
+      materialType: "dirt",
+      truckType: "dump_truck",
+      pickupAddress: "1 Pit Rd",
+      deliveryAddress: "1 Dirt Rd",
+      scheduledDate: new Date(),
+      startTime: "08:00",
+      estimatedHours: "8",
+      status: "completed",
+    })
+    .returning();
 });
 
 afterAll(async () => {
   // Children first to satisfy FKs (most cascade, but be explicit).
-  await db.delete(projectAssignmentsTable).where(eq(projectAssignmentsTable.projectId, project.id));
-  await db.delete(jobStatusUpdatesTable).where(eq(jobStatusUpdatesTable.jobId, job.id));
+  await db
+    .delete(projectAssignmentsTable)
+    .where(eq(projectAssignmentsTable.projectId, project.id));
+  await db
+    .delete(jobStatusUpdatesTable)
+    .where(eq(jobStatusUpdatesTable.jobId, job.id));
   await db.delete(ticketsTable).where(eq(ticketsTable.jobId, job.id));
   await db.delete(jobsTable).where(eq(jobsTable.id, job.id));
   await db.delete(bidsTable).where(eq(bidsTable.id, bid.id));
@@ -154,8 +238,11 @@ describe("Company/team full flow", () => {
   it("1. provider company adds a truck to its fleet", async () => {
     as(providerOwner);
     const res = await request(app).post("/trucks").send({
-      truckType: "dump_truck", capacityTons: 20, ratePerHour: 100,
-      truckNumber: "T-1", coiStatus: "active",
+      truckType: "dump_truck",
+      capacityTons: 20,
+      ratePerHour: 100,
+      truckNumber: "T-1",
+      coiStatus: "active",
     });
     expect(res.status).toBe(201);
     expect(res.body.ownerId).toBe(providerOwner.id);
@@ -182,7 +269,8 @@ describe("Company/team full flow", () => {
   it("3. owner assigns the job to the driver + truck (creates a load ticket)", async () => {
     as(providerOwner);
     const res = await request(app).post(`/jobs/${job.id}/assign`).send({
-      driverProfileId: driver.id, truckId,
+      driverProfileId: driver.id,
+      truckId,
     });
     expect(res.status).toBe(201);
     expect(res.body.driverProfileId).toBe(driver.id);
@@ -193,7 +281,8 @@ describe("Company/team full flow", () => {
   it("3b. a non-manager driver cannot assign jobs", async () => {
     as(driver);
     const res = await request(app).post(`/jobs/${job.id}/assign`).send({
-      driverProfileId: driver.id, truckId,
+      driverProfileId: driver.id,
+      truckId,
     });
     expect(res.status).toBe(403);
   });
@@ -209,7 +298,9 @@ describe("Company/team full flow", () => {
   it("4b. driver posts a status update on the job", async () => {
     as(driver);
     const res = await request(app).post(`/jobs/${job.id}/status-updates`).send({
-      status: "arrived", ticketId, note: "On site",
+      status: "arrived",
+      ticketId,
+      note: "On site",
     });
     expect(res.status).toBe(201);
     expect(res.body.status).toBe("arrived");
@@ -217,21 +308,43 @@ describe("Company/team full flow", () => {
 
   it("4c. status update rejects a ticket that belongs to a different job", async () => {
     // Throwaway job + ticket on it, then try to attach that ticket to our job.
-    const [otherJob] = await db.insert(jobsTable).values({
-      requestId: request_.id, bidId: bid.id, customerId: customerOwner.id, providerId: providerOwner.id,
-      projectId: project.id, ratePerHour: "100", materialType: "dirt", truckType: "dump_truck",
-      pickupAddress: "1 Pit Rd", deliveryAddress: "1 Dirt Rd", scheduledDate: new Date(),
-      startTime: "08:00", estimatedHours: "8",
-      status: "in_progress",
-    }).returning();
-    const [otherTicket] = await db.insert(ticketsTable).values({
-      jobId: otherJob.id, driverProfileId: driver.id, truckId, loadNumber: 1, status: "pending",
-    }).returning();
+    const [otherJob] = await db
+      .insert(jobsTable)
+      .values({
+        requestId: request_.id,
+        bidId: bid.id,
+        customerId: customerOwner.id,
+        providerId: providerOwner.id,
+        projectId: project.id,
+        ratePerHour: "100",
+        materialType: "dirt",
+        truckType: "dump_truck",
+        pickupAddress: "1 Pit Rd",
+        deliveryAddress: "1 Dirt Rd",
+        scheduledDate: new Date(),
+        startTime: "08:00",
+        estimatedHours: "8",
+        status: "in_progress",
+      })
+      .returning();
+    const [otherTicket] = await db
+      .insert(ticketsTable)
+      .values({
+        jobId: otherJob.id,
+        driverProfileId: driver.id,
+        truckId,
+        loadNumber: 1,
+        status: "pending",
+      })
+      .returning();
     try {
       as(driver);
-      const res = await request(app).post(`/jobs/${job.id}/status-updates`).send({
-        status: "arrived", ticketId: otherTicket.id,
-      });
+      const res = await request(app)
+        .post(`/jobs/${job.id}/status-updates`)
+        .send({
+          status: "arrived",
+          ticketId: otherTicket.id,
+        });
       expect(res.status).toBe(400);
     } finally {
       await db.delete(ticketsTable).where(eq(ticketsTable.id, otherTicket.id));
@@ -241,9 +354,11 @@ describe("Company/team full flow", () => {
 
   it("5. customer assigns the foreman to the project site", async () => {
     as(customerOwner);
-    const res = await request(app).post(`/projects/${project.id}/assignments`).send({
-      supervisorProfileId: foreman.id,
-    });
+    const res = await request(app)
+      .post(`/projects/${project.id}/assignments`)
+      .send({
+        supervisorProfileId: foreman.id,
+      });
     expect(res.status).toBe(201);
     expect(res.body.supervisorProfileId).toBe(foreman.id);
   });
@@ -255,13 +370,19 @@ describe("Company/team full flow", () => {
   });
 
   it("5c. completion cannot be reviewed until the job is marked completed", async () => {
-    await db.update(jobsTable).set({ status: "in_progress" }).where(eq(jobsTable.id, job.id));
+    await db
+      .update(jobsTable)
+      .set({ status: "in_progress" })
+      .where(eq(jobsTable.id, job.id));
     try {
       as(foreman);
       const res = await request(app).post(`/jobs/${job.id}/approve-completion`);
       expect(res.status).toBe(409);
     } finally {
-      await db.update(jobsTable).set({ status: "completed" }).where(eq(jobsTable.id, job.id));
+      await db
+        .update(jobsTable)
+        .set({ status: "completed" })
+        .where(eq(jobsTable.id, job.id));
     }
   });
 
@@ -272,7 +393,10 @@ describe("Company/team full flow", () => {
     expect(res.body.completionApproval).toBe("approved");
     expect(res.body.approvedByProfileId).toBe(foreman.id);
 
-    const [persisted] = await db.select().from(jobsTable).where(eq(jobsTable.id, job.id));
+    const [persisted] = await db
+      .select()
+      .from(jobsTable)
+      .where(eq(jobsTable.id, job.id));
     expect(persisted.completionApproval).toBe("approved");
     expect(persisted.approvedByProfileId).toBe(foreman.id);
   });

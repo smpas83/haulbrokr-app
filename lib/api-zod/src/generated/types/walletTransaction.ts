@@ -5,7 +5,7 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
-import type { WalletTransactionType } from './walletTransactionType';
+import type { WalletTransactionType } from "./walletTransactionType";
 
 export interface WalletTransaction {
   id: string;

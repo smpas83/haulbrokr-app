@@ -26,7 +26,11 @@ interface Props<T extends BinSize> {
   onPress?: (bin: T) => void;
 }
 
-export function BinCard<T extends BinSize>({ bin, selected, onPress }: Props<T>) {
+export function BinCard<T extends BinSize>({
+  bin,
+  selected,
+  onPress,
+}: Props<T>) {
   const colors = useColors();
   const scale = useSharedValue(1);
 
@@ -145,11 +149,7 @@ export function BinCard<T extends BinSize>({ bin, selected, onPress }: Props<T>)
 
         {selected && (
           <View style={styles.selectedIndicator}>
-            <Feather
-              name="check"
-              size={14}
-              color={colors.primaryForeground}
-            />
+            <Feather name="check" size={14} color={colors.primaryForeground} />
           </View>
         )}
       </Pressable>

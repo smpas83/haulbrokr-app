@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type ComplianceRecordDotOperatingStatus = typeof ComplianceRecordDotOperatingStatus[keyof typeof ComplianceRecordDotOperatingStatus];
-
+export type ComplianceRecordDotOperatingStatus =
+  (typeof ComplianceRecordDotOperatingStatus)[keyof typeof ComplianceRecordDotOperatingStatus];
 
 export const ComplianceRecordDotOperatingStatus = {
-  unknown: 'unknown',
-  verified: 'verified',
-  failed: 'failed',
+  unknown: "unknown",
+  verified: "verified",
+  failed: "failed",
 } as const;

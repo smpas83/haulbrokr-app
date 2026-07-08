@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type CreditApplicationStatus = typeof CreditApplicationStatus[keyof typeof CreditApplicationStatus];
-
+export type CreditApplicationStatus =
+  (typeof CreditApplicationStatus)[keyof typeof CreditApplicationStatus];
 
 export const CreditApplicationStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  approved: 'approved',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  approved: "approved",
+  rejected: "rejected",
 } as const;

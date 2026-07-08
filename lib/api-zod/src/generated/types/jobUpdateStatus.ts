@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type JobUpdateStatus = typeof JobUpdateStatus[keyof typeof JobUpdateStatus];
-
+export type JobUpdateStatus =
+  (typeof JobUpdateStatus)[keyof typeof JobUpdateStatus];
 
 export const JobUpdateStatus = {
-  in_progress: 'in_progress',
-  completed: 'completed',
+  in_progress: "in_progress",
+  completed: "completed",
 } as const;

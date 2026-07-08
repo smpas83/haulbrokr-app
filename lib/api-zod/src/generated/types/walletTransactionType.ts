@@ -6,11 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type WalletTransactionType = typeof WalletTransactionType[keyof typeof WalletTransactionType];
-
+export type WalletTransactionType =
+  (typeof WalletTransactionType)[keyof typeof WalletTransactionType];
 
 export const WalletTransactionType = {
-  payout: 'payout',
-  factoring: 'factoring',
-  earning: 'earning',
+  payout: "payout",
+  factoring: "factoring",
+  earning: "earning",
 } as const;

@@ -37,7 +37,11 @@ vi.mock("../middlewares/requireAuth", () => ({
 }));
 
 import walletRouter from "./wallet";
-import { jobsTable, factoringRequestsTable, payoutAccountsTable } from "@workspace/db";
+import {
+  jobsTable,
+  factoringRequestsTable,
+  payoutAccountsTable,
+} from "@workspace/db";
 
 const PROVIDER_ID = 2;
 
@@ -70,11 +74,28 @@ beforeEach(() => {
 describe("GET /wallet", () => {
   it("returns correct balances for a provider with paid + pending jobs", async () => {
     h.rows.set(jobsTable, [
-      baseJob({ id: 10, paymentStatus: "released", providerNetAmount: "100.00", completedAt: new Date("2026-06-03T00:00:00Z") }),
-      baseJob({ id: 11, paymentStatus: "invoiced", providerNetAmount: "50.00", completedAt: new Date("2026-06-02T00:00:00Z") }),
+      baseJob({
+        id: 10,
+        paymentStatus: "released",
+        providerNetAmount: "100.00",
+        completedAt: new Date("2026-06-03T00:00:00Z"),
+      }),
+      baseJob({
+        id: 11,
+        paymentStatus: "invoiced",
+        providerNetAmount: "50.00",
+        completedAt: new Date("2026-06-02T00:00:00Z"),
+      }),
     ]);
     h.rows.set(factoringRequestsTable, [
-      { id: 1, jobId: 10, netAmount: "97.00", status: "approved", requestedAt: new Date("2026-06-04T00:00:00Z"), createdAt: new Date("2026-06-04T00:00:00Z") },
+      {
+        id: 1,
+        jobId: 10,
+        netAmount: "97.00",
+        status: "approved",
+        requestedAt: new Date("2026-06-04T00:00:00Z"),
+        createdAt: new Date("2026-06-04T00:00:00Z"),
+      },
     ]);
     h.rows.set(payoutAccountsTable, [
       { stripeAccountId: "acct_1", payoutsEnabled: 1, accountLast4: "4821" },

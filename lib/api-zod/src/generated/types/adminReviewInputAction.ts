@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type AdminReviewInputAction = typeof AdminReviewInputAction[keyof typeof AdminReviewInputAction];
-
+export type AdminReviewInputAction =
+  (typeof AdminReviewInputAction)[keyof typeof AdminReviewInputAction];
 
 export const AdminReviewInputAction = {
-  approve: 'approve',
-  reject: 'reject',
+  approve: "approve",
+  reject: "reject",
 } as const;

@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type AccountStatusDotCdlStatus = typeof AccountStatusDotCdlStatus[keyof typeof AccountStatusDotCdlStatus];
-
+export type AccountStatusDotCdlStatus =
+  (typeof AccountStatusDotCdlStatus)[keyof typeof AccountStatusDotCdlStatus];
 
 export const AccountStatusDotCdlStatus = {
-  not_submitted: 'not_submitted',
-  pending: 'pending',
-  verified: 'verified',
-  rejected: 'rejected',
+  not_submitted: "not_submitted",
+  pending: "pending",
+  verified: "verified",
+  rejected: "rejected",
 } as const;

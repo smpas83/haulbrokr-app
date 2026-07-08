@@ -47,7 +47,9 @@ vi.mock("@workspace/db", () => {
         return Promise.resolve(undefined);
       },
     }),
-    select: () => ({ from: () => ({ where: () => Promise.resolve(h.profileRows) }) }),
+    select: () => ({
+      from: () => ({ where: () => Promise.resolve(h.profileRows) }),
+    }),
   };
   return {
     db,
@@ -139,7 +141,10 @@ describe("settleConfirmedPayout", () => {
     expect(params.source_transaction).toBe("ch_1");
     // Attempt is UNCHANGED — same idempotency key Stripe would dedupe against.
     expect(options.idempotencyKey).toBe("job-transfer:7:2");
-    expect(h.updates[0]).toMatchObject({ paymentStatus: "released", stripeTransferId: "tr_1" });
+    expect(h.updates[0]).toMatchObject({
+      paymentStatus: "released",
+      stripeTransferId: "tr_1",
+    });
   });
 });
 
@@ -153,7 +158,10 @@ describe("retryStuckPayout", () => {
   });
 
   it("skips jobs that are not awaiting a payout release", async () => {
-    const result = await retryStuckPayout({ ...stuckJob, paymentStatus: "released" });
+    const result = await retryStuckPayout({
+      ...stuckJob,
+      paymentStatus: "released",
+    });
     expect(result.outcome).toBe("skipped");
     expect(h.transferCalls).toHaveLength(0);
   });
@@ -201,8 +209,18 @@ describe("retryStuckPayout", () => {
     // profileRows backs BOTH the admin lookup and the provider lookup; the admins
     // are returned first, the provider second (only its companyName is read).
     h.profileRows = [
-      { id: 10, clerkId: "admin_clerk_1", companyName: "Admin One", email: "one@admin.test" },
-      { id: 11, clerkId: "admin_clerk_2", companyName: "Admin Two", email: "two@admin.test" },
+      {
+        id: 10,
+        clerkId: "admin_clerk_1",
+        companyName: "Admin One",
+        email: "one@admin.test",
+      },
+      {
+        id: 11,
+        clerkId: "admin_clerk_2",
+        companyName: "Admin Two",
+        email: "two@admin.test",
+      },
     ];
     const result = await retryStuckPayout({
       ...stuckJob,
@@ -239,8 +257,18 @@ describe("retryStuckPayout", () => {
     process.env.ADMIN_USER_IDS = "admin_clerk_1, admin_clerk_2";
     h.transferError = new Error("transfer boom");
     h.profileRows = [
-      { id: 10, clerkId: "admin_clerk_1", companyName: "Admin One", email: "one@admin.test" },
-      { id: 11, clerkId: "admin_clerk_2", companyName: "Admin Two", email: null },
+      {
+        id: 10,
+        clerkId: "admin_clerk_1",
+        companyName: "Admin One",
+        email: "one@admin.test",
+      },
+      {
+        id: 11,
+        clerkId: "admin_clerk_2",
+        companyName: "Admin Two",
+        email: null,
+      },
     ];
     await retryStuckPayout({ ...stuckJob, payoutRetryFailures: 2 });
     // In-app alert still reaches both admins; email only the one with an address.
@@ -252,7 +280,14 @@ describe("retryStuckPayout", () => {
   it("does not email when no admin has an address (in-app alert still fires)", async () => {
     process.env.ADMIN_USER_IDS = "admin_clerk_1";
     h.transferError = new Error("transfer boom");
-    h.profileRows = [{ id: 10, clerkId: "admin_clerk_1", companyName: "Admin One", email: null }];
+    h.profileRows = [
+      {
+        id: 10,
+        clerkId: "admin_clerk_1",
+        companyName: "Admin One",
+        email: null,
+      },
+    ];
     await retryStuckPayout({ ...stuckJob, payoutRetryFailures: 2 });
     expect(h.inserts).toHaveLength(1);
     expect(h.emailCalls).toHaveLength(0);
@@ -262,8 +297,18 @@ describe("retryStuckPayout", () => {
     process.env.ADMIN_USER_IDS = "admin_clerk_1";
     h.transferError = new Error("transfer boom");
     h.resendError = new Error("Resend not connected");
-    h.profileRows = [{ id: 10, clerkId: "admin_clerk_1", companyName: "Admin One", email: "one@admin.test" }];
-    const result = await retryStuckPayout({ ...stuckJob, payoutRetryFailures: 2 });
+    h.profileRows = [
+      {
+        id: 10,
+        clerkId: "admin_clerk_1",
+        companyName: "Admin One",
+        email: "one@admin.test",
+      },
+    ];
+    const result = await retryStuckPayout({
+      ...stuckJob,
+      payoutRetryFailures: 2,
+    });
     // A mail-provider failure must never break the sweep or the in-app alert.
     expect(result.outcome).toBe("failed");
     expect(h.inserts).toHaveLength(1);
@@ -273,7 +318,14 @@ describe("retryStuckPayout", () => {
   it("does not re-email once an alert has already been sent for the job", async () => {
     process.env.ADMIN_USER_IDS = "admin_clerk_1";
     h.transferError = new Error("transfer boom");
-    h.profileRows = [{ id: 10, clerkId: "admin_clerk_1", companyName: "Admin One", email: "one@admin.test" }];
+    h.profileRows = [
+      {
+        id: 10,
+        clerkId: "admin_clerk_1",
+        companyName: "Admin One",
+        email: "one@admin.test",
+      },
+    ];
     await retryStuckPayout({
       ...stuckJob,
       payoutRetryFailures: 5,
@@ -287,7 +339,9 @@ describe("retryStuckPayout", () => {
   it("does not re-alert once an alert has already been sent for the job", async () => {
     process.env.ADMIN_USER_IDS = "admin_clerk_1";
     h.transferError = new Error("transfer boom");
-    h.profileRows = [{ id: 10, clerkId: "admin_clerk_1", companyName: "Admin One" }];
+    h.profileRows = [
+      { id: 10, clerkId: "admin_clerk_1", companyName: "Admin One" },
+    ];
     await retryStuckPayout({
       ...stuckJob,
       payoutRetryFailures: 5,

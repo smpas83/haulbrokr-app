@@ -4,52 +4,131 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { 
-  Loader2, CheckCircle2, AlertCircle, Clock, ShieldAlert,
-  CreditCard, Banknote, HelpCircle, ShieldCheck, FileText, ArrowRight
+import {
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  ShieldAlert,
+  CreditCard,
+  Banknote,
+  HelpCircle,
+  ShieldCheck,
+  FileText,
+  ArrowRight,
 } from "lucide-react";
 import {
-  useGetMyProfile, useUpdateMyProfile, getGetMyProfileQueryKey,
-  useGetAccountStatus, getGetAccountStatusQueryKey,
-  useGetW9, useSubmitW9, useUpdateW9, getGetW9QueryKey,
-  useGetInsurance, useSubmitInsurance, useUpdateInsurance, getGetInsuranceQueryKey,
-  useGetPaymentMethod, useSetPaymentMethod, useUpdatePaymentMethod, getGetPaymentMethodQueryKey,
-  useGetPayoutAccount, useSetPayoutAccount, useUpdatePayoutAccount, getGetPayoutAccountQueryKey,
-  useGetPayoutStatus, getGetPayoutStatusQueryKey, useConnectPayoutLink,
-  useGetCompliance, useSubmitCompliance, useVerifyCompliance, getGetComplianceQueryKey,
-  useGetCreditApplication, useSubmitCreditApplication, getGetCreditApplicationQueryKey
+  useGetMyProfile,
+  useUpdateMyProfile,
+  getGetMyProfileQueryKey,
+  useGetAccountStatus,
+  getGetAccountStatusQueryKey,
+  useGetW9,
+  useSubmitW9,
+  useUpdateW9,
+  getGetW9QueryKey,
+  useGetInsurance,
+  useSubmitInsurance,
+  useUpdateInsurance,
+  getGetInsuranceQueryKey,
+  useGetPaymentMethod,
+  useSetPaymentMethod,
+  useUpdatePaymentMethod,
+  getGetPaymentMethodQueryKey,
+  useGetPayoutAccount,
+  useSetPayoutAccount,
+  useUpdatePayoutAccount,
+  getGetPayoutAccountQueryKey,
+  useGetPayoutStatus,
+  getGetPayoutStatusQueryKey,
+  useConnectPayoutLink,
+  useGetCompliance,
+  useSubmitCompliance,
+  useVerifyCompliance,
+  getGetComplianceQueryKey,
+  useGetCreditApplication,
+  useSubmitCreditApplication,
+  getGetCreditApplicationQueryKey,
 } from "@workspace/api-client-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AccountDocuments } from "@/components/documents";
 import { Badge } from "@/components/ui/badge";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StripeCardForm } from "@/components/stripe-card-form";
 import { StripeBankForm } from "@/components/stripe-bank-form";
 import { MicrodepositVerify } from "@/components/microdeposit-verify";
 
-function StatusBadge({ status, text }: { status: "not_submitted"|"not_set"|"pending"|"verified"|"rejected", text?: string }) {
+function StatusBadge({
+  status,
+  text,
+}: {
+  status: "not_submitted" | "not_set" | "pending" | "verified" | "rejected";
+  text?: string;
+}) {
   if (status === "verified") {
-    return <Badge className="bg-green-500 hover:bg-green-600 rounded-xl"><CheckCircle2 className="w-3 h-3 mr-1"/> {text || "Verified"}</Badge>;
+    return (
+      <Badge className="bg-green-500 hover:bg-green-600 rounded-xl">
+        <CheckCircle2 className="w-3 h-3 mr-1" /> {text || "Verified"}
+      </Badge>
+    );
   }
   if (status === "pending") {
-    return <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl"><Clock className="w-3 h-3 mr-1"/> {text || "Pending Review"}</Badge>;
+    return (
+      <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl">
+        <Clock className="w-3 h-3 mr-1" /> {text || "Pending Review"}
+      </Badge>
+    );
   }
   if (status === "rejected") {
-    return <Badge variant="destructive" className="rounded-xl"><AlertCircle className="w-3 h-3 mr-1"/> {text || "Rejected"}</Badge>;
+    return (
+      <Badge variant="destructive" className="rounded-xl">
+        <AlertCircle className="w-3 h-3 mr-1" /> {text || "Rejected"}
+      </Badge>
+    );
   }
-  return <Badge variant="secondary" className="rounded-xl text-muted-foreground">{text || "Not Submitted"}</Badge>;
+  return (
+    <Badge variant="secondary" className="rounded-xl text-muted-foreground">
+      {text || "Not Submitted"}
+    </Badge>
+  );
 }
 
 const profileSchema = z.object({
@@ -92,13 +171,19 @@ function ProfileTab() {
   if (isLoading) return <Skeleton className="h-[400px] w-full" />;
 
   function onSubmit(values: z.infer<typeof profileSchema>) {
-    updateProfile.mutate({ data: values }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
-        toast({ title: "Profile updated successfully" });
+    updateProfile.mutate(
+      { data: values },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: getGetMyProfileQueryKey(),
+          });
+          toast({ title: "Profile updated successfully" });
+        },
+        onError: () =>
+          toast({ title: "Failed to update profile", variant: "destructive" }),
       },
-      onError: () => toast({ title: "Failed to update profile", variant: "destructive" })
-    });
+    );
   }
 
   return (
@@ -117,7 +202,9 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company Name</FormLabel>
-                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                    <FormControl>
+                      <Input {...field} className="rounded-xl" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -128,7 +215,9 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Primary Contact</FormLabel>
-                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                    <FormControl>
+                      <Input {...field} className="rounded-xl" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -139,7 +228,9 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
-                    <FormControl><Input type="tel" {...field} className="rounded-xl" /></FormControl>
+                    <FormControl>
+                      <Input type="tel" {...field} className="rounded-xl" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -150,7 +241,9 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>City</FormLabel>
-                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                    <FormControl>
+                      <Input {...field} className="rounded-xl" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -161,14 +254,22 @@ function ProfileTab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>State</FormLabel>
-                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                    <FormControl>
+                      <Input {...field} className="rounded-xl" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <Button type="submit" disabled={updateProfile.isPending} className="rounded-xl font-bold">
-              {updateProfile.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Button
+              type="submit"
+              disabled={updateProfile.isPending}
+              className="rounded-xl font-bold"
+            >
+              {updateProfile.isPending && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              )}
               Save Profile
             </Button>
           </form>
@@ -181,7 +282,15 @@ function ProfileTab() {
 const w9Schema = z.object({
   legalName: z.string().min(1, "Legal name is required"),
   businessName: z.string().optional(),
-  businessType: z.enum(["sole_proprietor", "single_member_llc", "multi_member_llc", "partnership", "c_corporation", "s_corporation", "other"]),
+  businessType: z.enum([
+    "sole_proprietor",
+    "single_member_llc",
+    "multi_member_llc",
+    "partnership",
+    "c_corporation",
+    "s_corporation",
+    "other",
+  ]),
   taxIdType: z.enum(["ein", "ssn"]),
   taxIdLast4: z.string().length(4, "Must be exactly 4 digits"),
   address: z.string().min(1, "Address is required"),
@@ -241,14 +350,24 @@ function W9Tab() {
 
   function onSubmit(values: z.infer<typeof w9Schema>) {
     const action = isExisting ? updateW9.mutate : submitW9.mutate;
-    action({ data: values }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetW9QueryKey() });
-        queryClient.invalidateQueries({ queryKey: getGetAccountStatusQueryKey() });
-        toast({ title: isExisting ? "W-9 updated successfully" : "W-9 submitted successfully" });
+    action(
+      { data: values },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetW9QueryKey() });
+          queryClient.invalidateQueries({
+            queryKey: getGetAccountStatusQueryKey(),
+          });
+          toast({
+            title: isExisting
+              ? "W-9 updated successfully"
+              : "W-9 submitted successfully",
+          });
+        },
+        onError: () =>
+          toast({ title: "Failed to save W-9", variant: "destructive" }),
       },
-      onError: () => toast({ title: "Failed to save W-9", variant: "destructive" })
-    });
+    );
   }
 
   const isPending = submitW9.isPending || updateW9.isPending;
@@ -259,7 +378,9 @@ function W9Tab() {
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>W-9 Tax Information</CardTitle>
-            <CardDescription>Required for tax reporting purposes.</CardDescription>
+            <CardDescription>
+              Required for tax reporting purposes.
+            </CardDescription>
           </div>
           {isExisting && <StatusBadge status={w9?.status as any} />}
         </div>
@@ -270,23 +391,32 @@ function W9Tab() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
             <AlertDescription>
-              Your W-9 submission was rejected.{w9.reviewNote ? ` Reason: ${w9.reviewNote}` : " Please review your information and resubmit."}
+              Your W-9 submission was rejected.
+              {w9.reviewNote
+                ? ` Reason: ${w9.reviewNote}`
+                : " Please review your information and resubmit."}
             </AlertDescription>
           </Alert>
         )}
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
-              <h3 className="text-lg font-bold border-b border-border pb-2">Business Information</h3>
+              <h3 className="text-lg font-bold border-b border-border pb-2">
+                Business Information
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="legalName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name (as shown on your income tax return)</FormLabel>
-                      <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                      <FormLabel>
+                        Name (as shown on your income tax return)
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} className="rounded-xl" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -296,8 +426,12 @@ function W9Tab() {
                   name="businessName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Business name/disregarded entity name (optional)</FormLabel>
-                      <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                      <FormLabel>
+                        Business name/disregarded entity name (optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} className="rounded-xl" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -317,23 +451,41 @@ function W9Tab() {
                         className="flex flex-col space-y-1"
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl><RadioGroupItem value="sole_proprietor" /></FormControl>
-                          <FormLabel className="font-normal">Individual/sole proprietor or single-member LLC</FormLabel>
+                          <FormControl>
+                            <RadioGroupItem value="sole_proprietor" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Individual/sole proprietor or single-member LLC
+                          </FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl><RadioGroupItem value="c_corporation" /></FormControl>
-                          <FormLabel className="font-normal">C Corporation</FormLabel>
+                          <FormControl>
+                            <RadioGroupItem value="c_corporation" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            C Corporation
+                          </FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl><RadioGroupItem value="s_corporation" /></FormControl>
-                          <FormLabel className="font-normal">S Corporation</FormLabel>
+                          <FormControl>
+                            <RadioGroupItem value="s_corporation" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            S Corporation
+                          </FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl><RadioGroupItem value="partnership" /></FormControl>
-                          <FormLabel className="font-normal">Partnership</FormLabel>
+                          <FormControl>
+                            <RadioGroupItem value="partnership" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Partnership
+                          </FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl><RadioGroupItem value="other" /></FormControl>
+                          <FormControl>
+                            <RadioGroupItem value="other" />
+                          </FormControl>
                           <FormLabel className="font-normal">Other</FormLabel>
                         </FormItem>
                       </RadioGroup>
@@ -345,15 +497,21 @@ function W9Tab() {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-bold border-b border-border pb-2">Address</h3>
+              <h3 className="text-lg font-bold border-b border-border pb-2">
+                Address
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="address"
                   render={({ field }) => (
                     <FormItem className="col-span-full">
-                      <FormLabel>Address (number, street, and apt. or suite no.)</FormLabel>
-                      <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                      <FormLabel>
+                        Address (number, street, and apt. or suite no.)
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} className="rounded-xl" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -364,7 +522,9 @@ function W9Tab() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>City</FormLabel>
-                      <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                      <FormControl>
+                        <Input {...field} className="rounded-xl" />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -376,7 +536,9 @@ function W9Tab() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>State</FormLabel>
-                        <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                        <FormControl>
+                          <Input {...field} className="rounded-xl" />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -387,7 +549,9 @@ function W9Tab() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>ZIP code</FormLabel>
-                        <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                        <FormControl>
+                          <Input {...field} className="rounded-xl" />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -397,7 +561,9 @@ function W9Tab() {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-bold border-b border-border pb-2">Taxpayer Identification Number</h3>
+              <h3 className="text-lg font-bold border-b border-border pb-2">
+                Taxpayer Identification Number
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -412,12 +578,20 @@ function W9Tab() {
                           className="flex space-x-4"
                         >
                           <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl><RadioGroupItem value="ein" /></FormControl>
-                            <FormLabel className="font-normal">Employer ID (EIN)</FormLabel>
+                            <FormControl>
+                              <RadioGroupItem value="ein" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Employer ID (EIN)
+                            </FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl><RadioGroupItem value="ssn" /></FormControl>
-                            <FormLabel className="font-normal">Social Security (SSN)</FormLabel>
+                            <FormControl>
+                              <RadioGroupItem value="ssn" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Social Security (SSN)
+                            </FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
@@ -431,8 +605,17 @@ function W9Tab() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Last 4 Digits</FormLabel>
-                      <FormControl><Input {...field} maxLength={4} placeholder="1234" className="rounded-xl font-mono" /></FormControl>
-                      <FormDescription>For security, we only collect the last 4 digits.</FormDescription>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          maxLength={4}
+                          placeholder="1234"
+                          className="rounded-xl font-mono"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        For security, we only collect the last 4 digits.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -441,7 +624,9 @@ function W9Tab() {
             </div>
 
             <div className="space-y-4 bg-muted/50 p-4 border border-border">
-              <h3 className="text-lg font-bold border-b border-border pb-2">Certification & Signature</h3>
+              <h3 className="text-lg font-bold border-b border-border pb-2">
+                Certification & Signature
+              </h3>
               <FormField
                 control={form.control}
                 name="agreedToTerms"
@@ -450,13 +635,16 @@ function W9Tab() {
                     <FormControl>
                       <Checkbox
                         checked={field.value === "true"}
-                        onCheckedChange={(checked) => field.onChange(checked ? "true" : "false")}
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked ? "true" : "false")
+                        }
                         className="mt-1"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>
-                        I certify under penalties of perjury that the information provided is correct and complete.
+                        I certify under penalties of perjury that the
+                        information provided is correct and complete.
                       </FormLabel>
                     </div>
                   </FormItem>
@@ -468,14 +656,20 @@ function W9Tab() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Digital Signature (Full Legal Name)</FormLabel>
-                    <FormControl><Input {...field} className="rounded-xl" /></FormControl>
+                    <FormControl>
+                      <Input {...field} className="rounded-xl" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <Button type="submit" disabled={isPending || form.watch("agreedToTerms") !== "true"} className="rounded-xl font-bold">
+            <Button
+              type="submit"
+              disabled={isPending || form.watch("agreedToTerms") !== "true"}
+              className="rounded-xl font-bold"
+            >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isExisting ? "Update W-9" : "Submit W-9"}
             </Button>
@@ -517,10 +711,20 @@ function InsuranceTab() {
   const form = useForm<z.infer<typeof insuranceSchema>>({
     resolver: zodResolver(insuranceSchema),
     defaultValues: {
-      glCarrier: "", glPolicyNumber: "", glCoverageAmount: "", glExpirationDate: "",
-      autoCarrier: "", autoPolicyNumber: "", autoCoverageAmount: "", autoExpirationDate: "",
-      wcCarrier: "", wcPolicyNumber: "", wcExpirationDate: "",
-      bondCompany: "", bondAmount: "", bondExpirationDate: "",
+      glCarrier: "",
+      glPolicyNumber: "",
+      glCoverageAmount: "",
+      glExpirationDate: "",
+      autoCarrier: "",
+      autoPolicyNumber: "",
+      autoCoverageAmount: "",
+      autoExpirationDate: "",
+      wcCarrier: "",
+      wcPolicyNumber: "",
+      wcExpirationDate: "",
+      bondCompany: "",
+      bondAmount: "",
+      bondExpirationDate: "",
       certificateHolderName: "",
     },
   });
@@ -530,11 +734,15 @@ function InsuranceTab() {
       form.reset({
         glCarrier: ins.glCarrier || "",
         glPolicyNumber: ins.glPolicyNumber || "",
-        glCoverageAmount: ins.glCoverageAmount ? String(ins.glCoverageAmount) : "",
+        glCoverageAmount: ins.glCoverageAmount
+          ? String(ins.glCoverageAmount)
+          : "",
         glExpirationDate: ins.glExpirationDate || "",
         autoCarrier: ins.autoCarrier || "",
         autoPolicyNumber: ins.autoPolicyNumber || "",
-        autoCoverageAmount: ins.autoCoverageAmount ? String(ins.autoCoverageAmount) : "",
+        autoCoverageAmount: ins.autoCoverageAmount
+          ? String(ins.autoCoverageAmount)
+          : "",
         autoExpirationDate: ins.autoExpirationDate || "",
         wcCarrier: ins.wcCarrier || "",
         wcPolicyNumber: ins.wcPolicyNumber || "",
@@ -553,19 +761,33 @@ function InsuranceTab() {
     const payload = {
       ...values,
       glCoverageAmount: Number(values.glCoverageAmount),
-      autoCoverageAmount: values.autoCoverageAmount ? Number(values.autoCoverageAmount) : undefined,
+      autoCoverageAmount: values.autoCoverageAmount
+        ? Number(values.autoCoverageAmount)
+        : undefined,
       bondAmount: values.bondAmount ? Number(values.bondAmount) : undefined,
     };
-    
+
     const action = isExisting ? updateIns.mutate : submitIns.mutate;
-    action({ data: payload as any }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetInsuranceQueryKey() });
-        queryClient.invalidateQueries({ queryKey: getGetAccountStatusQueryKey() });
-        toast({ title: isExisting ? "Insurance updated successfully" : "Insurance submitted successfully" });
+    action(
+      { data: payload as any },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: getGetInsuranceQueryKey(),
+          });
+          queryClient.invalidateQueries({
+            queryKey: getGetAccountStatusQueryKey(),
+          });
+          toast({
+            title: isExisting
+              ? "Insurance updated successfully"
+              : "Insurance submitted successfully",
+          });
+        },
+        onError: () =>
+          toast({ title: "Failed to save insurance", variant: "destructive" }),
       },
-      onError: () => toast({ title: "Failed to save insurance", variant: "destructive" })
-    });
+    );
   }
 
   const isPending = submitIns.isPending || updateIns.isPending;
@@ -576,7 +798,9 @@ function InsuranceTab() {
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>Insurance & Bonding</CardTitle>
-            <CardDescription>Provide your coverage details to bid on jobs.</CardDescription>
+            <CardDescription>
+              Provide your coverage details to bid on jobs.
+            </CardDescription>
           </div>
           {isExisting && <StatusBadge status={ins?.status as any} />}
         </div>
@@ -587,95 +811,288 @@ function InsuranceTab() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
             <AlertDescription>
-              Your insurance submission was rejected.{ins.reviewNote ? ` Reason: ${ins.reviewNote}` : " Please review your information and resubmit."}
+              Your insurance submission was rejected.
+              {ins.reviewNote
+                ? ` Reason: ${ins.reviewNote}`
+                : " Please review your information and resubmit."}
             </AlertDescription>
           </Alert>
         )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Accordion type="multiple" defaultValue={["item-1"]} className="w-full">
+            <Accordion
+              type="multiple"
+              defaultValue={["item-1"]}
+              className="w-full"
+            >
               <AccordionItem value="item-1" className="border-border">
-                <AccordionTrigger className="font-bold">General Liability (Required)</AccordionTrigger>
+                <AccordionTrigger className="font-bold">
+                  General Liability (Required)
+                </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="glCarrier" render={({ field }) => (
-                      <FormItem><FormLabel>Carrier Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="glPolicyNumber" render={({ field }) => (
-                      <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="glCoverageAmount" render={({ field }) => (
-                      <FormItem><FormLabel>Coverage Amount ($)</FormLabel><FormControl><Input type="number" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="glExpirationDate" render={({ field }) => (
-                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField
+                      control={form.control}
+                      name="glCarrier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Carrier Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} className="rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="glPolicyNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Policy Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} className="rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="glCoverageAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Coverage Amount ($)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              className="rounded-xl"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="glExpirationDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expiration Date</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              className="rounded-xl"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2" className="border-border">
-                <AccordionTrigger className="font-bold text-muted-foreground hover:text-foreground">Commercial Auto (Optional)</AccordionTrigger>
+                <AccordionTrigger className="font-bold text-muted-foreground hover:text-foreground">
+                  Commercial Auto (Optional)
+                </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="autoCarrier" render={({ field }) => (
-                      <FormItem><FormLabel>Carrier Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="autoPolicyNumber" render={({ field }) => (
-                      <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="autoCoverageAmount" render={({ field }) => (
-                      <FormItem><FormLabel>Coverage Amount ($)</FormLabel><FormControl><Input type="number" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="autoExpirationDate" render={({ field }) => (
-                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField
+                      control={form.control}
+                      name="autoCarrier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Carrier Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} className="rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="autoPolicyNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Policy Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} className="rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="autoCoverageAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Coverage Amount ($)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              className="rounded-xl"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="autoExpirationDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expiration Date</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              className="rounded-xl"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3" className="border-border">
-                <AccordionTrigger className="font-bold text-muted-foreground hover:text-foreground">Workers Compensation (Optional)</AccordionTrigger>
+                <AccordionTrigger className="font-bold text-muted-foreground hover:text-foreground">
+                  Workers Compensation (Optional)
+                </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="wcCarrier" render={({ field }) => (
-                      <FormItem><FormLabel>Carrier Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="wcPolicyNumber" render={({ field }) => (
-                      <FormItem><FormLabel>Policy Number</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="wcExpirationDate" render={({ field }) => (
-                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField
+                      control={form.control}
+                      name="wcCarrier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Carrier Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} className="rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="wcPolicyNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Policy Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} className="rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="wcExpirationDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expiration Date</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              className="rounded-xl"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-4" className="border-border">
-                <AccordionTrigger className="font-bold text-muted-foreground hover:text-foreground">Surety Bond (Optional)</AccordionTrigger>
+                <AccordionTrigger className="font-bold text-muted-foreground hover:text-foreground">
+                  Surety Bond (Optional)
+                </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="bondCompany" render={({ field }) => (
-                      <FormItem><FormLabel>Bond Company</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="bondAmount" render={({ field }) => (
-                      <FormItem><FormLabel>Bond Amount ($)</FormLabel><FormControl><Input type="number" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="bondExpirationDate" render={({ field }) => (
-                      <FormItem><FormLabel>Expiration Date</FormLabel><FormControl><Input type="date" {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField
+                      control={form.control}
+                      name="bondCompany"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bond Company</FormLabel>
+                          <FormControl>
+                            <Input {...field} className="rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="bondAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bond Amount ($)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              className="rounded-xl"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="bondExpirationDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expiration Date</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              className="rounded-xl"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            
-            <FormField control={form.control} name="certificateHolderName" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Certificate Holder Name (if applicable)</FormLabel>
-                <FormControl><Input {...field} className="rounded-xl" /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
 
-            <Button type="submit" disabled={isPending} className="rounded-xl font-bold">
+            <FormField
+              control={form.control}
+              name="certificateHolderName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Certificate Holder Name (if applicable)</FormLabel>
+                  <FormControl>
+                    <Input {...field} className="rounded-xl" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="rounded-xl font-bold"
+            >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isExisting ? "Update Insurance" : "Submit Insurance"}
             </Button>
@@ -748,11 +1165,21 @@ function PaymentMethodTab() {
     const action = isExisting ? updatePm.mutate : setPm.mutate;
     action({ data: values } as any, {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetPaymentMethodQueryKey() });
-        queryClient.invalidateQueries({ queryKey: getGetAccountStatusQueryKey() });
-        toast({ title: isExisting ? "Payment method updated" : "Payment method saved" });
+        queryClient.invalidateQueries({
+          queryKey: getGetPaymentMethodQueryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: getGetAccountStatusQueryKey(),
+        });
+        toast({
+          title: isExisting ? "Payment method updated" : "Payment method saved",
+        });
       },
-      onError: () => toast({ title: "Failed to save payment method", variant: "destructive" })
+      onError: () =>
+        toast({
+          title: "Failed to save payment method",
+          variant: "destructive",
+        }),
     });
   }
 
@@ -798,51 +1225,100 @@ function PaymentMethodTab() {
     <Card className="rounded-xl border-2">
       <CardHeader>
         <CardTitle>Billing & Payment Method</CardTitle>
-        <CardDescription>Set up how you will pay for completed jobs.</CardDescription>
+        <CardDescription>
+          Set up how you will pay for completed jobs.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField control={form.control} name="methodType" render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Payment Type</FormLabel>
-                <FormControl>
-                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {[
-                      { value: "credit_card", label: "Credit / Debit Card", icon: CreditCard },
-                      { value: "ach", label: "ACH Bank Transfer", icon: Banknote },
-                      { value: "net_15", label: "Net 15 Terms", icon: ShieldAlert },
-                      { value: "net_30", label: "Net 30 Terms", icon: ShieldAlert },
-                      { value: "net_45", label: "Net 45 Terms", icon: ShieldAlert },
-                    ].map(option => (
-                      <FormItem key={option.value} className="[&>div]:w-full">
-                        <FormControl>
-                          <RadioGroupItem value={option.value} className="peer sr-only" />
-                        </FormControl>
-                        <FormLabel className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary cursor-pointer h-24">
-                          <option.icon className="mb-2 h-6 w-6" />
-                          {option.label}
-                        </FormLabel>
-                      </FormItem>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+            <FormField
+              control={form.control}
+              name="methodType"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Payment Type</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
+                    >
+                      {[
+                        {
+                          value: "credit_card",
+                          label: "Credit / Debit Card",
+                          icon: CreditCard,
+                        },
+                        {
+                          value: "ach",
+                          label: "ACH Bank Transfer",
+                          icon: Banknote,
+                        },
+                        {
+                          value: "net_15",
+                          label: "Net 15 Terms",
+                          icon: ShieldAlert,
+                        },
+                        {
+                          value: "net_30",
+                          label: "Net 30 Terms",
+                          icon: ShieldAlert,
+                        },
+                        {
+                          value: "net_45",
+                          label: "Net 45 Terms",
+                          icon: ShieldAlert,
+                        },
+                      ].map((option) => (
+                        <FormItem key={option.value} className="[&>div]:w-full">
+                          <FormControl>
+                            <RadioGroupItem
+                              value={option.value}
+                              className="peer sr-only"
+                            />
+                          </FormControl>
+                          <FormLabel className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary cursor-pointer h-24">
+                            <option.icon className="mb-2 h-6 w-6" />
+                            {option.label}
+                          </FormLabel>
+                        </FormItem>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {methodType === "credit_card" && (
               <div className="space-y-4 border p-4 bg-muted/20">
                 <h4 className="font-bold">Card Details</h4>
                 {isExisting && pm?.cardLast4 && (
                   <p className="text-sm text-muted-foreground">
-                    Saved card on file: <span className="font-mono font-medium">{pm.cardBrand || "Card"} •••• {pm.cardLast4}</span>
-                    {pm.cardExpMonth && pm.cardExpYear ? ` (exp ${pm.cardExpMonth}/${pm.cardExpYear})` : ""}. Enter a new card below to replace it.
+                    Saved card on file:{" "}
+                    <span className="font-mono font-medium">
+                      {pm.cardBrand || "Card"} •••• {pm.cardLast4}
+                    </span>
+                    {pm.cardExpMonth && pm.cardExpYear
+                      ? ` (exp ${pm.cardExpMonth}/${pm.cardExpYear})`
+                      : ""}
+                    . Enter a new card below to replace it.
                   </p>
                 )}
-                <FormField control={form.control} name="cardholderName" render={({ field }) => (
-                  <FormItem className="max-w-md"><FormLabel>Cardholder Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                )} />
+                <FormField
+                  control={form.control}
+                  name="cardholderName"
+                  render={({ field }) => (
+                    <FormItem className="max-w-md">
+                      <FormLabel>Cardholder Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="rounded-xl" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="space-y-2">
                   <FormLabel>Card</FormLabel>
                   <StripeCardForm
@@ -851,7 +1327,8 @@ function PaymentMethodTab() {
                     saveLabel={isExisting ? "Replace card" : "Save card"}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Card details are entered securely with Stripe — they never touch our servers.
+                    Card details are entered securely with Stripe — they never
+                    touch our servers.
                   </p>
                 </div>
               </div>
@@ -862,25 +1339,52 @@ function PaymentMethodTab() {
                 <h4 className="font-bold">Bank Account</h4>
                 {isExisting && pm?.accountLast4 && (
                   <p className="text-sm text-muted-foreground">
-                    Saved bank account on file: <span className="font-mono font-medium">{pm.bankName || "Bank"} •••• {pm.accountLast4}</span>. Connect a new account below to replace it.
+                    Saved bank account on file:{" "}
+                    <span className="font-mono font-medium">
+                      {pm.bankName || "Bank"} •••• {pm.accountLast4}
+                    </span>
+                    . Connect a new account below to replace it.
                   </p>
                 )}
                 {isExisting && pm?.verificationStatus === "pending" && (
                   <MicrodepositVerify
                     onVerified={() => {
-                      queryClient.invalidateQueries({ queryKey: getGetPaymentMethodQueryKey() });
-                      queryClient.invalidateQueries({ queryKey: getGetAccountStatusQueryKey() });
+                      queryClient.invalidateQueries({
+                        queryKey: getGetPaymentMethodQueryKey(),
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: getGetAccountStatusQueryKey(),
+                      });
                     }}
                   />
                 )}
-                <FormField control={form.control} name="cardholderName" render={({ field }) => (
-                  <FormItem className="max-w-md"><FormLabel>Account Holder Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                )} />
+                <FormField
+                  control={form.control}
+                  name="cardholderName"
+                  render={({ field }) => (
+                    <FormItem className="max-w-md">
+                      <FormLabel>Account Holder Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="rounded-xl" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <StripeBankForm
                   onSaved={onBankSaved}
                   saving={isPending}
-                  saveLabel={isExisting && pm?.accountLast4 ? "Replace bank account" : "Connect bank account"}
-                  accountHolderName={form.watch("cardholderName") || profile?.companyName || profile?.contactName || ""}
+                  saveLabel={
+                    isExisting && pm?.accountLast4
+                      ? "Replace bank account"
+                      : "Connect bank account"
+                  }
+                  accountHolderName={
+                    form.watch("cardholderName") ||
+                    profile?.companyName ||
+                    profile?.contactName ||
+                    ""
+                  }
                   email={profile?.email || undefined}
                 />
               </div>
@@ -890,7 +1394,10 @@ function PaymentMethodTab() {
               <Alert className="rounded-xl">
                 <ShieldAlert className="h-4 w-4" />
                 <AlertTitle>Credit Approval Required</AlertTitle>
-                <AlertDescription>Net terms are subject to credit approval. Our team will review your account history before activating this payment method.</AlertDescription>
+                <AlertDescription>
+                  Net terms are subject to credit approval. Our team will review
+                  your account history before activating this payment method.
+                </AlertDescription>
               </Alert>
             )}
 
@@ -898,24 +1405,68 @@ function PaymentMethodTab() {
               <div className="space-y-4">
                 <h4 className="font-bold">Billing Address</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="billingAddress" render={({ field }) => (
-                    <FormItem className="col-span-full"><FormLabel>Address</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="billingCity" render={({ field }) => (
-                    <FormItem><FormLabel>City</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="billingState" render={({ field }) => (
-                    <FormItem><FormLabel>State</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={form.control} name="billingZip" render={({ field }) => (
-                    <FormItem><FormLabel>ZIP</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-                  )} />
+                  <FormField
+                    control={form.control}
+                    name="billingAddress"
+                    render={({ field }) => (
+                      <FormItem className="col-span-full">
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="rounded-xl" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="billingCity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="rounded-xl" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="billingState"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="rounded-xl" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="billingZip"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ZIP</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="rounded-xl" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
             )}
 
             {methodType.startsWith("net_") && (
-              <Button type="submit" disabled={isPending} className="rounded-xl font-bold">
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="rounded-xl font-bold"
+              >
                 {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Save Payment Method
               </Button>
@@ -927,34 +1478,41 @@ function PaymentMethodTab() {
   );
 }
 
-const payoutSchema = z.object({
-  bankName: z.string().min(1, "Bank name is required"),
-  accountHolderName: z.string().min(1, "Account holder name is required"),
-  accountType: z.enum(["checking", "savings"]),
-  routingNumber: z.string().min(9, "Must be 9 digits").max(9, "Must be 9 digits"),
-  accountNumber: z.string().min(4, "Account number required"),
-  confirmAccountNumber: z.string(),
-}).refine((data) => data.accountNumber === data.confirmAccountNumber, {
-  message: "Account numbers don't match",
-  path: ["confirmAccountNumber"],
-});
+const payoutSchema = z
+  .object({
+    bankName: z.string().min(1, "Bank name is required"),
+    accountHolderName: z.string().min(1, "Account holder name is required"),
+    accountType: z.enum(["checking", "savings"]),
+    routingNumber: z
+      .string()
+      .min(9, "Must be 9 digits")
+      .max(9, "Must be 9 digits"),
+    accountNumber: z.string().min(4, "Account number required"),
+    confirmAccountNumber: z.string(),
+  })
+  .refine((data) => data.accountNumber === data.confirmAccountNumber, {
+    message: "Account numbers don't match",
+    path: ["confirmAccountNumber"],
+  });
 
 function PayoutAccountTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: payout, isLoading, error } = useGetPayoutAccount();
-  const { data: payoutStatus, isLoading: isStatusLoading } = useGetPayoutStatus({
-    query: {
-      queryKey: getGetPayoutStatusQueryKey(),
-      // Keep the checklist fresh without a manual reload: refetch when the
-      // provider returns to this tab (e.g. after finishing Stripe onboarding
-      // in another tab) and poll on a short interval while Stripe still has
-      // outstanding requirements (connected but payouts not yet enabled).
-      refetchOnWindowFocus: true,
-      refetchInterval: (query) =>
-        query.state.data && !query.state.data.payoutsEnabled ? 15000 : false,
+  const { data: payoutStatus, isLoading: isStatusLoading } = useGetPayoutStatus(
+    {
+      query: {
+        queryKey: getGetPayoutStatusQueryKey(),
+        // Keep the checklist fresh without a manual reload: refetch when the
+        // provider returns to this tab (e.g. after finishing Stripe onboarding
+        // in another tab) and poll on a short interval while Stripe still has
+        // outstanding requirements (connected but payouts not yet enabled).
+        refetchOnWindowFocus: true,
+        refetchInterval: (query) =>
+          query.state.data && !query.state.data.payoutsEnabled ? 15000 : false,
+      },
     },
-  });
+  );
   const setPayout = useSetPayoutAccount();
   const updatePayout = useUpdatePayoutAccount();
   const connectPayout = useConnectPayoutLink();
@@ -966,9 +1524,14 @@ function PayoutAccountTab() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("payouts") === "done") {
       queryClient.invalidateQueries({ queryKey: getGetPayoutStatusQueryKey() });
-      queryClient.invalidateQueries({ queryKey: getGetAccountStatusQueryKey() });
+      queryClient.invalidateQueries({
+        queryKey: getGetAccountStatusQueryKey(),
+      });
       params.delete("payouts");
-      const next = window.location.pathname + (params.toString() ? `?${params}` : "") + window.location.hash;
+      const next =
+        window.location.pathname +
+        (params.toString() ? `?${params}` : "") +
+        window.location.hash;
       window.history.replaceState({}, "", next);
     }
   }, [queryClient]);
@@ -983,7 +1546,8 @@ function PayoutAccountTab() {
     if (wasPayoutsEnabled.current === false && enabled) {
       toast({
         title: "Payouts enabled",
-        description: "You're all set — completed jobs now pay out to your bank automatically.",
+        description:
+          "You're all set — completed jobs now pay out to your bank automatically.",
       });
     }
     wasPayoutsEnabled.current = enabled;
@@ -997,7 +1561,12 @@ function PayoutAccountTab() {
         onSuccess: (res) => {
           window.location.href = res.url;
         },
-        onError: () => toast({ title: "Couldn't open Stripe onboarding", description: "Please try again.", variant: "destructive" }),
+        onError: () =>
+          toast({
+            title: "Couldn't open Stripe onboarding",
+            description: "Please try again.",
+            variant: "destructive",
+          }),
       },
     );
   }
@@ -1035,15 +1604,36 @@ function PayoutAccountTab() {
   function onSubmit(values: z.infer<typeof payoutSchema>) {
     const { confirmAccountNumber, ...payload } = values;
     const action = isExisting ? updatePayout.mutate : setPayout.mutate;
-    action({ data: payload as any }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetPayoutAccountQueryKey() });
-        queryClient.invalidateQueries({ queryKey: getGetAccountStatusQueryKey() });
-        toast({ title: isExisting ? "Payout account updated" : "Payout account saved" });
-        if (isExisting) form.reset({ ...values, routingNumber: "", accountNumber: "", confirmAccountNumber: "" });
+    action(
+      { data: payload as any },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: getGetPayoutAccountQueryKey(),
+          });
+          queryClient.invalidateQueries({
+            queryKey: getGetAccountStatusQueryKey(),
+          });
+          toast({
+            title: isExisting
+              ? "Payout account updated"
+              : "Payout account saved",
+          });
+          if (isExisting)
+            form.reset({
+              ...values,
+              routingNumber: "",
+              accountNumber: "",
+              confirmAccountNumber: "",
+            });
+        },
+        onError: () =>
+          toast({
+            title: "Failed to save payout account",
+            variant: "destructive",
+          }),
       },
-      onError: () => toast({ title: "Failed to save payout account", variant: "destructive" })
-    });
+    );
   }
 
   const isPending = setPayout.isPending || updatePayout.isPending;
@@ -1054,7 +1644,9 @@ function PayoutAccountTab() {
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>Payout Bank Account</CardTitle>
-            <CardDescription>Where you will receive payments for completed jobs.</CardDescription>
+            <CardDescription>
+              Where you will receive payments for completed jobs.
+            </CardDescription>
           </div>
           {isExisting && <StatusBadge status={payout?.status as any} />}
         </div>
@@ -1065,11 +1657,17 @@ function PayoutAccountTab() {
             <div className="flex items-center gap-3">
               <Banknote className="h-8 w-8 text-muted-foreground" />
               <div>
-                <p className="font-bold">{payout.bankName} •••• {payout.accountLast4}</p>
-                <p className="text-sm text-muted-foreground capitalize">{payout.accountType}</p>
+                <p className="font-bold">
+                  {payout.bankName} •••• {payout.accountLast4}
+                </p>
+                <p className="text-sm text-muted-foreground capitalize">
+                  {payout.accountType}
+                </p>
               </div>
             </div>
-            <Badge variant="outline" className="rounded-xl">Current</Badge>
+            <Badge variant="outline" className="rounded-xl">
+              Current
+            </Badge>
           </div>
         )}
 
@@ -1078,7 +1676,8 @@ function PayoutAccountTab() {
           const enabled = !!ps?.payoutsEnabled;
           const connected = !!ps?.connected;
           const currentlyDue = ps?.requirements?.currentlyDue ?? [];
-          const pendingVerification = ps?.requirements?.pendingVerification ?? [];
+          const pendingVerification =
+            ps?.requirements?.pendingVerification ?? [];
           const deadline = ps?.requirements?.currentDeadline ?? null;
 
           if (isStatusLoading) {
@@ -1090,7 +1689,10 @@ function PayoutAccountTab() {
               <Alert className="mb-6 rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
                 <CheckCircle2 className="h-4 w-4" />
                 <AlertTitle>Payouts enabled</AlertTitle>
-                <AlertDescription>You're all set — completed jobs pay out to your bank automatically.</AlertDescription>
+                <AlertDescription>
+                  You're all set — completed jobs pay out to your bank
+                  automatically.
+                </AlertDescription>
               </Alert>
             );
           }
@@ -1101,10 +1703,13 @@ function PayoutAccountTab() {
               <div className="mb-6 border-2 border-amber-500/30 bg-amber-500/5 p-4 space-y-4">
                 <div className="flex items-center gap-2">
                   <Banknote className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  <p className="font-bold text-amber-700 dark:text-amber-400">Set up payouts</p>
+                  <p className="font-bold text-amber-700 dark:text-amber-400">
+                    Set up payouts
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Connect a payout account through Stripe to receive payments for completed jobs. It only takes a few minutes.
+                  Connect a payout account through Stripe to receive payments
+                  for completed jobs. It only takes a few minutes.
                 </p>
                 <Button
                   type="button"
@@ -1112,7 +1717,9 @@ function PayoutAccountTab() {
                   disabled={connectPayout.isPending}
                   className="rounded-xl font-bold"
                 >
-                  {connectPayout.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {connectPayout.isPending && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
                   Connect payout account
                 </Button>
               </div>
@@ -1124,23 +1731,31 @@ function PayoutAccountTab() {
             <div className="mb-6 border-2 border-amber-500/30 bg-amber-500/5 p-4 space-y-4">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <p className="font-bold text-amber-700 dark:text-amber-400">Finish payout setup</p>
+                <p className="font-bold text-amber-700 dark:text-amber-400">
+                  Finish payout setup
+                </p>
               </div>
 
               {currentlyDue.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-bold tracking-wide text-foreground">WHAT STRIPE STILL NEEDS</p>
+                  <p className="text-xs font-bold tracking-wide text-foreground">
+                    WHAT STRIPE STILL NEEDS
+                  </p>
                   <ul className="space-y-1.5">
                     {currentlyDue.map((req) => (
                       <li key={req.code} className="flex items-start gap-2">
                         <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                        <span className="text-sm leading-snug">{req.label}</span>
+                        <span className="text-sm leading-snug">
+                          {req.label}
+                        </span>
                       </li>
                     ))}
                   </ul>
                   {deadline && (
                     <p className="text-xs text-destructive">
-                      Complete by {new Date(deadline * 1000).toLocaleDateString()} to avoid a payout hold.
+                      Complete by{" "}
+                      {new Date(deadline * 1000).toLocaleDateString()} to avoid
+                      a payout hold.
                     </p>
                   )}
                 </div>
@@ -1148,23 +1763,29 @@ function PayoutAccountTab() {
 
               {pendingVerification.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-bold tracking-wide text-muted-foreground">STRIPE IS REVIEWING</p>
+                  <p className="text-xs font-bold tracking-wide text-muted-foreground">
+                    STRIPE IS REVIEWING
+                  </p>
                   <ul className="space-y-1.5">
                     {pendingVerification.map((req) => (
                       <li key={req.code} className="flex items-start gap-2">
                         <Clock className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-                        <span className="text-sm leading-snug text-muted-foreground">{req.label}</span>
+                        <span className="text-sm leading-snug text-muted-foreground">
+                          {req.label}
+                        </span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              {currentlyDue.length === 0 && pendingVerification.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Stripe is finishing your review. Payouts turn on once approved — check back shortly.
-                </p>
-              )}
+              {currentlyDue.length === 0 &&
+                pendingVerification.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Stripe is finishing your review. Payouts turn on once
+                    approved — check back shortly.
+                  </p>
+                )}
 
               {currentlyDue.length > 0 && (
                 <Button
@@ -1173,7 +1794,9 @@ function PayoutAccountTab() {
                   disabled={connectPayout.isPending}
                   className="rounded-xl font-bold"
                 >
-                  {connectPayout.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {connectPayout.isPending && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
                   Continue onboarding
                 </Button>
               )}
@@ -1184,52 +1807,133 @@ function PayoutAccountTab() {
         <Alert className="mb-6 rounded-xl bg-blue-50/50 text-blue-900 border-blue-200 dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-800">
           <ShieldAlert className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <AlertTitle>Secure Storage</AlertTitle>
-          <AlertDescription>Your bank information is encrypted and stored securely. We only display the last 4 digits after saving.</AlertDescription>
+          <AlertDescription>
+            Your bank information is encrypted and stored securely. We only
+            display the last 4 digits after saving.
+          </AlertDescription>
         </Alert>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="bankName" render={({ field }) => (
-                <FormItem><FormLabel>Bank Name</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="accountHolderName" render={({ field }) => (
-                <FormItem><FormLabel>Name on Account</FormLabel><FormControl><Input {...field} className="rounded-xl" /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="bankName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bank Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} className="rounded-xl" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="accountHolderName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name on Account</FormLabel>
+                    <FormControl>
+                      <Input {...field} className="rounded-xl" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <FormField control={form.control} name="accountType" render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Account Type</FormLabel>
-                <FormControl>
-                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl><RadioGroupItem value="checking" /></FormControl>
-                      <FormLabel className="font-normal">Checking</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl><RadioGroupItem value="savings" /></FormControl>
-                      <FormLabel className="font-normal">Savings</FormLabel>
-                    </FormItem>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+            <FormField
+              control={form.control}
+              name="accountType"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Account Type</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex space-x-4"
+                    >
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="checking" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Checking</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="savings" />
+                        </FormControl>
+                        <FormLabel className="font-normal">Savings</FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="routingNumber" render={({ field }) => (
-                <FormItem className="col-span-full"><FormLabel>Routing Number (9 digits)</FormLabel><FormControl><Input {...field} maxLength={9} className="rounded-xl font-mono" /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="accountNumber" render={({ field }) => (
-                <FormItem><FormLabel>Account Number</FormLabel><FormControl><Input type="password" {...field} className="rounded-xl font-mono" /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="confirmAccountNumber" render={({ field }) => (
-                <FormItem><FormLabel>Confirm Account Number</FormLabel><FormControl><Input type="password" {...field} className="rounded-xl font-mono" /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="routingNumber"
+                render={({ field }) => (
+                  <FormItem className="col-span-full">
+                    <FormLabel>Routing Number (9 digits)</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        maxLength={9}
+                        className="rounded-xl font-mono"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="accountNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        {...field}
+                        className="rounded-xl font-mono"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="confirmAccountNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Account Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        {...field}
+                        className="rounded-xl font-mono"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <Button type="submit" disabled={isPending} className="rounded-xl font-bold">
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="rounded-xl font-bold"
+            >
               {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isExisting ? "Update Bank Account" : "Save Bank Account"}
             </Button>
@@ -1243,8 +1947,9 @@ function PayoutAccountTab() {
 function ComplianceTab() {
   const { data: profile } = useGetMyProfile();
   const { data: status, isLoading } = useGetAccountStatus();
-  
-  if (isLoading || !status || !profile) return <Skeleton className="h-[400px] w-full" />;
+
+  if (isLoading || !status || !profile)
+    return <Skeleton className="h-[400px] w-full" />;
 
   const isCustomer = profile.role === "customer";
   const isProvider = profile.role === "provider";
@@ -1253,23 +1958,30 @@ function ComplianceTab() {
     <Card className="rounded-xl border-2">
       <CardHeader>
         <CardTitle>Account Status</CardTitle>
-        <CardDescription>Overview of your account verification and readiness.</CardDescription>
+        <CardDescription>
+          Overview of your account verification and readiness.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        
         {(!status.canBid && isProvider) || (!status.canPost && isCustomer) ? (
-          <Alert variant="destructive" className="rounded-xl bg-destructive/5 text-destructive border-destructive/20">
+          <Alert
+            variant="destructive"
+            className="rounded-xl bg-destructive/5 text-destructive border-destructive/20"
+          >
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
             <AlertDescription>
-              Your account is not fully set up. Complete the sections below to start {isProvider ? "bidding on" : "posting"} jobs.
+              Your account is not fully set up. Complete the sections below to
+              start {isProvider ? "bidding on" : "posting"} jobs.
             </AlertDescription>
           </Alert>
         ) : (
           <Alert className="rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
             <CheckCircle2 className="h-4 w-4" />
             <AlertTitle>Ready to Go</AlertTitle>
-            <AlertDescription>Your account is fully verified and ready.</AlertDescription>
+            <AlertDescription>
+              Your account is fully verified and ready.
+            </AlertDescription>
           </Alert>
         )}
 
@@ -1277,9 +1989,15 @@ function ComplianceTab() {
           <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
             <div className="flex flex-col">
               <span className="font-bold">Profile Completeness</span>
-              <span className="text-sm text-muted-foreground">Basic contact information</span>
+              <span className="text-sm text-muted-foreground">
+                Basic contact information
+              </span>
             </div>
-            {status.profileComplete ? <StatusBadge status="verified" text="Complete" /> : <StatusBadge status="not_submitted" text="Incomplete" />}
+            {status.profileComplete ? (
+              <StatusBadge status="verified" text="Complete" />
+            ) : (
+              <StatusBadge status="not_submitted" text="Incomplete" />
+            )}
           </div>
 
           {isProvider && (
@@ -1287,7 +2005,9 @@ function ComplianceTab() {
               <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
                 <div className="flex flex-col">
                   <span className="font-bold">W-9 Tax Form</span>
-                  <span className="text-sm text-muted-foreground">Required for payout reporting</span>
+                  <span className="text-sm text-muted-foreground">
+                    Required for payout reporting
+                  </span>
                 </div>
                 <StatusBadge status={status.w9Status as any} />
               </div>
@@ -1295,7 +2015,9 @@ function ComplianceTab() {
               <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
                 <div className="flex flex-col">
                   <span className="font-bold">Insurance & Bonding</span>
-                  <span className="text-sm text-muted-foreground">Liability coverage verification</span>
+                  <span className="text-sm text-muted-foreground">
+                    Liability coverage verification
+                  </span>
                 </div>
                 <StatusBadge status={status.insuranceStatus as any} />
               </div>
@@ -1303,7 +2025,9 @@ function ComplianceTab() {
               <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
                 <div className="flex flex-col">
                   <span className="font-bold">DOT / CDL Compliance</span>
-                  <span className="text-sm text-muted-foreground">Carrier operating credentials</span>
+                  <span className="text-sm text-muted-foreground">
+                    Carrier operating credentials
+                  </span>
                 </div>
                 <StatusBadge status={status.dotCdlStatus as any} />
               </div>
@@ -1311,7 +2035,9 @@ function ComplianceTab() {
               <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
                 <div className="flex flex-col">
                   <span className="font-bold">Payout Account</span>
-                  <span className="text-sm text-muted-foreground">Bank account for receiving funds</span>
+                  <span className="text-sm text-muted-foreground">
+                    Bank account for receiving funds
+                  </span>
                 </div>
                 <StatusBadge status={status.payoutStatus as any} />
               </div>
@@ -1322,12 +2048,17 @@ function ComplianceTab() {
             <div className="flex items-center justify-between p-4 border border-border/60 bg-card">
               <div className="flex flex-col">
                 <span className="font-bold">Payment Method</span>
-                <span className="text-sm text-muted-foreground">Billing source for accepted bids</span>
+                <span className="text-sm text-muted-foreground">
+                  Billing source for accepted bids
+                </span>
               </div>
               {status.paymentStatus === "set" ? (
                 <StatusBadge status="verified" text="Set" />
               ) : (
-                <a href="?tab=payment" className="inline-flex items-center gap-2 rounded-xl border-2 border-amber-400 px-3 py-1 text-sm font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-400/10">
+                <a
+                  href="?tab=payment"
+                  className="inline-flex items-center gap-2 rounded-xl border-2 border-amber-400 px-3 py-1 text-sm font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-400/10"
+                >
                   Set up
                   <ArrowRight className="h-4 w-4" />
                 </a>
@@ -1341,42 +2072,62 @@ function ComplianceTab() {
 }
 
 async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...options?.headers } });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || "Request failed"); }
+  const res = await fetch(path, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...options?.headers },
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.error || "Request failed");
+  }
   return res.json();
 }
 
 function DotCdlTab() {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [form, setForm] = useState({ dotNumber: "", mcNumber: "", cdlNumber: "", cdlState: "", cdlClass: "A", cdlExpiry: "" });
+  const [form, setForm] = useState({
+    dotNumber: "",
+    mcNumber: "",
+    cdlNumber: "",
+    cdlState: "",
+    cdlClass: "A",
+    cdlExpiry: "",
+  });
 
   const { data: record, isLoading } = useGetCompliance();
 
   const submit = useSubmitCompliance({
     mutation: {
-      onSuccess: () => { qc.invalidateQueries({ queryKey: getGetComplianceQueryKey() }); toast({ title: "Compliance info submitted for review" }); },
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: getGetComplianceQueryKey() });
+        toast({ title: "Compliance info submitted for review" });
+      },
       onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
     },
   });
 
   const verify = useVerifyCompliance({
     mutation: {
-      onSuccess: () => { qc.invalidateQueries({ queryKey: getGetComplianceQueryKey() }); toast({ title: "Credentials verified" }); },
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: getGetComplianceQueryKey() });
+        toast({ title: "Credentials verified" });
+      },
       onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
     },
   });
 
-  const submitForm = () => submit.mutate({
-    data: {
-      dotNumber: form.dotNumber || undefined,
-      mcNumber: form.mcNumber || undefined,
-      cdlNumber: form.cdlNumber || undefined,
-      cdlState: form.cdlState || undefined,
-      cdlClass: form.cdlClass || undefined,
-      cdlExpiry: form.cdlExpiry || undefined,
-    },
-  });
+  const submitForm = () =>
+    submit.mutate({
+      data: {
+        dotNumber: form.dotNumber || undefined,
+        mcNumber: form.mcNumber || undefined,
+        cdlNumber: form.cdlNumber || undefined,
+        cdlState: form.cdlState || undefined,
+        cdlClass: form.cdlClass || undefined,
+        cdlExpiry: form.cdlExpiry || undefined,
+      },
+    });
 
   React.useEffect(() => {
     if (record) {
@@ -1386,33 +2137,48 @@ function DotCdlTab() {
         cdlNumber: record.cdlNumber || "",
         cdlState: record.cdlState || "",
         cdlClass: record.cdlClass || "A",
-        cdlExpiry: record.cdlExpiry ? new Date(record.cdlExpiry).toISOString().split("T")[0] : "",
+        cdlExpiry: record.cdlExpiry
+          ? new Date(record.cdlExpiry).toISOString().split("T")[0]
+          : "",
       });
     }
   }, [record]);
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
 
-  const statusColor = !record ? "border-gray-200 bg-gray-50" :
-    record.status === "verified" ? "border-green-200 bg-green-50" :
-    record.status === "pending" ? "border-amber-200 bg-amber-50" :
-    record.status === "rejected" ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50";
+  const statusColor = !record
+    ? "border-gray-200 bg-gray-50"
+    : record.status === "verified"
+      ? "border-green-200 bg-green-50"
+      : record.status === "pending"
+        ? "border-amber-200 bg-amber-50"
+        : record.status === "rejected"
+          ? "border-red-200 bg-red-50"
+          : "border-gray-200 bg-gray-50";
 
   return (
     <Card className="rounded-xl border-2">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" />DOT / CDL Verification</CardTitle>
-            <CardDescription>Verify your DOT number and CDL credentials to unlock more jobs</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5" />
+              DOT / CDL Verification
+            </CardTitle>
+            <CardDescription>
+              Verify your DOT number and CDL credentials to unlock more jobs
+            </CardDescription>
           </div>
           {record && (
             <StatusBadge
               status={
-                record.status === "verified" ? "verified"
-                  : record.status === "pending" ? "pending"
-                  : record.status === "rejected" ? "rejected"
-                  : "not_submitted"
+                record.status === "verified"
+                  ? "verified"
+                  : record.status === "pending"
+                    ? "pending"
+                    : record.status === "rejected"
+                      ? "rejected"
+                      : "not_submitted"
               }
             />
           )}
@@ -1423,7 +2189,10 @@ function DotCdlTab() {
           <Alert className="rounded-xl border-green-200 bg-green-50">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-green-800">Verified</AlertTitle>
-            <AlertDescription className="text-green-700">Your DOT number and CDL are verified. You can bid on all job types.</AlertDescription>
+            <AlertDescription className="text-green-700">
+              Your DOT number and CDL are verified. You can bid on all job
+              types.
+            </AlertDescription>
           </Alert>
         )}
         {record?.status === "rejected" && (
@@ -1431,7 +2200,10 @@ function DotCdlTab() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
             <AlertDescription>
-              Your DOT/CDL submission was rejected.{record.reviewNote ? ` Reason: ${record.reviewNote}` : " Please update your credentials and resubmit."}
+              Your DOT/CDL submission was rejected.
+              {record.reviewNote
+                ? ` Reason: ${record.reviewNote}`
+                : " Please update your credentials and resubmit."}
             </AlertDescription>
           </Alert>
         )}
@@ -1440,9 +2212,21 @@ function DotCdlTab() {
             <Clock className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-amber-800">Under Review</AlertTitle>
             <AlertDescription className="text-amber-700 space-y-2">
-              <span>Your credentials are being verified (typically 1–2 business days).</span>
-              <Button size="sm" variant="outline" className="rounded-xl border-amber-400 text-amber-800 mt-2 block" onClick={() => verify.mutate({})} disabled={verify.isPending}>
-                {verify.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}Simulate Verification (Demo)
+              <span>
+                Your credentials are being verified (typically 1–2 business
+                days).
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-xl border-amber-400 text-amber-800 mt-2 block"
+                onClick={() => verify.mutate({})}
+                disabled={verify.isPending}
+              >
+                {verify.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : null}
+                Simulate Verification (Demo)
               </Button>
             </AlertDescription>
           </Alert>
@@ -1450,81 +2234,203 @@ function DotCdlTab() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">USDOT Number</Label>
-            <Input className="rounded-xl mt-1 font-mono" value={form.dotNumber} onChange={e => setForm(f => ({ ...f, dotNumber: e.target.value }))} placeholder="1234567" />
-            {record?.dotVerified && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Verified</p>}
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              USDOT Number
+            </Label>
+            <Input
+              className="rounded-xl mt-1 font-mono"
+              value={form.dotNumber}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, dotNumber: e.target.value }))
+              }
+              placeholder="1234567"
+            />
+            {record?.dotVerified && (
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Verified
+              </p>
+            )}
           </div>
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Number</Label>
-            <Input className="rounded-xl mt-1 font-mono" value={form.cdlNumber} onChange={e => setForm(f => ({ ...f, cdlNumber: e.target.value }))} placeholder="D1234-56789-01234" />
-            {record?.cdlVerified && <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Verified</p>}
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              CDL Number
+            </Label>
+            <Input
+              className="rounded-xl mt-1 font-mono"
+              value={form.cdlNumber}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, cdlNumber: e.target.value }))
+              }
+              placeholder="D1234-56789-01234"
+            />
+            {record?.cdlVerified && (
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Verified
+              </p>
+            )}
           </div>
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Issuing State</Label>
-            <Input className="rounded-xl mt-1" value={form.cdlState} onChange={e => setForm(f => ({ ...f, cdlState: e.target.value }))} placeholder="TX" maxLength={2} />
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              CDL Issuing State
+            </Label>
+            <Input
+              className="rounded-xl mt-1"
+              value={form.cdlState}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, cdlState: e.target.value }))
+              }
+              placeholder="TX"
+              maxLength={2}
+            />
           </div>
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Class</Label>
-            <Select value={form.cdlClass} onValueChange={v => setForm(f => ({ ...f, cdlClass: v }))}>
-              <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              CDL Class
+            </Label>
+            <Select
+              value={form.cdlClass}
+              onValueChange={(v) => setForm((f) => ({ ...f, cdlClass: v }))}
+            >
+              <SelectTrigger className="rounded-xl mt-1">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                <SelectItem value="A">Class A — Combination vehicles</SelectItem>
-                <SelectItem value="B">Class B — Heavy straight vehicles</SelectItem>
+                <SelectItem value="A">
+                  Class A — Combination vehicles
+                </SelectItem>
+                <SelectItem value="B">
+                  Class B — Heavy straight vehicles
+                </SelectItem>
                 <SelectItem value="C">Class C — Small vehicles</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CDL Expiry Date</Label>
-            <Input className="rounded-xl mt-1" type="date" value={form.cdlExpiry} onChange={e => setForm(f => ({ ...f, cdlExpiry: e.target.value }))} />
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              CDL Expiry Date
+            </Label>
+            <Input
+              className="rounded-xl mt-1"
+              type="date"
+              value={form.cdlExpiry}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, cdlExpiry: e.target.value }))
+              }
+            />
           </div>
         </div>
 
         <div>
-          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">MC Number</Label>
-          <Input className="rounded-xl mt-1 font-mono" value={form.mcNumber} onChange={e => setForm(f => ({ ...f, mcNumber: e.target.value }))} placeholder="MC-123456" />
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            MC Number
+          </Label>
+          <Input
+            className="rounded-xl mt-1 font-mono"
+            value={form.mcNumber}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, mcNumber: e.target.value }))
+            }
+            placeholder="MC-123456"
+          />
         </div>
 
         {record && (
           <div className="border border-border/60">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-4 pt-4">FMCSA Authority Checks</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-4 pt-4">
+              FMCSA Authority Checks
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border mt-3">
               {[
-                { label: "Operating Authority (FMCSA)", value: record.fmcsaAuthority },
-                { label: "Active Insurance on File", value: record.insuranceActive },
-                { label: "DOT Operating Status", value: record.dotOperatingStatus },
-                { label: "Not Out-of-Service / Suspended", value: record.notSuspended },
+                {
+                  label: "Operating Authority (FMCSA)",
+                  value: record.fmcsaAuthority,
+                },
+                {
+                  label: "Active Insurance on File",
+                  value: record.insuranceActive,
+                },
+                {
+                  label: "DOT Operating Status",
+                  value: record.dotOperatingStatus,
+                },
+                {
+                  label: "Not Out-of-Service / Suspended",
+                  value: record.notSuspended,
+                },
               ].map((c) => (
-                <div key={c.label} className="bg-background p-3 flex items-center justify-between gap-2">
+                <div
+                  key={c.label}
+                  className="bg-background p-3 flex items-center justify-between gap-2"
+                >
                   <span className="text-sm">{c.label}</span>
                   {c.value === "verified" ? (
-                    <Badge className="bg-green-500 hover:bg-green-600 rounded-xl text-xs"><CheckCircle2 className="w-3 h-3 mr-1" />Verified</Badge>
+                    <Badge className="bg-green-500 hover:bg-green-600 rounded-xl text-xs">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Verified
+                    </Badge>
                   ) : c.value === "failed" ? (
-                    <Badge variant="destructive" className="rounded-xl text-xs"><AlertCircle className="w-3 h-3 mr-1" />Failed</Badge>
+                    <Badge variant="destructive" className="rounded-xl text-xs">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      Failed
+                    </Badge>
                   ) : (
-                    <Badge variant="secondary" className="rounded-xl text-xs text-muted-foreground"><Clock className="w-3 h-3 mr-1" />Unknown</Badge>
+                    <Badge
+                      variant="secondary"
+                      className="rounded-xl text-xs text-muted-foreground"
+                    >
+                      <Clock className="w-3 h-3 mr-1" />
+                      Unknown
+                    </Badge>
                   )}
                 </div>
               ))}
             </div>
             {record.safetyRating && (
               <p className="text-xs text-muted-foreground px-4 py-3 border-t border-border">
-                Safety rating: <span className="font-bold text-foreground">{record.safetyRating}</span>
-                {record.complianceCheckedAt ? ` · Checked ${new Date(record.complianceCheckedAt).toLocaleDateString()}` : ""}
+                Safety rating:{" "}
+                <span className="font-bold text-foreground">
+                  {record.safetyRating}
+                </span>
+                {record.complianceCheckedAt
+                  ? ` · Checked ${new Date(record.complianceCheckedAt).toLocaleDateString()}`
+                  : ""}
               </p>
             )}
           </div>
         )}
 
         <div className="bg-muted/30 p-4 border border-border space-y-1">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Why verify?</p>
-          {["Unlock premium high-value jobs", "Display verified badge on your profile", "Faster bid acceptance from customers", "Required for interstate hauls"].map(i => (
-            <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground"><CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />{i}</div>
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+            Why verify?
+          </p>
+          {[
+            "Unlock premium high-value jobs",
+            "Display verified badge on your profile",
+            "Faster bid acceptance from customers",
+            "Required for interstate hauls",
+          ].map((i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2 text-sm text-muted-foreground"
+            >
+              <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
+              {i}
+            </div>
           ))}
         </div>
 
-        <Button className="rounded-xl font-bold w-full" disabled={submit.isPending} onClick={submitForm}>
-          {submit.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+        <Button
+          className="rounded-xl font-bold w-full"
+          disabled={submit.isPending}
+          onClick={submitForm}
+        >
+          {submit.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <ShieldCheck className="mr-2 h-4 w-4" />
+          )}
           {record ? "Update & Resubmit" : "Submit for Verification"}
         </Button>
       </CardContent>
@@ -1535,13 +2441,21 @@ function DotCdlTab() {
 function CreditApplicationTab() {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [form, setForm] = useState({ wantsInvoicing: false, tradeReferences: "", bankReference: "", estimatedMonthlySpend: "" });
+  const [form, setForm] = useState({
+    wantsInvoicing: false,
+    tradeReferences: "",
+    bankReference: "",
+    estimatedMonthlySpend: "",
+  });
 
   const { data: record, isLoading } = useGetCreditApplication();
 
   const submit = useSubmitCreditApplication({
     mutation: {
-      onSuccess: () => { qc.invalidateQueries({ queryKey: getGetCreditApplicationQueryKey() }); toast({ title: "Credit application submitted for review" }); },
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: getGetCreditApplicationQueryKey() });
+        toast({ title: "Credit application submitted for review" });
+      },
       onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
     },
   });
@@ -1552,34 +2466,62 @@ function CreditApplicationTab() {
         wantsInvoicing: !!record.wantsInvoicing,
         tradeReferences: record.tradeReferences || "",
         bankReference: record.bankReference || "",
-        estimatedMonthlySpend: record.estimatedMonthlySpend != null ? String(record.estimatedMonthlySpend) : "",
+        estimatedMonthlySpend:
+          record.estimatedMonthlySpend != null
+            ? String(record.estimatedMonthlySpend)
+            : "",
       });
     }
   }, [record]);
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
 
-  const submitForm = () => submit.mutate({
-    data: {
-      wantsInvoicing: form.wantsInvoicing,
-      tradeReferences: form.tradeReferences || undefined,
-      bankReference: form.bankReference || undefined,
-      estimatedMonthlySpend: form.estimatedMonthlySpend ? Number(form.estimatedMonthlySpend) : undefined,
-    },
-  });
+  const submitForm = () =>
+    submit.mutate({
+      data: {
+        wantsInvoicing: form.wantsInvoicing,
+        tradeReferences: form.tradeReferences || undefined,
+        bankReference: form.bankReference || undefined,
+        estimatedMonthlySpend: form.estimatedMonthlySpend
+          ? Number(form.estimatedMonthlySpend)
+          : undefined,
+      },
+    });
 
   return (
     <Card className="rounded-xl border-2">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" />Credit Application</CardTitle>
-            <CardDescription>Apply for Net invoicing terms so you can hire trucks and pay later.</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Credit Application
+            </CardTitle>
+            <CardDescription>
+              Apply for Net invoicing terms so you can hire trucks and pay
+              later.
+            </CardDescription>
           </div>
           {record && (
             <StatusBadge
-              status={record.status === "approved" ? "verified" : record.status === "pending" ? "pending" : record.status === "rejected" ? "rejected" : "not_submitted"}
-              text={record.status === "approved" ? "Approved" : record.status === "rejected" ? "Rejected" : record.status === "pending" ? "Under Review" : "Not Submitted"}
+              status={
+                record.status === "approved"
+                  ? "verified"
+                  : record.status === "pending"
+                    ? "pending"
+                    : record.status === "rejected"
+                      ? "rejected"
+                      : "not_submitted"
+              }
+              text={
+                record.status === "approved"
+                  ? "Approved"
+                  : record.status === "rejected"
+                    ? "Rejected"
+                    : record.status === "pending"
+                      ? "Under Review"
+                      : "Not Submitted"
+              }
             />
           )}
         </div>
@@ -1589,37 +2531,86 @@ function CreditApplicationTab() {
           <Alert className="rounded-xl border-green-200 bg-green-50">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-green-800">Credit Approved</AlertTitle>
-            <AlertDescription className="text-green-700">You can select Net payment terms when paying for completed jobs.</AlertDescription>
+            <AlertDescription className="text-green-700">
+              You can select Net payment terms when paying for completed jobs.
+            </AlertDescription>
           </Alert>
         )}
         {record?.status === "pending" && (
           <Alert className="rounded-xl border-amber-200 bg-amber-50">
             <Clock className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-amber-800">Under Review</AlertTitle>
-            <AlertDescription className="text-amber-700">Our team is reviewing your credit application (typically 1–3 business days).</AlertDescription>
+            <AlertDescription className="text-amber-700">
+              Our team is reviewing your credit application (typically 1–3
+              business days).
+            </AlertDescription>
           </Alert>
         )}
 
         <label className="flex items-center gap-3 cursor-pointer">
-          <Checkbox checked={form.wantsInvoicing} onCheckedChange={(v) => setForm(f => ({ ...f, wantsInvoicing: !!v }))} />
-          <span className="text-sm font-medium">I want to pay by invoice (Net terms) instead of card up front</span>
+          <Checkbox
+            checked={form.wantsInvoicing}
+            onCheckedChange={(v) =>
+              setForm((f) => ({ ...f, wantsInvoicing: !!v }))
+            }
+          />
+          <span className="text-sm font-medium">
+            I want to pay by invoice (Net terms) instead of card up front
+          </span>
         </label>
 
         <div>
-          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Estimated Monthly Spend ($)</Label>
-          <Input className="rounded-xl mt-1" type="number" inputMode="decimal" value={form.estimatedMonthlySpend} onChange={e => setForm(f => ({ ...f, estimatedMonthlySpend: e.target.value }))} placeholder="25000" />
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Estimated Monthly Spend ($)
+          </Label>
+          <Input
+            className="rounded-xl mt-1"
+            type="number"
+            inputMode="decimal"
+            value={form.estimatedMonthlySpend}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, estimatedMonthlySpend: e.target.value }))
+            }
+            placeholder="25000"
+          />
         </div>
         <div>
-          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Trade References</Label>
-          <Input className="rounded-xl mt-1" value={form.tradeReferences} onChange={e => setForm(f => ({ ...f, tradeReferences: e.target.value }))} placeholder="Supplier names, contacts, account #s" />
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Trade References
+          </Label>
+          <Input
+            className="rounded-xl mt-1"
+            value={form.tradeReferences}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, tradeReferences: e.target.value }))
+            }
+            placeholder="Supplier names, contacts, account #s"
+          />
         </div>
         <div>
-          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Bank Reference</Label>
-          <Input className="rounded-xl mt-1" value={form.bankReference} onChange={e => setForm(f => ({ ...f, bankReference: e.target.value }))} placeholder="Bank name & account officer" />
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Bank Reference
+          </Label>
+          <Input
+            className="rounded-xl mt-1"
+            value={form.bankReference}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, bankReference: e.target.value }))
+            }
+            placeholder="Bank name & account officer"
+          />
         </div>
 
-        <Button className="rounded-xl font-bold w-full" disabled={submit.isPending} onClick={submitForm}>
-          {submit.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+        <Button
+          className="rounded-xl font-bold w-full"
+          disabled={submit.isPending}
+          onClick={submitForm}
+        >
+          {submit.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <FileText className="mr-2 h-4 w-4" />
+          )}
           {record ? "Update & Resubmit" : "Submit Credit Application"}
         </Button>
       </CardContent>
@@ -1629,7 +2620,10 @@ function CreditApplicationTab() {
 
 export default function AccountPage() {
   const { data: profile, isLoading } = useGetMyProfile();
-  const initialTab = typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("tab") ?? "status") : "status";
+  const initialTab =
+    typeof window !== "undefined"
+      ? (new URLSearchParams(window.location.search).get("tab") ?? "status")
+      : "status";
 
   if (isLoading) {
     return (
@@ -1646,31 +2640,124 @@ export default function AccountPage() {
     <div className="space-y-6 max-w-5xl mx-auto page-enter">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
-        <p className="text-muted-foreground">Manage your profile, compliance, and billing information.</p>
+        <p className="text-muted-foreground">
+          Manage your profile, compliance, and billing information.
+        </p>
       </div>
 
       <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="flex flex-wrap h-auto rounded-xl justify-start gap-2 bg-transparent p-0 mb-6">
-          <TabsTrigger value="status" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Status</TabsTrigger>
-          <TabsTrigger value="profile" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Profile</TabsTrigger>
-          {isProvider && <TabsTrigger value="w9" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">W-9 Form</TabsTrigger>}
-          {isProvider && <TabsTrigger value="insurance" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Insurance</TabsTrigger>}
-          {isProvider && <TabsTrigger value="payout" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payout Account</TabsTrigger>}
-          {isProvider && <TabsTrigger value="dotcdl" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">DOT / CDL</TabsTrigger>}
-          {(isProvider || isCustomer) && <TabsTrigger value="documents" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
-          {isCustomer && <TabsTrigger value="payment" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payment Method</TabsTrigger>}
-          {isCustomer && <TabsTrigger value="credit" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Credit Application</TabsTrigger>}
+          <TabsTrigger
+            value="status"
+            className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10"
+          >
+            Status
+          </TabsTrigger>
+          <TabsTrigger
+            value="profile"
+            className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10"
+          >
+            Profile
+          </TabsTrigger>
+          {isProvider && (
+            <TabsTrigger
+              value="w9"
+              className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10"
+            >
+              W-9 Form
+            </TabsTrigger>
+          )}
+          {isProvider && (
+            <TabsTrigger
+              value="insurance"
+              className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10"
+            >
+              Insurance
+            </TabsTrigger>
+          )}
+          {isProvider && (
+            <TabsTrigger
+              value="payout"
+              className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10"
+            >
+              Payout Account
+            </TabsTrigger>
+          )}
+          {isProvider && (
+            <TabsTrigger
+              value="dotcdl"
+              className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10"
+            >
+              DOT / CDL
+            </TabsTrigger>
+          )}
+          {(isProvider || isCustomer) && (
+            <TabsTrigger
+              value="documents"
+              className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10"
+            >
+              Documents
+            </TabsTrigger>
+          )}
+          {isCustomer && (
+            <TabsTrigger
+              value="payment"
+              className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10"
+            >
+              Payment Method
+            </TabsTrigger>
+          )}
+          {isCustomer && (
+            <TabsTrigger
+              value="credit"
+              className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10"
+            >
+              Credit Application
+            </TabsTrigger>
+          )}
         </TabsList>
-        
-        <TabsContent value="status" className="mt-0"><ComplianceTab /></TabsContent>
-        <TabsContent value="profile" className="mt-0"><ProfileTab /></TabsContent>
-        {isProvider && <TabsContent value="w9" className="mt-0"><W9Tab /></TabsContent>}
-        {isProvider && <TabsContent value="insurance" className="mt-0"><InsuranceTab /></TabsContent>}
-        {isProvider && <TabsContent value="payout" className="mt-0"><PayoutAccountTab /></TabsContent>}
-        {isProvider && <TabsContent value="dotcdl" className="mt-0"><DotCdlTab /></TabsContent>}
-        {(isProvider || isCustomer) && <TabsContent value="documents" className="mt-0"><AccountDocuments /></TabsContent>}
-        {isCustomer && <TabsContent value="payment" className="mt-0"><PaymentMethodTab /></TabsContent>}
-        {isCustomer && <TabsContent value="credit" className="mt-0"><CreditApplicationTab /></TabsContent>}
+
+        <TabsContent value="status" className="mt-0">
+          <ComplianceTab />
+        </TabsContent>
+        <TabsContent value="profile" className="mt-0">
+          <ProfileTab />
+        </TabsContent>
+        {isProvider && (
+          <TabsContent value="w9" className="mt-0">
+            <W9Tab />
+          </TabsContent>
+        )}
+        {isProvider && (
+          <TabsContent value="insurance" className="mt-0">
+            <InsuranceTab />
+          </TabsContent>
+        )}
+        {isProvider && (
+          <TabsContent value="payout" className="mt-0">
+            <PayoutAccountTab />
+          </TabsContent>
+        )}
+        {isProvider && (
+          <TabsContent value="dotcdl" className="mt-0">
+            <DotCdlTab />
+          </TabsContent>
+        )}
+        {(isProvider || isCustomer) && (
+          <TabsContent value="documents" className="mt-0">
+            <AccountDocuments />
+          </TabsContent>
+        )}
+        {isCustomer && (
+          <TabsContent value="payment" className="mt-0">
+            <PaymentMethodTab />
+          </TabsContent>
+        )}
+        {isCustomer && (
+          <TabsContent value="credit" className="mt-0">
+            <CreditApplicationTab />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
