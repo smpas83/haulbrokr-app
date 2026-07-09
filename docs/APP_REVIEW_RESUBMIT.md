@@ -26,11 +26,13 @@ git fetch origin
 git checkout cursor/app-review-apple-auth-deletion-401a
 git pull origin cursor/app-review-apple-auth-deletion-401a
 cd artifacts/haulbrokr-mobile
-pnpm exec eas build --platform ios --profile production --non-interactive
+# First rebuild after bundle-ID fix: let EAS set up credentials for `haulbrokr`
+pnpm exec eas build --platform ios --profile production
+# After build succeeds:
 pnpm exec eas submit --platform ios --profile production --latest --non-interactive
 ```
 
-Or from repo root after checkout: `./scripts/ship-ios-testflight.sh`
+Confirm Apple Developer App ID **`haulbrokr`** has **Sign in with Apple** enabled (Clerk Apple provider should use the same bundle ID).
 
 ---
 
