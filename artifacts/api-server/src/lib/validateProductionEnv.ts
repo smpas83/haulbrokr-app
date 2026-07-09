@@ -63,6 +63,7 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   { service: "core", variable: "TICKET_QR_SECRET", required: true, description: "HMAC secret for ticket QR codes (≥32 chars)." },
   { service: "core", variable: "STAFF_AUTH_SECRET", required: true, description: "Staff session HMAC secret (≥32 chars; TICKET_QR_SECRET may substitute)." },
   { service: "core", variable: "ADMIN_USER_IDS", required: true, description: "Comma-separated Clerk user IDs with admin access." },
+  { service: "core", variable: "GOOGLE_MAPS_API_KEY", required: true, description: "Google Maps API key for /api/map/config and geocoding." },
   { service: "core", variable: "AUTOMATION_KEY", required: false, description: "Optional shared key for internal automation endpoints." },
 ];
 
@@ -296,6 +297,13 @@ function validateCoreSecrets(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[
     pushMissing(issues, "core", "ADMIN_USER_IDS");
   } else if (adminIds.split(",").every((id) => !id.trim())) {
     pushInvalid(issues, "core", "ADMIN_USER_IDS", "ADMIN_USER_IDS must contain at least one Clerk user ID.");
+  }
+
+  const mapsKey = envValue(env, "GOOGLE_MAPS_API_KEY");
+  if (!mapsKey) {
+    pushMissing(issues, "core", "GOOGLE_MAPS_API_KEY");
+  } else if (mapsKey.length < 20) {
+    pushInvalid(issues, "core", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_API_KEY looks too short to be a real Google API key.");
   }
 }
 

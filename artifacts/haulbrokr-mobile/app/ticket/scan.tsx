@@ -76,7 +76,7 @@ export default function TicketScanScreen() {
             <Feather name="key" size={15} color="#8ba0b8" style={{ marginRight: 8 }} />
             <TextInput
               style={styles.input}
-              placeholder="db:1:lt1:..."
+              placeholder="Paste ticket QR token from the driver app"
               placeholderTextColor="#4a5568"
               value={manualToken}
               onChangeText={setManualToken}

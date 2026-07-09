@@ -8,9 +8,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
 import { usePaymentMethod } from "@/hooks/useLiveApi";
+import { getExpoPublicDomain } from "@/lib/apiConfig";
 
-const DOMAIN = process.env.EXPO_PUBLIC_DOMAIN ?? "localhost:8080";
-const PAYMENT_URL = `https://${DOMAIN}/mobile-payment`;
+const DOMAIN = getExpoPublicDomain();
+const PAYMENT_URL = DOMAIN ? `https://${DOMAIN}/mobile-payment` : null;
 
 export default function PaymentMethodScreen() {
   const colors = useColors();
@@ -19,6 +20,13 @@ export default function PaymentMethodScreen() {
   const pmQuery = usePaymentMethod();
 
   const openCardSetup = useCallback(async () => {
+    if (!PAYMENT_URL) {
+      Alert.alert(
+        "Payment setup unavailable",
+        "Set EXPO_PUBLIC_DOMAIN to your production host (e.g. haulbrokr.com) in the app environment.",
+      );
+      return;
+    }
     try {
       const returnTo = Linking.createURL("payment-return");
       await WebBrowser.openAuthSessionAsync(PAYMENT_URL, returnTo);

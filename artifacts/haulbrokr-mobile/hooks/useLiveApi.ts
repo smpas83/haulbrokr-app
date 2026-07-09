@@ -1,7 +1,8 @@
 import { useAuth } from "@clerk/expo";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiBaseUrl } from "@/lib/apiConfig";
 
-const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+const API_BASE = getApiBaseUrl();
 
 async function apiFetch(
   getToken: () => Promise<string | null>,

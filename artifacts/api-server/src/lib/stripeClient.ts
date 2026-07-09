@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { createMockStripeClient, MOCK_PUBLISHABLE_KEY } from "./mockStripeClient";
+import { isProductionRuntime } from "./validateProductionEnv";
 import { logger } from "./logger";
 
 let connectionSettings: any;
@@ -14,8 +15,8 @@ function mockModeForced(): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
-/** True when running inside a published Replit Deployment (production). */
-function isProductionDeployment(): boolean {
+/** Replit connector environment selector (development vs production connector). */
+function isReplitProductionConnector(): boolean {
   return process.env.REPLIT_DEPLOYMENT === "1";
 }
 
@@ -54,7 +55,7 @@ async function getCredentials(): Promise<CredResult> {
   if (!hostname || !xReplitToken) return { kind: "not_connected" };
 
   const connectorName = "stripe";
-  const targetEnvironment = isProductionDeployment() ? "production" : "development";
+  const targetEnvironment = isReplitProductionConnector() ? "production" : "development";
 
   const url = new URL(`https://${hostname}/api/v2/connection`);
   url.searchParams.set("include_secrets", "true");
@@ -107,7 +108,7 @@ function warnMockOnce(reason: string): void {
   if (warnedMockReasons.has(reason)) return;
   warnedMockReasons.add(reason);
   logger.warn(
-    { reason, deployment: isProductionDeployment() },
+    { reason, deployment: isProductionRuntime() },
     "Stripe is running in MOCK payment mode — payments are SIMULATED and no money moves. Connect a live Stripe account to process real payments.",
   );
 }
@@ -120,7 +121,14 @@ function warnMockOnce(reason: string): void {
  * development a lookup error falls back to mock for convenience.
  */
 function failClosedOnError(creds: CredResult): boolean {
-  return creds.kind === "error" && isProductionDeployment();
+  return creds.kind === "error" && isProductionRuntime();
+}
+
+function refuseMockPaymentsInProduction(): void {
+  if (!isProductionRuntime()) return;
+  throw new Error(
+    "Stripe is not configured for production. Set STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY — mock payments are not allowed.",
+  );
 }
 
 // WARNING: Never cache this client. Always call this fresh — tokens expire.
@@ -129,6 +137,7 @@ function failClosedOnError(creds: CredResult): boolean {
 // hard-requires Stripe. A connector LOOKUP error in production fails closed.
 export async function getUncachableStripeClient(): Promise<Stripe> {
   if (mockModeForced()) {
+    refuseMockPaymentsInProduction();
     warnMockOnce("forced");
     return createMockStripeClient();
   }
@@ -144,6 +153,9 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
     );
     throw new Error("Payment processing is temporarily unavailable. Please try again shortly.");
   }
+  if (creds.kind === "not_connected") {
+    refuseMockPaymentsInProduction();
+  }
   warnMockOnce(creds.kind);
   return createMockStripeClient();
 }
@@ -154,11 +166,17 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
 // inert until a real Stripe account is connected). A connector lookup error in
 // production fails closed rather than returning a placeholder key.
 export async function getStripePublishableKey(): Promise<string> {
-  if (mockModeForced()) return MOCK_PUBLISHABLE_KEY;
+  if (mockModeForced()) {
+    refuseMockPaymentsInProduction();
+    return MOCK_PUBLISHABLE_KEY;
+  }
   const creds = await getCredentials();
   if (creds.kind === "connected") return creds.publishableKey;
   if (failClosedOnError(creds)) {
     throw new Error("Payment processing is temporarily unavailable. Please try again shortly.");
+  }
+  if (creds.kind === "not_connected") {
+    refuseMockPaymentsInProduction();
   }
   return MOCK_PUBLISHABLE_KEY;
 }
@@ -173,6 +191,6 @@ export async function isMockPaymentMode(): Promise<boolean> {
   if (mockModeForced()) return true;
   const creds = await getCredentials();
   if (creds.kind === "connected") return false;
-  if (creds.kind === "error") return !isProductionDeployment();
+  if (creds.kind === "error") return !isProductionRuntime();
   return true;
 }

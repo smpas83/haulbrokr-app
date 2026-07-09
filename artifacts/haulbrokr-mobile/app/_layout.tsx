@@ -130,11 +130,16 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError, authStorageReady]);
 
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+  const expoDomain = process.env.EXPO_PUBLIC_DOMAIN?.trim() ?? "";
   const clerkKeyInvalid =
     !publishableKey ||
     publishableKey.includes("xxx") ||
     publishableKey.includes("...") ||
     !/^pk_(test|live)_/.test(publishableKey);
+  const domainInvalid =
+    !expoDomain ||
+    expoDomain.includes("localhost") ||
+    expoDomain.startsWith("127.0.0.1");
 
   if ((!fontsLoaded && !fontError) || !authStorageReady) {
     return null;
@@ -148,6 +153,19 @@ export default function RootLayout() {
         </Text>
         <Text style={{ color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21 }}>
           Set exactly one EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in .env to your real pk_live_... or pk_test_... value, then restart Expo with --clear.
+        </Text>
+      </View>
+    );
+  }
+
+  if (domainInvalid) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#1e2235", justifyContent: "center", padding: 24 }}>
+        <Text style={{ color: "#f87171", fontFamily: "Inter_600SemiBold", fontSize: 16, textAlign: "center", marginBottom: 12 }}>
+          API domain missing or invalid
+        </Text>
+        <Text style={{ color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21 }}>
+          Set EXPO_PUBLIC_DOMAIN to your production host (e.g. haulbrokr.com) in .env or EAS secrets. Do not use localhost in store builds.
         </Text>
       </View>
     );

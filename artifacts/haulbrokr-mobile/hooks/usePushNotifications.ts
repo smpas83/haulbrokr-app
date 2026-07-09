@@ -3,17 +3,18 @@ import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import { useAuth } from "@clerk/expo";
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
-  : "/api";
+import { getApiBaseUrlOrNull } from "@/lib/apiConfig";
 
 async function registerPushToken(
   getToken: () => Promise<string | null>,
   token: string,
   platform: string,
 ) {
+  const apiBase = getApiBaseUrlOrNull();
+  if (!apiBase) return;
+
   const authToken = await getToken();
-  await fetch(`${API_BASE}/notifications/register`, {
+  await fetch(`${apiBase}/notifications/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

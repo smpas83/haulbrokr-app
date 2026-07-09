@@ -193,7 +193,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const removeTeamMember = (id: string) => setTeam((prev) => prev.filter((t) => t.id !== id));
   const rotateInviteCode = () => {
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let code = "DB-";
+    let code = "HB-";
     for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
     setProfile({ ...profile, orgInviteCode: code });
   };
@@ -275,7 +275,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const generateTicketQR = (jobId: string, ticketId: string): string => {
-    const token = `db:${jobId}:${ticketId}:${Date.now().toString(36)}`;
+    const token = `hb:${jobId}:${ticketId}:${Date.now().toString(36)}`;
     setJobs((prev) => prev.map((j) => j.id !== jobId ? j : {
       ...j,
       loadTickets: (j.loadTickets ?? []).map((t) => t.id === ticketId ? { ...t, qrToken: token } : t),

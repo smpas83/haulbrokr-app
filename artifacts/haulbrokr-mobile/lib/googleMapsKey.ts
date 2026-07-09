@@ -1,3 +1,5 @@
+import { getExpoPublicDomain } from "@/lib/apiConfig";
+
 type MapConfigResponse = {
   googleMapsApiKey?: string;
   error?: string;
@@ -6,7 +8,7 @@ type MapConfigResponse = {
 let cachedRuntimeKey: string | null = null;
 
 function mapConfigUrl(): string {
-  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  const domain = getExpoPublicDomain();
   if (domain) return `https://${domain}/api/map/config`;
   return "/api/map/config";
 }
