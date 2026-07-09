@@ -14,8 +14,9 @@ Branch: `cursor/app-review-apple-auth-deletion-401a`
 
 ## Blocker before build (operator action)
 
-1. **EAS slug must match project ID.** Expo project `6a500641-…` is registered as slug `dumpbroker-mobile` (legacy). `app.json` uses that slug; display name / bundle ID remain HaulBrokr / `com.haulbrokr.mobile`.
-2. GitHub Actions TestFlight also needs **`EXPO_TOKEN`** (empty today). For local builds, `eas login` is enough.
+1. **EAS slug must match project ID.** Expo project `6a500641-…` is registered as slug `dumpbroker-mobile` (legacy). Display name stays HaulBrokr.
+2. **iOS bundle ID must be `haulbrokr`.** App Store Connect app `6769841431` is locked to `haulbrokr` (error 90055 if you submit `com.haulbrokr.mobile`).
+3. GitHub Actions TestFlight also needs **`EXPO_TOKEN`** (empty today). For local builds, `eas login` is enough.
 
 Local ship:
 
