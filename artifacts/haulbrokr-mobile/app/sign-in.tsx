@@ -31,6 +31,11 @@ import {
   hasGoogleNativeSignInConfig,
   shouldUseNativeAppleSignIn,
 } from "@/lib/clerkOAuth";
+import {
+  isOAuthUserCancel,
+  resolveOAuthSessionId,
+  type OAuthFlowResult,
+} from "@/lib/completeOAuthSignUp";
 import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
@@ -85,12 +90,42 @@ export default function SignInScreen() {
   };
 
   const completeOAuthSession = async (
-    createdSessionId: string | null | undefined,
-    setActive: ((params: { session: string }) => Promise<void>) | undefined,
+    flow: OAuthFlowResult,
     which: "google" | "apple",
   ) => {
-    console.log("[COMPLETE OAUTH]", { createdSessionId, hasSetActive: !!setActive });
+    const setActive = flow.setActive;
+    let createdSessionId: string | null = null;
+    try {
+      createdSessionId = await resolveOAuthSessionId(flow);
+    } catch (err) {
+      logClerkAuthError(`${which}-complete-signup`, err, {
+        signUpStatus: flow.signUp?.status,
+        missingFields: flow.signUp?.missingFields,
+      });
+      setError(
+        clerkErrorMessage(err as any) ||
+          `Sign-in with ${which} couldn't finish account setup. Please try again.`,
+      );
+      return;
+    }
+
+    console.log("[COMPLETE OAUTH]", {
+      createdSessionId,
+      hasSetActive: !!setActive,
+      signUpStatus: flow.signUp?.status,
+      missingFields: flow.signUp?.missingFields,
+    });
+
     if (!createdSessionId) {
+      if (isOAuthUserCancel(flow)) {
+        // User dismissed the native sheet — not an error.
+        return;
+      }
+      logClerkAuthError(`${which}-no-session`, new Error("OAuth completed without session"), {
+        signInStatus: flow.signIn?.status,
+        signUpStatus: flow.signUp?.status,
+        missingFields: flow.signUp?.missingFields,
+      });
       setError(`Sign-in with ${which} couldn't complete. Please try again.`);
       return;
     }
@@ -120,25 +155,32 @@ export default function SignInScreen() {
     try {
       if (which === "apple" && shouldUseNativeAppleSignIn()) {
         const result = await startAppleAuthenticationFlow();
-      console.log("[APPLE AUTH RESULT]", JSON.stringify(result, null, 2));
-      const { createdSessionId, setActive } = result;
-        await completeOAuthSession(createdSessionId, setActive, which);
+        console.log("[APPLE AUTH RESULT]", {
+          createdSessionId: result?.createdSessionId,
+          signInStatus: result?.signIn?.status,
+          signUpStatus: result?.signUp?.status,
+          missingFields: result?.signUp?.missingFields,
+        });
+        await completeOAuthSession(result as OAuthFlowResult, which);
         return;
       }
 
       if (which === "google" && hasGoogleNativeSignInConfig()) {
-        const { createdSessionId, setActive } = await startGoogleAuthenticationFlow();
-        await completeOAuthSession(createdSessionId, setActive, which);
+        const result = await startGoogleAuthenticationFlow();
+        await completeOAuthSession(result as OAuthFlowResult, which);
         return;
       }
 
       const redirectUrl = clerkOAuthRedirectUri();
-      const { createdSessionId, setActive } = await startSSOFlow({
+      const result = await startSSOFlow({
         strategy,
         redirectUrl,
       });
-      await completeOAuthSession(createdSessionId, setActive, which);
+      await completeOAuthSession(result as OAuthFlowResult, which);
     } catch (err: any) {
+      if (err?.code === "ERR_REQUEST_CANCELED" || err?.code === "SIGN_IN_CANCELLED") {
+        return;
+      }
       logClerkAuthError(`${which}-sso`, err, { which, redirectUrl: clerkOAuthRedirectUri() });
       const msg = clerkErrorMessage(err) || err?.message || "";
       if (/not enabled|provider.*not.*configured|strategy.*not.*allowed/i.test(msg)) {

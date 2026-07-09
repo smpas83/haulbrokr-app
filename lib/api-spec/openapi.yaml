@@ -78,6 +78,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserProfile"
+    delete:
+      operationId: deleteMyAccount
+      tags: [profiles]
+      summary: Permanently delete the authenticated user's account and associated personal data
+      description: |
+        Required for App Store Guideline 5.1.1(v). Deletes personally identifiable
+        data, anonymizes marketplace history that must be retained for settlement,
+        and removes the Clerk authentication identity so the user cannot sign in again.
+      responses:
+        "200":
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted:
+                    type: boolean
+                  profileId:
+                    type: integer
+                    nullable: true
+                  message:
+                    type: string
+        "500":
+          description: Deletion failed
 
   /profiles:
     post:

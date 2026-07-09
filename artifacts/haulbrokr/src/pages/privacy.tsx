@@ -57,7 +57,7 @@ const sections = [
     title: "Your rights & choices",
     body: [
       "You can access and update most of your information from the Account page within the app.",
-      "You can request that we correct or delete your account information by emailing us.",
+      "You can permanently delete your account from Account → Delete Account in the mobile app, or by emailing privacy@haulbrokr.com.",
       "Depending on where you live, you may have additional rights under applicable privacy laws — contact us to exercise them.",
     ],
   },
