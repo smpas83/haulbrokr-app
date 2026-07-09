@@ -14,25 +14,22 @@ Branch: `cursor/app-review-apple-auth-deletion-401a`
 
 ## Blocker before build (operator action)
 
-GitHub Actions TestFlight fails because **`EXPO_TOKEN` is empty**.
+1. **EAS slug must match project ID.** Expo project `6a500641-…` is registered as slug `dumpbroker-mobile` (legacy). `app.json` uses that slug; display name / bundle ID remain HaulBrokr / `com.haulbrokr.mobile`.
+2. GitHub Actions TestFlight also needs **`EXPO_TOKEN`** (empty today). For local builds, `eas login` is enough.
 
-1. Create an Expo access token: https://expo.dev/accounts/[account]/settings/access-tokens  
-2. Add repo secret `EXPO_TOKEN` in GitHub → Settings → Secrets → Actions  
-3. Then either:
-   - Merge PR #114 to `master` (auto-triggers Mobile TestFlight), **or**
-   - From a machine with Expo login:
+Local ship:
 
 ```bash
+cd ~/haulbrokr-app
+git fetch origin
+git checkout cursor/app-review-apple-auth-deletion-401a
+git pull origin cursor/app-review-apple-auth-deletion-401a
 cd artifacts/haulbrokr-mobile
 pnpm exec eas build --platform ios --profile production --non-interactive
 pnpm exec eas submit --platform ios --profile production --latest --non-interactive
 ```
 
-Or use the helper:
-
-```bash
-./scripts/ship-ios-testflight.sh
-```
+Or from repo root after checkout: `./scripts/ship-ios-testflight.sh`
 
 ---
 
