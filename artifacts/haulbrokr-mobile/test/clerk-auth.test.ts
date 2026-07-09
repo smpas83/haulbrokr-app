@@ -102,7 +102,7 @@ describe("completeOAuthSignUp", () => {
     });
 
     expect(signUp.update).toHaveBeenCalledOnce();
-    expect(signUp.update.mock.calls[0][0]).toEqual(
+    expect(signUp.update).toHaveBeenCalledWith(
       expect.objectContaining({ username: expect.stringMatching(/^newuser_/) }),
     );
     expect(session).toBe("sess_after_username");
