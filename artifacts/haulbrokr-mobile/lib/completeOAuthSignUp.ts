@@ -17,8 +17,10 @@ type ClerkErrorLike = {
 };
 
 type SignUpLike = {
+  id?: string | null;
   status?: string | null;
   createdSessionId?: string | null;
+  existingSession?: { sessionId?: string | null } | null;
   emailAddress?: string | null;
   username?: string | null;
   firstName?: string | null;
@@ -110,6 +112,14 @@ async function applyMissingSignUpFields(
   signUp: SignUpLike,
   opts?: ResolveOAuthSessionOptions,
 ): Promise<void> {
+  // Calling update() without a SignUp attempt id yields Clerk's
+  // "No sign up attempt was found" (GET client sign_ups/:id).
+  if (!signUp.id) {
+    throw new Error(
+      "No sign up attempt was found after Apple transfer. Please try Continue with Apple again.",
+    );
+  }
+
   const patch: Record<string, unknown> = {};
 
   const needsUsername =
@@ -202,6 +212,7 @@ export async function resolveOAuthSessionId(
     result.signIn?.createdSessionId ??
     result.signIn?.existingSession?.sessionId ??
     result.signUp?.createdSessionId ??
+    result.signUp?.existingSession?.sessionId ??
     null;
 
   if (fromResult) return fromResult;
@@ -214,18 +225,29 @@ export async function resolveOAuthSessionId(
       signUp.status === "complete";
 
     if (pending) {
-      if (signUp.status === "missing_requirements" || fieldList(signUp).length > 0) {
+      // Without an attempt id, update() always fails — surface a clear error instead.
+      if (
+        !signUp.id &&
+        (signUp.status === "missing_requirements" || fieldList(signUp).length > 0)
+      ) {
+        throw new Error(
+          "No sign up attempt was found after Apple transfer. Please try Continue with Apple again.",
+        );
+      }
+
+      if (signUp.id && (signUp.status === "missing_requirements" || fieldList(signUp).length > 0)) {
         await applyMissingSignUpFields(signUp, opts);
       }
 
       // After filling requirements, another pass may still list fields (e.g. legal + username).
-      if (signUp.status === "missing_requirements" || needsField(signUp, "username")) {
+      if (signUp.id && (signUp.status === "missing_requirements" || needsField(signUp, "username"))) {
         await applyMissingSignUpFields(signUp, opts);
       }
 
       const sessionFromFinalize = await finalizeIfNeeded(signUp);
       if (sessionFromFinalize) return sessionFromFinalize;
       if (signUp.createdSessionId) return signUp.createdSessionId;
+      if (signUp.existingSession?.sessionId) return signUp.existingSession.sessionId;
 
       throw new Error(
         `Apple sign-up is incomplete (status=${signUp.status ?? "unknown"}, missing=${snapshotFields(signUp)}). ` +
@@ -235,15 +257,17 @@ export async function resolveOAuthSessionId(
   }
 
   const signIn = result.signIn;
-  if (signIn?.status === "complete") {
+  if (signIn?.status === "complete" || signIn?.existingSession?.sessionId) {
     const sessionFromFinalize = await finalizeIfNeeded(signIn);
     if (sessionFromFinalize) return sessionFromFinalize;
+    if (signIn.existingSession?.sessionId) return signIn.existingSession.sessionId;
   }
 
   return (
     result.signIn?.createdSessionId ??
     result.signIn?.existingSession?.sessionId ??
     result.signUp?.createdSessionId ??
+    result.signUp?.existingSession?.sessionId ??
     null
   );
 }
@@ -271,5 +295,6 @@ export function oauthFlowDebugSnapshot(result: OAuthFlowResult): Record<string, 
     requiredFields: result.signUp?.requiredFields ?? [],
     unverifiedFields: result.signUp?.unverifiedFields ?? [],
     email: result.signUp?.emailAddress ?? null,
+    signUpId: (result.signUp as { id?: string | null } | null | undefined)?.id ?? null,
   };
 }

@@ -1,5 +1,4 @@
 import { useAuth, useClerk, useSignIn, useSignUp, useSSO } from "@clerk/expo";
-import { useSignInWithApple } from "@clerk/expo/apple";
 import { useSignInWithGoogle } from "@clerk/expo/google";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -32,6 +31,9 @@ import {
   shouldUseNativeAppleSignIn,
 } from "@/lib/clerkOAuth";
 import {
+  completeNativeAppleSignIn,
+} from "@/lib/appleNativeAuth";
+import {
   isOAuthUserCancel,
   oauthFlowDebugSnapshot,
   resolveOAuthSessionId,
@@ -52,7 +54,6 @@ export default function SignInScreen() {
   const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
-  const { startAppleAuthenticationFlow } = useSignInWithApple();
   const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
@@ -90,6 +91,25 @@ export default function SignInScreen() {
     }
   };
 
+  const activateExistingClerkSession = async (): Promise<boolean> => {
+    const sessionId =
+      clerk.session?.id ??
+      (clerk as { client?: { activeSessions?: Array<{ id?: string; status?: string }> } }).client
+        ?.activeSessions?.find((s) => s.status === "active" || !!s.id)?.id ??
+      signIn?.createdSessionId ??
+      signIn?.existingSession?.sessionId ??
+      signUp?.createdSessionId ??
+      null;
+
+    if (!sessionId) {
+      if (signIn?.status === "complete") {
+        return finalizeSignIn();
+      }
+      return false;
+    }
+    return activateSession(sessionId);
+  };
+
   const completeOAuthSession = async (
     flow: OAuthFlowResult,
     which: "google" | "apple",
@@ -104,6 +124,15 @@ export default function SignInScreen() {
     } catch (err) {
       logClerkAuthError(`${which}-complete-signup`, err, snapshot);
       const detail = clerkErrorMessage(err as any) || (err as Error)?.message || "";
+
+      // Partial Apple success can leave a Clerk session while SignUp update fails.
+      const recovered = await activateExistingClerkSession();
+      if (recovered) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace("/" as any);
+        return;
+      }
+
       setError(
         detail ||
           `Sign-in with ${which} couldn't finish account setup. Please try again.`,
@@ -123,6 +152,12 @@ export default function SignInScreen() {
         return;
       }
       logClerkAuthError(`${which}-no-session`, new Error("OAuth completed without session"), snapshot);
+      const recovered = await activateExistingClerkSession();
+      if (recovered) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace("/" as any);
+        return;
+      }
       const missing = (flow.signUp?.missingFields ?? []).join(", ");
       if (missing) {
         setError(
@@ -163,9 +198,41 @@ export default function SignInScreen() {
     setError("");
     try {
       if (which === "apple" && shouldUseNativeAppleSignIn()) {
-        const result = await startAppleAuthenticationFlow();
-        console.log("[APPLE AUTH RESULT]", oauthFlowDebugSnapshot(result as OAuthFlowResult));
-        await completeOAuthSession(result as OAuthFlowResult, which);
+        if (!signIn || !signUp) {
+          setError("Authentication is initialising. Please wait a moment.");
+          return;
+        }
+        // Future-API Apple flow — do not use legacy useSignInWithApple.
+        const appleResult = await completeNativeAppleSignIn({
+          signIn: signIn as any,
+          signUp: signUp as any,
+          setActive: clerk.setActive ? (params) => clerk.setActive!(params as any) : undefined,
+        });
+        if (appleResult.cancelled) return;
+        console.log("[APPLE AUTH RESULT]", {
+          sessionId: appleResult.sessionId,
+          names: appleResult.names,
+          signInStatus: signIn.status,
+          signUpStatus: signUp.status,
+          signUpId: (signUp as { id?: string }).id ?? null,
+        });
+        if (appleResult.sessionId) {
+          const activated = await activateSession(appleResult.sessionId);
+          if (activated) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.replace("/" as any);
+            return;
+          }
+        }
+        await completeOAuthSession(
+          {
+            createdSessionId: appleResult.sessionId,
+            setActive: clerk.setActive ? (params) => clerk.setActive!(params as any) : undefined,
+            signIn: signIn as any,
+            signUp: signUp as any,
+          },
+          which,
+        );
         return;
       }
 
@@ -187,6 +254,16 @@ export default function SignInScreen() {
       }
       logClerkAuthError(`${which}-sso`, err, { which, redirectUrl: clerkOAuthRedirectUri() });
       const msg = clerkErrorMessage(err) || err?.message || "";
+      if (/already signed in/i.test(msg)) {
+        const recovered = await activateExistingClerkSession();
+        if (recovered) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          router.replace("/" as any);
+          return;
+        }
+        setError("You're already signed in.");
+        return;
+      }
       if (/not enabled|provider.*not.*configured|strategy.*not.*allowed/i.test(msg)) {
         setError(`Sign in with ${which === "google" ? "Google" : "Apple"} isn't enabled yet — turn it on in the Auth pane.`);
       } else if (/redirect|callback|native application/i.test(msg)) {
@@ -773,7 +850,15 @@ export default function SignInScreen() {
             {stuckSignedIn ? (
               <Pressable
                 style={[styles.btn, busy && styles.btnDisabled]}
-                onPress={() => void finalizeSignIn()}
+                onPress={async () => {
+                  const recovered = await activateExistingClerkSession();
+                  if (recovered) {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    router.replace("/" as any);
+                    return;
+                  }
+                  await finalizeSignIn();
+                }}
                 disabled={busy}
               >
                 {busy ? (

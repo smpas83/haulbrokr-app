@@ -4,7 +4,7 @@ Fixes Apple rejection of **HaulBrokr iOS 1.0 (11)** for:
 
 | Guideline | Issue | Fix |
 |-----------|-------|-----|
-| **2.1(a)** Performance | Sign in with Apple failed | Complete Clerk transfer sign-up by auto-filling required username |
+| **2.1(a)** Performance | Sign in with Apple failed | Future-API native Apple flow + auto-fill required username after transfer |
 | **5.1.1(v)** Privacy | No account deletion | In-app **Delete Account** (mobile + web) + `DELETE /profiles/me` |
 
 PR: https://github.com/smpas83/haulbrokr-app/pull/114  
@@ -105,8 +105,13 @@ Thank you for the feedback on submission 9bbb0fcf-5046-4e17-b665-0781e0978b6a.
 We have fixed both issues in this build:
 
 1) Guideline 2.1(a) — Sign in with Apple
-   Root cause: new Apple users transferred into Clerk SignUp with a required
-   username field that Apple does not provide, so the session never activated.
+   Root cause (latest): `@clerk/expo/apple` used legacy SignIn/SignUp while the
+   app uses Clerk Future hooks, so transfer left no SignUp attempt id and
+   `update()` failed with "No sign up attempt was found". Existing sessions
+   then showed "You're already signed in" without activating cleanly.
+   Fix: native Apple identity token is exchanged via Future `signIn`/`signUp`
+   (with direct `oauth_token_apple` sign-up fallback), missing username/legal
+   fields are filled, then the session is finalized/activated.
    The app now completes that requirement and activates the session.
 
 2) Guideline 5.1.1(v) — Account deletion
