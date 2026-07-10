@@ -34,6 +34,22 @@ pnpm exec eas submit --platform ios --profile production --latest --non-interact
 
 Confirm Apple Developer App ID **`haulbrokr`** has **Sign in with Apple** enabled (Clerk Apple provider should use the same bundle ID).
 
+### Clerk Dashboard checklist (required for Apple Sign-In)
+
+In [Clerk Dashboard → Native applications](https://dashboard.clerk.com), the iOS native app must use:
+
+| Field | Value |
+|-------|--------|
+| Bundle ID | `haulbrokr` (not `com.haulbrokr.mobile`) |
+| Team ID / App ID Prefix | `B7Z55AHC9L` |
+
+Also under **User & authentication → Email, phone, username**:
+
+- Prefer **Username = Optional** (or collect it in-app). Required username is the usual cause of `createdSessionId: null` after native Apple transfer.
+- Apple SSO connection enabled for sign-up and sign-in.
+
+Builds **14/15 failed ASC upload** (wrong bundle ID). App Review / TestFlight must use a **new** build after `bundleIdentifier: haulbrokr` + this Apple completion fix.
+
 ---
 
 ## Pre-submit checklist

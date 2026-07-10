@@ -84,15 +84,21 @@ describe("completeOAuthSignUp", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("fills missing username on Apple transfer sign-up", async () => {
+  it("fills missing username via Future API { error: null } and finalizes", async () => {
     const signUp = {
-      status: "missing_requirements",
+      status: "missing_requirements" as string | null,
       emailAddress: "newuser@example.com",
-      missingFields: ["username"],
+      missingFields: ["username"] as string[] | null,
       createdSessionId: null as string | null,
       update: vi.fn(async () => {
-        signUp.createdSessionId = "sess_after_username";
         signUp.status = "complete";
+        signUp.missingFields = [];
+        signUp.createdSessionId = null;
+        return { error: null };
+      }),
+      finalize: vi.fn(async () => {
+        signUp.createdSessionId = "sess_after_finalize";
+        return { error: null };
       }),
     };
 
@@ -101,11 +107,51 @@ describe("completeOAuthSignUp", () => {
       signUp,
     });
 
-    expect(signUp.update).toHaveBeenCalledOnce();
+    expect(signUp.update).toHaveBeenCalled();
     expect(signUp.update).toHaveBeenCalledWith(
       expect.objectContaining({ username: expect.stringMatching(/^newuser_/) }),
     );
-    expect(session).toBe("sess_after_username");
+    expect(signUp.finalize).toHaveBeenCalled();
+    expect(session).toBe("sess_after_finalize");
+  });
+
+  it("surfaces Future API update errors instead of swallowing them", async () => {
+    const signUp = {
+      status: "missing_requirements",
+      emailAddress: "newuser@example.com",
+      missingFields: ["username"],
+      createdSessionId: null as string | null,
+      update: vi.fn(async () => ({
+        error: { longMessage: "Username is invalid.", code: "form_param_format_invalid" },
+      })),
+    };
+
+    await expect(
+      resolveOAuthSessionId({
+        createdSessionId: null,
+        signUp,
+      }),
+    ).rejects.toThrow(/Username is invalid/i);
+  });
+
+  it("fills legal_accepted when required", async () => {
+    const signUp = {
+      status: "missing_requirements" as string | null,
+      emailAddress: "newuser@example.com",
+      missingFields: ["username", "legal_accepted"] as string[] | null,
+      createdSessionId: null as string | null,
+      update: vi.fn(async (params: Record<string, unknown>) => {
+        expect(params.legalAccepted).toBe(true);
+        expect(params.username).toMatch(/^newuser_/);
+        signUp.status = "complete";
+        signUp.missingFields = [];
+        signUp.createdSessionId = "sess_legal";
+        return { error: null };
+      }),
+    };
+
+    const session = await resolveOAuthSessionId({ createdSessionId: null, signUp });
+    expect(session).toBe("sess_legal");
   });
 
   it("does not treat missing_requirements as a user cancel", () => {

@@ -33,6 +33,7 @@ import {
 } from "@/lib/clerkOAuth";
 import {
   isOAuthUserCancel,
+  oauthFlowDebugSnapshot,
   resolveOAuthSessionId,
   type OAuthFlowResult,
 } from "@/lib/completeOAuthSignUp";
@@ -94,26 +95,26 @@ export default function SignInScreen() {
     which: "google" | "apple",
   ) => {
     const setActive = flow.setActive;
+    const snapshot = oauthFlowDebugSnapshot(flow);
+    console.log("[COMPLETE OAUTH] before resolve", snapshot);
+
     let createdSessionId: string | null = null;
     try {
       createdSessionId = await resolveOAuthSessionId(flow);
     } catch (err) {
-      logClerkAuthError(`${which}-complete-signup`, err, {
-        signUpStatus: flow.signUp?.status,
-        missingFields: flow.signUp?.missingFields,
-      });
+      logClerkAuthError(`${which}-complete-signup`, err, snapshot);
+      const detail = clerkErrorMessage(err as any) || (err as Error)?.message || "";
       setError(
-        clerkErrorMessage(err as any) ||
+        detail ||
           `Sign-in with ${which} couldn't finish account setup. Please try again.`,
       );
       return;
     }
 
-    console.log("[COMPLETE OAUTH]", {
+    console.log("[COMPLETE OAUTH] after resolve", {
       createdSessionId,
       hasSetActive: !!setActive,
-      signUpStatus: flow.signUp?.status,
-      missingFields: flow.signUp?.missingFields,
+      ...oauthFlowDebugSnapshot(flow),
     });
 
     if (!createdSessionId) {
@@ -121,12 +122,17 @@ export default function SignInScreen() {
         // User dismissed the native sheet — not an error.
         return;
       }
-      logClerkAuthError(`${which}-no-session`, new Error("OAuth completed without session"), {
-        signInStatus: flow.signIn?.status,
-        signUpStatus: flow.signUp?.status,
-        missingFields: flow.signUp?.missingFields,
-      });
-      setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+      logClerkAuthError(`${which}-no-session`, new Error("OAuth completed without session"), snapshot);
+      const missing = (flow.signUp?.missingFields ?? []).join(", ");
+      if (missing) {
+        setError(
+          `Sign-in with ${which} needs more account details (${missing}). Check Clerk required fields or try again.`,
+        );
+      } else {
+        setError(
+          `Sign-in with ${which} couldn't complete. Confirm Clerk Apple is enabled for bundle ID "haulbrokr".`,
+        );
+      }
       return;
     }
     try {
@@ -144,7 +150,10 @@ export default function SignInScreen() {
       router.replace("/" as any);
     } catch (err) {
       logClerkAuthError(`${which}-setActive`, err, { createdSessionId });
-      setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+      setError(
+        clerkErrorMessage(err as any) ||
+          `Sign-in with ${which} couldn't activate your session. Please try again.`,
+      );
     }
   };
 
@@ -155,12 +164,7 @@ export default function SignInScreen() {
     try {
       if (which === "apple" && shouldUseNativeAppleSignIn()) {
         const result = await startAppleAuthenticationFlow();
-        console.log("[APPLE AUTH RESULT]", {
-          createdSessionId: result?.createdSessionId,
-          signInStatus: result?.signIn?.status,
-          signUpStatus: result?.signUp?.status,
-          missingFields: result?.signUp?.missingFields,
-        });
+        console.log("[APPLE AUTH RESULT]", oauthFlowDebugSnapshot(result as OAuthFlowResult));
         await completeOAuthSession(result as OAuthFlowResult, which);
         return;
       }
@@ -187,7 +191,11 @@ export default function SignInScreen() {
         setError(`Sign in with ${which === "google" ? "Google" : "Apple"} isn't enabled yet — turn it on in the Auth pane.`);
       } else if (/redirect|callback|native application/i.test(msg)) {
         setError(
-          `Sign in with ${which === "google" ? "Google" : "Apple"} failed — confirm Clerk Native Applications includes haulbrokr://sso-callback.`
+          `Sign in with ${which === "google" ? "Google" : "Apple"} failed — confirm Clerk Native Applications includes haulbrokr://sso-callback and bundle ID haulbrokr.`
+        );
+      } else if (/bundle|app.?id|team.?id|audience|token|jwt|nonce/i.test(msg)) {
+        setError(
+          `Sign in with Apple failed — confirm Clerk Native Application uses iOS bundle ID "haulbrokr" (Team B7Z55AHC9L).`
         );
       } else if (msg) {
         setError(msg);

@@ -1,25 +1,41 @@
 /**
  * Completes Clerk OAuth / native Apple-Google sign-up when the provider
- * transfer leaves the SignUp in `missing_requirements` (usually username).
+ * transfer leaves SignUp in `missing_requirements` (usually username).
  *
- * Apple reviewers hit this on first Sign in with Apple because Clerk requires
- * a username and Apple does not supply one.
+ * Apple App Review hits this on first Sign in with Apple because Clerk requires
+ * a username (and sometimes legal_accepted / name) that Apple does not supply.
+ *
+ * Clerk Future / Core 3 APIs return `{ error }` from update()/finalize() instead
+ * of throwing — callers must check the return value.
  */
+
+type ClerkErrorLike = {
+  message?: string;
+  longMessage?: string;
+  code?: string;
+  errors?: Array<{ message?: string; longMessage?: string; code?: string }>;
+};
 
 type SignUpLike = {
   status?: string | null;
   createdSessionId?: string | null;
   emailAddress?: string | null;
   username?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   missingFields?: string[] | null;
   unmatchedFields?: string[] | null;
-  update?: (params: Record<string, unknown>) => Promise<unknown>;
+  requiredFields?: string[] | null;
+  unverifiedFields?: string[] | null;
+  update?: (params: Record<string, unknown>) => Promise<{ error?: ClerkErrorLike | null } | unknown>;
+  finalize?: (params?: Record<string, unknown>) => Promise<{ error?: ClerkErrorLike | null } | unknown>;
 };
 
 type SignInLike = {
   status?: string | null;
   createdSessionId?: string | null;
   existingSession?: { sessionId?: string | null } | null;
+  finalize?: (params?: Record<string, unknown>) => Promise<{ error?: ClerkErrorLike | null } | unknown>;
 };
 
 export type OAuthFlowResult = {
@@ -28,6 +44,29 @@ export type OAuthFlowResult = {
   signIn?: SignInLike | null;
   signUp?: SignUpLike | null;
 };
+
+export type ResolveOAuthSessionOptions = {
+  /** Prefer Apple credential fullName when present. */
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
+function extractError(result: unknown): ClerkErrorLike | null {
+  if (!result || typeof result !== "object") return null;
+  const err = (result as { error?: ClerkErrorLike | null }).error;
+  return err ?? null;
+}
+
+export function clerkResultErrorMessage(error: ClerkErrorLike | null | undefined): string {
+  if (!error) return "";
+  if (error.errors?.length) {
+    return error.errors
+      .map((item) => item.longMessage ?? item.message)
+      .filter(Boolean)
+      .join(" ");
+  }
+  return error.longMessage ?? error.message ?? "";
+}
 
 /** Sanitize a string into a Clerk-safe username (letters, numbers, underscore). */
 export function sanitizeClerkUsername(raw: string): string {
@@ -50,20 +89,113 @@ export function usernameFromEmail(email: string | null | undefined): string {
   return combined.slice(0, 48);
 }
 
-function missingIncludes(signUp: SignUpLike | null | undefined, field: string): boolean {
-  const fields = [
+function fieldList(signUp: SignUpLike | null | undefined): string[] {
+  return [
     ...(signUp?.missingFields ?? []),
     ...(signUp?.unmatchedFields ?? []),
+    ...(signUp?.requiredFields ?? []),
   ].map((f) => String(f).toLowerCase());
-  return fields.includes(field.toLowerCase());
+}
+
+function needsField(signUp: SignUpLike | null | undefined, field: string): boolean {
+  return fieldList(signUp).includes(field.toLowerCase());
+}
+
+function snapshotFields(signUp: SignUpLike | null | undefined): string {
+  const fields = Array.from(new Set(fieldList(signUp)));
+  return fields.length ? fields.join(", ") : "(none)";
+}
+
+async function applyMissingSignUpFields(
+  signUp: SignUpLike,
+  opts?: ResolveOAuthSessionOptions,
+): Promise<void> {
+  const patch: Record<string, unknown> = {};
+
+  const needsUsername =
+    needsField(signUp, "username") ||
+    (signUp.status === "missing_requirements" && !signUp.username);
+
+  if (needsUsername) {
+    patch.username = usernameFromEmail(signUp.emailAddress);
+  }
+  if (needsField(signUp, "legal_accepted")) {
+    patch.legalAccepted = true;
+  }
+  if (needsField(signUp, "first_name") && (opts?.firstName || !signUp.firstName)) {
+    patch.firstName = (opts?.firstName ?? "HaulBrokr").trim() || "HaulBrokr";
+  }
+  if (needsField(signUp, "last_name") && (opts?.lastName || !signUp.lastName)) {
+    patch.lastName = (opts?.lastName ?? "User").trim() || "User";
+  }
+
+  if (Object.keys(patch).length === 0) {
+    if (signUp.status === "missing_requirements" && typeof signUp.update === "function") {
+      const result = await signUp.update({});
+      const err = extractError(result);
+      if (err) throw Object.assign(new Error(clerkResultErrorMessage(err) || "Sign-up update failed"), err);
+    }
+    return;
+  }
+
+  if (typeof signUp.update !== "function") {
+    throw new Error("Sign-up update is unavailable — cannot finish Apple account setup.");
+  }
+
+  // Retry username collisions with a fresh suffix.
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const attemptPatch = { ...patch };
+    if (needsUsername) {
+      attemptPatch.username = usernameFromEmail(signUp.emailAddress);
+    }
+    try {
+      const result = await signUp.update(attemptPatch);
+      const err = extractError(result);
+      if (err) {
+        const msg = clerkResultErrorMessage(err).toLowerCase();
+        if (needsUsername && /username|taken|exists|unique|identifier/i.test(msg) && attempt < 3) {
+          lastError = err;
+          continue;
+        }
+        throw Object.assign(new Error(clerkResultErrorMessage(err) || "Sign-up update failed"), err);
+      }
+      return;
+    } catch (err) {
+      lastError = err;
+      const msg = String((err as { message?: string })?.message ?? err).toLowerCase();
+      if (needsUsername && /username|taken|exists|unique|identifier/i.test(msg) && attempt < 3) {
+        continue;
+      }
+      throw err;
+    }
+  }
+  if (lastError) throw lastError;
+}
+
+async function finalizeIfNeeded(resource: SignUpLike | SignInLike | null | undefined): Promise<string | null> {
+  if (!resource) return null;
+  if (resource.createdSessionId) return resource.createdSessionId;
+  if (resource.status !== "complete" || typeof resource.finalize !== "function") {
+    return resource.createdSessionId ?? null;
+  }
+  const result = await resource.finalize({});
+  const err = extractError(result);
+  if (err) {
+    // Session may already exist even if finalize reports a soft error.
+    if (resource.createdSessionId) return resource.createdSessionId;
+    throw Object.assign(new Error(clerkResultErrorMessage(err) || "Could not finalize session"), err);
+  }
+  return resource.createdSessionId ?? null;
 }
 
 /**
- * If OAuth returned no session because SignUp still needs a username (or similar),
- * fill required fields and return the resulting session id.
+ * If OAuth returned no session because SignUp still needs fields (username, etc.),
+ * fill them, finalize, and return the resulting session id.
  */
 export async function resolveOAuthSessionId(
   result: OAuthFlowResult,
+  opts?: ResolveOAuthSessionOptions,
 ): Promise<string | null> {
   const fromResult =
     result.createdSessionId ??
@@ -75,41 +207,69 @@ export async function resolveOAuthSessionId(
   if (fromResult) return fromResult;
 
   const signUp = result.signUp;
-  if (!signUp) return null;
+  if (signUp) {
+    const pending =
+      signUp.status === "missing_requirements" ||
+      fieldList(signUp).length > 0 ||
+      signUp.status === "complete";
 
-  const needsUsername =
-    missingIncludes(signUp, "username") ||
-    (signUp.status === "missing_requirements" && !signUp.username);
-
-  if (needsUsername && typeof signUp.update === "function") {
-    let lastError: unknown;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const username = usernameFromEmail(signUp.emailAddress);
-      try {
-        await signUp.update({ username });
-        if (signUp.createdSessionId) return signUp.createdSessionId;
-        lastError = null;
-        break;
-      } catch (err) {
-        lastError = err;
-        const msg = String((err as { message?: string })?.message ?? err).toLowerCase();
-        if (!/username|taken|exists|unique|identifier/i.test(msg)) throw err;
+    if (pending) {
+      if (signUp.status === "missing_requirements" || fieldList(signUp).length > 0) {
+        await applyMissingSignUpFields(signUp, opts);
       }
+
+      // After filling requirements, another pass may still list fields (e.g. legal + username).
+      if (signUp.status === "missing_requirements" || needsField(signUp, "username")) {
+        await applyMissingSignUpFields(signUp, opts);
+      }
+
+      const sessionFromFinalize = await finalizeIfNeeded(signUp);
+      if (sessionFromFinalize) return sessionFromFinalize;
+      if (signUp.createdSessionId) return signUp.createdSessionId;
+
+      throw new Error(
+        `Apple sign-up is incomplete (status=${signUp.status ?? "unknown"}, missing=${snapshotFields(signUp)}). ` +
+          "In Clerk Dashboard, make Username optional for social sign-up, or ensure Native App bundle ID matches this build.",
+      );
     }
-    if (lastError) throw lastError;
-  } else if (signUp.status === "missing_requirements" && typeof signUp.update === "function") {
-    // Best-effort: some Clerk configs still need an update tick after transfer.
-    await signUp.update({});
   }
 
-  return signUp.createdSessionId ?? null;
+  const signIn = result.signIn;
+  if (signIn?.status === "complete") {
+    const sessionFromFinalize = await finalizeIfNeeded(signIn);
+    if (sessionFromFinalize) return sessionFromFinalize;
+  }
+
+  return (
+    result.signIn?.createdSessionId ??
+    result.signIn?.existingSession?.sessionId ??
+    result.signUp?.createdSessionId ??
+    null
+  );
 }
 
 /** True when the user dismissed the native Apple/Google sheet (no error thrown). */
 export function isOAuthUserCancel(result: OAuthFlowResult): boolean {
   if (result.createdSessionId) return false;
   if (result.signUp?.status === "missing_requirements") return false;
+  if (result.signUp?.status === "complete") return false;
   if (result.signIn?.status === "complete") return false;
+  if (fieldList(result.signUp).length > 0) return false;
   // Native Apple cancel returns null session with no transferable sign-up work left.
-  return !result.signUp?.missingFields?.length && !result.signUp?.createdSessionId;
+  return !result.signUp?.createdSessionId && !result.signIn?.createdSessionId;
+}
+
+/** Compact debug snapshot for console / review logs. */
+export function oauthFlowDebugSnapshot(result: OAuthFlowResult): Record<string, unknown> {
+  return {
+    createdSessionId: result.createdSessionId ?? null,
+    signInStatus: result.signIn?.status ?? null,
+    signInSession: result.signIn?.createdSessionId ?? null,
+    signUpStatus: result.signUp?.status ?? null,
+    signUpSession: result.signUp?.createdSessionId ?? null,
+    missingFields: result.signUp?.missingFields ?? [],
+    requiredFields: result.signUp?.requiredFields ?? [],
+    unverifiedFields: result.signUp?.unverifiedFields ?? [],
+    email: result.signUp?.emailAddress ?? null,
+  };
 }
