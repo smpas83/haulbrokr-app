@@ -619,6 +619,46 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DumpSite"
+    post:
+      operationId: createDumpSite
+      tags: [dump-sites]
+      summary: Add a new dropoff facility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DumpSiteInput"
+      responses:
+        "201":
+          description: Created dump site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DumpSite"
+        "403":
+          description: Staff access required
+
+  /dump-sites/{id}:
+    get:
+      operationId: getDumpSite
+      tags: [dump-sites]
+      summary: Get a dropoff facility by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dump site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DumpSite"
+        "404":
+          description: Dump site not found
 
   /dump-sites/states:
     get:
@@ -2630,6 +2670,10 @@ components:
           type: string
         deliveryAddress:
           type: string
+        dropoffFacilityId:
+          type: ["integer", "null"]
+        dropoffInstructions:
+          type: ["string", "null"]
         scheduledDate:
           type: string
           format: date-time
@@ -2669,6 +2713,10 @@ components:
           type: string
         deliveryAddress:
           type: string
+        dropoffFacilityId:
+          type: integer
+        dropoffInstructions:
+          type: string
         scheduledDate:
           type: string
           format: date-time
@@ -2704,6 +2752,10 @@ components:
           type: string
         deliveryAddress:
           type: string
+        dropoffFacilityId:
+          type: ["integer", "null"]
+        dropoffInstructions:
+          type: ["string", "null"]
         scheduledDate:
           type: string
           format: date-time
@@ -2803,6 +2855,10 @@ components:
           type: string
         deliveryAddress:
           type: string
+        dropoffFacilityId:
+          type: ["integer", "null"]
+        dropoffInstructions:
+          type: ["string", "null"]
         scheduledDate:
           type: string
           format: date-time
@@ -2979,10 +3035,64 @@ components:
           enum: [landfill, transfer_station, recycling_center, construction_debris, hazardous_waste, compost]
         phone:
           type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        hours:
+          type: ["string", "null"]
+        acceptedMaterials:
+          type: array
+          items:
+            type: string
+        tippingFeeDetails:
+          type: ["string", "null"]
+        paymentMethods:
+          type: ["string", "null"]
+        instructions:
+          type: ["string", "null"]
         isActive:
           type: boolean
         fullAddress:
           type: string
+
+    DumpSiteInput:
+      type: object
+      required: [name, address, city, state, zip, type]
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        type:
+          type: string
+          enum: [landfill, transfer_station, recycling_center, construction_debris, hazardous_waste, compost]
+        phone:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        hours:
+          type: string
+        acceptedMaterials:
+          type: array
+          items:
+            type: string
+        tippingFeeDetails:
+          type: string
+        paymentMethods:
+          type: string
+        instructions:
+          type: string
+        isActive:
+          type: boolean
 
     # ── W-9 ───────────────────────────────────────────────────────────────────
     W9Submission:

@@ -370,6 +370,10 @@ export interface JobRequest {
   quantityTons: number;
   pickupAddress: string;
   deliveryAddress: string;
+  /** @nullable */
+  dropoffFacilityId?: number | null;
+  /** @nullable */
+  dropoffInstructions?: string | null;
   scheduledDate: string;
   /** Local start time in HH:mm (24-hour) format */
   startTime: string;
@@ -425,6 +429,8 @@ export interface JobRequestInput {
   quantityTons: number;
   pickupAddress: string;
   deliveryAddress: string;
+  dropoffFacilityId?: number;
+  dropoffInstructions?: string;
   scheduledDate: string;
   /**
      * Local start time in HH:mm (24-hour) format
@@ -494,6 +500,10 @@ export interface JobRequestUpdate {
   quantityTons?: number;
   pickupAddress?: string;
   deliveryAddress?: string;
+  /** @nullable */
+  dropoffFacilityId?: number | null;
+  /** @nullable */
+  dropoffInstructions?: string | null;
   scheduledDate?: string;
   /** @pattern ^([01]\d|2[0-3]):[0-5]\d$ */
   startTime?: string;
@@ -621,6 +631,10 @@ export interface Job {
   truckType: JobTruckType;
   pickupAddress: string;
   deliveryAddress: string;
+  /** @nullable */
+  dropoffFacilityId?: number | null;
+  /** @nullable */
+  dropoffInstructions?: string | null;
   scheduledDate: string;
   startTime: string;
   estimatedHours: number;
@@ -778,8 +792,51 @@ export interface DumpSite {
   type: DumpSiteType;
   /** @nullable */
   phone?: string | null;
+  /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
+  /** @nullable */
+  hours?: string | null;
+  acceptedMaterials?: string[];
+  /** @nullable */
+  tippingFeeDetails?: string | null;
+  /** @nullable */
+  paymentMethods?: string | null;
+  /** @nullable */
+  instructions?: string | null;
   isActive: boolean;
   fullAddress?: string;
+}
+
+export type DumpSiteInputType = typeof DumpSiteInputType[keyof typeof DumpSiteInputType];
+
+
+export const DumpSiteInputType = {
+  landfill: 'landfill',
+  transfer_station: 'transfer_station',
+  recycling_center: 'recycling_center',
+  construction_debris: 'construction_debris',
+  hazardous_waste: 'hazardous_waste',
+  compost: 'compost',
+} as const;
+
+export interface DumpSiteInput {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  type: DumpSiteInputType;
+  phone?: string;
+  latitude?: number;
+  longitude?: number;
+  hours?: string;
+  acceptedMaterials?: string[];
+  tippingFeeDetails?: string;
+  paymentMethods?: string;
+  instructions?: string;
+  isActive?: boolean;
 }
 
 export type W9SubmissionBusinessType = typeof W9SubmissionBusinessType[keyof typeof W9SubmissionBusinessType];

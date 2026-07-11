@@ -5,6 +5,7 @@ import request from "supertest";
 const h = vi.hoisted(() => ({
   profile: { id: 1, role: "customer", companyName: "Test Builders" } as Record<string, unknown>,
   requests: [] as Record<string, unknown>[],
+  dumpSites: [] as Record<string, unknown>[],
   nextRequestId: 1,
   inserts: [] as Record<string, unknown>[],
 }));
@@ -17,6 +18,7 @@ vi.mock("@workspace/db", () => {
   const profilesTable = makeTable("profiles");
   const bidsTable = makeTable("bids");
   const activityTable = makeTable("activity");
+  const dumpSitesTable = makeTable("dumpSites");
 
   const db = {
     select: () => ({
@@ -25,6 +27,7 @@ vi.mock("@workspace/db", () => {
           if (table === requestsTable) return Promise.resolve(h.requests);
           if (table === profilesTable) return Promise.resolve([{ companyName: "Test Builders" }]);
           if (table === bidsTable) return Promise.resolve([{ count: 0 }]);
+          if (table === dumpSitesTable) return Promise.resolve(h.dumpSites.filter((s) => s.isActive !== false));
           return Promise.resolve([]);
         },
         orderBy: () => Promise.resolve(h.requests),
@@ -53,7 +56,7 @@ vi.mock("@workspace/db", () => {
     }),
   };
 
-  return { db, requestsTable, profilesTable, bidsTable, activityTable };
+  return { db, requestsTable, profilesTable, bidsTable, activityTable, dumpSitesTable };
 });
 
 vi.mock("../middlewares/requireAuth", () => ({
@@ -89,6 +92,7 @@ const validBody = {
 
 beforeEach(() => {
   h.requests = [];
+  h.dumpSites = [];
   h.inserts = [];
   h.nextRequestId = 1;
   h.profile = { id: 1, role: "customer", companyName: "Test Builders" };
@@ -117,6 +121,36 @@ describe("POST /requests job posting fields", () => {
       trucksNeeded: 2,
       notes: "Gate code 4455",
     });
+  });
+
+  it("stores selected dropoff facility and instructions", async () => {
+    h.dumpSites.push({ id: 77, isActive: true });
+
+    const res = await request(makeApp()).post("/requests").send({
+      ...validBody,
+      dropoffFacilityId: 77,
+      dropoffInstructions: "Check in at the scale house and upload tipping receipt.",
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      dropoffFacilityId: 77,
+      dropoffInstructions: "Check in at the scale house and upload tipping receipt.",
+    });
+    expect(h.inserts[0]).toMatchObject({
+      dropoffFacilityId: 77,
+      dropoffInstructions: "Check in at the scale house and upload tipping receipt.",
+    });
+  });
+
+  it("rejects a missing or inactive dropoff facility", async () => {
+    const res = await request(makeApp()).post("/requests").send({
+      ...validBody,
+      dropoffFacilityId: 99,
+    });
+
+    expect(res.status).toBe(400);
+    expect(h.requests).toHaveLength(0);
   });
 
   it("rejects invalid start time format", async () => {

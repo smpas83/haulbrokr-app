@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
 import { projectsTable } from "./projects";
 import { truckTypeEnum } from "./trucks";
+import { dumpSitesTable } from "./dump-sites";
 
 export const materialTypeEnum = pgEnum("material_type", ["dirt", "gravel", "sand", "concrete", "asphalt", "demolition", "topsoil", "fill", "other"]);
 export const requestStatusEnum = pgEnum("request_status", [
@@ -25,6 +26,8 @@ export const requestsTable = pgTable("requests", {
   quantityTons: numeric("quantity_tons", { precision: 10, scale: 2 }).notNull(),
   pickupAddress: text("pickup_address").notNull(),
   deliveryAddress: text("delivery_address").notNull(),
+  dropoffFacilityId: integer("dropoff_facility_id").references(() => dumpSitesTable.id),
+  dropoffInstructions: text("dropoff_instructions"),
   scheduledDate: timestamp("scheduled_date", { withTimezone: true }).notNull(),
   startTime: text("start_time").notNull(),
   estimatedHours: numeric("estimated_hours", { precision: 8, scale: 2 }).notNull(),

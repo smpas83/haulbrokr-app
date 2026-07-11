@@ -1547,9 +1547,21 @@ export default function JobDetailPage() {
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Delivery</p>
                 <div className="bg-background border border-border/60 p-4 shadow-sm">
                   <p className="font-medium whitespace-pre-line">{job.deliveryAddress}</p>
+                  {job.dropoffFacilityId && (
+                    <Badge variant="outline" className="mt-3 rounded-none">Facility #{job.dropoffFacilityId}</Badge>
+                  )}
                 </div>
               </div>
             </div>
+
+            {job.dropoffInstructions && (
+              <div className="pt-6">
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Dropoff Instructions</p>
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 border-l-4 border-blue-400">
+                  <p className="text-sm font-medium whitespace-pre-line">{job.dropoffInstructions}</p>
+                </div>
+              </div>
+            )}
 
             {job.notes && (
               <div className="pt-6">

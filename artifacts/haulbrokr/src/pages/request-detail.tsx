@@ -204,6 +204,7 @@ export default function RequestDetailPage() {
                     <p><strong>When:</strong> {format(new Date(request.scheduledDate), "MMM d, yyyy")} at {formatStartTime(request.startTime)} · ~{request.estimatedHours}h</p>
                     <p><strong>Pickup:</strong> {request.pickupAddress}</p>
                     <p><strong>Drop-off:</strong> {request.deliveryAddress}</p>
+                    {request.dropoffInstructions && <p><strong>Dropoff instructions:</strong> {request.dropoffInstructions}</p>}
                     {request.notes && <p><strong>Notes:</strong> {request.notes}</p>}
                   </div>
                 </DialogDescription>
@@ -361,8 +362,20 @@ export default function RequestDetailPage() {
                   <MapPin className="h-4 w-4 text-primary" /> Delivery Location
                 </p>
                 <p className="font-medium whitespace-pre-line">{request.deliveryAddress}</p>
+                {request.dropoffFacilityId && (
+                  <Badge variant="outline" className="mt-3 rounded-none">Facility #{request.dropoffFacilityId}</Badge>
+                )}
               </div>
             </div>
+
+            {request.dropoffInstructions && (
+              <div className="mt-8 border-t-2 border-border pt-6">
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3">Dropoff Instructions</p>
+                <p className="text-foreground/90 whitespace-pre-line bg-blue-50 dark:bg-blue-900/20 p-4 border-l-4 border-blue-400">
+                  {request.dropoffInstructions}
+                </p>
+              </div>
+            )}
 
             {request.notes && (
               <div className="mt-8 border-t-2 border-border pt-6">

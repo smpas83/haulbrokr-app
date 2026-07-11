@@ -75,9 +75,13 @@ const SITE_TYPE_COLORS: Record<string, string> = {
   compost: "bg-emerald-600",
 };
 
+function dumpSiteAddress(site: DumpSite): string {
+  return site.fullAddress || `${site.name}, ${site.address}, ${site.city}, ${site.state} ${site.zip}`;
+}
+
 interface DumpSitePickerProps {
   label: string;
-  onSelect: (address: string) => void;
+  onSelect: (site: DumpSite) => void;
 }
 
 function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
@@ -100,7 +104,7 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
   );
 
   function handleSelect(site: DumpSite) {
-    onSelect(site.fullAddress || `${site.name}, ${site.address}, ${site.city}, ${site.state} ${site.zip}`);
+    onSelect(site);
     setOpen(false);
     setSearch("");
   }
@@ -223,6 +227,23 @@ function DumpSitePicker({ label, onSelect }: DumpSitePickerProps) {
                       {site.phone && (
                         <p className="text-xs text-muted-foreground/70 mt-0.5">{site.phone}</p>
                       )}
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {site.hours && (
+                          <Badge variant="outline" className="rounded-none text-[10px] px-1 py-0">
+                            {site.hours}
+                          </Badge>
+                        )}
+                        {site.tippingFeeDetails && (
+                          <Badge variant="outline" className="rounded-none text-[10px] px-1 py-0">
+                            {site.tippingFeeDetails}
+                          </Badge>
+                        )}
+                        {(site.acceptedMaterials ?? []).slice(0, 2).map((material) => (
+                          <Badge key={material} variant="outline" className="rounded-none text-[10px] px-1 py-0 capitalize">
+                            {material}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                     <Badge className={cn("text-[10px] px-1.5 py-0 rounded-xl text-white flex-shrink-0", SITE_TYPE_COLORS[site.type] || "bg-slate-500")}>
                       {SITE_TYPE_LABELS[site.type] || site.type}
@@ -254,6 +275,8 @@ const formSchema = z.object({
   quantityTons: z.coerce.number().positive("Quantity must be positive."),
   pickupAddress: z.string().min(5, "Pickup address is required."),
   deliveryAddress: z.string().min(5, "Delivery address is required."),
+  dropoffFacilityId: z.number().optional(),
+  dropoffInstructions: z.string().optional(),
   scheduledDate: z.date({
     required_error: "A scheduled date is required.",
   }),
@@ -327,6 +350,8 @@ export default function NewRequestPage() {
       quantityTons: "" as any,
       pickupAddress: "",
       deliveryAddress: "",
+      dropoffFacilityId: undefined,
+      dropoffInstructions: "",
       startTime: "07:00",
       estimatedHours: "" as any,
       trucksNeeded: 1,
@@ -340,6 +365,8 @@ export default function NewRequestPage() {
       ...values,
       scheduledDate: values.scheduledDate.toISOString(),
       budgetPerHour: values.budgetPerHour === "" ? undefined : Number(values.budgetPerHour),
+      dropoffFacilityId: values.dropoffFacilityId ?? undefined,
+      dropoffInstructions: values.dropoffInstructions?.trim() || undefined,
     };
 
     createRequest.mutate(
@@ -588,7 +615,7 @@ export default function NewRequestPage() {
                           </Button>
                           <DumpSitePicker
                             label="Pickup"
-                            onSelect={(addr) => form.setValue("pickupAddress", addr, { shouldValidate: true })}
+                            onSelect={(site) => form.setValue("pickupAddress", dumpSiteAddress(site), { shouldValidate: true })}
                           />
                         </div>
                       </div>
@@ -616,7 +643,10 @@ export default function NewRequestPage() {
                         </FormLabel>
                         <DumpSitePicker
                           label="Delivery"
-                          onSelect={(addr) => form.setValue("deliveryAddress", addr, { shouldValidate: true })}
+                          onSelect={(site) => {
+                            form.setValue("deliveryAddress", dumpSiteAddress(site), { shouldValidate: true });
+                            form.setValue("dropoffFacilityId", site.id, { shouldValidate: true });
+                          }}
                         />
                       </div>
                       <FormControl>
@@ -624,8 +654,34 @@ export default function NewRequestPage() {
                           placeholder="e.g. Apex Landfill, 4250 Losee Rd, North Las Vegas, NV 89030"
                           className="min-h-[80px] border-2 rounded-xl focus-visible:ring-primary resize-none"
                           {...field}
+                          onChange={(event) => {
+                            field.onChange(event);
+                            form.setValue("dropoffFacilityId", undefined);
+                          }}
                         />
                       </FormControl>
+                      {form.watch("dropoffFacilityId") && (
+                        <FormDescription>Linked to facility #{form.watch("dropoffFacilityId")}.</FormDescription>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dropoffInstructions"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dropoff Instructions</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Facility gate, scale house, tipping-fee payment, or receipt requirements."
+                          className="min-h-[72px] border-2 rounded-none focus-visible:ring-primary resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>Visible on the load so drivers know exactly how to deliver.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

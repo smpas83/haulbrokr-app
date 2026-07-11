@@ -250,6 +250,8 @@ router.patch("/bids/:id", requireProfile, async (req, res): Promise<void> => {
       truckType: request.truckType,
       pickupAddress: request.pickupAddress,
       deliveryAddress: request.deliveryAddress,
+      dropoffFacilityId: request.dropoffFacilityId,
+      dropoffInstructions: request.dropoffInstructions,
       scheduledDate: request.scheduledDate,
       startTime: request.startTime,
       estimatedHours: request.estimatedHours,

@@ -136,6 +136,8 @@ function sampleJob(overrides: Record<string, unknown> = {}) {
     truckType: "dump_truck",
     pickupAddress: "A",
     deliveryAddress: "B",
+    dropoffFacilityId: 77,
+    dropoffInstructions: "Scale in before dumping.",
     scheduledDate: new Date(),
     startTime: "08:00",
     estimatedHours: "8",
@@ -157,6 +159,8 @@ beforeEach(() => {
     quantityTons: "100",
     pickupAddress: "A",
     deliveryAddress: "B",
+    dropoffFacilityId: 77,
+    dropoffInstructions: "Scale in before dumping.",
     scheduledDate: new Date(),
     startTime: "08:00",
     estimatedHours: "8",
@@ -186,7 +190,13 @@ describe("Job award / hauler acceptance flow", () => {
 
     expect(res.status).toBe(200);
     expect(h.jobs).toHaveLength(1);
-    expect(h.jobs[0]).toMatchObject({ status: "awarded", providerId: 20, bidId: 5 });
+    expect(h.jobs[0]).toMatchObject({
+      status: "awarded",
+      providerId: 20,
+      bidId: 5,
+      dropoffFacilityId: 77,
+      dropoffInstructions: "Scale in before dumping.",
+    });
     expect(h.requests[0].status).toBe("awarded");
     expect(h.bids[0].status).toBe("awarded");
   });
