@@ -167,13 +167,6 @@ export default defineConfig(async ({ command }) => {
         privacy: path.resolve(import.meta.dirname, "privacy.html"),
         notFound: path.resolve(import.meta.dirname, "404.html"),
       },
-      output: {
-        manualChunks: {
-          "auth-shell": [
-            path.resolve(import.meta.dirname, "src/AuthShell.tsx"),
-          ],
-        },
-      },
     },
   },
   server: {
