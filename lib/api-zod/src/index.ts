@@ -6,6 +6,7 @@ export * from "./generated/api";
 export {
   ConnectQuickBooksBody,
   CreateBinOrderBody,
+  CreateDriverEventBody,
   CreateFactoringRequestBody,
   CreateJobEvidenceBody,
   CreateProjectBody,
@@ -13,3 +14,4 @@ export {
   UpsertDriverDocBody,
   VerifyTicketQrBody,
 } from "./generated/api";
+export * from "./generated/types";
