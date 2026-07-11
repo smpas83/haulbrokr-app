@@ -8,7 +8,7 @@ Fixes Apple rejection of **HaulBrokr iOS 1.0 (11)** for:
 | **5.1.1(v)** Privacy | No account deletion | In-app **Delete Account** (mobile + web) + `DELETE /profiles/me` |
 
 PR: https://github.com/smpas83/haulbrokr-app/pull/114  
-Branch: `cursor/app-review-apple-auth-deletion-401a`
+Branches: `cursor/app-review-apple-auth-deletion-401a`, `cursor/kash-ai-testflight-d8f3`
 
 ---
 
@@ -16,7 +16,16 @@ Branch: `cursor/app-review-apple-auth-deletion-401a`
 
 1. **EAS slug must match project ID.** Expo project `6a500641-…` is registered as slug `dumpbroker-mobile` (legacy). Display name stays HaulBrokr.
 2. **iOS bundle ID must be `haulbrokr`.** App Store Connect app `6769841431` is locked to `haulbrokr` (error 90055 if you submit `com.haulbrokr.mobile`).
-3. GitHub Actions TestFlight also needs **`EXPO_TOKEN`** (empty today). For local builds, `eas login` is enough.
+3. GitHub Actions TestFlight and **Cursor Cloud Agents** need **`EXPO_TOKEN`**. Add it to:
+   - GitHub → repo → Settings → Secrets → `EXPO_TOKEN`
+   - Cursor → Cloud Agents → Environment → Secrets → `EXPO_TOKEN` ([create token](https://expo.dev/accounts/smpas83/settings/access-tokens))
+   For local builds, `eas login` is enough.
+
+One-command ship (after `EXPO_TOKEN` is set or `eas login`):
+
+```bash
+./scripts/ship-ios-testflight.sh
+```
 
 Local ship:
 
