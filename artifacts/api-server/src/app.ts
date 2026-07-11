@@ -17,6 +17,7 @@ import stripeWebhooksRouter from "./routes/stripe-webhooks";
 import { globalRateLimit } from "./middlewares/rateLimit";
 import { errorHandler } from "./middlewares/errorHandler";
 import { logger } from "./lib/logger";
+import { createRequestId } from "./lib/requestId";
 
 const app: Express = express();
 
@@ -76,6 +77,11 @@ app.use((_req, res, next) => {
 app.use(
   pinoHttp({
     logger,
+    genReqId(req, res) {
+      const id = createRequestId(req.headers);
+      res.setHeader("X-Request-Id", id);
+      return id;
+    },
     serializers: {
       req(req) {
         return {
