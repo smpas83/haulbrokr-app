@@ -14,6 +14,7 @@
     "seed-apple-review": "tsx scripts/seed-apple-review-account.ts",
     "audit-production-data": "tsx scripts/audit-production-data.ts",
     "seed-dump-sites": "tsx src/seed/dump-sites.ts",
+    "seed-demo-loads": "tsx scripts/seed-demo-loads.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

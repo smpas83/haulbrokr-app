@@ -56,7 +56,8 @@ export default function DriverJobsScreen() {
 
   const activeJobs: any[] = useMemo(() => {
     const all = (jobsQuery.data as any[]) ?? [];
-    return all.filter((j) => j.status === "active" || j.status === "in_progress");
+    const ACTIVE = new Set(["active", "awarded", "accepted", "in_progress"]);
+    return all.filter((j) => ACTIVE.has(j.status));
   }, [jobsQuery.data]);
 
   return (

@@ -25,7 +25,9 @@ async function seedDumpSitesIfEmpty() {
     console.log("Dump sites already seeded — skipping.");
     return;
   }
-  console.log("Dump sites empty — run: pnpm --filter @workspace/api-server exec tsx src/seed/dump-sites.ts");
+  console.log("Dump sites empty — seeding nationwide facilities...");
+  const { seedDumpSites } = await import("../src/seed/dump-sites.js");
+  await seedDumpSites();
 }
 
 async function seedProfiles() {
