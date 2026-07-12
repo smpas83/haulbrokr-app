@@ -67,7 +67,15 @@ jobs:
       - name: Web app tests
         run: pnpm --filter @workspace/haulbrokr run test
 
+      # ubuntu-latest ships a snap-backed `chromium` wrapper that Puppeteer cannot
+      # launch (WS endpoint timeout). Install real Chrome for the headless runtime
+      # guard in haulbrokr-mobile/test/check-web-runtime.test.ts.
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+
       - name: Mobile tests
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.chrome-path }}
         run: pnpm --filter @workspace/haulbrokr-mobile run test
 
       - name: Build API
