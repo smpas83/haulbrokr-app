@@ -12,6 +12,11 @@ const VALID_PRODUCTION_ENV: Record<string, string> = {
   DATABASE_URL: "postgresql://haulbrokr:secret@ep-damp-boat-aftkv449.us-east-2.aws.neon.tech/neondb?sslmode=require",
   CLERK_SECRET_KEY: "sk_live_clerk_secret",
   CLERK_PUBLISHABLE_KEY: "pk_live_clerk_publishable",
+  APPLE_TEAM_ID: "AB12CD34EF",
+  APPLE_KEY_ID: "KEYID1234",
+  APPLE_CLIENT_ID: "com.haulbrokr.mobile",
+  APPLE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\\nMIGHTESTKEY\\n-----END PRIVATE KEY-----",
+  APPLE_TOKEN_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   STRIPE_SECRET_KEY: "sk_live_stripe_secret",
   STRIPE_PUBLISHABLE_KEY: "pk_live_stripe_publishable",
   STRIPE_WEBHOOK_SECRET: "whsec_stripe_webhook",
@@ -37,6 +42,7 @@ describe("validateProductionEnv", () => {
     const services = new Set(PRODUCTION_ENV_REQUIREMENTS.map((req) => req.service));
     expect(services.has("neon")).toBe(true);
     expect(services.has("clerk")).toBe(true);
+    expect(services.has("apple")).toBe(true);
     expect(services.has("stripe")).toBe(true);
     expect(services.has("resend")).toBe(true);
     expect(services.has("r2")).toBe(true);
@@ -64,6 +70,8 @@ describe("validateProductionEnv", () => {
 
     expect(variables).toContain("DATABASE_URL");
     expect(variables).toContain("CLERK_SECRET_KEY");
+    expect(variables).toContain("APPLE_TEAM_ID");
+    expect(variables).toContain("APPLE_PRIVATE_KEY");
     expect(variables).toContain("STRIPE_SECRET_KEY");
     expect(variables).toContain("RESEND_API_KEY");
     expect(variables).toContain("R2_BUCKET");

@@ -6,6 +6,7 @@ export type ProductionService =
   | "r2"
   | "render"
   | "vercel"
+  | "apple"
   | "core";
 
 export interface EnvRequirement {
@@ -29,6 +30,13 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   // Clerk
   { service: "clerk", variable: "CLERK_SECRET_KEY", required: true, description: "Clerk secret key for backend auth (sk_…)." },
   { service: "clerk", variable: "CLERK_PUBLISHABLE_KEY", required: true, description: "Clerk publishable key for JWT verification (pk_…)." },
+
+  // Sign in with Apple (HaulBrokr backend owns token exchange + revocation)
+  { service: "apple", variable: "APPLE_TEAM_ID", required: true, description: "Apple Developer Team ID (10 characters)." },
+  { service: "apple", variable: "APPLE_KEY_ID", required: true, description: "Sign in with Apple Key ID from Certificates, Identifiers & Profiles." },
+  { service: "apple", variable: "APPLE_CLIENT_ID", required: true, description: "Bundle ID (native) or Services ID used by HaulBrokr — typically com.haulbrokr.mobile." },
+  { service: "apple", variable: "APPLE_PRIVATE_KEY", required: true, description: "Sign in with Apple .p8 private key PEM (store in secret manager; never commit)." },
+  { service: "apple", variable: "APPLE_TOKEN_ENCRYPTION_KEY", required: true, description: "32-byte AES key as 64 hex chars (or base64) for encrypting Apple refresh tokens at rest." },
 
   // Stripe
   { service: "stripe", variable: "STRIPE_SECRET_KEY", required: true, description: "Stripe secret API key (sk_live_… or sk_test_…)." },
@@ -264,6 +272,70 @@ function validateRender(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): v
   }
 }
 
+function looksLikeAppleEncryptionKey(value: string): boolean {
+  if (/^[0-9a-fA-F]{64}$/.test(value)) return true;
+  try {
+    return Buffer.from(value, "base64").length === 32;
+  } catch {
+    return false;
+  }
+}
+
+function validateApple(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+  const teamId = envValue(env, "APPLE_TEAM_ID");
+  const keyId = envValue(env, "APPLE_KEY_ID");
+  const clientId = envValue(env, "APPLE_CLIENT_ID");
+  const privateKey = envValue(env, "APPLE_PRIVATE_KEY");
+  const encKey = envValue(env, "APPLE_TOKEN_ENCRYPTION_KEY");
+
+  if (!teamId) pushMissing(issues, "apple", "APPLE_TEAM_ID");
+  else if (!/^[A-Z0-9]{10}$/i.test(teamId)) {
+    pushInvalid(issues, "apple", "APPLE_TEAM_ID", "APPLE_TEAM_ID must be a 10-character Apple Team ID.");
+  }
+
+  if (!keyId) pushMissing(issues, "apple", "APPLE_KEY_ID");
+  else if (keyId.length < 8) {
+    pushInvalid(issues, "apple", "APPLE_KEY_ID", "APPLE_KEY_ID looks too short to be a real Apple Key ID.");
+  }
+
+  if (!clientId) pushMissing(issues, "apple", "APPLE_CLIENT_ID");
+  else if (!clientId.includes(".")) {
+    pushInvalid(
+      issues,
+      "apple",
+      "APPLE_CLIENT_ID",
+      "APPLE_CLIENT_ID should be a Bundle ID or Services ID (e.g. com.haulbrokr.mobile).",
+    );
+  }
+
+  if (!privateKey) {
+    pushMissing(issues, "apple", "APPLE_PRIVATE_KEY");
+  } else {
+    const normalized = privateKey.replace(/\\n/g, "\n");
+    const looksPem = normalized.includes("BEGIN PRIVATE KEY");
+    const looksBase64Pem = !privateKey.includes(" ") && privateKey.length > 80;
+    if (!looksPem && !looksBase64Pem) {
+      pushInvalid(
+        issues,
+        "apple",
+        "APPLE_PRIVATE_KEY",
+        "APPLE_PRIVATE_KEY must be a PKCS#8 .p8 PEM (or base64-encoded PEM). Never commit the key to git.",
+      );
+    }
+  }
+
+  if (!encKey) {
+    pushMissing(issues, "apple", "APPLE_TOKEN_ENCRYPTION_KEY");
+  } else if (!looksLikeAppleEncryptionKey(encKey)) {
+    pushInvalid(
+      issues,
+      "apple",
+      "APPLE_TOKEN_ENCRYPTION_KEY",
+      "APPLE_TOKEN_ENCRYPTION_KEY must be 64 hex characters or base64 for exactly 32 bytes.",
+    );
+  }
+}
+
 function validateCoreSecrets(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
   const uploadSecret = envValue(env, "UPLOAD_TOKEN_SECRET");
   if (!uploadSecret) {
@@ -316,6 +388,7 @@ export function collectProductionEnvIssues(env: NodeJS.ProcessEnv = process.env)
   const issues: EnvValidationIssue[] = [];
   validateDatabaseUrl(env, issues);
   validateClerk(env, issues);
+  validateApple(env, issues);
   validateStripe(env, issues);
   validateResend(env, issues);
   validateR2(env, issues);
@@ -335,6 +408,7 @@ function formatIssues(issues: EnvValidationIssue[]): string {
   const serviceOrder: ProductionService[] = [
     "neon",
     "clerk",
+    "apple",
     "stripe",
     "resend",
     "r2",

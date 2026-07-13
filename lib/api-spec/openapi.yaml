@@ -78,6 +78,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserProfile"
+    delete:
+      operationId: deleteMyAccount
+      tags: [profiles]
+      summary: Permanently delete the authenticated user's account and associated personal data
+      description: |
+        Required for App Store Guideline 5.1.1(v). Deletes personally identifiable
+        data, anonymizes marketplace history that must be retained for settlement,
+        revokes Sign in with Apple tokens via Apple's /auth/revoke API (HaulBrokr-owned,
+        not Clerk), and removes the Clerk authentication identity.
+      responses:
+        "200":
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted:
+                    type: boolean
+                  profileId:
+                    type: integer
+                    nullable: true
+                  clerkDeleted:
+                    type: boolean
+                  appleRevoked:
+                    type: boolean
+                    nullable: true
+                  jobId:
+                    type: integer
+                  status:
+                    type: string
+                  message:
+                    type: string
+        "500":
+          description: Deletion failed
 
   /profiles:
     post:
@@ -648,6 +684,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AccountStatus"
+
+  /account/apple-authorization:
+    post:
+      operationId: storeAppleAuthorization
+      tags: [account]
+      summary: Exchange a Sign in with Apple authorization code and store the refresh token
+      description: |
+        Called immediately after native Sign in with Apple. HaulBrokr's API exchanges
+        the one-time authorization code with Apple, encrypts the refresh token at rest,
+        and later revokes it during account deletion. Clerk does not own this lifecycle.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [authorizationCode]
+              properties:
+                authorizationCode:
+                  type: string
+      responses:
+        "200":
+          description: Skipped (e.g. Apple server credentials not configured in this environment)
+        "201":
+          description: Refresh token stored
+        "400":
+          description: Missing authorizationCode
+        "502":
+          description: Apple token exchange failed
 
   /account/w9:
     get:

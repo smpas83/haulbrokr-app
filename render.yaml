@@ -29,6 +29,18 @@ services:
         sync: false
       - key: CLERK_PUBLISHABLE_KEY
         sync: false
+      # Sign in with Apple — HaulBrokr backend owns token exchange + revocation.
+      # Create in Apple Developer, then paste into Render secret manager (never git).
+      - key: APPLE_TEAM_ID
+        sync: false
+      - key: APPLE_KEY_ID
+        sync: false
+      - key: APPLE_CLIENT_ID
+        sync: false
+      - key: APPLE_PRIVATE_KEY
+        sync: false
+      - key: APPLE_TOKEN_ENCRYPTION_KEY
+        sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY

@@ -32,6 +32,8 @@ describe("runStartupMigrations", () => {
     expect(h.query).toHaveBeenCalledWith("COMMIT");
     expect(h.query.mock.calls.some(([sql]) => String(sql).includes("payment_refunds"))).toBe(true);
     expect(h.query.mock.calls.some(([sql]) => String(sql).includes("refunded_amount"))).toBe(true);
+    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("apple_auth_tokens"))).toBe(true);
+    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("account_deletion_jobs"))).toBe(true);
   });
 
   it("rolls back on failure", async () => {

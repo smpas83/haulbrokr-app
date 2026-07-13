@@ -83,8 +83,81 @@ export async function runStartupMigrations(): Promise<void> {
         ON device_tokens (profile_id, expo_push_token);
     `);
 
+    // Sign in with Apple token storage + account deletion outbox (P0 App Store gate).
+    await client.query(`
+      DO $$ BEGIN
+        CREATE TYPE apple_token_status AS ENUM ('active', 'revoked', 'revoke_pending', 'revoke_failed');
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+    await client.query(`
+      DO $$ BEGIN
+        CREATE TYPE account_deletion_status AS ENUM (
+          'pending', 'revoking_apple', 'anonymizing', 'deleting_clerk', 'completed', 'failed'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+    await client.query(`
+      DO $$ BEGIN
+        CREATE TYPE apple_revoke_status AS ENUM ('not_needed', 'pending', 'succeeded', 'failed');
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS apple_auth_tokens (
+        id serial PRIMARY KEY,
+        profile_id integer REFERENCES profiles(id),
+        clerk_id text NOT NULL,
+        apple_subject text,
+        encrypted_refresh_token text NOT NULL,
+        status apple_token_status NOT NULL DEFAULT 'active',
+        last_error text,
+        revoked_at timestamptz,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS apple_auth_tokens_clerk_id_idx
+        ON apple_auth_tokens (clerk_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS apple_auth_tokens_profile_id_idx
+        ON apple_auth_tokens (profile_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS apple_auth_tokens_status_idx
+        ON apple_auth_tokens (status);
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS account_deletion_jobs (
+        id serial PRIMARY KEY,
+        clerk_id text NOT NULL,
+        profile_id integer,
+        status account_deletion_status NOT NULL DEFAULT 'pending',
+        apple_revoke_status apple_revoke_status NOT NULL DEFAULT 'pending',
+        attempt_count integer NOT NULL DEFAULT 0,
+        next_attempt_at timestamptz NOT NULL DEFAULT now(),
+        last_error text,
+        completed_at timestamptz,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS account_deletion_jobs_open_idx
+        ON account_deletion_jobs (status, next_attempt_at);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS account_deletion_jobs_clerk_id_idx
+        ON account_deletion_jobs (clerk_id);
+    `);
+
     await client.query("COMMIT");
-    logger.info("Startup migrations applied (refund schema)");
+    logger.info("Startup migrations applied (refund + Apple auth / deletion schema)");
   } catch (err) {
     await client.query("ROLLBACK");
     logger.error({ err }, "Startup migrations failed");

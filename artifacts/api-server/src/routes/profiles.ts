@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import { db, profilesTable, organizationsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { computeDocumentStatus } from "../lib/documentStatus";
+import { deleteAccountForClerkUser } from "../lib/deleteAccount";
+import { linkAppleTokensToProfile } from "../lib/appleTokenStore";
 
 const router: IRouter = Router();
 
@@ -86,6 +88,30 @@ router.patch("/profiles/me", requireAuth, async (req, res): Promise<void> => {
   res.json(profile);
 });
 
+/**
+ * Permanently delete the authenticated account (App Store Guideline 5.1.1(v)).
+ * Runs an auditable state machine: Apple token revoke → anonymize → Clerk delete,
+ * with background retries for Apple revocation failures.
+ */
+router.delete("/profiles/me", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = req.clerkId as string;
+  try {
+    const result = await deleteAccountForClerkUser(clerkId);
+    res.json({
+      deleted: true,
+      profileId: result.profileId,
+      clerkDeleted: result.clerkDeleted,
+      appleRevoked: result.appleRevoked,
+      jobId: result.jobId,
+      status: result.status,
+      message: "Your account has been permanently deleted.",
+    });
+  } catch (err: any) {
+    req.log?.error?.({ err }, "Account deletion failed");
+    res.status(500).json({ error: err?.message ?? "Account deletion failed" });
+  }
+});
+
 const VALID_ROLES = ["customer", "provider", "driver", "supervisor"] as const;
 type Role = (typeof VALID_ROLES)[number];
 
@@ -131,6 +157,7 @@ router.post("/profiles", requireAuth, async (req, res): Promise<void> => {
       inviteCode: code,
     }).returning();
     await db.update(profilesTable).set({ organizationId: org.id }).where(eq(profilesTable.id, newProfile.id));
+    await linkAppleTokensToProfile(clerkId, newProfile.id).catch(() => undefined);
     res.status(201).json({ ...newProfile, organizationId: org.id, organization: org });
     return;
   }
@@ -158,6 +185,7 @@ router.post("/profiles", requireAuth, async (req, res): Promise<void> => {
     ...extras, clerkId, role, companyName: org.name, phone, organizationId: org.id, orgRole: "member",
   }).returning();
   organizationId = org.id;
+  await linkAppleTokensToProfile(clerkId, newProfile.id).catch(() => undefined);
   res.status(201).json({ ...newProfile, organizationId, organization: org });
 });
 

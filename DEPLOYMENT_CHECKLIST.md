@@ -30,6 +30,8 @@ Start from empty provider accounts and complete these steps in order.
 - [ ] Configure sign-in and sign-up paths: `/sign-in`, `/sign-up`.
 - [ ] Enable required social providers.
 - [ ] Configure Apple Sign-In for `com.haulbrokr.mobile`.
+- [ ] Store Apple server secrets in Render: `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_CLIENT_ID`, `APPLE_PRIVATE_KEY`, `APPLE_TOKEN_ENCRYPTION_KEY` (see `docs/APPLE_SIGN_IN_REVOCATION.md`). Never commit the `.p8` key.
+- [ ] Verify account deletion revokes Sign in with Apple on a physical TestFlight device.
 - [ ] Enable **Native applications** in Clerk.
 - [ ] Add redirect URIs: `haulbrokr://`, `haulbrokr://*`, `haulbrokr://sso-callback`, `https://haulbrokr.com/*`, `https://www.haulbrokr.com/*`.
 - [ ] Copy `CLERK_SECRET_KEY`.

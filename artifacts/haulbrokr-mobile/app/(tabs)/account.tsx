@@ -18,7 +18,7 @@ import { LastUpdated } from "@/components/LastUpdated";
 import { ACCENT } from "@/constants/theme";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import { useCompliance, useSubmitCompliance, useVerifyCompliance, useCreditApplication, useSubmitCreditApplication, useQBStatus, useQBConnect, useQBSync, useQBDisconnect, usePayoutStatus, useConnectStripe, useMyProfile, useAdminAccess, useAdminCompliance, useAdminCreditApplications, useStuckPayouts, useWallet, useAccountStatus, useLiveActivity } from "@/hooks/useLiveApi";
+import { useCompliance, useSubmitCompliance, useVerifyCompliance, useCreditApplication, useSubmitCreditApplication, useQBStatus, useQBConnect, useQBSync, useQBDisconnect, usePayoutStatus, useConnectStripe, useMyProfile, useAdminAccess, useAdminCompliance, useAdminCreditApplications, useStuckPayouts, useWallet, useAccountStatus, useLiveActivity, useDeleteAccount } from "@/hooks/useLiveApi";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 const COMPLIANCE_ITEMS = [
@@ -48,6 +48,7 @@ export default function AccountScreen() {
   const [notifJobs, setNotifJobs] = useState(true);
   const [notifPayments, setNotifPayments] = useState(true);
   const { signOut } = useAuth();
+  const deleteAccount = useDeleteAccount();
   const complianceQuery = useCompliance();
   const submitCompliance = useSubmitCompliance();
   const verifyCompliance = useVerifyCompliance();
@@ -1004,7 +1005,7 @@ export default function AccountScreen() {
         ))}
       </Animated.View>
 
-      {/* Sign Out */}
+      {/* Sign Out / Delete Account */}
       <Animated.View entering={FadeInDown.delay(400).springify()}>
         <Pressable
           onPress={() => {
@@ -1025,6 +1026,64 @@ export default function AccountScreen() {
           <Feather name="log-out" size={18} color={colors.destructive} />
           <Text style={[styles.signOutText, { color: colors.destructive, fontFamily: "Inter_600SemiBold" }]}>Sign Out</Text>
         </Pressable>
+
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            Alert.alert(
+              "Delete Account",
+              "This permanently deletes your HaulBrokr account and personal data. Sign in with Apple authorization is revoked when applicable. This cannot be undone.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Continue",
+                  style: "destructive",
+                  onPress: () => {
+                    Alert.alert(
+                      "Confirm deletion",
+                      "Are you sure you want to permanently delete your account?",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Delete Account",
+                          style: "destructive",
+                          onPress: async () => {
+                            try {
+                              await deleteAccount.mutateAsync();
+                              try {
+                                await signOutAndClearLocalState(signOut);
+                              } catch {
+                                // Clerk user may already be gone after server delete.
+                              }
+                              Alert.alert(
+                                "Account deleted",
+                                "Your account has been permanently deleted.",
+                                [{ text: "OK", onPress: () => router.replace("/sign-in" as any) }],
+                              );
+                            } catch (err: any) {
+                              Alert.alert(
+                                "Couldn't delete account",
+                                err?.message ?? "Please try again or contact privacy@haulbrokr.com.",
+                              );
+                            }
+                          },
+                        },
+                      ],
+                    );
+                  },
+                },
+              ],
+            );
+          }}
+          disabled={deleteAccount.isPending}
+          style={[styles.signOutBtn, { backgroundColor: colors.card, borderColor: colors.border, opacity: deleteAccount.isPending ? 0.6 : 1 }]}
+        >
+          <Feather name="trash-2" size={18} color={colors.destructive} />
+          <Text style={[styles.signOutText, { color: colors.destructive, fontFamily: "Inter_600SemiBold" }]}>
+            {deleteAccount.isPending ? "Deleting…" : "Delete Account"}
+          </Text>
+        </Pressable>
+
         <Text style={[styles.version, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
           HaulBrokr v2.0.0 • Built for construction professionals
         </Text>
