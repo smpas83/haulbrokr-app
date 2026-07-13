@@ -10,11 +10,13 @@ import {
   dotCdlTable,
   creditApplicationsTable,
 } from "@workspace/db";
-import { getRequestProfile, requireProfile, attachClerkProfileIfPresent } from "../middlewares/requireAuth";
-import { hasPermission, requirePermission } from "../middlewares/requireAdmin";
+import { getRequestProfile, requireProfile, attachClerkProfileIfPresent, requireAuth } from "../middlewares/requireAuth";
+import { requirePermission } from "../middlewares/requireAdmin";
 import { attachStaffSession, requireStaffOrProfile } from "../middlewares/staffAuth";
 import { computeProviderCanBid } from "../lib/providerCompliance";
 import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
+import { storeAppleAuthorizationForUser } from "../lib/appleTokenStore";
+import { AppleAuthError } from "../lib/appleAuth";
 import {
   GetW9Response,
   SubmitW9Body,
@@ -40,6 +42,42 @@ const router: IRouter = Router();
 
 router.use(attachStaffSession);
 router.use(attachClerkProfileIfPresent);
+
+/**
+ * Capture a native Sign in with Apple authorization code, exchange it server-side
+ * for a refresh token, and store the refresh token encrypted at rest.
+ * HaulBrokr (not Clerk) owns this so account deletion can call Apple /auth/revoke.
+ */
+router.post("/account/apple-authorization", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = req.clerkId as string;
+  const authorizationCode =
+    typeof req.body?.authorizationCode === "string" ? req.body.authorizationCode.trim() : "";
+  if (!authorizationCode) {
+    res.status(400).json({ error: "authorizationCode is required" });
+    return;
+  }
+
+  try {
+    const profile = req.profile ?? null;
+    const result = await storeAppleAuthorizationForUser({
+      clerkId,
+      authorizationCode,
+      profileId: profile?.id ?? null,
+    });
+    res.status(result.stored ? 201 : 200).json({
+      stored: result.stored,
+      skippedReason: result.skippedReason ?? null,
+      appleSubject: result.appleSubject,
+    });
+  } catch (err: any) {
+    req.log?.error?.({ err }, "Apple authorization exchange failed");
+    if (err instanceof AppleAuthError) {
+      res.status(502).json({ error: "Apple token exchange failed. Please sign in with Apple again." });
+      return;
+    }
+    res.status(500).json({ error: err?.message ?? "Could not store Apple authorization" });
+  }
+});
 
 // Compliance verification is staff-only (compliance permission).
 

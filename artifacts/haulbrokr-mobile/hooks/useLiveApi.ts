@@ -67,6 +67,17 @@ export function useCreateProfile() {
   });
 }
 
+export function useDeleteAccount() {
+  const { getToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch(getToken, "DELETE", "/profiles/me"),
+    onSuccess: () => {
+      qc.clear();
+    },
+  });
+}
+
 export function useProjects() {
   const { getToken, isSignedIn } = useAuth();
   return useQuery({

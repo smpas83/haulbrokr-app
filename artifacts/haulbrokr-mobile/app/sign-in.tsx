@@ -1,5 +1,4 @@
 import { useAuth, useClerk, useSignIn, useSignUp, useSSO } from "@clerk/expo";
-import { useSignInWithApple } from "@clerk/expo/apple";
 import { useSignInWithGoogle } from "@clerk/expo/google";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -32,6 +31,10 @@ import {
   shouldUseNativeAppleSignIn,
 } from "@/lib/clerkOAuth";
 import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
+import {
+  completeNativeAppleSignIn,
+  submitAppleAuthorizationCode,
+} from "@/lib/appleNativeAuth";
 
 type Mode = "signin" | "signup";
 type Step = "credentials" | "verify";
@@ -41,12 +44,11 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
-  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const { isLoaded: authLoaded, isSignedIn, getToken } = useAuth();
   const clerk = useClerk();
   const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
-  const { startAppleAuthenticationFlow } = useSignInWithApple();
   const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
@@ -119,10 +121,30 @@ export default function SignInScreen() {
     setError("");
     try {
       if (which === "apple" && shouldUseNativeAppleSignIn()) {
-        const result = await startAppleAuthenticationFlow();
-      console.log("[APPLE AUTH RESULT]", JSON.stringify(result, null, 2));
-      const { createdSessionId, setActive } = result;
-        await completeOAuthSession(createdSessionId, setActive, which);
+        if (!signIn || !signUp) {
+          setError("Authentication is still loading. Please try again.");
+          return;
+        }
+        const appleResult = await completeNativeAppleSignIn({
+          signIn: signIn as any,
+          signUp: signUp as any,
+          setActive: clerk.setActive ? (params) => clerk.setActive!(params) : undefined,
+        });
+        if (appleResult.cancelled) {
+          return;
+        }
+        await completeOAuthSession(appleResult.sessionId, undefined, which);
+        if (appleResult.authorizationCode) {
+          try {
+            await submitAppleAuthorizationCode({
+              getToken,
+              authorizationCode: appleResult.authorizationCode,
+            });
+          } catch (storeErr) {
+            // Sign-in already succeeded — revocation storage is best-effort + retryable on next Apple sign-in.
+            logClerkAuthError("apple-authorization-store", storeErr, { which });
+          }
+        }
         return;
       }
 

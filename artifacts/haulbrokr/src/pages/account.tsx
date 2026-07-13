@@ -6,8 +6,10 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { 
   Loader2, CheckCircle2, AlertCircle, Clock, ShieldAlert,
-  CreditCard, Banknote, HelpCircle, ShieldCheck, FileText, ArrowRight
+  CreditCard, Banknote, HelpCircle, ShieldCheck, FileText, ArrowRight, Trash2
 } from "lucide-react";
+import { useClerk } from "@clerk/react";
+import { apiFetch as sharedApiFetch } from "@/lib/apiFetch";
 import {
   useGetMyProfile, useUpdateMyProfile, getGetMyProfileQueryKey,
   useGetAccountStatus, getGetAccountStatusQueryKey,
@@ -173,6 +175,93 @@ function ProfileTab() {
             </Button>
           </form>
         </Form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DeleteAccountCard() {
+  const { toast } = useToast();
+  const { signOut } = useClerk();
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await sharedApiFetch("/profiles/me", { method: "DELETE" });
+      toast({ title: "Account deleted", description: "Your account has been permanently deleted." });
+      try {
+        await signOut(() => {
+          window.location.href = import.meta.env.BASE_URL || "/";
+        });
+      } catch {
+        window.location.href = import.meta.env.BASE_URL || "/";
+      }
+    } catch (err: any) {
+      toast({
+        title: "Couldn't delete account",
+        description: err?.message ?? "Please try again or email privacy@haulbrokr.com.",
+        variant: "destructive",
+      });
+      setDeleting(false);
+      setConfirming(false);
+    }
+  };
+
+  return (
+    <Card className="rounded-xl border-2 border-destructive/30">
+      <CardHeader>
+        <CardTitle className="text-destructive">Delete Account</CardTitle>
+        <CardDescription>
+          Permanently delete your HaulBrokr account and personal data. Sign in with Apple
+          authorization is revoked when applicable. This cannot be undone.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!confirming ? (
+          <Button
+            type="button"
+            variant="destructive"
+            className="rounded-xl font-bold"
+            onClick={() => setConfirming(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete Account
+          </Button>
+        ) : (
+          <div className="space-y-3">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Confirm permanent deletion</AlertTitle>
+              <AlertDescription>
+                Your profile, documents, and authentication identity will be removed. Marketplace
+                settlement history may be retained in anonymized form for legal compliance.
+              </AlertDescription>
+            </Alert>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="button"
+                variant="destructive"
+                className="rounded-xl font-bold"
+                disabled={deleting}
+                onClick={() => void handleDelete()}
+              >
+                {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                Yes, delete permanently
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl"
+                disabled={deleting}
+                onClick={() => setConfirming(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -1663,7 +1752,10 @@ export default function AccountPage() {
         </TabsList>
         
         <TabsContent value="status" className="mt-0"><ComplianceTab /></TabsContent>
-        <TabsContent value="profile" className="mt-0"><ProfileTab /></TabsContent>
+        <TabsContent value="profile" className="mt-0 space-y-6">
+          <ProfileTab />
+          <DeleteAccountCard />
+        </TabsContent>
         {isProvider && <TabsContent value="w9" className="mt-0"><W9Tab /></TabsContent>}
         {isProvider && <TabsContent value="insurance" className="mt-0"><InsuranceTab /></TabsContent>}
         {isProvider && <TabsContent value="payout" className="mt-0"><PayoutAccountTab /></TabsContent>}

@@ -11,6 +11,11 @@ Use this as the source of truth for staging and production configuration. Do not
 | `DATABASE_URL` | Yes | Neon/Supabase/API | Neon pooled connection string | `postgresql://user:pass@ep-name-pooler.region.aws.neon.tech/db?sslmode=require` | Postgres connection used by Drizzle and `/api/readyz`. |
 | `CLERK_SECRET_KEY` | Yes | Clerk/API | Clerk dashboard | `sk_test_...` / `sk_live_...` | Backend Clerk secret for auth verification and proxy calls. |
 | `CLERK_PUBLISHABLE_KEY` | Yes | Clerk/API | Clerk dashboard | `pk_test_...` / `pk_live_...` | Backend publishable key used with Clerk middleware. |
+| `APPLE_TEAM_ID` | Yes (App Store) | Apple/API | Apple Developer → Membership | `AB12CD34EF` | 10-character Team ID used to mint Apple client_secret JWTs. |
+| `APPLE_KEY_ID` | Yes (App Store) | Apple/API | Apple Developer → Keys | `KEYID12345` | Sign in with Apple key ID. |
+| `APPLE_CLIENT_ID` | Yes (App Store) | Apple/API | Apple Developer → Identifiers | `com.haulbrokr.mobile` | Bundle ID (native) or Services ID used by HaulBrokr. |
+| `APPLE_PRIVATE_KEY` | Yes (App Store) | Apple/API | Apple Developer → Keys (.p8) | PKCS#8 PEM | Sign in with Apple private key. Store only in secret manager — never commit or paste into chat. |
+| `APPLE_TOKEN_ENCRYPTION_KEY` | Yes (App Store) | API | `openssl rand -hex 32` | 64 hex chars | AES-256 key for encrypting Apple refresh tokens at rest. |
 | `STRIPE_SECRET_KEY` | Yes | Stripe/API | Stripe dashboard | `sk_test_...` / `sk_live_...` | Stripe API key for charges, Checkout, Connect, and payouts. |
 | `STRIPE_PUBLISHABLE_KEY` | Yes | Stripe/API | Stripe dashboard | `pk_test_...` / `pk_live_...` | Publishable key returned to clients where needed. |
 | `STRIPE_WEBHOOK_SECRET` | Yes | Stripe/API | Stripe webhook endpoint | `whsec_...` | Signature secret for `/api/webhooks/stripe`. |
