@@ -28,7 +28,7 @@ const EQUIPMENT_TYPES: { value: string; label: string }[] = [
 
 const ROLES: { id: Role; title: string; sub: string; icon: keyof typeof Feather.glyphMap }[] = [
   { id: "customer",   title: "Customer",   sub: "I hire dump trucks",       icon: "briefcase" },
-  { id: "provider",   title: "Provider",   sub: "I operate trucks",         icon: "truck" },
+  { id: "provider",   title: "Provider",   sub: "I operate dump trucks",    icon: "truck" },
   { id: "supervisor", title: "Supervisor", sub: "I manage a job site",      icon: "clipboard" },
   { id: "driver",     title: "Driver",     sub: "I drive for a company",    icon: "user" },
 ];

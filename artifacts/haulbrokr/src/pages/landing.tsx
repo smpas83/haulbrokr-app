@@ -1,11 +1,11 @@
 import {
   ArrowRight, CheckCircle2, ClipboardCheck, DollarSign, FileText,
   HardHat, LayoutDashboard, MapPin, Navigation, Search, ShieldCheck,
-  Truck, Zap, Building2, Users, Sparkles, Globe, BarChart3, Clock, Star, Bot
+  Zap, Building2, Users, Sparkles, Globe, BarChart3, Clock, Star, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { SurfacePanel, AnimatedNationMap, AiCopilotPreview, FaqSection } from "@/components/design";
+import { SurfacePanel, AnimatedNationMap, AiCopilotPreview, FaqSection, DumpTruckIcon } from "@/components/design";
 import logo from "@/assets/haulbrokr-logo.png";
 import logoWebp from "@/assets/haulbrokr-logo.webp";
 import heroTruck from "@/assets/hero-truck.png";
@@ -22,8 +22,8 @@ const PLATFORM_HIGHLIGHTS = [
 ];
 
 const steps = [
-  { icon: FileText, title: "Post the job", desc: "Create a haul request with pickup, material, truck count, and schedule." },
-  { icon: Truck, title: "Match trucks", desc: "Available haulers see nearby work and respond faster." },
+  { icon: FileText, title: "Post the job", desc: "Create a haul request with pickup, material, dump truck count, and schedule." },
+  { icon: DumpTruckIcon, title: "Match dump trucks", desc: "Available dump truck operators see nearby work and respond faster." },
   { icon: MapPin, title: "Track live", desc: "Follow check-in, route status, load progress, and completion." },
   { icon: CheckCircle2, title: "Close clean", desc: "Capture proof, load tickets, photos, and billing records." },
 ];
@@ -32,7 +32,7 @@ const features = [
   { icon: Zap, title: "AI dispatch", desc: "Intelligent load matching and route optimization powered by machine learning." },
   { icon: Navigation, title: "GPS visibility", desc: "Real-time fleet tracking with live ETAs and geofenced check-ins." },
   { icon: ClipboardCheck, title: "Digital tickets", desc: "Load photos, timestamps, and signed proof — all organized automatically." },
-  { icon: ShieldCheck, title: "Verified network", desc: "Compliance workflows for haulers, fleets, insurance, and documents." },
+  { icon: ShieldCheck, title: "Verified network", desc: "Compliance workflows for dump truck operators, fleets, insurance, and documents." },
   { icon: LayoutDashboard, title: "Mission control", desc: "Manage requests, bids, active hauls, billing, and analytics in one view." },
   { icon: DollarSign, title: "Payment ready", desc: "Instant invoicing, factoring, and Stripe-powered payment processing." },
 ];
@@ -42,15 +42,15 @@ const segments = [
     icon: HardHat,
     title: "Contractors",
     subtitle: "Customer Portal",
-    desc: "Request trucks, compare bids, track live hauls, and manage invoices from a luxury dashboard.",
-    features: ["Book hauls in seconds", "Live truck tracking", "Digital invoicing", "AI assistant"],
+    desc: "Request dump trucks, compare bids, track live hauls, and manage invoices from a luxury dashboard.",
+    features: ["Book hauls in seconds", "Live dump truck tracking", "Digital invoicing", "AI assistant"],
     cta: "Start hauling",
   },
   {
-    icon: Truck,
+    icon: DumpTruckIcon,
     title: "Drivers",
     subtitle: "Driver App",
-    desc: "One-handed mobile experience built for the cab. Huge buttons, GPS navigation, ticket upload.",
+    desc: "One-handed mobile experience built for the dump truck cab. Huge buttons, GPS navigation, ticket upload.",
     features: ["One-tap check-in", "Camera ticket upload", "Turn-by-turn nav", "Breakdown reporting"],
     cta: "Join as driver",
   },
@@ -73,8 +73,8 @@ const segments = [
 ];
 
 const DISPATCH_FEATURES = [
-  { title: "Post haul requests", desc: "Contractors publish pickup, material, truck count, and schedule." },
-  { title: "Match available trucks", desc: "Verified carriers browse open loads and submit bids." },
+  { title: "Post haul requests", desc: "Contractors publish pickup, material, dump truck count, and schedule." },
+  { title: "Match dump trucks", desc: "Verified dump truck operators browse open loads and submit bids." },
   { title: "Track active jobs", desc: "Follow check-ins, route status, and completion in real time." },
 ];
 
@@ -136,7 +136,7 @@ const FAQ = [
   },
   {
     question: "Is HaulBrokr available nationwide?",
-    answer: "Yes. The marketplace covers all 50 states with live load boards, verified haulers, and GPS tracking on active jobs.",
+    answer: "Yes. The marketplace covers all 50 states with live load boards, verified dump truck operators, and GPS tracking on active jobs.",
   },
   {
     question: "How does AI dispatch work?",
@@ -198,7 +198,7 @@ export default function LandingPage() {
               <div className="max-w-xl animate-slide-up">
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                  North America's #1 haul marketplace
+                  North America's #1 dump truck marketplace
                 </div>
                 <h1 className="text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl leading-[1.05]">
                   Move more.
@@ -210,7 +210,7 @@ export default function LandingPage() {
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Button asChild size="xl" variant="accent">
-                    <a href="/sign-up"><Search className="mr-2 h-5 w-5" />Find Trucks</a>
+                    <a href="/sign-up"><Search className="mr-2 h-5 w-5" />Find Dump Trucks</a>
                   </Button>
                   <Button asChild size="xl" variant="outline">
                     <a href="/sign-up">Join the Network<ArrowRight className="ml-2 h-5 w-5" /></a>
@@ -476,8 +476,8 @@ export default function LandingPage() {
                 <Sparkles className="h-3.5 w-3.5" />
                 Ready to move?
               </div>
-              <h2 className="text-4xl font-bold tracking-tight sm:text-6xl">Put trucks to work today</h2>
-              <p className="mt-4 text-lg text-muted-foreground">Join thousands of contractors and haulers already on the platform.</p>
+              <h2 className="text-4xl font-bold tracking-tight sm:text-6xl">Put dump trucks to work today</h2>
+              <p className="mt-4 text-lg text-muted-foreground">Join thousands of contractors and dump truck operators already on the platform.</p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                 <Button asChild size="xl" variant="accent">
                   <a href="/sign-up">Get Started Free</a>

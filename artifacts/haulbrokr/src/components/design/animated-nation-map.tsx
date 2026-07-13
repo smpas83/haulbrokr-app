@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Truck, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DumpTruckIcon } from "./dump-truck-icon";
 
 interface MapPin {
   id: number;
@@ -63,7 +64,7 @@ export function AnimatedNationMap({ className }: { className?: string }) {
       ctx.clearRect(0, 0, w, h);
 
       // Grid lines
-      ctx.strokeStyle = "rgba(59, 130, 246, 0.06)";
+      ctx.strokeStyle = "rgba(255, 85, 0, 0.06)";
       ctx.lineWidth = 1;
       for (let i = 0; i < w; i += 40) {
         ctx.beginPath();
@@ -143,7 +144,7 @@ export function AnimatedNationMap({ className }: { className?: string }) {
             animationDelay: `${truck.delay}s`,
           }}
         >
-          <Truck className="h-4 w-4 text-accent drop-shadow-[0_0_8px_rgba(255,106,0,0.5)]" />
+          <DumpTruckIcon className="h-4 w-4 text-accent drop-shadow-[0_0_8px_rgba(255,85,0,0.55)]" />
         </div>
       ))}
 
