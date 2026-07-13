@@ -100,7 +100,7 @@ export default function ProjectsScreen() {
       <RefreshingIndicator visible={isUpdating} />
       <ScrollView
         contentContainerStyle={[styles.content, { paddingTop: topPad + 16, paddingBottom: 100 + insets.bottom }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e9a600" colors={["#e9a600"]} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3B82F6" colors={["#3B82F6"]} />}
       >
         <View style={styles.header}>
           <View>
@@ -120,7 +120,7 @@ export default function ProjectsScreen() {
 
         {isLoading && (
           <View style={styles.center}>
-            <ActivityIndicator color="#e9a600" size="large" />
+            <ActivityIndicator color="#3B82F6" size="large" />
           </View>
         )}
 

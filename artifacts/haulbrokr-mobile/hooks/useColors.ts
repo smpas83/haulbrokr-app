@@ -1,12 +1,9 @@
-import { useColorScheme } from "react-native";
 import colors from "@/constants/colors";
 
 /**
- * Returns design tokens for the current color scheme.
- * Falls back to light if no dark scheme is detected.
+ * Returns Industrial Luxury design tokens.
+ * Always dark — matches the haulbrokr.com website (no light theme).
  */
 export function useColors() {
-  const scheme = useColorScheme();
-  const palette = scheme === "dark" ? colors.dark : colors.light;
-  return { ...palette, radius: colors.radius };
+  return { ...colors.dark, radius: colors.radius };
 }

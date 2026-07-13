@@ -65,15 +65,15 @@ export default function TicketScanScreen() {
   if (Platform.OS === "web" || !CameraView) {
     return (
       <SafeAreaView style={styles.safe}>
-        <Stack.Screen options={{ title: "Scan Ticket", headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+        <Stack.Screen options={{ title: "Scan Ticket", headerStyle: { backgroundColor: "#0A0A0C" }, headerTintColor: "#F4F4F5" }} />
         <View style={styles.manualWrap}>
-          <Feather name="smartphone" size={48} color="#8ba0b8" />
+          <Feather name="smartphone" size={48} color="#8B8B96" />
           <Text style={styles.manualTitle}>Camera Required</Text>
           <Text style={styles.manualBody}>
             QR scanning needs the iOS or Android app. For testing, paste a verification token below.
           </Text>
           <View style={styles.inputRow}>
-            <Feather name="key" size={15} color="#8ba0b8" style={{ marginRight: 8 }} />
+            <Feather name="key" size={15} color="#8B8B96" style={{ marginRight: 8 }} />
             <TextInput
               style={styles.input}
               placeholder="Paste ticket QR token from the driver app"
@@ -96,7 +96,7 @@ export default function TicketScanScreen() {
   if (!permission) {
     return (
       <SafeAreaView style={styles.safe}>
-        <Stack.Screen options={{ title: "Scan Ticket", headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+        <Stack.Screen options={{ title: "Scan Ticket", headerStyle: { backgroundColor: "#0A0A0C" }, headerTintColor: "#F4F4F5" }} />
         <View style={styles.center}><Text style={styles.permText}>Loading camera…</Text></View>
       </SafeAreaView>
     );
@@ -104,9 +104,9 @@ export default function TicketScanScreen() {
   if (!permission.granted) {
     return (
       <SafeAreaView style={styles.safe}>
-        <Stack.Screen options={{ title: "Scan Ticket", headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+        <Stack.Screen options={{ title: "Scan Ticket", headerStyle: { backgroundColor: "#0A0A0C" }, headerTintColor: "#F4F4F5" }} />
         <View style={styles.center}>
-          <Feather name="camera-off" size={42} color="#8ba0b8" />
+          <Feather name="camera-off" size={42} color="#8B8B96" />
           <Text style={styles.permTitle}>Camera Permission Needed</Text>
           <Text style={styles.permText}>To scan ticket QR codes from drivers, allow camera access.</Text>
           <Pressable style={styles.primaryBtn} onPress={requestPermission}>
@@ -119,7 +119,7 @@ export default function TicketScanScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: "#000" }]}>
-      <Stack.Screen options={{ title: "Scan Ticket", headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+      <Stack.Screen options={{ title: "Scan Ticket", headerStyle: { backgroundColor: "#0A0A0C" }, headerTintColor: "#F4F4F5" }} />
       <View style={{ flex: 1 }}>
         <CameraView
           style={{ flex: 1 }}
@@ -138,22 +138,22 @@ export default function TicketScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#1e2235" },
+  safe: { flex: 1, backgroundColor: "#0A0A0C" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 12 },
   manualWrap: { flex: 1, padding: 24, alignItems: "center", justifyContent: "center", gap: 12 },
-  manualTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#f0f6ff", marginTop: 4 },
-  manualBody: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8ba0b8", textAlign: "center", marginBottom: 16, lineHeight: 19 },
+  manualTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#F4F4F5", marginTop: 4 },
+  manualBody: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center", marginBottom: 16, lineHeight: 19 },
   inputRow: {
-    flexDirection: "row", alignItems: "center", backgroundColor: "#2a3352",
-    borderRadius: 12, borderWidth: 1, borderColor: "#3a4565",
+    flexDirection: "row", alignItems: "center", backgroundColor: "#141416",
+    borderRadius: 12, borderWidth: 1, borderColor: "#27272A",
     paddingHorizontal: 14, marginBottom: 14, width: "100%",
   },
-  input: { flex: 1, height: 48, color: "#f0f6ff", fontFamily: "Inter_400Regular", fontSize: 13 },
-  primaryBtn: { backgroundColor: "#e9a600", borderRadius: 10, paddingVertical: 14, paddingHorizontal: 32 },
-  primaryBtnText: { color: "#1e2235", fontFamily: "Inter_700Bold", fontSize: 15 },
-  permTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#f0f6ff" },
-  permText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8ba0b8", textAlign: "center", marginBottom: 8 },
+  input: { flex: 1, height: 48, color: "#F4F4F5", fontFamily: "Inter_400Regular", fontSize: 13 },
+  primaryBtn: { backgroundColor: "#3B82F6", borderRadius: 10, paddingVertical: 14, paddingHorizontal: 32 },
+  primaryBtnText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 15 },
+  permTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#F4F4F5" },
+  permText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center", marginBottom: 8 },
   overlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
-  reticle: { width: 240, height: 240, borderWidth: 3, borderColor: "#e9a600", borderRadius: 16, backgroundColor: "transparent" },
-  overlayHint: { marginTop: 22, color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 14, backgroundColor: "rgba(30,34,53,0.7)", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  reticle: { width: 240, height: 240, borderWidth: 3, borderColor: "#3B82F6", borderRadius: 16, backgroundColor: "transparent" },
+  overlayHint: { marginTop: 22, color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 14, backgroundColor: "rgba(10,10,12,0.75)", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
 });

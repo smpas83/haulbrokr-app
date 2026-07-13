@@ -15,7 +15,7 @@ const ROLE_LABEL: Record<string, string> = {
   customer: "Owner", provider: "Owner", driver: "Driver", supervisor: "Supervisor",
 };
 const ROLE_COLOR: Record<string, string> = {
-  customer: "#e9a600", provider: "#e9a600", driver: "#5fb878", supervisor: "#6aa9ff",
+  customer: "#3B82F6", provider: "#3B82F6", driver: "#5fb878", supervisor: "#6aa9ff",
 };
 
 function formatJoined(iso?: string | null): string {
@@ -102,7 +102,7 @@ export default function TeamScreen() {
   if (!isOwner) {
     return (
       <SafeAreaView style={styles.safe}>
-        <Stack.Screen options={{ title: "My Team", headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+        <Stack.Screen options={{ title: "My Team", headerStyle: { backgroundColor: "#0A0A0C" }, headerTintColor: "#F4F4F5" }} />
         <View style={styles.emptyWrap}>
           <Feather name="users" size={48} color="#4a5568" />
           <Text style={styles.emptyTitle}>You're a {ROLE_LABEL[profile.role]}</Text>
@@ -121,15 +121,15 @@ export default function TeamScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <Stack.Screen options={{ title: "My Team", headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+      <Stack.Screen options={{ title: "My Team", headerStyle: { backgroundColor: "#0A0A0C" }, headerTintColor: "#F4F4F5" }} />
       <ScrollView contentContainerStyle={styles.container}>
         {/* Invite code card */}
         <View style={styles.inviteCard}>
           <View style={styles.sourceRow}>
             <Text style={styles.inviteLabel}>YOUR TEAM INVITE CODE</Text>
-            <View style={[styles.sourcePill, { backgroundColor: usingLive ? "#5fb87822" : "#8ba0b822", borderColor: usingLive ? "#5fb87866" : "#8ba0b866" }]}>
-              <View style={[styles.sourceDot, { backgroundColor: usingLive ? "#5fb878" : "#8ba0b8" }]} />
-              <Text style={[styles.sourcePillText, { color: usingLive ? "#5fb878" : "#8ba0b8" }]}>
+            <View style={[styles.sourcePill, { backgroundColor: usingLive ? "#5fb87822" : "#8B8B9622", borderColor: usingLive ? "#5fb87866" : "#8B8B9666" }]}>
+              <View style={[styles.sourceDot, { backgroundColor: usingLive ? "#5fb878" : "#8B8B96" }]} />
+              <Text style={[styles.sourcePillText, { color: usingLive ? "#5fb878" : "#8B8B96" }]}>
                 {usingLive ? "Live" : isLoading ? "Loading…" : "Demo"}
               </Text>
             </View>
@@ -142,11 +142,11 @@ export default function TeamScreen() {
           </Text>
           <View style={styles.inviteActions}>
             <Pressable style={styles.actionBtn} onPress={copyCode}>
-              <Feather name="copy" size={16} color="#1e2235" />
+              <Feather name="copy" size={16} color="#FFFFFF" />
               <Text style={styles.actionBtnText}>Copy</Text>
             </Pressable>
             <Pressable style={styles.actionBtn} onPress={shareCode}>
-              <Feather name="share-2" size={16} color="#1e2235" />
+              <Feather name="share-2" size={16} color="#FFFFFF" />
               <Text style={styles.actionBtnText}>Share</Text>
             </Pressable>
             <Pressable
@@ -155,10 +155,10 @@ export default function TeamScreen() {
               disabled={rotateMut.isPending}
             >
               {rotateMut.isPending ? (
-                <ActivityIndicator size="small" color="#e9a600" />
+                <ActivityIndicator size="small" color="#3B82F6" />
               ) : (
                 <>
-                  <Feather name="refresh-cw" size={16} color="#e9a600" />
+                  <Feather name="refresh-cw" size={16} color="#3B82F6" />
                   <Text style={styles.actionBtnGhostText}>Rotate</Text>
                 </>
               )}
@@ -181,7 +181,7 @@ export default function TeamScreen() {
         {/* Members list */}
         <Text style={styles.sectionLabel}>{memberTypeCap.toUpperCase()}</Text>
         {isLoading && !liveMembers ? (
-          <View style={styles.emptyList}><ActivityIndicator color="#8ba0b8" /></View>
+          <View style={styles.emptyList}><ActivityIndicator color="#8B8B96" /></View>
         ) : members.length === 0 ? (
           <View style={styles.emptyList}>
             <Feather name="user-plus" size={32} color="#4a5568" />
@@ -223,44 +223,44 @@ export default function TeamScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#1e2235" },
+  safe: { flex: 1, backgroundColor: "#0A0A0C" },
   container: { padding: 20, paddingBottom: 40 },
   inviteCard: {
-    backgroundColor: "#2a3352", borderRadius: 16, padding: 20,
-    borderWidth: 1.5, borderColor: "#e9a60030", marginBottom: 20,
+    backgroundColor: "#141416", borderRadius: 16, padding: 20,
+    borderWidth: 1.5, borderColor: "#3B82F630", marginBottom: 20,
   },
   sourceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
   sourcePill: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
   sourceDot: { width: 6, height: 6, borderRadius: 3 },
   sourcePillText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
-  inviteLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#8ba0b8", letterSpacing: 1 },
+  inviteLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#8B8B96", letterSpacing: 1 },
   inviteCode: {
-    fontSize: 36, fontFamily: "Inter_700Bold", color: "#e9a600",
+    fontSize: 36, fontFamily: "Inter_700Bold", color: "#3B82F6",
     letterSpacing: 3, textAlign: "center", marginVertical: 8,
   },
-  inviteHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#8ba0b8", textAlign: "center", marginBottom: 14 },
+  inviteHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center", marginBottom: 14 },
   inviteActions: { flexDirection: "row", gap: 8 },
   actionBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 6, backgroundColor: "#e9a600", height: 40, borderRadius: 10,
+    gap: 6, backgroundColor: "#3B82F6", height: 40, borderRadius: 10,
   },
-  actionBtnText: { color: "#1e2235", fontFamily: "Inter_700Bold", fontSize: 13 },
+  actionBtnText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 13 },
   actionBtnGhost: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 6, borderWidth: 1.5, borderColor: "#e9a60055", height: 40, borderRadius: 10,
+    gap: 6, borderWidth: 1.5, borderColor: "#3B82F655", height: 40, borderRadius: 10,
   },
-  actionBtnGhostText: { color: "#e9a600", fontFamily: "Inter_700Bold", fontSize: 13 },
+  actionBtnGhostText: { color: "#3B82F6", fontFamily: "Inter_700Bold", fontSize: 13 },
   statsRow: { flexDirection: "row", gap: 12, marginBottom: 24 },
   statCard: {
-    flex: 1, backgroundColor: "#2a3352", borderRadius: 12, padding: 16,
-    borderWidth: 1, borderColor: "#3a4565", alignItems: "center",
+    flex: 1, backgroundColor: "#141416", borderRadius: 12, padding: 16,
+    borderWidth: 1, borderColor: "#27272A", alignItems: "center",
   },
-  statValue: { fontSize: 28, fontFamily: "Inter_700Bold", color: "#f0f6ff" },
-  statLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: "#8ba0b8", marginTop: 4 },
-  sectionLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#8ba0b8", letterSpacing: 1, marginBottom: 12 },
+  statValue: { fontSize: 28, fontFamily: "Inter_700Bold", color: "#F4F4F5" },
+  statLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: "#8B8B96", marginTop: 4 },
+  sectionLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#8B8B96", letterSpacing: 1, marginBottom: 12 },
   memberCard: {
-    flexDirection: "row", alignItems: "center", backgroundColor: "#2a3352",
-    borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: "#3a4565", gap: 12,
+    flexDirection: "row", alignItems: "center", backgroundColor: "#141416",
+    borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: "#27272A", gap: 12,
   },
   avatar: {
     width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center",
@@ -268,17 +268,17 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: 14, fontFamily: "Inter_700Bold" },
   memberHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
-  memberName: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#f0f6ff" },
+  memberName: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#F4F4F5" },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
-  memberMeta: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#8ba0b8", marginTop: 2 },
-  memberPhone: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#8ba0b8", marginTop: 1 },
+  memberMeta: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#8B8B96", marginTop: 2 },
+  memberPhone: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#8B8B96", marginTop: 1 },
   emptyList: { alignItems: "center", paddingVertical: 32, gap: 8 },
-  emptyListText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#8ba0b8" },
+  emptyListText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#8B8B96" },
   emptyListSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#6b7280" },
   emptyWrap: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 12 },
-  emptyTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#f0f6ff", marginTop: 8 },
-  emptyBody: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8ba0b8", textAlign: "center", lineHeight: 19 },
-  backBtn: { marginTop: 16, backgroundColor: "#2a3352", paddingVertical: 12, paddingHorizontal: 28, borderRadius: 10 },
-  backBtnText: { color: "#f0f6ff", fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  emptyTitle: { fontSize: 18, fontFamily: "Inter_700Bold", color: "#F4F4F5", marginTop: 8 },
+  emptyBody: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center", lineHeight: 19 },
+  backBtn: { marginTop: 16, backgroundColor: "#141416", paddingVertical: 12, paddingHorizontal: 28, borderRadius: 10 },
+  backBtnText: { color: "#F4F4F5", fontFamily: "Inter_600SemiBold", fontSize: 14 },
   footnote: { marginTop: 16, fontSize: 11, color: "#6b7280", textAlign: "center", fontFamily: "Inter_400Regular" },
 });

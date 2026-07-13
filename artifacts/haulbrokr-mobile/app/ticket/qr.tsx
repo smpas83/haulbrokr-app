@@ -59,9 +59,9 @@ export default function TicketQRScreen() {
   if (!ticket) {
     return (
       <SafeAreaView style={styles.safe}>
-        <Stack.Screen options={{ title: "Ticket QR", headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+        <Stack.Screen options={{ title: "Ticket QR", headerStyle: { backgroundColor: "#0A0A0C" }, headerTintColor: "#F4F4F5" }} />
         <View style={styles.center}>
-          <Feather name="alert-circle" size={36} color="#8ba0b8" />
+          <Feather name="alert-circle" size={36} color="#8B8B96" />
           <Text style={styles.errorText}>Ticket not found.</Text>
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
             <Text style={styles.backText}>Go Back</Text>
@@ -77,7 +77,7 @@ export default function TicketQRScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <Stack.Screen options={{ title: `Ticket #${ticket.loadNumber}`, headerStyle: { backgroundColor: "#1e2235" }, headerTintColor: "#f0f6ff" }} />
+      <Stack.Screen options={{ title: `Ticket #${ticket.loadNumber}`, headerStyle: { backgroundColor: "#0A0A0C" }, headerTintColor: "#F4F4F5" }} />
       <View style={styles.container}>
         <Text style={styles.title}>{isVerified ? "Verified ✓" : "Show this code to your supervisor"}</Text>
         <Text style={styles.subtitle}>
@@ -94,14 +94,14 @@ export default function TicketQRScreen() {
               </View>
             ) : Platform.OS === "web" ? (
               <View style={styles.qrWebFallback}>
-                <Feather name="grid" size={120} color="#1e2235" />
+                <Feather name="grid" size={120} color="#0A0A0C" />
                 <Text style={styles.qrWebFallbackText}>QR Preview</Text>
               </View>
             ) : token ? (
-              <QRCode value={token} size={240} backgroundColor="#ffffff" color="#1e2235" />
+              <QRCode value={token} size={240} backgroundColor="#ffffff" color="#0A0A0C" />
             ) : (
               <View style={styles.qrWebFallback}>
-                <ActivityIndicator color="#1e2235" />
+                <ActivityIndicator color="#0A0A0C" />
               </View>
             )}
           </View>
@@ -126,11 +126,11 @@ export default function TicketQRScreen() {
         {!isVerified && (
           <View style={styles.actions}>
             <Pressable style={styles.actionBtn} onPress={handleShare} disabled={!token}>
-              <Feather name="share-2" size={16} color="#1e2235" />
+              <Feather name="share-2" size={16} color="#FFFFFF" />
               <Text style={styles.actionText}>Share</Text>
             </Pressable>
             <Pressable style={styles.actionBtnGhost} onPress={handleRegenerate} disabled={issueQR.isPending}>
-              <Feather name="refresh-cw" size={16} color="#e9a600" />
+              <Feather name="refresh-cw" size={16} color="#3B82F6" />
               <Text style={styles.actionGhostText}>{issueQR.isPending ? "Issuing…" : "New Code"}</Text>
             </Pressable>
           </View>
@@ -147,35 +147,35 @@ export default function TicketQRScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#1e2235" },
+  safe: { flex: 1, backgroundColor: "#0A0A0C" },
   container: { flex: 1, padding: 24, alignItems: "center" },
-  title: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#f0f6ff", textAlign: "center", marginTop: 8 },
-  subtitle: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8ba0b8", textAlign: "center", marginTop: 6, marginBottom: 24 },
+  title: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#F4F4F5", textAlign: "center", marginTop: 8 },
+  subtitle: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center", marginTop: 6, marginBottom: 24 },
   qrFrame: {
     padding: 16, backgroundColor: "#fff", borderRadius: 20,
-    borderWidth: 3, borderColor: "#e9a600", marginBottom: 20,
+    borderWidth: 3, borderColor: "#3B82F6", marginBottom: 20,
     position: "relative",
   },
   qrFrameVerified: { borderColor: "#5fb878" },
   qrInner: { padding: 4 },
   qrWebFallback: { width: 240, height: 240, alignItems: "center", justifyContent: "center", gap: 8 },
-  qrWebFallbackText: { fontFamily: "Inter_600SemiBold", color: "#1e2235", fontSize: 12 },
+  qrWebFallbackText: { fontFamily: "Inter_600SemiBold", color: "#0A0A0C", fontSize: 12 },
   verifiedBadge: {
     position: "absolute", top: -10, right: -10, width: 36, height: 36, borderRadius: 18,
     backgroundColor: "#5fb878", alignItems: "center", justifyContent: "center",
-    borderWidth: 3, borderColor: "#1e2235",
+    borderWidth: 3, borderColor: "#0A0A0C",
   },
-  tokenBox: { backgroundColor: "#2a3352", borderRadius: 10, padding: 12, marginBottom: 20, width: "100%", borderWidth: 1, borderColor: "#3a4565" },
-  tokenLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#8ba0b8", letterSpacing: 1, marginBottom: 4 },
-  tokenText: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#e9a600" },
+  tokenBox: { backgroundColor: "#141416", borderRadius: 10, padding: 12, marginBottom: 20, width: "100%", borderWidth: 1, borderColor: "#27272A" },
+  tokenLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#8B8B96", letterSpacing: 1, marginBottom: 4 },
+  tokenText: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#3B82F6" },
   actions: { flexDirection: "row", gap: 10, width: "100%" },
-  actionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#e9a600", height: 44, borderRadius: 10 },
-  actionText: { color: "#1e2235", fontFamily: "Inter_700Bold", fontSize: 14 },
-  actionBtnGhost: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1.5, borderColor: "#e9a60055", height: 44, borderRadius: 10 },
-  actionGhostText: { color: "#e9a600", fontFamily: "Inter_700Bold", fontSize: 14 },
-  hint: { marginTop: 18, fontSize: 12, color: "#8ba0b8", textAlign: "center", lineHeight: 18 },
+  actionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#3B82F6", height: 44, borderRadius: 10 },
+  actionText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 14 },
+  actionBtnGhost: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1.5, borderColor: "#3B82F655", height: 44, borderRadius: 10 },
+  actionGhostText: { color: "#3B82F6", fontFamily: "Inter_700Bold", fontSize: 14 },
+  hint: { marginTop: 18, fontSize: 12, color: "#8B8B96", textAlign: "center", lineHeight: 18 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  errorText: { color: "#f0f6ff", fontFamily: "Inter_600SemiBold", fontSize: 15 },
-  backBtn: { backgroundColor: "#2a3352", paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10 },
-  backText: { color: "#f0f6ff", fontFamily: "Inter_600SemiBold" },
+  errorText: { color: "#F4F4F5", fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  backBtn: { backgroundColor: "#141416", paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10 },
+  backText: { color: "#F4F4F5", fontFamily: "Inter_600SemiBold" },
 });

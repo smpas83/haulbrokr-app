@@ -163,7 +163,7 @@ export default function OnboardingScreen() {
                   onPress={() => setRole(r.id)}
                   style={[styles.roleCard, active && styles.roleCardActive]}
                 >
-                  <Feather name={r.icon} size={22} color={active ? "#1e2235" : "#8ba0b8"} />
+                  <Feather name={r.icon} size={22} color={active ? "#0A0A0C" : "#8B8B96"} />
                   <Text style={[styles.roleTitle, active && styles.roleTitleActive]}>{r.title}</Text>
                   <Text style={[styles.roleSub, active && styles.roleSubActive]}>{r.sub}</Text>
                 </Pressable>
@@ -175,7 +175,7 @@ export default function OnboardingScreen() {
             <>
               <Text style={styles.label}>Team invite code *</Text>
               <View style={styles.inputRow}>
-                <Feather name="key" size={15} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="key" size={15} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. 4K7P2X"
@@ -196,7 +196,7 @@ export default function OnboardingScreen() {
             <>
               <Text style={styles.label}>{ownerCompanyLabel}</Text>
               <View style={styles.inputRow}>
-                <Feather name="briefcase" size={15} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="briefcase" size={15} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder={role === "provider" ? "e.g. MW Hauling LLC" : "e.g. Apex Construction LLC"}
@@ -215,19 +215,19 @@ export default function OnboardingScreen() {
 
               <Text style={styles.label}>DBA (optional)</Text>
               <View style={styles.inputRow}>
-                <Feather name="tag" size={15} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="tag" size={15} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput style={styles.input} placeholder="Doing-business-as name" placeholderTextColor="#4a5568" value={dba} onChangeText={setDba} />
               </View>
 
               <Text style={styles.label}>Website (optional)</Text>
               <View style={styles.inputRow}>
-                <Feather name="globe" size={15} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="globe" size={15} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput style={styles.input} placeholder="https://" placeholderTextColor="#4a5568" value={website} onChangeText={setWebsite} autoCapitalize="none" keyboardType="url" />
               </View>
 
               <Text style={styles.label}>MC number (optional)</Text>
               <View style={styles.inputRow}>
-                <Feather name="hash" size={15} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="hash" size={15} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput style={styles.input} placeholder="MC-123456" placeholderTextColor="#4a5568" value={mcNumber} onChangeText={setMcNumber} />
               </View>
 
@@ -248,7 +248,7 @@ export default function OnboardingScreen() {
 
               <Text style={styles.label}>Counties served (optional)</Text>
               <View style={styles.inputRow}>
-                <Feather name="map-pin" size={15} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="map-pin" size={15} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput style={styles.input} placeholder="e.g. Cook, DuPage, Will" placeholderTextColor="#4a5568" value={countiesServed} onChangeText={setCountiesServed} />
               </View>
 
@@ -298,19 +298,19 @@ export default function OnboardingScreen() {
 
               <Text style={styles.label}>EIN (last 4, optional)</Text>
               <View style={styles.inputRow}>
-                <Feather name="credit-card" size={15} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="credit-card" size={15} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput style={styles.input} placeholder="1234" placeholderTextColor="#4a5568" value={billingEinLast4} onChangeText={setBillingEinLast4} keyboardType="numeric" maxLength={4} />
               </View>
 
               <Text style={styles.label}>A/P contact name (optional)</Text>
               <View style={styles.inputRow}>
-                <Feather name="user" size={15} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="user" size={15} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput style={styles.input} placeholder="Accounts payable contact" placeholderTextColor="#4a5568" value={apContactName} onChangeText={setApContactName} />
               </View>
 
               <Text style={styles.label}>A/P email (optional)</Text>
               <View style={styles.inputRow}>
-                <Feather name="mail" size={15} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="mail" size={15} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput style={styles.input} placeholder="ap@company.com" placeholderTextColor="#4a5568" value={apEmail} onChangeText={setApEmail} autoCapitalize="none" keyboardType="email-address" />
               </View>
 
@@ -332,7 +332,7 @@ export default function OnboardingScreen() {
 
           <Text style={[styles.label, { marginTop: 6 }]}>Phone (optional)</Text>
           <View style={styles.inputRow}>
-            <Feather name="phone" size={15} color="#8ba0b8" style={styles.inputIcon} />
+            <Feather name="phone" size={15} color="#8B8B96" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="(555) 000-0000"
@@ -349,7 +349,7 @@ export default function OnboardingScreen() {
             disabled={createProfile.isPending}
           >
             {createProfile.isPending ? (
-              <ActivityIndicator color="#1e2235" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.btnText}>{needsInvite ? "Join Team →" : "Get Started →"}</Text>
             )}
@@ -361,50 +361,50 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#1e2235" },
+  safe: { flex: 1, backgroundColor: "#0A0A0C" },
   container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 40 },
   logoRow: { alignItems: "center", marginBottom: 16 },
   logoImg: { width: "70%", height: 72 },
-  title: { fontSize: 24, fontFamily: "Inter_700Bold", color: "#f0f6ff", textAlign: "center", marginBottom: 6 },
-  subtitle: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#8ba0b8", textAlign: "center", marginBottom: 28 },
-  label: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8ba0b8", letterSpacing: 0.5, marginBottom: 6 },
-  sectionLabel: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#e9a600", letterSpacing: 0.5, marginTop: 14, marginBottom: 10, textTransform: "uppercase" },
+  title: { fontSize: 24, fontFamily: "Inter_700Bold", color: "#F4F4F5", textAlign: "center", marginBottom: 6 },
+  subtitle: { fontSize: 14, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center", marginBottom: 28 },
+  label: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8B8B96", letterSpacing: 0.5, marginBottom: 6 },
+  sectionLabel: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#3B82F6", letterSpacing: 0.5, marginTop: 14, marginBottom: 10, textTransform: "uppercase" },
   row2: { flexDirection: "row", gap: 10 },
   col: { flex: 1 },
   equipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
-  equipChip: { borderWidth: 1.5, borderColor: "#3a4565", borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, backgroundColor: "#2a3352" },
-  equipChipActive: { borderColor: "#e9a600", backgroundColor: "#e9a600" },
-  equipChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8ba0b8" },
-  equipChipTextActive: { color: "#1e2235" },
+  equipChip: { borderWidth: 1.5, borderColor: "#27272A", borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, backgroundColor: "#141416" },
+  equipChipActive: { borderColor: "#3B82F6", backgroundColor: "#3B82F6" },
+  equipChipText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8B8B96" },
+  equipChipTextActive: { color: "#FFFFFF" },
   termsRow: { flexDirection: "row", gap: 8, marginBottom: 8 },
-  termChip: { flex: 1, borderWidth: 1.5, borderColor: "#3a4565", borderRadius: 10, paddingVertical: 10, alignItems: "center", backgroundColor: "#2a3352" },
-  termChipActive: { borderColor: "#e9a600", backgroundColor: "#e9a600" },
-  termChipText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#8ba0b8" },
-  termChipTextActive: { color: "#1e2235" },
+  termChip: { flex: 1, borderWidth: 1.5, borderColor: "#27272A", borderRadius: 10, paddingVertical: 10, alignItems: "center", backgroundColor: "#141416" },
+  termChipActive: { borderColor: "#3B82F6", backgroundColor: "#3B82F6" },
+  termChipText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#8B8B96" },
+  termChipTextActive: { color: "#FFFFFF" },
   labelRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
-  changeLink: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#e9a600" },
+  changeLink: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#3B82F6" },
   roleGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
   roleCard: {
-    width: "48%", borderWidth: 1.5, borderColor: "#3a4565", borderRadius: 14,
-    paddingVertical: 14, paddingHorizontal: 12, alignItems: "center", gap: 5, backgroundColor: "#2a3352",
+    width: "48%", borderWidth: 1.5, borderColor: "#27272A", borderRadius: 14,
+    paddingVertical: 14, paddingHorizontal: 12, alignItems: "center", gap: 5, backgroundColor: "#141416",
   },
-  roleCardActive: { borderColor: "#e9a600", backgroundColor: "#e9a600" },
-  roleTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#f0f6ff" },
-  roleTitleActive: { color: "#1e2235" },
-  roleSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#8ba0b8", textAlign: "center" },
-  roleSubActive: { color: "#1e223580" },
+  roleCardActive: { borderColor: "#3B82F6", backgroundColor: "#3B82F6" },
+  roleTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#F4F4F5" },
+  roleTitleActive: { color: "#FFFFFF" },
+  roleSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center" },
+  roleSubActive: { color: "#FFFFFF80" },
   inputRow: {
-    flexDirection: "row", alignItems: "center", backgroundColor: "#2a3352",
-    borderRadius: 12, borderWidth: 1, borderColor: "#3a4565",
+    flexDirection: "row", alignItems: "center", backgroundColor: "#141416",
+    borderRadius: 12, borderWidth: 1, borderColor: "#27272A",
     paddingHorizontal: 14, marginBottom: 8,
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, height: 48, color: "#f0f6ff", fontFamily: "Inter_400Regular", fontSize: 14 },
-  helperText: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#8ba0b8", marginBottom: 14, marginLeft: 4 },
+  input: { flex: 1, height: 48, color: "#F4F4F5", fontFamily: "Inter_400Regular", fontSize: 14 },
+  helperText: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#8B8B96", marginBottom: 14, marginLeft: 4 },
   btn: {
-    backgroundColor: "#e9a600", borderRadius: 12, height: 52,
+    backgroundColor: "#3B82F6", borderRadius: 12, height: 52,
     alignItems: "center", justifyContent: "center", marginTop: 14,
   },
   btnDisabled: { opacity: 0.6 },
-  btnText: { color: "#1e2235", fontFamily: "Inter_700Bold", fontSize: 16 },
+  btnText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 16 },
 });

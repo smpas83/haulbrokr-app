@@ -40,7 +40,7 @@ function fmtMoney(n: number): string {
 }
 
 const ACTIVITY_ICON_COLORS: Record<string, string> = {
-  bid: "#e9a600", job: "#16a34a", payment: "#0891b2", bin: "#7c3aed", alert: "#ef4444",
+  bid: "#3B82F6", job: "#16a34a", payment: "#0891b2", bin: "#7c3aed", alert: "#ef4444",
 };
 
 export default function HomeScreen() {
@@ -139,7 +139,7 @@ export default function HomeScreen() {
       contentContainerStyle={[styles.content, { paddingTop: topPad + 16, paddingBottom: 100 }]}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e9a600" colors={["#e9a600"]} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3B82F6" colors={["#3B82F6"]} />
       }
     >
       {/* Header */}

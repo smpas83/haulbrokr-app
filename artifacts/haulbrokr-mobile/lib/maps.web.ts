@@ -200,7 +200,7 @@ type CircleProps = {
 export function Circle(_props: CircleProps) { return null; }
 
 const webStyles = StyleSheet.create({
-  map:         { flex: 1, backgroundColor: "#0f172a", overflow: "hidden" },
+  map:         { flex: 1, backgroundColor: "#0A0A0C", overflow: "hidden" },
   placeholder: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", padding: 24 },
   label:       { color: "#93c5fd", fontSize: 14, fontFamily: "Inter_600SemiBold", textAlign: "center" },
   sub:         { color: "#4b6080", fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 8 },
