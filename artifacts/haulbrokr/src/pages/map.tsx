@@ -38,14 +38,14 @@ type MarketplaceMapData = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  open: "#e9a600",
-  bidding: "#3b82f6",
-  bid_received: "#3b82f6",
+  open: "#FF5500",
+  bidding: "#F59E0B",
+  bid_received: "#F59E0B",
   accepted: "#16a34a",
   in_progress: "#16a34a",
   available: "#22c55e",
-  assigned: "#3b82f6",
-  en_route: "#e9a600",
+  assigned: "#3B82F6",
+  en_route: "#FF5500",
 };
 
 const GOOGLE_MAPS_SCRIPT_ID = "haulbrokr-google-maps-script";
@@ -247,7 +247,7 @@ export default function MapPage() {
           icon: {
             path: window.google.maps.SymbolPath.CIRCLE,
             scale: 7,
-            fillColor: STATUS_COLOR[load.status] ?? "#e9a600",
+            fillColor: STATUS_COLOR[load.status] ?? "#FF5500",
             fillOpacity: 1,
             strokeColor: "#fff",
             strokeWeight: 2,
