@@ -16,7 +16,7 @@ const STATUS_CONFIG: Record<
   Status,
   { label: string; bg: string; text: string }
 > = {
-  open: { label: "Open", bg: "#3B82F620", text: "#3B82F6" },
+  open: { label: "Open", bg: "#FF550020", text: "#FF5500" },
   bidding: { label: "Bidding", bg: "#F59E0B20", text: "#F59E0B" },
   accepted: { label: "Accepted", bg: "#10B98120", text: "#10B981" },
   in_progress: { label: "In Progress", bg: "#8B5CF620", text: "#8B5CF6" },
@@ -24,7 +24,7 @@ const STATUS_CONFIG: Record<
   cancelled: { label: "Cancelled", bg: "#EF444420", text: "#EF4444" },
   pending: { label: "Pending", bg: "#F59E0B20", text: "#F59E0B" },
   confirmed: { label: "Confirmed", bg: "#10B98120", text: "#10B981" },
-  active: { label: "Active", bg: "#3B82F620", text: "#3B82F6" },
+  active: { label: "Active", bg: "#FF550020", text: "#FF5500" },
 };
 
 interface Props {

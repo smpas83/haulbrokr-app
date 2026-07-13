@@ -267,7 +267,7 @@ export default function JobsScreen() {
           { paddingBottom: Platform.OS === "web" ? 100 : 100 + insets.bottom },
         ]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3B82F6" colors={["#3B82F6"]} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF5500" colors={["#FF5500"]} />
         }
         renderItem={({ item, index }) => (
           <Animated.View entering={FadeInDown.delay(index * 50).springify()}>

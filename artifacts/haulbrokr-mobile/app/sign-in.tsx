@@ -761,7 +761,7 @@ export default function SignInScreen() {
                   style={styles.resetBtn}
                 >
                   {resettingAuth ? (
-                    <ActivityIndicator size="small" color="#3B82F6" />
+                    <ActivityIndicator size="small" color="#FF5500" />
                   ) : (
                     <Text style={styles.resetText}>Reset saved auth data</Text>
                   )}
@@ -772,7 +772,7 @@ export default function SignInScreen() {
         ) : (
           <>
             <View style={styles.codeHint}>
-              <Feather name="mail" size={14} color="#3B82F6" />
+              <Feather name="mail" size={14} color="#FF5500" />
               <Text style={styles.codeHintText}>
                 {verifyReason === "trust"
                   ? "One-time check for new devices — you won't need this again on this phone"
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
     flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: "center",
   },
   modeTabActive: {
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#FF5500",
   },
   modeTabText: {
     fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#8B8B96",
@@ -884,7 +884,7 @@ const styles = StyleSheet.create({
     fontSize: 22, fontFamily: "Inter_700Bold", letterSpacing: 6, textAlign: "center",
   },
   btn: {
-    width: "100%", backgroundColor: "#3B82F6", borderRadius: 12,
+    width: "100%", backgroundColor: "#FF5500", borderRadius: 12,
     height: 52, alignItems: "center", justifyContent: "center", marginBottom: 14,
   },
   btnDisabled: { opacity: 0.55 },
@@ -918,23 +918,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   resetText: {
-    color: "#3B82F6", fontFamily: "Inter_600SemiBold", fontSize: 12,
+    color: "#FF5500", fontFamily: "Inter_600SemiBold", fontSize: 12,
     textAlign: "center",
   },
   codeHint: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#3B82F612", borderWidth: 1, borderColor: "#3B82F630",
+    backgroundColor: "#FF550012", borderWidth: 1, borderColor: "#FF550030",
     borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
     marginBottom: 16, width: "100%",
   },
   codeHintText: {
-    color: "#3B82F6", fontFamily: "Inter_400Regular", fontSize: 13,
+    color: "#FF5500", fontFamily: "Inter_400Regular", fontSize: 13,
   },
   resendRow: {
     flexDirection: "row", alignItems: "center", marginBottom: 24,
   },
   resendLabel: { color: "#8B8B96", fontFamily: "Inter_400Regular", fontSize: 13 },
-  resendLink: { color: "#3B82F6", fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  resendLink: { color: "#FF5500", fontFamily: "Inter_600SemiBold", fontSize: 13 },
   footerNote: {
     color: "#27272A", fontFamily: "Inter_400Regular",
     fontSize: 11, textAlign: "center", lineHeight: 16, marginTop: 8,

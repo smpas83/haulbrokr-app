@@ -149,11 +149,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, marginBottom: 14, width: "100%",
   },
   input: { flex: 1, height: 48, color: "#F4F4F5", fontFamily: "Inter_400Regular", fontSize: 13 },
-  primaryBtn: { backgroundColor: "#3B82F6", borderRadius: 10, paddingVertical: 14, paddingHorizontal: 32 },
+  primaryBtn: { backgroundColor: "#FF5500", borderRadius: 10, paddingVertical: 14, paddingHorizontal: 32 },
   primaryBtnText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 15 },
   permTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#F4F4F5" },
   permText: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center", marginBottom: 8 },
   overlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" },
-  reticle: { width: 240, height: 240, borderWidth: 3, borderColor: "#3B82F6", borderRadius: 16, backgroundColor: "transparent" },
+  reticle: { width: 240, height: 240, borderWidth: 3, borderColor: "#FF5500", borderRadius: 16, backgroundColor: "transparent" },
   overlayHint: { marginTop: 22, color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 14, backgroundColor: "rgba(10,10,12,0.75)", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
 });

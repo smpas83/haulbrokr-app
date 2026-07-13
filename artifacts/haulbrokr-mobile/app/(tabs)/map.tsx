@@ -41,8 +41,8 @@ const OPEN_STATUSES = new Set(["open", "bidding", "bid_received"]);
 
 const TRUCK_PIN_COLOR: Record<MarketplaceTruck["status"], string> = {
   available: "#16a34a",
-  assigned: "#3b82f6",
-  en_route: "#3B82F6",
+  assigned: "#3B82F6",
+  en_route: "#FF5500",
   offline: "#6b7280",
 };
 
@@ -588,7 +588,7 @@ export default function MapScreen() {
         {/* ── Legend ─────────────────────────────────────────────── */}
         <View style={[styles.legend, { backgroundColor: "#0A0A0C90" }]}>
           {[
-            { color: "#3B82F6", label: "Open"    },
+            { color: "#FF5500", label: "Open"    },
             { color: "#F59E0B", label: "Bidding" },
             { color: "#16a34a", label: "Active"  },
             { color: "#22c55e", label: "Trucks"  },
@@ -718,8 +718,8 @@ export default function MapScreen() {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={onRefresh}
-                  tintColor="#3B82F6"
-                  colors={["#3B82F6"]}
+                  tintColor="#FF5500"
+                  colors={["#FF5500"]}
                 />
               }
             >

@@ -15,7 +15,7 @@ const ROLE_LABEL: Record<string, string> = {
   customer: "Owner", provider: "Owner", driver: "Driver", supervisor: "Supervisor",
 };
 const ROLE_COLOR: Record<string, string> = {
-  customer: "#3B82F6", provider: "#3B82F6", driver: "#5fb878", supervisor: "#6aa9ff",
+  customer: "#FF5500", provider: "#FF5500", driver: "#5fb878", supervisor: "#6aa9ff",
 };
 
 function formatJoined(iso?: string | null): string {
@@ -155,10 +155,10 @@ export default function TeamScreen() {
               disabled={rotateMut.isPending}
             >
               {rotateMut.isPending ? (
-                <ActivityIndicator size="small" color="#3B82F6" />
+                <ActivityIndicator size="small" color="#FF5500" />
               ) : (
                 <>
-                  <Feather name="refresh-cw" size={16} color="#3B82F6" />
+                  <Feather name="refresh-cw" size={16} color="#FF5500" />
                   <Text style={styles.actionBtnGhostText}>Rotate</Text>
                 </>
               )}
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   container: { padding: 20, paddingBottom: 40 },
   inviteCard: {
     backgroundColor: "#141416", borderRadius: 16, padding: 20,
-    borderWidth: 1.5, borderColor: "#3B82F630", marginBottom: 20,
+    borderWidth: 1.5, borderColor: "#FF550030", marginBottom: 20,
   },
   sourceRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
   sourcePill: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, borderWidth: 1 },
@@ -235,21 +235,21 @@ const styles = StyleSheet.create({
   sourcePillText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
   inviteLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#8B8B96", letterSpacing: 1 },
   inviteCode: {
-    fontSize: 36, fontFamily: "Inter_700Bold", color: "#3B82F6",
+    fontSize: 36, fontFamily: "Inter_700Bold", color: "#FF5500",
     letterSpacing: 3, textAlign: "center", marginVertical: 8,
   },
   inviteHint: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center", marginBottom: 14 },
   inviteActions: { flexDirection: "row", gap: 8 },
   actionBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 6, backgroundColor: "#3B82F6", height: 40, borderRadius: 10,
+    gap: 6, backgroundColor: "#FF5500", height: 40, borderRadius: 10,
   },
   actionBtnText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 13 },
   actionBtnGhost: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 6, borderWidth: 1.5, borderColor: "#3B82F655", height: 40, borderRadius: 10,
+    gap: 6, borderWidth: 1.5, borderColor: "#FF550055", height: 40, borderRadius: 10,
   },
-  actionBtnGhostText: { color: "#3B82F6", fontFamily: "Inter_700Bold", fontSize: 13 },
+  actionBtnGhostText: { color: "#FF5500", fontFamily: "Inter_700Bold", fontSize: 13 },
   statsRow: { flexDirection: "row", gap: 12, marginBottom: 24 },
   statCard: {
     flex: 1, backgroundColor: "#141416", borderRadius: 12, padding: 16,

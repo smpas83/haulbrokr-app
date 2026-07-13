@@ -1,22 +1,22 @@
 /**
- * Premium Industrial Luxury design tokens — aligned with haulbrokr.com.
- * The product is dark-first; light is kept as an alias of dark so any
- * leftover scheme lookups never surface a white UI.
+ * Premium Industrial Luxury design tokens — aligned with haulbrokr.com dark chrome,
+ * with neon fire orange primary from brand direction.
+ * Dark-first only; light is an alias of dark so no white UI can leak.
  */
 const industrialDark = {
   text: "#F4F4F5",
-  tint: "#3B82F6",
+  tint: "#FF5500",
   background: "#0A0A0C",
   foreground: "#F4F4F5",
   card: "#141416",
   cardForeground: "#F4F4F5",
-  primary: "#3B82F6",
+  primary: "#FF5500",
   primaryForeground: "#FFFFFF",
   secondary: "#1E1E22",
   secondaryForeground: "#F4F4F5",
   muted: "#1A1A1E",
   mutedForeground: "#8B8B96",
-  accent: "#FF6A00",
+  accent: "#FF5500",
   accentForeground: "#FFFFFF",
   destructive: "#EF4444",
   destructiveForeground: "#F4F4F5",

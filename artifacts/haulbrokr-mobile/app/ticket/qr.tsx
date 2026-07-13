@@ -130,7 +130,7 @@ export default function TicketQRScreen() {
               <Text style={styles.actionText}>Share</Text>
             </Pressable>
             <Pressable style={styles.actionBtnGhost} onPress={handleRegenerate} disabled={issueQR.isPending}>
-              <Feather name="refresh-cw" size={16} color="#3B82F6" />
+              <Feather name="refresh-cw" size={16} color="#FF5500" />
               <Text style={styles.actionGhostText}>{issueQR.isPending ? "Issuing…" : "New Code"}</Text>
             </Pressable>
           </View>
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#8B8B96", textAlign: "center", marginTop: 6, marginBottom: 24 },
   qrFrame: {
     padding: 16, backgroundColor: "#fff", borderRadius: 20,
-    borderWidth: 3, borderColor: "#3B82F6", marginBottom: 20,
+    borderWidth: 3, borderColor: "#FF5500", marginBottom: 20,
     position: "relative",
   },
   qrFrameVerified: { borderColor: "#5fb878" },
@@ -167,12 +167,12 @@ const styles = StyleSheet.create({
   },
   tokenBox: { backgroundColor: "#141416", borderRadius: 10, padding: 12, marginBottom: 20, width: "100%", borderWidth: 1, borderColor: "#27272A" },
   tokenLabel: { fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#8B8B96", letterSpacing: 1, marginBottom: 4 },
-  tokenText: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#3B82F6" },
+  tokenText: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#FF5500" },
   actions: { flexDirection: "row", gap: 10, width: "100%" },
-  actionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#3B82F6", height: 44, borderRadius: 10 },
+  actionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#FF5500", height: 44, borderRadius: 10 },
   actionText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 14 },
-  actionBtnGhost: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1.5, borderColor: "#3B82F655", height: 44, borderRadius: 10 },
-  actionGhostText: { color: "#3B82F6", fontFamily: "Inter_700Bold", fontSize: 14 },
+  actionBtnGhost: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1.5, borderColor: "#FF550055", height: 44, borderRadius: 10 },
+  actionGhostText: { color: "#FF5500", fontFamily: "Inter_700Bold", fontSize: 14 },
   hint: { marginTop: 18, fontSize: 12, color: "#8B8B96", textAlign: "center", lineHeight: 18 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   errorText: { color: "#F4F4F5", fontFamily: "Inter_600SemiBold", fontSize: 15 },

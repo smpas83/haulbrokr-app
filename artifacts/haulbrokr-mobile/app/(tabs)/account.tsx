@@ -312,7 +312,7 @@ export default function AccountScreen() {
       contentContainerStyle={[styles.content, { paddingTop: topPad + 16, paddingBottom: 100 + insets.bottom }]}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3B82F6" colors={["#3B82F6"]} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF5500" colors={["#FF5500"]} />
       }
     >
       {/* Profile Card */}
@@ -939,7 +939,7 @@ export default function AccountScreen() {
 
           {/* Topics */}
           <Text style={[styles.prefGroupLabel, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold" }]}>NOTIFY ME ABOUT</Text>
-          <NotifToggle label="Bid Activity" icon="trending-up" value={notifBids} onChange={setNotifBids} colors={colors} accent="#3B82F6" />
+          <NotifToggle label="Bid Activity" icon="trending-up" value={notifBids} onChange={setNotifBids} colors={colors} accent="#FF5500" />
           <View style={[styles.prefDivider, { backgroundColor: colors.border }]} />
           <NotifToggle label="Job Updates" icon="briefcase" value={notifJobs} onChange={setNotifJobs} colors={colors} accent={ACCENT.green} />
           <View style={[styles.prefDivider, { backgroundColor: colors.border }]} />

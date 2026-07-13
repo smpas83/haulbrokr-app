@@ -14,7 +14,7 @@ import { liveActivityToView, type ActivityView, type LiveActivity } from "@/lib/
 const LAST_READ_KEY = "notif:lastReadAt";
 
 const CAT_COLOR: Record<ActivityView["type"], string> = {
-  bid: "#3B82F6",
+  bid: "#FF5500",
   job: "#16a34a",
   bin: "#8b5cf6",
   payment: "#0891b2",
