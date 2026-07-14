@@ -88,6 +88,22 @@ async function companiesFor(job: { customerId: number; providerId: number }) {
   return { customerCompany: customer?.companyName ?? "", providerCompany: provider?.companyName ?? "" };
 }
 
+/** Batch-load company names for a job list (avoids N+1 profile lookups). */
+async function companyNamesByProfileIds(ids: number[]): Promise<Map<number, string>> {
+  const unique = [...new Set(ids.filter((id) => Number.isFinite(id)))];
+  const map = new Map<number, string>();
+  if (unique.length === 0) return map;
+  const rows = await db
+    .select({ id: profilesTable.id, companyName: profilesTable.companyName })
+    .from(profilesTable)
+    .where(inArray(profilesTable.id, unique));
+  for (const row of rows) map.set(row.id, row.companyName ?? "");
+  return map;
+}
+
+/** Hard cap for list endpoints — prevents unbounded payload growth. */
+const LIST_PAGE_LIMIT = 200;
+
 /**
  * Notify the customer in-app when their job's payment moves to "failed" (a
  * declined charge or a failed payout release). The activity feeds the customer's
@@ -269,12 +285,23 @@ router.get("/jobs", requireProfile, async (req, res): Promise<void> => {
     conditions.push(eq(jobsTable.status, params.data.status as any));
   }
 
-  const jobs = await db.select().from(jobsTable).where(and(...conditions)).orderBy(sql`${jobsTable.createdAt} desc`);
+  const jobs = await db
+    .select()
+    .from(jobsTable)
+    .where(and(...conditions))
+    .orderBy(sql`${jobsTable.createdAt} desc`)
+    .limit(LIST_PAGE_LIMIT);
 
-  const enriched = await Promise.all(jobs.map(async (j) => {
-    const { customerCompany, providerCompany } = await companiesFor(j);
-    return serializeJob(j, customerCompany, providerCompany);
-  }));
+  const companyNames = await companyNamesByProfileIds(
+    jobs.flatMap((j) => [j.customerId, j.providerId]),
+  );
+  const enriched = jobs.map((j) =>
+    serializeJob(
+      j,
+      companyNames.get(j.customerId) ?? "",
+      companyNames.get(j.providerId) ?? "",
+    ),
+  );
 
   res.json(ListJobsResponse.parse(enriched));
 });

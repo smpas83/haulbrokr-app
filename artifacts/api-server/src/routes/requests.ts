@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, or, sql, inArray } from "drizzle-orm";
 import { db, requestsTable, profilesTable, bidsTable, activityTable } from "@workspace/db";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import {
@@ -15,6 +15,9 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+/** Hard cap for list endpoints — prevents unbounded payload growth. */
+const LIST_PAGE_LIMIT = 200;
 
 function serializeRequest(
   r: typeof requestsTable.$inferSelect,
@@ -38,14 +41,14 @@ router.get("/requests", requireProfile, async (req, res): Promise<void> => {
   let rows: typeof requestsTable.$inferSelect[] = [];
 
   if (params.success && params.data.mine) {
-    rows = await db.select().from(requestsTable).where(eq(requestsTable.customerId, profile.id)).orderBy(sql`${requestsTable.createdAt} desc`);
+    rows = await db.select().from(requestsTable).where(eq(requestsTable.customerId, profile.id)).orderBy(sql`${requestsTable.createdAt} desc`).limit(LIST_PAGE_LIMIT);
   } else if (profile.role === "customer") {
     const conditions = [];
     if (params.success && params.data.status) {
       conditions.push(eq(requestsTable.status, params.data.status as any));
     }
     conditions.push(eq(requestsTable.customerId, profile.id));
-    rows = await db.select().from(requestsTable).where(and(...conditions)).orderBy(sql`${requestsTable.createdAt} desc`);
+    rows = await db.select().from(requestsTable).where(and(...conditions)).orderBy(sql`${requestsTable.createdAt} desc`).limit(LIST_PAGE_LIMIT);
   } else {
     const conditions = [];
     if (params.success && params.data.status) {
@@ -57,14 +60,32 @@ router.get("/requests", requireProfile, async (req, res): Promise<void> => {
         eq(requestsTable.status, "bidding"),
       )!);
     }
-    rows = await db.select().from(requestsTable).where(and(...conditions)).orderBy(sql`${requestsTable.createdAt} desc`);
+    rows = await db.select().from(requestsTable).where(and(...conditions)).orderBy(sql`${requestsTable.createdAt} desc`).limit(LIST_PAGE_LIMIT);
   }
 
-  const enriched = await Promise.all(rows.map(async (r) => {
-    const [customer] = await db.select().from(profilesTable).where(eq(profilesTable.id, r.customerId));
-    const bidCountResult = await db.select({ count: sql<number>`count(*)` }).from(bidsTable).where(eq(bidsTable.requestId, r.id));
-    return serializeRequest(r, customer?.companyName ?? "", Number(bidCountResult[0]?.count ?? 0));
-  }));
+  const customerIds = [...new Set(rows.map((r) => r.customerId))];
+  const requestIds = rows.map((r) => r.id);
+  const companyNames = new Map<number, string>();
+  if (customerIds.length > 0) {
+    const profiles = await db
+      .select({ id: profilesTable.id, companyName: profilesTable.companyName })
+      .from(profilesTable)
+      .where(inArray(profilesTable.id, customerIds));
+    for (const p of profiles) companyNames.set(p.id, p.companyName ?? "");
+  }
+  const bidCounts = new Map<number, number>();
+  if (requestIds.length > 0) {
+    const counts = await db
+      .select({ requestId: bidsTable.requestId, count: sql<number>`count(*)::int` })
+      .from(bidsTable)
+      .where(inArray(bidsTable.requestId, requestIds))
+      .groupBy(bidsTable.requestId);
+    for (const row of counts) bidCounts.set(row.requestId, Number(row.count ?? 0));
+  }
+
+  const enriched = rows.map((r) =>
+    serializeRequest(r, companyNames.get(r.customerId) ?? "", bidCounts.get(r.id) ?? 0),
+  );
 
   res.json(ListRequestsResponse.parse(enriched));
 });

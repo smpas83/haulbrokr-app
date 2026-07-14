@@ -20,15 +20,23 @@ vi.mock("@workspace/db", () => {
 
   const db = {
     select: () => ({
-      from: (table: unknown) => ({
-        where: (..._args: unknown[]) => {
+      from: (table: unknown) => {
+        const resolveFor = () => {
           if (table === requestsTable) return Promise.resolve(h.requests);
-          if (table === profilesTable) return Promise.resolve([{ companyName: "Test Builders" }]);
-          if (table === bidsTable) return Promise.resolve([{ count: 0 }]);
+          if (table === profilesTable) return Promise.resolve([{ id: h.profile.id, companyName: "Test Builders" }]);
+          if (table === bidsTable) return Promise.resolve([{ requestId: 1, count: 0 }]);
           return Promise.resolve([]);
-        },
-        orderBy: () => Promise.resolve(h.requests),
-      }),
+        };
+        const chain: any = {
+          where: () => chain,
+          orderBy: () => chain,
+          limit: () => chain,
+          groupBy: () => chain,
+          then: (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>
+            resolveFor().then(resolve, reject),
+        };
+        return chain;
+      },
     }),
     insert: (table: unknown) => ({
       values: (row: Record<string, unknown>) => {

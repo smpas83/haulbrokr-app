@@ -24,10 +24,21 @@ const h = vi.hoisted(() => ({
 vi.mock("@workspace/db", () => {
   const makeTable = (name: string) =>
     new Proxy({}, { get: (_t, p) => `${name}.${String(p)}` });
+  const resolveRows = (table: unknown) => Promise.resolve(h.rows.get(table) ?? []);
+  const thenableRows = (table: unknown) => {
+    const result: any = {
+      orderBy: () => result,
+      limit: () => result,
+      groupBy: () => result,
+      then: (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>
+        resolveRows(table).then(resolve, reject),
+    };
+    return result;
+  };
   const db = {
     select: () => ({
       from: (table: unknown) => ({
-        where: () => Promise.resolve(h.rows.get(table) ?? []),
+        where: () => thenableRows(table),
       }),
     }),
     update: () => ({
@@ -55,6 +66,7 @@ vi.mock("@workspace/db", () => {
     profilesTable: makeTable("profiles"),
     requestsTable: makeTable("requests"),
     activityTable: makeTable("activity"),
+    deviceTokensTable: makeTable("deviceTokens"),
   };
 });
 
