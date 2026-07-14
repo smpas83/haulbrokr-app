@@ -8,15 +8,21 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@workspace/db", () => {
-  const makeTable = (name: string) => new Proxy({}, { get: (_t, p) => `${name}.${String(p)}` });
+  const makeTable = (name: string) =>
+    new Proxy({}, { get: (_t, p) => `${name}.${String(p)}` });
   return {
     db: {
       select: () => ({
         from: (table: any) => ({
           where: async () => {
             const key = String(table?.id ?? table);
-            if (key.includes("recurringGeneration") || key.includes("generation")) return h.runs;
-            if (key.includes("recurringSchedules") || key.includes("schedules")) return h.schedules;
+            if (
+              key.includes("recurringGeneration") ||
+              key.includes("generation")
+            )
+              return h.runs;
+            if (key.includes("recurringSchedules") || key.includes("schedules"))
+              return h.schedules;
             return [];
           },
         }),
@@ -24,7 +30,9 @@ vi.mock("@workspace/db", () => {
       insert: (table: any) => ({
         values: (vals: any) => {
           const key = String(table?.id ?? "");
-          const isRequest = key.includes("requests") || (vals.customerId != null && vals.materialType != null);
+          const isRequest =
+            key.includes("requests") ||
+            (vals.customerId != null && vals.materialType != null);
           if (isRequest) {
             const row = { id: h.nextRequestId++, ...vals };
             h.requests.push(row);
@@ -56,7 +64,9 @@ vi.mock("@workspace/db", () => {
   };
 });
 
-vi.mock("./logger", () => ({ logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() } }));
+vi.mock("./logger", () => ({
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+}));
 
 import {
   buildIdempotencyKey,
@@ -65,7 +75,7 @@ import {
   shouldGenerateOnDate,
 } from "./recurringHauls";
 
-function baseSchedule(overrides: Partial<any> = {}) {
+function baseSchedule(overrides: Partial<any> = {}): any {
   return {
     id: 1,
     customerId: 9,
@@ -97,6 +107,8 @@ function baseSchedule(overrides: Partial<any> = {}) {
     lastRunAt: null,
     lastError: null,
     consecutiveFailures: 0,
+    createdAt: new Date("2026-07-01T12:00:00Z"),
+    updatedAt: new Date("2026-07-01T12:00:00Z"),
     ...overrides,
   };
 }
@@ -111,10 +123,16 @@ describe("recurring haul scheduling", () => {
 
   it("formats dates in timezone (DST-safe calendar day)", () => {
     // 2026-03-08 06:30 UTC is still Mar 7 evening in Chicago (CST)
-    const winter = formatDateInTimezone(new Date("2026-03-08T06:30:00Z"), "America/Chicago");
+    const winter = formatDateInTimezone(
+      new Date("2026-03-08T06:30:00Z"),
+      "America/Chicago",
+    );
     expect(winter).toBe("2026-03-08");
     // After spring-forward (CDT): 2026-03-08 07:30 UTC is Mar 8 02:30 CDT
-    const spring = formatDateInTimezone(new Date("2026-03-08T12:00:00Z"), "America/Chicago");
+    const spring = formatDateInTimezone(
+      new Date("2026-03-08T12:00:00Z"),
+      "America/Chicago",
+    );
     expect(spring).toBe("2026-03-08");
   });
 
@@ -144,7 +162,10 @@ describe("recurring haul scheduling", () => {
   it("skips paused / cancelled / expired schedules", async () => {
     for (const status of ["paused", "cancelled", "expired"] as const) {
       h.runs = [];
-      const result = await generateOccurrence(baseSchedule({ status }), "2026-07-10");
+      const result = await generateOccurrence(
+        baseSchedule({ status }),
+        "2026-07-10",
+      );
       expect(result.status).toBe("skipped");
     }
   });
@@ -192,8 +213,31 @@ describe("recurring haul scheduling", () => {
   });
 
   it("skips US federal holidays when holidayBehavior=skip", () => {
-    const s = baseSchedule({ holidayBehavior: "skip", startDate: new Date("2026-01-01T12:00:00Z") });
+    const s = baseSchedule({
+      holidayBehavior: "skip",
+      startDate: new Date("2026-01-01T12:00:00Z"),
+    });
     expect(shouldGenerateOnDate(s, "2026-07-04")).toBe(false);
     expect(shouldGenerateOnDate(s, "2026-07-05")).toBe(true);
+  });
+
+  it("retry clears failed run then regenerates", async () => {
+    const { retryFailedRecurringGenerations } =
+      await import("./recurringHauls");
+    h.schedules = [baseSchedule()];
+    h.runs = [
+      {
+        id: 9,
+        scheduleId: 1,
+        occurrenceDate: "2026-07-10",
+        status: "failed",
+        attempt: 1,
+        idempotencyKey: buildIdempotencyKey(1, "2026-07-10"),
+      },
+    ];
+    // After delete, generateOccurrence should create
+    const retried = await retryFailedRecurringGenerations(3);
+    expect(retried).toBe(1);
+    expect(h.requests.length).toBeGreaterThan(0);
   });
 });

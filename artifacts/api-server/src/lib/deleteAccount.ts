@@ -43,8 +43,13 @@ export function hashClerkId(clerkId: string): string {
   return createHash("sha256").update(clerkId).digest("hex").slice(0, 32);
 }
 
-export async function previewAccountDeletion(profileId: number): Promise<DeletionPreview> {
-  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, profileId));
+export async function previewAccountDeletion(
+  profileId: number,
+): Promise<DeletionPreview> {
+  const [profile] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, profileId));
   if (!profile) {
     throw new Error("Profile not found");
   }
@@ -56,7 +61,10 @@ export async function previewAccountDeletion(profileId: number): Promise<Deletio
       .select({ id: profilesTable.id, orgRole: profilesTable.orgRole })
       .from(profilesTable)
       .where(
-        and(eq(profilesTable.organizationId, profile.organizationId), sql`${profilesTable.id} <> ${profileId}`),
+        and(
+          eq(profilesTable.organizationId, profile.organizationId),
+          sql`${profilesTable.id} <> ${profileId}`,
+        ),
       );
     otherMemberCount = members.length;
     if (profile.orgRole === "owner" && otherMemberCount > 0) {
@@ -117,11 +125,19 @@ export async function deleteAccountForClerkUser(
   options: { deletionRequestId?: number; dryRun?: boolean } = {},
 ): Promise<DeleteResult> {
   const clerkIdHash = hashClerkId(clerkId);
-  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.clerkId, clerkId));
+  const [profile] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.clerkId, clerkId));
 
   if (!profile) {
     if (options.dryRun) {
-      return { deleted: true, profileId: null, clerkDeleted: false, deletionRequestId: options.deletionRequestId ?? null };
+      return {
+        deleted: true,
+        profileId: null,
+        clerkDeleted: false,
+        deletionRequestId: options.deletionRequestId ?? null,
+      };
     }
     const clerkDeleted = await deleteClerkUser(clerkId);
     await recordDeletionAudit({
@@ -131,7 +147,12 @@ export async function deleteAccountForClerkUser(
       outcome: "completed_no_profile",
       retentionCategories: [],
     });
-    return { deleted: true, profileId: null, clerkDeleted, deletionRequestId: options.deletionRequestId ?? null };
+    return {
+      deleted: true,
+      profileId: null,
+      clerkDeleted,
+      deletionRequestId: options.deletionRequestId ?? null,
+    };
   }
 
   const profileId = profile.id;
@@ -149,7 +170,12 @@ export async function deleteAccountForClerkUser(
   }
 
   if (options.dryRun) {
-    return { deleted: true, profileId, clerkDeleted: false, deletionRequestId: options.deletionRequestId ?? null };
+    return {
+      deleted: true,
+      profileId,
+      clerkDeleted: false,
+      deletionRequestId: options.deletionRequestId ?? null,
+    };
   }
 
   if (options.deletionRequestId) {
@@ -163,27 +189,51 @@ export async function deleteAccountForClerkUser(
 
   try {
     await db.transaction(async (tx) => {
-      await tx.delete(deviceTokensTable).where(eq(deviceTokensTable.profileId, profileId));
+      await tx
+        .delete(deviceTokensTable)
+        .where(eq(deviceTokensTable.profileId, profileId));
       stepsCompleted.push("device_tokens");
 
-      await tx.delete(activityTable).where(eq(activityTable.profileId, profileId));
+      await tx
+        .delete(activityTable)
+        .where(eq(activityTable.profileId, profileId));
       stepsCompleted.push("activity");
 
-      await tx.delete(dataExportRequestsTable).where(eq(dataExportRequestsTable.profileId, profileId));
+      await tx
+        .delete(dataExportRequestsTable)
+        .where(eq(dataExportRequestsTable.profileId, profileId));
       stepsCompleted.push("data_exports");
 
-      await tx.delete(recurringSchedulesTable).where(eq(recurringSchedulesTable.customerId, profileId));
+      await tx
+        .delete(recurringSchedulesTable)
+        .where(eq(recurringSchedulesTable.customerId, profileId));
       stepsCompleted.push("recurring_schedules");
 
-      await tx.delete(w9SubmissionsTable).where(eq(w9SubmissionsTable.profileId, profileId));
-      await tx.delete(insuranceSubmissionsTable).where(eq(insuranceSubmissionsTable.profileId, profileId));
-      await tx.delete(paymentMethodsTable).where(eq(paymentMethodsTable.profileId, profileId));
-      await tx.delete(payoutAccountsTable).where(eq(payoutAccountsTable.profileId, profileId));
-      await tx.delete(creditApplicationsTable).where(eq(creditApplicationsTable.profileId, profileId));
+      await tx
+        .delete(w9SubmissionsTable)
+        .where(eq(w9SubmissionsTable.profileId, profileId));
+      await tx
+        .delete(insuranceSubmissionsTable)
+        .where(eq(insuranceSubmissionsTable.profileId, profileId));
+      await tx
+        .delete(paymentMethodsTable)
+        .where(eq(paymentMethodsTable.profileId, profileId));
+      await tx
+        .delete(payoutAccountsTable)
+        .where(eq(payoutAccountsTable.profileId, profileId));
+      await tx
+        .delete(creditApplicationsTable)
+        .where(eq(creditApplicationsTable.profileId, profileId));
       await tx.delete(dotCdlTable).where(eq(dotCdlTable.profileId, profileId));
-      await tx.delete(driverDocumentsTable).where(eq(driverDocumentsTable.profileId, profileId));
-      await tx.delete(quickbooksConnectionsTable).where(eq(quickbooksConnectionsTable.profileId, profileId));
-      await tx.delete(uploadSessionsTable).where(eq(uploadSessionsTable.profileId, profileId));
+      await tx
+        .delete(driverDocumentsTable)
+        .where(eq(driverDocumentsTable.profileId, profileId));
+      await tx
+        .delete(quickbooksConnectionsTable)
+        .where(eq(quickbooksConnectionsTable.profileId, profileId));
+      await tx
+        .delete(uploadSessionsTable)
+        .where(eq(uploadSessionsTable.profileId, profileId));
       stepsCompleted.push("personal_submissions");
 
       await tx.delete(bidsTable).where(eq(bidsTable.providerId, profileId));
@@ -226,16 +276,28 @@ export async function deleteAccountForClerkUser(
         if (members.length === 0) {
           await tx
             .update(organizationsTable)
-            .set({ ownerProfileId: null, name: "Deleted Organization", inviteCode: `DEL${profileId}${Date.now()}` })
+            .set({
+              ownerProfileId: null,
+              name: "Deleted Organization",
+              inviteCode: `DEL${profileId}${Date.now()}`,
+            })
             .where(eq(organizationsTable.id, profile.organizationId));
-          await tx.delete(organizationsTable).where(eq(organizationsTable.id, profile.organizationId));
+          await tx
+            .delete(organizationsTable)
+            .where(eq(organizationsTable.id, profile.organizationId));
         } else {
           // Should not reach here when requiresOwnershipTransfer — defensive.
           const [nextOwner] = members;
-          await tx.update(profilesTable).set({ orgRole: "owner" }).where(eq(profilesTable.id, nextOwner.id));
+          await tx
+            .update(profilesTable)
+            .set({ orgRole: "owner" })
+            .where(eq(profilesTable.id, nextOwner.id));
           await tx
             .update(organizationsTable)
-            .set({ ownerProfileId: nextOwner.id, inviteCode: `X${Date.now().toString(36).toUpperCase()}` })
+            .set({
+              ownerProfileId: nextOwner.id,
+              inviteCode: `X${Date.now().toString(36).toUpperCase()}`,
+            })
             .where(eq(organizationsTable.id, profile.organizationId));
         }
         stepsCompleted.push("organization");
@@ -292,7 +354,10 @@ export async function deleteAccountForClerkUser(
       stepsCompleted.push("anonymize_profile");
     });
   } catch (err) {
-    logger.error({ err, profileId, stepsCompleted }, "Account deletion transaction failed");
+    logger.error(
+      { err, profileId, stepsCompleted },
+      "Account deletion transaction failed",
+    );
     if (options.deletionRequestId) {
       await db
         .update(accountDeletionRequestsTable)
@@ -311,13 +376,17 @@ export async function deleteAccountForClerkUser(
     clerkDeleted = await deleteClerkUser(clerkId);
     stepsCompleted.push("clerk_identity");
   } catch (err) {
-    logger.error({ err, profileId }, "Clerk identity delete failed — deletion request left for retry");
+    logger.error(
+      { err, profileId },
+      "Clerk identity delete failed — deletion request left for retry",
+    );
     if (options.deletionRequestId) {
       await db
         .update(accountDeletionRequestsTable)
         .set({
           status: "failed",
-          errorMessage: err instanceof Error ? err.message : "clerk_delete_failed",
+          errorMessage:
+            err instanceof Error ? err.message : "clerk_delete_failed",
           stepsCompleted,
         })
         .where(eq(accountDeletionRequestsTable.id, options.deletionRequestId));
@@ -345,7 +414,12 @@ export async function deleteAccountForClerkUser(
       .where(eq(accountDeletionRequestsTable.id, options.deletionRequestId));
   }
 
-  return { deleted: true, profileId, clerkDeleted, deletionRequestId: options.deletionRequestId ?? null };
+  return {
+    deleted: true,
+    profileId,
+    clerkDeleted,
+    deletionRequestId: options.deletionRequestId ?? null,
+  };
 }
 
 async function recordDeletionAudit(input: {
@@ -368,16 +442,21 @@ async function recordDeletionAudit(input: {
 async function deleteClerkUser(clerkId: string): Promise<boolean> {
   const secret = process.env.CLERK_SECRET_KEY?.trim();
   if (!secret) {
-    throw new Error("CLERK_SECRET_KEY is not configured — cannot delete auth identity.");
+    throw new Error(
+      "CLERK_SECRET_KEY is not configured — cannot delete auth identity.",
+    );
   }
 
-  const res = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(clerkId)}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${secret}`,
-      "Content-Type": "application/json",
+  const res = await fetch(
+    `https://api.clerk.com/v1/users/${encodeURIComponent(clerkId)}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${secret}`,
+        "Content-Type": "application/json",
+      },
     },
-  });
+  );
 
   // 404 = already gone — treat as success for idempotent retries.
   if (res.ok || res.status === 404) return true;
@@ -387,23 +466,38 @@ async function deleteClerkUser(clerkId: string): Promise<boolean> {
 }
 
 /** Resume a failed deletion request (compensating cleanup). */
-export async function resumeAccountDeletion(deletionRequestId: number): Promise<DeleteResult> {
+export async function resumeAccountDeletion(
+  deletionRequestId: number,
+): Promise<DeleteResult> {
   const [req] = await db
     .select()
     .from(accountDeletionRequestsTable)
     .where(eq(accountDeletionRequestsTable.id, deletionRequestId));
   if (!req) throw new Error("Deletion request not found");
   if (req.status === "completed") {
-    return { deleted: true, profileId: req.profileId, clerkDeleted: true, deletionRequestId: req.id };
+    return {
+      deleted: true,
+      profileId: req.profileId,
+      clerkDeleted: true,
+      deletionRequestId: req.id,
+    };
   }
 
-  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, req.profileId));
+  const [profile] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, req.profileId));
   if (!profile) {
     await db
       .update(accountDeletionRequestsTable)
       .set({ status: "completed", completedAt: new Date() })
       .where(eq(accountDeletionRequestsTable.id, req.id));
-    return { deleted: true, profileId: req.profileId, clerkDeleted: true, deletionRequestId: req.id };
+    return {
+      deleted: true,
+      profileId: req.profileId,
+      clerkDeleted: true,
+      deletionRequestId: req.id,
+    };
   }
 
   // Profile clerkId may already be anonymized — only resume if still a live clerk id.
@@ -412,8 +506,15 @@ export async function resumeAccountDeletion(deletionRequestId: number): Promise<
       .update(accountDeletionRequestsTable)
       .set({ status: "completed", completedAt: new Date() })
       .where(eq(accountDeletionRequestsTable.id, req.id));
-    return { deleted: true, profileId: req.profileId, clerkDeleted: true, deletionRequestId: req.id };
+    return {
+      deleted: true,
+      profileId: req.profileId,
+      clerkDeleted: true,
+      deletionRequestId: req.id,
+    };
   }
 
-  return deleteAccountForClerkUser(profile.clerkId, { deletionRequestId: req.id });
+  return deleteAccountForClerkUser(profile.clerkId, {
+    deletionRequestId: req.id,
+  });
 }

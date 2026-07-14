@@ -1,6 +1,10 @@
 import { LiveQcMobileFmcsaProvider } from "./liveQcMobileProvider";
 import { ManualReviewFmcsaProvider } from "./manualReviewProvider";
-import type { FmcsaLookupResult, FmcsaProvider, FmcsaProviderHealth } from "./types";
+import type {
+  FmcsaLookupResult,
+  FmcsaProvider,
+  FmcsaProviderHealth,
+} from "./types";
 
 export * from "./types";
 export { LiveQcMobileFmcsaProvider } from "./liveQcMobileProvider";
@@ -16,7 +20,9 @@ let cachedProvider: FmcsaProvider | null = null;
 export function getFmcsaProvider(): FmcsaProvider {
   if (cachedProvider) return cachedProvider;
   const live = new LiveQcMobileFmcsaProvider();
-  cachedProvider = live.hasCredentials() ? live : new ManualReviewFmcsaProvider();
+  cachedProvider = live.hasCredentials()
+    ? live
+    : new ManualReviewFmcsaProvider();
   return cachedProvider;
 }
 
@@ -46,7 +52,9 @@ export async function getFmcsaReadiness(): Promise<{
  * Lookup carrier; fall back to manual review on live failure / missing creds.
  * Never auto-verifies on incomplete data.
  */
-export async function lookupCarrierByDot(dotNumber: string): Promise<FmcsaLookupResult> {
+export async function lookupCarrierByDot(
+  dotNumber: string,
+): Promise<FmcsaLookupResult> {
   const live = new LiveQcMobileFmcsaProvider();
   if (!live.hasCredentials()) {
     return new ManualReviewFmcsaProvider().lookupByDot(dotNumber);

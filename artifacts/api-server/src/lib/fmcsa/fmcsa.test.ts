@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LiveQcMobileFmcsaProvider, clearFmcsaCache } from "./liveQcMobileProvider";
+import {
+  LiveQcMobileFmcsaProvider,
+  clearFmcsaCache,
+} from "./liveQcMobileProvider";
 import { ManualReviewFmcsaProvider } from "./manualReviewProvider";
 import { lookupCarrierByDot, setFmcsaProviderForTests } from "./index";
 
@@ -43,7 +46,11 @@ describe("FMCSA providers", () => {
       }),
     })) as unknown as typeof fetch;
 
-    const live = new LiveQcMobileFmcsaProvider("test-web-key", undefined, fetchImpl);
+    const live = new LiveQcMobileFmcsaProvider(
+      "test-web-key",
+      undefined,
+      fetchImpl,
+    );
     const result = await live.lookupByDot("3847291");
     expect(result.code).toBe("ok");
     expect(result.autoVerifyEligible).toBe(true);
@@ -66,7 +73,11 @@ describe("FMCSA providers", () => {
       }),
     })) as unknown as typeof fetch;
 
-    const live = new LiveQcMobileFmcsaProvider("test-web-key", undefined, fetchImpl);
+    const live = new LiveQcMobileFmcsaProvider(
+      "test-web-key",
+      undefined,
+      fetchImpl,
+    );
     const result = await live.lookupByDot("111");
     expect(result.code).toBe("provider_incomplete");
     expect(result.autoVerifyEligible).toBe(false);
@@ -78,7 +89,11 @@ describe("FMCSA providers", () => {
       status: 404,
       json: async () => ({}),
     })) as unknown as typeof fetch;
-    const live = new LiveQcMobileFmcsaProvider("test-web-key", undefined, fetchImpl);
+    const live = new LiveQcMobileFmcsaProvider(
+      "test-web-key",
+      undefined,
+      fetchImpl,
+    );
     const result = await live.lookupByDot("0000000");
     expect(result.code).toBe("carrier_not_found");
     expect(result.autoVerifyEligible).toBe(false);

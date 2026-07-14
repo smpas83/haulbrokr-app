@@ -17,9 +17,9 @@ Live access cannot be fabricated in CI. Until the credential is configured again
 
 ## Configure production / staging
 
-| Variable | Required | Notes |
-|---|---|---|
-| `FMCSA_WEB_KEY` | for live | QCMobile webKey |
+| Variable             | Required | Notes                                |
+| -------------------- | -------- | ------------------------------------ |
+| `FMCSA_WEB_KEY`      | for live | QCMobile webKey                      |
 | `FMCSA_API_BASE_URL` | optional | Override base URL (default QCMobile) |
 
 On API boot, missing `FMCSA_WEB_KEY` does **not** block startup. Check informational status:

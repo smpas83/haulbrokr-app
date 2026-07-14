@@ -4,23 +4,23 @@ Fill all `TODO_BEFORE_SUBMISSION` placeholders before submitting to App Review.
 
 ## Reviewer login
 
-| Field | Value |
-|---|---|
-| App | HaulBrokr (iOS) |
-| Bundle ID | `com.haulbrokr.mobile` |
-| Sign-in | Email/password **and** Sign in with Apple |
-| Demo account email | `TODO_BEFORE_SUBMISSION` (seed via `pnpm --filter @workspace/api-server run seed-apple-review`) |
-| Demo account password | `TODO_BEFORE_SUBMISSION` |
-| Notes | Demo account is a real Clerk user with a normal session — no security bypass |
+| Field                 | Value                                                                                           |
+| --------------------- | ----------------------------------------------------------------------------------------------- |
+| App                   | HaulBrokr (iOS)                                                                                 |
+| Bundle ID             | `com.haulbrokr.mobile`                                                                          |
+| Sign-in               | Email/password **and** Sign in with Apple                                                       |
+| Demo account email    | `TODO_BEFORE_SUBMISSION` (seed via `pnpm --filter @workspace/api-server run seed-apple-review`) |
+| Demo account password | `TODO_BEFORE_SUBMISSION`                                                                        |
+| Notes                 | Demo account is a real Clerk user with a normal session — no security bypass                    |
 
 ### Account roles available for review
 
-| Role | Purpose |
-|---|---|
-| Customer | Post haul requests, award bids, pay invoices |
+| Role               | Purpose                                               |
+| ------------------ | ----------------------------------------------------- |
+| Customer           | Post haul requests, award bids, pay invoices          |
 | Provider (carrier) | Bid on loads, submit compliance docs, receive payouts |
-| Driver | Accept assigned loads, capture tickets/POD |
-| Supervisor | Customer-side field oversight |
+| Driver             | Accept assigned loads, capture tickets/POD            |
+| Supervisor         | Customer-side field oversight                         |
 
 ## Exact workflows to test
 
@@ -92,12 +92,12 @@ Shipped HaulBrokr screens must not contain “coming soon” controls for core m
 
 ## Support contacts (fill before submission)
 
-| Purpose | Contact |
-|---|---|
-| App Review / technical | `TODO_BEFORE_SUBMISSION` |
-| Privacy requests | privacy@haulbrokr.com |
-| General support | `TODO_BEFORE_SUBMISSION` (also info@haulbrokr.com) |
-| Escalation phone | `TODO_BEFORE_SUBMISSION` |
+| Purpose                | Contact                                            |
+| ---------------------- | -------------------------------------------------- |
+| App Review / technical | `TODO_BEFORE_SUBMISSION`                           |
+| Privacy requests       | privacy@haulbrokr.com                              |
+| General support        | `TODO_BEFORE_SUBMISSION` (also info@haulbrokr.com) |
+| Escalation phone       | `TODO_BEFORE_SUBMISSION`                           |
 
 ## Privacy & Terms URLs
 

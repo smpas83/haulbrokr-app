@@ -1,4 +1,8 @@
-import type { FmcsaLookupResult, FmcsaProvider, FmcsaProviderHealth } from "./types";
+import type {
+  FmcsaLookupResult,
+  FmcsaProvider,
+  FmcsaProviderHealth,
+} from "./types";
 
 /**
  * Safe fallback when live FMCSA credentials are missing or the live provider
@@ -46,8 +50,12 @@ export class ManualReviewFmcsaProvider implements FmcsaProvider {
         notSuspended: "unknown",
         safetyRating: null,
       },
-      rawFields: { mode: "manual_review", reason: "live_fmcsa_not_configured_or_unavailable" },
-      errorMessage: "Live FMCSA verification unavailable — queued for staff manual review",
+      rawFields: {
+        mode: "manual_review",
+        reason: "live_fmcsa_not_configured_or_unavailable",
+      },
+      errorMessage:
+        "Live FMCSA verification unavailable — queued for staff manual review",
     };
   }
 }

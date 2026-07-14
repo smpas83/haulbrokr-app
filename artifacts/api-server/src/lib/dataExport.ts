@@ -55,7 +55,8 @@ function redactSecrets<T extends Record<string, unknown>>(row: T): T {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(row)) {
     if (blocked.has(k)) continue;
-    if (typeof k === "string" && /(secret|token|password|credential)/i.test(k)) continue;
+    if (typeof k === "string" && /(secret|token|password|credential)/i.test(k))
+      continue;
     out[k] = v;
   }
   return out as T;
@@ -69,7 +70,10 @@ function toCsv(rows: Record<string, unknown>[]): string {
     const s = typeof v === "object" ? JSON.stringify(v) : String(v);
     return `"${s.replace(/"/g, '""')}"`;
   };
-  return [keys.join(","), ...rows.map((r) => keys.map((k) => escape(r[k])).join(","))].join("\n");
+  return [
+    keys.join(","),
+    ...rows.map((r) => keys.map((k) => escape(r[k])).join(",")),
+  ].join("\n");
 }
 
 /** Minimal ZIP (store method) so we avoid an extra dependency. */
@@ -80,7 +84,9 @@ function buildZip(files: { name: string; content: string | Buffer }[]): Buffer {
 
   for (const file of files) {
     const nameBuf = Buffer.from(file.name, "utf8");
-    const data = Buffer.isBuffer(file.content) ? file.content : Buffer.from(file.content, "utf8");
+    const data = Buffer.isBuffer(file.content)
+      ? file.content
+      : Buffer.from(file.content, "utf8");
     const local = Buffer.alloc(30 + nameBuf.length);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
@@ -132,7 +138,9 @@ function buildZip(files: { name: string; content: string | Buffer }[]): Buffer {
   return Buffer.concat([...parts, centralBuf, end]);
 }
 
-export async function requestDataExport(profileId: number): Promise<typeof dataExportRequestsTable.$inferSelect> {
+export async function requestDataExport(
+  profileId: number,
+): Promise<typeof dataExportRequestsTable.$inferSelect> {
   const active = await db
     .select()
     .from(dataExportRequestsTable)
@@ -146,10 +154,15 @@ export async function requestDataExport(profileId: number): Promise<typeof dataE
     .select()
     .from(dataExportRequestsTable)
     .where(
-      and(eq(dataExportRequestsTable.profileId, profileId), eq(dataExportRequestsTable.status, "requested")),
+      and(
+        eq(dataExportRequestsTable.profileId, profileId),
+        eq(dataExportRequestsTable.status, "requested"),
+      ),
     );
   if (active.length + requested.length >= MAX_ACTIVE_EXPORTS) {
-    const err = new Error("Too many active export requests. Wait for one to finish.") as Error & {
+    const err = new Error(
+      "Too many active export requests. Wait for one to finish.",
+    ) as Error & {
       code?: string;
     };
     err.code = "EXPORT_LIMIT";
@@ -178,16 +191,27 @@ export async function listDataExports(profileId: number) {
     .limit(20);
 }
 
-export async function getDataExportForProfile(exportId: number, profileId: number) {
+export async function getDataExportForProfile(
+  exportId: number,
+  profileId: number,
+) {
   const [row] = await db
     .select()
     .from(dataExportRequestsTable)
-    .where(and(eq(dataExportRequestsTable.id, exportId), eq(dataExportRequestsTable.profileId, profileId)));
+    .where(
+      and(
+        eq(dataExportRequestsTable.id, exportId),
+        eq(dataExportRequestsTable.profileId, profileId),
+      ),
+    );
   return row ?? null;
 }
 
 export async function processDataExport(exportId: number): Promise<void> {
-  const [row] = await db.select().from(dataExportRequestsTable).where(eq(dataExportRequestsTable.id, exportId));
+  const [row] = await db
+    .select()
+    .from(dataExportRequestsTable)
+    .where(eq(dataExportRequestsTable.id, exportId));
   if (!row) return;
   if (row.status === "ready" || row.status === "expired") return;
 
@@ -200,18 +224,44 @@ export async function processDataExport(exportId: number): Promise<void> {
     const bundle = await collectExportBundle(row.profileId);
     const files = [
       { name: "export.json", content: JSON.stringify(bundle, null, 2) },
-      { name: "profile.csv", content: toCsv([bundle.profile as Record<string, unknown>]) },
-      { name: "jobs.csv", content: toCsv(bundle.jobs as Record<string, unknown>[]) },
-      { name: "requests.csv", content: toCsv(bundle.jobHistory as Record<string, unknown>[]) },
-      { name: "assignments.csv", content: toCsv(bundle.assignments as Record<string, unknown>[]) },
-      { name: "invoices_payments.csv", content: toCsv(bundle.invoicesAndPayments as Record<string, unknown>[]) },
-      { name: "documents_metadata.csv", content: toCsv(bundle.documentsMetadata as Record<string, unknown>[]) },
-      { name: "recurring_jobs.csv", content: toCsv(bundle.recurringJobs as Record<string, unknown>[]) },
-      { name: "audit_events.csv", content: toCsv(bundle.auditEvents as Record<string, unknown>[]) },
+      {
+        name: "profile.csv",
+        content: toCsv([bundle.profile as Record<string, unknown>]),
+      },
+      {
+        name: "jobs.csv",
+        content: toCsv(bundle.jobs as Record<string, unknown>[]),
+      },
+      {
+        name: "requests.csv",
+        content: toCsv(bundle.jobHistory as Record<string, unknown>[]),
+      },
+      {
+        name: "assignments.csv",
+        content: toCsv(bundle.assignments as Record<string, unknown>[]),
+      },
+      {
+        name: "invoices_payments.csv",
+        content: toCsv(bundle.invoicesAndPayments as Record<string, unknown>[]),
+      },
+      {
+        name: "documents_metadata.csv",
+        content: toCsv(bundle.documentsMetadata as Record<string, unknown>[]),
+      },
+      {
+        name: "recurring_jobs.csv",
+        content: toCsv(bundle.recurringJobs as Record<string, unknown>[]),
+      },
+      {
+        name: "audit_events.csv",
+        content: toCsv(bundle.auditEvents as Record<string, unknown>[]),
+      },
     ];
     const zip = buildZip(files);
 
-    const privateDir = (process.env.PRIVATE_OBJECT_DIR || "/haulbrokr/private").replace(/^\//, "").replace(/\/$/, "");
+    const privateDir = (process.env.PRIVATE_OBJECT_DIR || "/haulbrokr/private")
+      .replace(/^\//, "")
+      .replace(/\/$/, "");
     const objectKey = `${privateDir}/exports/${row.profileId}/${exportId}-${Date.now()}.zip`;
     const objectPath = `/objects/exports/${row.profileId}/${exportId}.zip`;
     const bucket = requireEnv("R2_BUCKET");
@@ -272,7 +322,8 @@ export async function processDataExport(exportId: number): Promise<void> {
       .update(dataExportRequestsTable)
       .set({
         status: "failed",
-        errorMessage: err instanceof Error ? err.message.slice(0, 500) : "export_failed",
+        errorMessage:
+          err instanceof Error ? err.message.slice(0, 500) : "export_failed",
       })
       .where(eq(dataExportRequestsTable.id, exportId));
     throw err;
@@ -280,7 +331,10 @@ export async function processDataExport(exportId: number): Promise<void> {
 }
 
 export async function collectExportBundle(profileId: number) {
-  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, profileId));
+  const [profile] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, profileId));
   if (!profile) throw new Error("Profile not found");
 
   // Organization isolation: only this user's org membership + own rows.
@@ -308,26 +362,60 @@ export async function collectExportBundle(profileId: number) {
       ]
     : [];
 
-  const [trucks, requests, jobs, bids, docs, payment, payout, tokens, recurring, activity] =
-    await Promise.all([
-      db.select().from(trucksTable).where(eq(trucksTable.ownerId, profileId)),
-      db.select().from(requestsTable).where(eq(requestsTable.customerId, profileId)),
-      db
-        .select()
-        .from(jobsTable)
-        .where(eq(jobsTable.customerId, profileId))
-        .then(async (customerJobs) => {
-          const providerJobs = await db.select().from(jobsTable).where(eq(jobsTable.providerId, profileId));
-          return [...customerJobs, ...providerJobs];
-        }),
-      db.select().from(bidsTable).where(eq(bidsTable.providerId, profileId)),
-      db.select().from(driverDocumentsTable).where(eq(driverDocumentsTable.profileId, profileId)),
-      db.select().from(paymentMethodsTable).where(eq(paymentMethodsTable.profileId, profileId)),
-      db.select().from(payoutAccountsTable).where(eq(payoutAccountsTable.profileId, profileId)),
-      db.select().from(deviceTokensTable).where(eq(deviceTokensTable.profileId, profileId)),
-      db.select().from(recurringSchedulesTable).where(eq(recurringSchedulesTable.customerId, profileId)),
-      db.select().from(activityTable).where(eq(activityTable.profileId, profileId)),
-    ]);
+  const [
+    trucks,
+    requests,
+    jobs,
+    bids,
+    docs,
+    payment,
+    payout,
+    tokens,
+    recurring,
+    activity,
+  ] = await Promise.all([
+    db.select().from(trucksTable).where(eq(trucksTable.ownerId, profileId)),
+    db
+      .select()
+      .from(requestsTable)
+      .where(eq(requestsTable.customerId, profileId)),
+    db
+      .select()
+      .from(jobsTable)
+      .where(eq(jobsTable.customerId, profileId))
+      .then(async (customerJobs) => {
+        const providerJobs = await db
+          .select()
+          .from(jobsTable)
+          .where(eq(jobsTable.providerId, profileId));
+        return [...customerJobs, ...providerJobs];
+      }),
+    db.select().from(bidsTable).where(eq(bidsTable.providerId, profileId)),
+    db
+      .select()
+      .from(driverDocumentsTable)
+      .where(eq(driverDocumentsTable.profileId, profileId)),
+    db
+      .select()
+      .from(paymentMethodsTable)
+      .where(eq(paymentMethodsTable.profileId, profileId)),
+    db
+      .select()
+      .from(payoutAccountsTable)
+      .where(eq(payoutAccountsTable.profileId, profileId)),
+    db
+      .select()
+      .from(deviceTokensTable)
+      .where(eq(deviceTokensTable.profileId, profileId)),
+    db
+      .select()
+      .from(recurringSchedulesTable)
+      .where(eq(recurringSchedulesTable.customerId, profileId)),
+    db
+      .select()
+      .from(activityTable)
+      .where(eq(activityTable.profileId, profileId)),
+  ]);
 
   const safeJobs = jobs.map((j) =>
     redactSecrets({
@@ -365,8 +453,12 @@ export async function collectExportBundle(profileId: number) {
       createdAt: profile.createdAt,
     }),
     organizationMemberships: memberships,
-    trucks: trucks.map((t) => redactSecrets(t as unknown as Record<string, unknown>)),
-    jobHistory: requests.map((r) => redactSecrets(r as unknown as Record<string, unknown>)),
+    trucks: trucks.map((t) =>
+      redactSecrets(t as unknown as Record<string, unknown>),
+    ),
+    jobHistory: requests.map((r) =>
+      redactSecrets(r as unknown as Record<string, unknown>),
+    ),
     assignments: bids.map((b) =>
       redactSecrets({
         id: b.id,
@@ -380,7 +472,8 @@ export async function collectExportBundle(profileId: number) {
     documentsMetadata: docs.map((d) =>
       redactSecrets({
         id: d.id,
-        docType: (d as { docType?: string }).docType ?? (d as { type?: string }).type,
+        docType:
+          (d as { docType?: string }).docType ?? (d as { type?: string }).type,
         status: d.status,
         createdAt: d.createdAt,
         updatedAt: d.updatedAt,
@@ -395,7 +488,9 @@ export async function collectExportBundle(profileId: number) {
       deviceTokenCount: tokens.length,
       platforms: tokens.map((t) => t.platform),
     },
-    recurringJobs: recurring.map((r) => redactSecrets(r as unknown as Record<string, unknown>)),
+    recurringJobs: recurring.map((r) =>
+      redactSecrets(r as unknown as Record<string, unknown>),
+    ),
     auditEvents: activity.map((a) =>
       redactSecrets({
         id: a.id,
@@ -435,7 +530,9 @@ export async function createSignedExportDownloadUrl(
     throw err;
   }
 
-  const objectKey = row.objectPath.includes("|") ? row.objectPath.split("|")[1]! : row.objectPath.replace(/^\//, "");
+  const objectKey = row.objectPath.includes("|")
+    ? row.objectPath.split("|")[1]!
+    : row.objectPath.replace(/^\//, "");
   const client = getObjectStorageClient();
   const bucket = requireEnv("R2_BUCKET");
   const url = await getSignedUrl(
@@ -450,7 +547,12 @@ export async function expireOldExports(): Promise<number> {
   const result = await db
     .update(dataExportRequestsTable)
     .set({ status: "expired" })
-    .where(and(eq(dataExportRequestsTable.status, "ready"), lt(dataExportRequestsTable.expiresAt, new Date())))
+    .where(
+      and(
+        eq(dataExportRequestsTable.status, "ready"),
+        lt(dataExportRequestsTable.expiresAt, new Date()),
+      ),
+    )
     .returning({ id: dataExportRequestsTable.id });
   return result.length;
 }

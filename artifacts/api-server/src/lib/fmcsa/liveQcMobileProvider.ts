@@ -1,4 +1,9 @@
-import type { FmcsaFieldStatus, FmcsaLookupResult, FmcsaProvider, FmcsaProviderHealth } from "./types";
+import type {
+  FmcsaFieldStatus,
+  FmcsaLookupResult,
+  FmcsaProvider,
+  FmcsaProviderHealth,
+} from "./types";
 import { logger } from "../logger";
 
 const DEFAULT_BASE = "https://mobile.fmcsa.dot.gov/qc/services";
@@ -17,8 +22,19 @@ function sleep(ms: number) {
 function mapStatus(value: unknown): FmcsaFieldStatus {
   if (value == null || value === "") return "incomplete";
   const s = String(value).toLowerCase();
-  if (["active", "authorized", "satisfactory", "yes", "true", "a"].includes(s)) return "verified";
-  if (["inactive", "unauthorized", "unsatisfactory", "out-of-service", "no", "false", "suspended"].includes(s)) {
+  if (["active", "authorized", "satisfactory", "yes", "true", "a"].includes(s))
+    return "verified";
+  if (
+    [
+      "inactive",
+      "unauthorized",
+      "unsatisfactory",
+      "out-of-service",
+      "no",
+      "false",
+      "suspended",
+    ].includes(s)
+  ) {
     return "failed";
   }
   return "incomplete";
@@ -33,7 +49,9 @@ export class LiveQcMobileFmcsaProvider implements FmcsaProvider {
 
   constructor(
     private readonly webKey = process.env.FMCSA_WEB_KEY?.trim() ?? "",
-    private readonly baseUrl = (process.env.FMCSA_API_BASE_URL?.trim() || DEFAULT_BASE).replace(/\/$/, ""),
+    private readonly baseUrl = (
+      process.env.FMCSA_API_BASE_URL?.trim() || DEFAULT_BASE
+    ).replace(/\/$/, ""),
     private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
@@ -48,9 +66,13 @@ export class LiveQcMobileFmcsaProvider implements FmcsaProvider {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
       const url = `${this.baseUrl}/carriers/0?webKey=${encodeURIComponent(this.webKey)}`;
-      const res = await this.fetchImpl(url, { signal: controller.signal, headers: { Accept: "application/json" } });
+      const res = await this.fetchImpl(url, {
+        signal: controller.signal,
+        headers: { Accept: "application/json" },
+      });
       clearTimeout(timer);
-      if (res.status === 401 || res.status === 403) return "missing_credentials";
+      if (res.status === 401 || res.status === 403)
+        return "missing_credentials";
       if (res.status >= 500) return "configured_unavailable";
       return "configured_healthy";
     } catch {
@@ -67,7 +89,9 @@ export class LiveQcMobileFmcsaProvider implements FmcsaProvider {
         code: "invalid_input",
         source: "live",
         lookedUpAt,
-        health: this.hasCredentials() ? "configured_healthy" : "missing_credentials",
+        health: this.hasCredentials()
+          ? "configured_healthy"
+          : "missing_credentials",
         autoVerifyEligible: false,
         fields: {
           fmcsaAuthority: "unknown",
@@ -135,7 +159,10 @@ export class LiveQcMobileFmcsaProvider implements FmcsaProvider {
             rawFields: { httpStatus: 404 },
             errorMessage: "Carrier not found in FMCSA QCMobile",
           };
-          cache.set(cleaned, { expiresAt: Date.now() + CACHE_TTL_MS, result: notFound });
+          cache.set(cleaned, {
+            expiresAt: Date.now() + CACHE_TTL_MS,
+            result: notFound,
+          });
           return notFound;
         }
 
@@ -183,17 +210,29 @@ export class LiveQcMobileFmcsaProvider implements FmcsaProvider {
         }
 
         const body = (await res.json()) as Record<string, unknown>;
-        const content = (body.content ?? body.carrier ?? body) as Record<string, unknown>;
+        const content = (body.content ?? body.carrier ?? body) as Record<
+          string,
+          unknown
+        >;
         const carrier = (content.carrier ?? content) as Record<string, unknown>;
 
-        const operatingStatus = String(carrier.operatingStatus ?? carrier.statusCode ?? "");
+        const operatingStatus = String(
+          carrier.operatingStatus ?? carrier.statusCode ?? "",
+        );
         const authorityStatus = String(
-          carrier.commonAuthorityStatus ?? carrier.authorityStatus ?? carrier.allowedToOperate ?? "",
+          carrier.commonAuthorityStatus ??
+            carrier.authorityStatus ??
+            carrier.allowedToOperate ??
+            "",
         );
         const insuranceStatus = String(
-          carrier.bipdInsuranceOnFile ?? carrier.insuranceStatus ?? carrier.liabilityInsurance ?? "",
+          carrier.bipdInsuranceOnFile ??
+            carrier.insuranceStatus ??
+            carrier.liabilityInsurance ??
+            "",
         );
-        const safetyRating = carrier.safetyRating != null ? String(carrier.safetyRating) : null;
+        const safetyRating =
+          carrier.safetyRating != null ? String(carrier.safetyRating) : null;
         const oos =
           carrier.oosDate != null ||
           String(carrier.outOfService ?? "").toLowerCase() === "true" ||
@@ -203,7 +242,11 @@ export class LiveQcMobileFmcsaProvider implements FmcsaProvider {
           fmcsaAuthority: mapStatus(authorityStatus || null),
           insuranceActive: mapStatus(insuranceStatus || null),
           dotOperatingStatus: mapStatus(operatingStatus || null),
-          notSuspended: oos ? ("failed" as const) : operatingStatus ? ("verified" as const) : ("incomplete" as const),
+          notSuspended: oos
+            ? ("failed" as const)
+            : operatingStatus
+              ? ("verified" as const)
+              : ("incomplete" as const),
           safetyRating,
         };
 
@@ -230,10 +273,13 @@ export class LiveQcMobileFmcsaProvider implements FmcsaProvider {
           health: "configured_healthy",
           autoVerifyEligible,
           carrier: {
-            legalName: carrier.legalName != null ? String(carrier.legalName) : undefined,
-            dbaName: carrier.dbaName != null ? String(carrier.dbaName) : undefined,
+            legalName:
+              carrier.legalName != null ? String(carrier.legalName) : undefined,
+            dbaName:
+              carrier.dbaName != null ? String(carrier.dbaName) : undefined,
             dotNumber: cleaned,
-            mcNumber: carrier.mcNumber != null ? String(carrier.mcNumber) : undefined,
+            mcNumber:
+              carrier.mcNumber != null ? String(carrier.mcNumber) : undefined,
             operatingStatus: operatingStatus || undefined,
             authorityStatus: authorityStatus || undefined,
             insuranceStatus: insuranceStatus || undefined,
@@ -250,14 +296,19 @@ export class LiveQcMobileFmcsaProvider implements FmcsaProvider {
             safetyRating: safetyRating,
             outOfService: Boolean(oos),
           },
-          errorMessage: incomplete ? "Provider response incomplete — manual review required" : undefined,
+          errorMessage: incomplete
+            ? "Provider response incomplete — manual review required"
+            : undefined,
         };
 
         cache.set(cleaned, { expiresAt: Date.now() + CACHE_TTL_MS, result });
         return result;
       } catch (err) {
         lastError = err instanceof Error ? err.message : "lookup_failed";
-        logger.warn({ attempt, err: lastError }, "FMCSA live lookup attempt failed");
+        logger.warn(
+          { attempt, err: lastError },
+          "FMCSA live lookup attempt failed",
+        );
         if (attempt < MAX_RETRIES) await sleep(200 * (attempt + 1));
       }
     }

@@ -14,7 +14,13 @@ function isUsFederalHoliday(dateStr: string): boolean {
   if (!y || !m || !d) return false;
   // Fixed-date holidays
   const fixed = new Set([`${m}-${d}`]);
-  if (fixed.has("1-1") || fixed.has("6-19") || fixed.has("7-4") || fixed.has("11-11") || fixed.has("12-25")) {
+  if (
+    fixed.has("1-1") ||
+    fixed.has("6-19") ||
+    fixed.has("7-4") ||
+    fixed.has("11-11") ||
+    fixed.has("12-25")
+  ) {
     return true;
   }
   // Thanksgiving: 4th Thursday of November
@@ -69,8 +75,19 @@ function addDays(dateStr: string, days: number): string {
 function dayOfWeekInTimezone(dateStr: string, timeZone: string): number {
   // Use midday UTC then format weekday in TZ
   const dt = parseDateOnly(dateStr);
-  const weekday = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" }).format(dt);
-  const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "short",
+  }).format(dt);
+  const map: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
   return map[weekday] ?? 0;
 }
 
@@ -82,11 +99,17 @@ function dayOfMonthInTimezone(dateStr: string, timeZone: string): number {
   return Number(parts.find((p) => p.type === "day")?.value ?? "0");
 }
 
-export function buildIdempotencyKey(scheduleId: number, occurrenceDate: string): string {
+export function buildIdempotencyKey(
+  scheduleId: number,
+  occurrenceDate: string,
+): string {
   return `recurring:${scheduleId}:${occurrenceDate}`;
 }
 
-export function shouldGenerateOnDate(schedule: RecurringSchedule, dateStr: string): boolean {
+export function shouldGenerateOnDate(
+  schedule: RecurringSchedule,
+  dateStr: string,
+): boolean {
   if (schedule.status !== "active") return false;
 
   const startStr = formatDateInTimezone(schedule.startDate, schedule.timezone);
@@ -140,7 +163,10 @@ export function shouldGenerateOnDate(schedule: RecurringSchedule, dateStr: strin
   }
 }
 
-function applyHolidayBehavior(schedule: RecurringSchedule, dateStr: string): string | null {
+function applyHolidayBehavior(
+  schedule: RecurringSchedule,
+  dateStr: string,
+): string | null {
   if (!isUsFederalHoliday(dateStr)) return dateStr;
   if (schedule.holidayBehavior === "include") return dateStr;
   if (schedule.holidayBehavior === "skip") return null;
@@ -187,7 +213,11 @@ export async function generateOccurrence(
     };
   }
 
-  if (schedule.status === "paused" || schedule.status === "cancelled" || schedule.status === "expired") {
+  if (
+    schedule.status === "paused" ||
+    schedule.status === "cancelled" ||
+    schedule.status === "expired"
+  ) {
     await db.insert(recurringGenerationRunsTable).values({
       scheduleId: schedule.id,
       occurrenceDate,
@@ -195,15 +225,28 @@ export async function generateOccurrence(
       idempotencyKey,
       errorMessage: `schedule_${schedule.status}`,
     });
-    return { scheduleId: schedule.id, occurrenceDate, status: "skipped", errorMessage: `schedule_${schedule.status}` };
+    return {
+      scheduleId: schedule.id,
+      occurrenceDate,
+      status: "skipped",
+      errorMessage: `schedule_${schedule.status}`,
+    };
   }
 
   if (!shouldGenerateOnDate(schedule, occurrenceDate)) {
-    return { scheduleId: schedule.id, occurrenceDate, status: "skipped", errorMessage: "not_due" };
+    return {
+      scheduleId: schedule.id,
+      occurrenceDate,
+      status: "skipped",
+      errorMessage: "not_due",
+    };
   }
 
   let effectiveDate = occurrenceDate;
-  if (schedule.holidayBehavior === "next_business_day" && isUsFederalHoliday(occurrenceDate)) {
+  if (
+    schedule.holidayBehavior === "next_business_day" &&
+    isUsFederalHoliday(occurrenceDate)
+  ) {
     const moved = applyHolidayBehavior(schedule, occurrenceDate);
     if (!moved) {
       await db.insert(recurringGenerationRunsTable).values({
@@ -213,12 +256,20 @@ export async function generateOccurrence(
         idempotencyKey,
         errorMessage: "holiday_unresolvable",
       });
-      return { scheduleId: schedule.id, occurrenceDate, status: "skipped", errorMessage: "holiday_unresolvable" };
+      return {
+        scheduleId: schedule.id,
+        occurrenceDate,
+        status: "skipped",
+        errorMessage: "holiday_unresolvable",
+      };
     }
     effectiveDate = moved;
   }
 
-  const reviewRequired = !locationsValid(schedule.pickupAddress, schedule.deliveryAddress);
+  const reviewRequired = !locationsValid(
+    schedule.pickupAddress,
+    schedule.deliveryAddress,
+  );
   const scheduledDate = parseDateOnly(effectiveDate);
 
   try {
@@ -299,12 +350,24 @@ export async function generateOccurrence(
       })
       .where(eq(recurringSchedulesTable.id, schedule.id));
 
-    logger.error({ err, scheduleId: schedule.id, occurrenceDate }, "Recurring haul generation failed");
-    return { scheduleId: schedule.id, occurrenceDate, status: "failed", errorMessage: message };
+    logger.error(
+      { err, scheduleId: schedule.id, occurrenceDate },
+      "Recurring haul generation failed",
+    );
+    return {
+      scheduleId: schedule.id,
+      occurrenceDate,
+      status: "failed",
+      errorMessage: message,
+    };
   }
 }
 
-export function listOccurrenceDates(schedule: RecurringSchedule, from: Date, horizonDays: number): string[] {
+export function listOccurrenceDates(
+  schedule: RecurringSchedule,
+  from: Date,
+  horizonDays: number,
+): string[] {
   const dates: string[] = [];
   const start = formatDateInTimezone(from, schedule.timezone);
   for (let i = 0; i <= horizonDays; i++) {
@@ -326,7 +389,9 @@ export type WorkerRunSummary = {
   results: GenerationResult[];
 };
 
-export async function runRecurringHaulWorker(options: { now?: Date; scheduleIds?: number[] } = {}): Promise<WorkerRunSummary> {
+export async function runRecurringHaulWorker(
+  options: { now?: Date; scheduleIds?: number[] } = {},
+): Promise<WorkerRunSummary> {
   const now = options.now ?? new Date();
   const summary: WorkerRunSummary = {
     schedulesProcessed: 0,
@@ -367,7 +432,11 @@ export async function runRecurringHaulWorker(options: { now?: Date; scheduleIds?
     if (schedule.status !== "active") {
       continue;
     }
-    const dates = listOccurrenceDates(schedule, now, schedule.generateHorizonDays ?? 14);
+    const dates = listOccurrenceDates(
+      schedule,
+      now,
+      schedule.generateHorizonDays ?? 14,
+    );
     for (const dateStr of dates) {
       const result = await generateOccurrence(schedule, dateStr);
       summary.results.push(result);
@@ -395,11 +464,18 @@ export async function runRecurringHaulWorker(options: { now?: Date; scheduleIds?
 }
 
 /** Retry failed generation runs that are still under the attempt budget. */
-export async function retryFailedRecurringGenerations(maxAttempts = 3): Promise<number> {
+export async function retryFailedRecurringGenerations(
+  maxAttempts = 3,
+): Promise<number> {
   const failed = await db
     .select()
     .from(recurringGenerationRunsTable)
-    .where(and(eq(recurringGenerationRunsTable.status, "failed"), sql`${recurringGenerationRunsTable.attempt} < ${maxAttempts}`));
+    .where(
+      and(
+        eq(recurringGenerationRunsTable.status, "failed"),
+        sql`${recurringGenerationRunsTable.attempt} < ${maxAttempts}`,
+      ),
+    );
 
   let retried = 0;
   for (const run of failed) {
@@ -410,13 +486,20 @@ export async function retryFailedRecurringGenerations(maxAttempts = 3): Promise<
     if (!schedule || schedule.status !== "active") continue;
 
     // Clear failed row so idempotency allows retry with incremented attempt
-    await db.delete(recurringGenerationRunsTable).where(eq(recurringGenerationRunsTable.id, run.id));
+    await db
+      .delete(recurringGenerationRunsTable)
+      .where(eq(recurringGenerationRunsTable.id, run.id));
     const result = await generateOccurrence(schedule, run.occurrenceDate);
     if (result.status === "failed") {
       await db
         .update(recurringGenerationRunsTable)
         .set({ attempt: run.attempt + 1 })
-        .where(eq(recurringGenerationRunsTable.idempotencyKey, buildIdempotencyKey(schedule.id, run.occurrenceDate)));
+        .where(
+          eq(
+            recurringGenerationRunsTable.idempotencyKey,
+            buildIdempotencyKey(schedule.id, run.occurrenceDate),
+          ),
+        );
     }
     retried += 1;
   }

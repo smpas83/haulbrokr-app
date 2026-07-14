@@ -191,8 +191,8 @@ vi.mock("@workspace/db", () => {
 
   const resolve = (tableRef: unknown) => h.rows.get(tableRef) ?? [];
 
-  const db = {
-    select: (cols?: unknown) => ({
+  const db: any = {
+    select: (_cols?: unknown) => ({
       from: (tableRef: unknown) => ({
         where: () => {
           const rows = resolve(tableRef);
@@ -298,14 +298,14 @@ function as(profile: Record<string, unknown> | null) {
   h.profile = profile;
 }
 
-function appWith(...routers: Parameters<Express["use"]>[0][]): Express {
+function appWith(...routers: any[]): Express {
   const app = express();
   app.use(express.json());
   app.use((req: any, _res, next) => {
     req.log = { error: vi.fn(), warn: vi.fn(), info: vi.fn() };
     next();
   });
-  for (const r of routers) app.use(r as any);
+  for (const r of routers) app.use(r);
   app.use((err: any, _req: any, res: any, _next: any) => {
     res.status(500).json({ error: err?.message ?? "error", stack: err?.stack });
   });

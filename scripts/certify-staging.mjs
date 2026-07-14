@@ -11,8 +11,16 @@
 import { spawnSync } from "child_process";
 
 const ROOT = new URL("..", import.meta.url).pathname;
-const API = (process.env.API_DIRECT ?? process.env.STAGING_API_URL ?? "https://haulbrokr-api.onrender.com").replace(/\/$/, "");
-const WEB = (process.env.WEB_URL ?? process.env.STAGING_WEB_URL ?? "https://haulbrokr.com").replace(/\/$/, "");
+const API = (
+  process.env.API_DIRECT ??
+  process.env.STAGING_API_URL ??
+  "https://haulbrokr-api.onrender.com"
+).replace(/\/$/, "");
+const WEB = (
+  process.env.WEB_URL ??
+  process.env.STAGING_WEB_URL ??
+  "https://haulbrokr.com"
+).replace(/\/$/, "");
 
 const results = [];
 
@@ -49,24 +57,67 @@ console.log(`API: ${API}`);
 console.log("Secrets are never printed — only presence/length.\n");
 
 // Config presence (no values)
-record("Clerk publishable configured", hasEnv("CLERK_PUBLISHABLE_KEY") || hasEnv("VITE_CLERK_PUBLISHABLE_KEY") ? "PASS" : "WARN", "operator must set staging Clerk keys");
-record("Clerk secret configured", hasEnv("CLERK_SECRET_KEY") ? "PASS" : "WARN", mask(process.env.CLERK_SECRET_KEY));
-record("Stripe test mode key", hasEnv("STRIPE_SECRET_KEY") ? (String(process.env.STRIPE_SECRET_KEY).startsWith("sk_test") ? "PASS" : "WARN") : "WARN", "expect sk_test_…");
-record("R2 configured", ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET"].every(hasEnv) ? "PASS" : "WARN");
-record("FMCSA_WEB_KEY", hasEnv("FMCSA_WEB_KEY") ? "PASS" : "WARN", "EXTERNAL BLOCKER if unset — manual review fallback active");
-record("AUTOMATION_KEY / CRON_SECRET", hasEnv("AUTOMATION_KEY") || hasEnv("CRON_SECRET") ? "PASS" : "WARN");
+record(
+  "Clerk publishable configured",
+  hasEnv("CLERK_PUBLISHABLE_KEY") || hasEnv("VITE_CLERK_PUBLISHABLE_KEY")
+    ? "PASS"
+    : "WARN",
+  "operator must set staging Clerk keys",
+);
+record(
+  "Clerk secret configured",
+  hasEnv("CLERK_SECRET_KEY") ? "PASS" : "WARN",
+  mask(process.env.CLERK_SECRET_KEY),
+);
+record(
+  "Stripe test mode key",
+  hasEnv("STRIPE_SECRET_KEY")
+    ? String(process.env.STRIPE_SECRET_KEY).startsWith("sk_test")
+      ? "PASS"
+      : "WARN"
+    : "WARN",
+  "expect sk_test_…",
+);
+record(
+  "R2 configured",
+  [
+    "R2_ACCOUNT_ID",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_BUCKET",
+  ].every(hasEnv)
+    ? "PASS"
+    : "WARN",
+);
+record(
+  "FMCSA_WEB_KEY",
+  hasEnv("FMCSA_WEB_KEY") ? "PASS" : "WARN",
+  "EXTERNAL BLOCKER if unset — manual review fallback active",
+);
+record(
+  "AUTOMATION_KEY / CRON_SECRET",
+  hasEnv("AUTOMATION_KEY") || hasEnv("CRON_SECRET") ? "PASS" : "WARN",
+);
 
 // Infrastructure
 try {
   const health = await fetchJson(`${API}/api/healthz`);
-  record("API healthz", health.res.status === 200 ? "PASS" : "FAIL", `HTTP ${health.res.status}`);
+  record(
+    "API healthz",
+    health.res.status === 200 ? "PASS" : "FAIL",
+    `HTTP ${health.res.status}`,
+  );
 } catch (e) {
   record("API healthz", "FAIL", e instanceof Error ? e.message : String(e));
 }
 
 try {
   const ready = await fetchJson(`${API}/api/readyz`);
-  record("API readyz", ready.res.status === 200 ? "PASS" : "FAIL", `HTTP ${ready.res.status}`);
+  record(
+    "API readyz",
+    ready.res.status === 200 ? "PASS" : "FAIL",
+    `HTTP ${ready.res.status}`,
+  );
 } catch (e) {
   record("API readyz", "FAIL", e instanceof Error ? e.message : String(e));
 }
@@ -74,29 +125,51 @@ try {
 try {
   const details = await fetchJson(`${API}/api/readyz/details`);
   const fmcsa = details.body?.fmcsa;
-  if (!details.res.ok) {
+  if (details.res.status === 404) {
+    record(
+      "FMCSA readiness detail",
+      "WARN",
+      "HTTP 404 — deploy RC3 API for /api/readyz/details",
+    );
+  } else if (!details.res.ok) {
     record("FMCSA readiness detail", "FAIL", `HTTP ${details.res.status}`);
   } else if (!fmcsa) {
     record("FMCSA readiness detail", "WARN", "no fmcsa block — deploy RC3 API");
   } else if (fmcsa.liveConfigured && fmcsa.health === "configured_healthy") {
-    record("FMCSA lookup / status", "PASS", `${fmcsa.provider}/${fmcsa.health}`);
+    record(
+      "FMCSA lookup / status",
+      "PASS",
+      `${fmcsa.provider}/${fmcsa.health}`,
+    );
   } else if (fmcsa.manualFallbackAvailable) {
-    record("FMCSA lookup / status", "WARN", `manual fallback (${fmcsa.health}) — EXTERNAL BLOCKER for live`);
+    record(
+      "FMCSA lookup / status",
+      "WARN",
+      `manual fallback (${fmcsa.health}) — EXTERNAL BLOCKER for live`,
+    );
   } else {
     record("FMCSA lookup / status", "FAIL", JSON.stringify(fmcsa));
   }
 } catch (e) {
-  record("FMCSA lookup / status", "WARN", e instanceof Error ? e.message : String(e));
+  record(
+    "FMCSA lookup / status",
+    "WARN",
+    e instanceof Error ? e.message : String(e),
+  );
 }
 
 try {
   const web = await fetch(`${WEB}`);
-  record("Web homepage", web.status === 200 ? "PASS" : "FAIL", `HTTP ${web.status}`);
+  record(
+    "Web homepage",
+    web.status === 200 ? "PASS" : "FAIL",
+    `HTTP ${web.status}`,
+  );
 } catch (e) {
   record("Web homepage", "FAIL", e instanceof Error ? e.message : String(e));
 }
 
-// Auth gates
+// Auth gates (404 = RC3 routes not deployed yet → WARN)
 for (const [name, path] of [
   ["Clerk-protected profiles", "/api/profiles/me"],
   ["Account export auth gate", "/api/account/export"],
@@ -105,7 +178,13 @@ for (const [name, path] of [
 ]) {
   try {
     const { res } = await fetchJson(`${API}${path}`);
-    record(name, res.status === 401 || res.status === 403 ? "PASS" : "FAIL", `HTTP ${res.status}`);
+    if (res.status === 401 || res.status === 403) {
+      record(name, "PASS", `HTTP ${res.status}`);
+    } else if (res.status === 404) {
+      record(name, "WARN", `HTTP 404 — deploy RC3 API for ${path}`);
+    } else {
+      record(name, "FAIL", `HTTP ${res.status}`);
+    }
   } catch (e) {
     record(name, "FAIL", e instanceof Error ? e.message : String(e));
   }
@@ -113,26 +192,72 @@ for (const [name, path] of [
 
 // Worker auth
 try {
-  const { res } = await fetchJson(`${API}/api/workers/recurring-hauls`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
-  record("Recurring worker rejects unauthenticated", res.status === 401 || res.status === 503 ? "PASS" : "FAIL", `HTTP ${res.status}`);
+  const { res } = await fetchJson(`${API}/api/workers/recurring-hauls`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{}",
+  });
+  if (res.status === 401 || res.status === 503) {
+    record(
+      "Recurring worker rejects unauthenticated",
+      "PASS",
+      `HTTP ${res.status}`,
+    );
+  } else if (res.status === 404) {
+    record(
+      "Recurring worker rejects unauthenticated",
+      "WARN",
+      "HTTP 404 — deploy RC3 API for /api/workers/recurring-hauls",
+    );
+  } else {
+    record(
+      "Recurring worker rejects unauthenticated",
+      "FAIL",
+      `HTTP ${res.status}`,
+    );
+  }
 } catch (e) {
-  record("Recurring worker rejects unauthenticated", "FAIL", e instanceof Error ? e.message : String(e));
+  record(
+    "Recurring worker rejects unauthenticated",
+    "FAIL",
+    e instanceof Error ? e.message : String(e),
+  );
 }
 
 if (hasEnv("AUTOMATION_KEY") || hasEnv("CRON_SECRET")) {
   const key = process.env.AUTOMATION_KEY || process.env.CRON_SECRET;
   try {
-    const { res, body } = await fetchJson(`${API}/api/workers/recurring-hauls`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-automation-key": key },
-      body: "{}",
-    });
-    record("Recurring worker execution", res.status === 200 ? "PASS" : "FAIL", res.status === 200 ? `created=${body?.created ?? "?"}` : `HTTP ${res.status}`);
+    const { res, body } = await fetchJson(
+      `${API}/api/workers/recurring-hauls`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-automation-key": key,
+        },
+        body: "{}",
+      },
+    );
+    record(
+      "Recurring worker execution",
+      res.status === 200 ? "PASS" : "FAIL",
+      res.status === 200
+        ? `created=${body?.created ?? "?"}`
+        : `HTTP ${res.status}`,
+    );
   } catch (e) {
-    record("Recurring worker execution", "FAIL", e instanceof Error ? e.message : String(e));
+    record(
+      "Recurring worker execution",
+      "FAIL",
+      e instanceof Error ? e.message : String(e),
+    );
   }
 } else {
-  record("Recurring worker execution", "WARN", "set AUTOMATION_KEY to exercise worker against staging");
+  record(
+    "Recurring worker execution",
+    "WARN",
+    "set AUTOMATION_KEY to exercise worker against staging",
+  );
 }
 
 // Stripe webhook unsigned rejection (no real charge)
@@ -142,26 +267,51 @@ try {
     headers: { "content-type": "application/json" },
     body: "{}",
   });
-  record("Stripe webhook rejects unsigned", res.status === 400 || res.status === 401 ? "PASS" : "WARN", `HTTP ${res.status}`);
+  record(
+    "Stripe webhook rejects unsigned",
+    res.status === 400 || res.status === 401 ? "PASS" : "WARN",
+    `HTTP ${res.status}`,
+  );
 } catch (e) {
-  record("Stripe webhook rejects unsigned", "WARN", e instanceof Error ? e.message : String(e));
+  record(
+    "Stripe webhook rejects unsigned",
+    "WARN",
+    e instanceof Error ? e.message : String(e),
+  );
 }
 
 // Authenticated operator flows (optional dedicated staging token)
-const stagingToken = process.env.STAGING_CLERK_SESSION_TOKEN || process.env.STAGING_TEST_JWT;
+const stagingToken =
+  process.env.STAGING_CLERK_SESSION_TOKEN || process.env.STAGING_TEST_JWT;
 const authHeaders = stagingToken
-  ? { Authorization: `Bearer ${stagingToken}`, "content-type": "application/json" }
+  ? {
+      Authorization: `Bearer ${stagingToken}`,
+      "content-type": "application/json",
+    }
   : null;
 
 async function authCheck(name, path, init = {}) {
   if (!authHeaders) {
-    record(name, "WARN", "set STAGING_CLERK_SESSION_TOKEN for authenticated checks");
+    record(
+      name,
+      "WARN",
+      "set STAGING_CLERK_SESSION_TOKEN for authenticated checks",
+    );
     return;
   }
   try {
-    const { res, body } = await fetchJson(`${API}${path}`, { ...init, headers: { ...authHeaders, ...(init.headers || {}) } });
+    const { res, body } = await fetchJson(`${API}${path}`, {
+      ...init,
+      headers: { ...authHeaders, ...(init.headers || {}) },
+    });
     const ok = res.status >= 200 && res.status < 300;
-    record(name, ok ? "PASS" : "FAIL", ok ? `HTTP ${res.status}` : `HTTP ${res.status}: ${typeof body === "object" ? body?.error : String(body).slice(0, 80)}`);
+    record(
+      name,
+      ok ? "PASS" : "FAIL",
+      ok
+        ? `HTTP ${res.status}`
+        : `HTTP ${res.status}: ${typeof body === "object" ? body?.error : String(body).slice(0, 80)}`,
+    );
   } catch (e) {
     record(name, "FAIL", e instanceof Error ? e.message : String(e));
   }
@@ -169,7 +319,10 @@ async function authCheck(name, path, init = {}) {
 
 await authCheck("Clerk login session accepted", "/api/profiles/me");
 await authCheck("Organization membership readable", "/api/organizations/me");
-await authCheck("Account export request", "/api/account/export", { method: "POST", body: "{}" });
+await authCheck("Account export request", "/api/account/export", {
+  method: "POST",
+  body: "{}",
+});
 await authCheck("Account export list (authorization)", "/api/account/export");
 await authCheck("Account deletion dry-run", "/api/account/deletion", {
   method: "POST",
@@ -183,21 +336,65 @@ if (!authHeaders) {
   record("Image upload", "WARN", "requires authenticated staging session");
   record("PDF upload", "WARN", "requires authenticated staging session");
   record("Blocked file type", "WARN", "requires authenticated staging session");
-  record("Stripe Connect onboarding link", "WARN", "requires authenticated staging provider");
-  record("Stripe Checkout session", "WARN", "requires authenticated staging customer + job");
-  record("Stripe webhook test event → DB", "WARN", "operator: stripe trigger payment_intent.succeeded --stripe-account=…");
-  record("Invoice state update", "WARN", "operator: verify job payment_status after test webhook");
-  record("Clerk signup", "WARN", "operator: create staging test user in Clerk dashboard");
+  record(
+    "Stripe Connect onboarding link",
+    "WARN",
+    "requires authenticated staging provider",
+  );
+  record(
+    "Stripe Checkout session",
+    "WARN",
+    "requires authenticated staging customer + job",
+  );
+  record(
+    "Stripe webhook test event → DB",
+    "WARN",
+    "operator: stripe trigger payment_intent.succeeded --stripe-account=…",
+  );
+  record(
+    "Invoice state update",
+    "WARN",
+    "operator: verify job payment_status after test webhook",
+  );
+  record(
+    "Clerk signup",
+    "WARN",
+    "operator: create staging test user in Clerk dashboard",
+  );
   record("Clerk login", "WARN", "operator: sign in with staging test user");
-  record("Organization creation", "WARN", "operator: complete onboarding as customer/provider");
-  record("Carrier onboarding", "WARN", "operator: submit W-9/insurance/DOT on staging");
-  record("Customer onboarding", "WARN", "operator: set payment method on staging");
-  record("Driver onboarding", "WARN", "operator: join via invite code on staging");
-  record("Notification delivery config", "WARN", "operator: verify Expo push credentials in EAS");
+  record(
+    "Organization creation",
+    "WARN",
+    "operator: complete onboarding as customer/provider",
+  );
+  record(
+    "Carrier onboarding",
+    "WARN",
+    "operator: submit W-9/insurance/DOT on staging",
+  );
+  record(
+    "Customer onboarding",
+    "WARN",
+    "operator: set payment method on staging",
+  );
+  record(
+    "Driver onboarding",
+    "WARN",
+    "operator: join via invite code on staging",
+  );
+  record(
+    "Notification delivery config",
+    "WARN",
+    "operator: verify Expo push credentials in EAS",
+  );
 } else {
   await authCheck("R2 signed upload URL", "/api/storage/uploads/request-url", {
     method: "POST",
-    body: JSON.stringify({ name: "cert.bin", size: 128, contentType: "application/octet-stream" }),
+    body: JSON.stringify({
+      name: "cert.bin",
+      size: 128,
+      contentType: "application/octet-stream",
+    }),
   });
 }
 
@@ -208,18 +405,30 @@ const unit = spawnSync("pnpm", ["--filter", "@workspace/api-server", "test"], {
   stdio: "inherit",
   env: process.env,
 });
-record("Local api-server tests", unit.status === 0 ? "PASS" : "FAIL", `exit ${unit.status}`);
+record(
+  "Local api-server tests",
+  unit.status === 0 ? "PASS" : "FAIL",
+  `exit ${unit.status}`,
+);
 
 const pass = results.filter((r) => r.status === "PASS").length;
 const warn = results.filter((r) => r.status === "WARN").length;
 const fail = results.filter((r) => r.status === "FAIL").length;
 
-console.log(`\n=== Staging certify: ${pass} PASS / ${warn} WARN / ${fail} FAIL ===\n`);
+console.log(
+  `\n=== Staging certify: ${pass} PASS / ${warn} WARN / ${fail} FAIL ===\n`,
+);
 console.log("Operator checklist:");
 console.log("1. Use Stripe TEST mode keys only.");
-console.log("2. Use dedicated staging Clerk users — never production identities.");
+console.log(
+  "2. Use dedicated staging Clerk users — never production identities.",
+);
 console.log("3. Set STAGING_CLERK_SESSION_TOKEN for authenticated PASS lines.");
-console.log("4. Configure FMCSA_WEB_KEY for live carrier lookup (see docs/FMCSA_OPERATOR_CHECKLIST.md).");
-console.log("5. Do not delete real users; use dryRun deletion or disposable staging accounts.\n");
+console.log(
+  "4. Configure FMCSA_WEB_KEY for live carrier lookup (see docs/FMCSA_OPERATOR_CHECKLIST.md).",
+);
+console.log(
+  "5. Do not delete real users; use dryRun deletion or disposable staging accounts.\n",
+);
 
 if (fail > 0) process.exit(1);
