@@ -1229,3 +1229,71 @@ export function useSubmitJobRating(jobId: number | null) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["job", jobId, "rating"] }),
   });
 }
+
+// ── Account deletion & data export (RC3 / App Store) ──────────────────────────
+export function useDeletionPreview() {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery({
+    queryKey: ["account", "deletion", "preview"],
+    queryFn: () => apiFetch(getToken, "GET", "/account/deletion/preview"),
+    enabled: !!isSignedIn,
+  });
+}
+
+export function useDeleteAccount() {
+  const { getToken } = useAuth();
+  return useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      const res = await fetch(`${API_BASE}/account/deletion`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          "X-Reauth-Confirmed": "1",
+        },
+        body: JSON.stringify({ confirmation: "DELETE" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error ?? "Delete failed");
+      }
+      return res.json();
+    },
+  });
+}
+
+export function useDataExports() {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery({
+    queryKey: ["account", "export"],
+    queryFn: () => apiFetch(getToken, "GET", "/account/export"),
+    enabled: !!isSignedIn,
+  });
+}
+
+export function useRequestDataExport() {
+  const { getToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch(getToken, "POST", "/account/export", {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["account", "export"] }),
+  });
+}
+
+export function useDownloadDataExport() {
+  const { getToken } = useAuth();
+  return useMutation({
+    mutationFn: (exportId: number) =>
+      apiFetch(getToken, "GET", `/account/export/${exportId}/download`) as Promise<{ url: string }>,
+  });
+}
+
+export function useRecurringSchedules() {
+  const { getToken, isSignedIn } = useAuth();
+  return useQuery({
+    queryKey: ["recurring-schedules"],
+    queryFn: () => apiFetch(getToken, "GET", "/recurring-schedules"),
+    enabled: !!isSignedIn,
+  });
+}

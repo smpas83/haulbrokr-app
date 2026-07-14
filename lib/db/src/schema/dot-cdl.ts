@@ -16,13 +16,18 @@ export const dotCdlTable = pgTable("dot_cdl_compliance", {
   cdlExpiry: timestamp("cdl_expiry", { withTimezone: true }),
   cdlVerified: boolean("cdl_verified").notNull().default(false),
   cdlVerifiedAt: timestamp("cdl_verified_at", { withTimezone: true }),
-  // Automated compliance checks (manual verify now, FMCSA API later): unknown | verified | failed
+  // Automated compliance checks: unknown | verified | failed | incomplete | not_found | unavailable
   fmcsaAuthority: text("fmcsa_authority").notNull().default("unknown"),
   insuranceActive: text("insurance_active").notNull().default("unknown"),
   dotOperatingStatus: text("dot_operating_status").notNull().default("unknown"),
   safetyRating: text("safety_rating"),
   notSuspended: text("not_suspended").notNull().default("unknown"),
   complianceCheckedAt: timestamp("compliance_checked_at", { withTimezone: true }),
+  /** live | manual_review | cache */
+  fmcsaSource: text("fmcsa_source"),
+  /** Raw provider fields returned (non-secret) for audit / staff review. */
+  fmcsaLookupFields: text("fmcsa_lookup_fields"),
+  fmcsaLookupError: text("fmcsa_lookup_error"),
   status: text("status").notNull().default("not_submitted"),
   reviewNote: text("review_note"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }),

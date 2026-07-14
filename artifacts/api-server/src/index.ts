@@ -5,6 +5,7 @@ import { logger } from "./lib/logger";
 import { startPayoutRetryScheduler } from "./lib/payoutRetryScheduler";
 import { startOrphanUploadCleaner } from "./lib/orphanUploadCleaner";
 import { startDocReminderScheduler } from "./lib/docReminderScheduler";
+import { startRecurringHaulScheduler } from "./lib/recurringHaulScheduler";
 import { runStartupMigrations } from "./lib/startupMigrations";
 
 validateProductionEnv();
@@ -38,6 +39,7 @@ async function boot(): Promise<void> {
     startPayoutRetryScheduler();
     startOrphanUploadCleaner();
     startDocReminderScheduler();
+    startRecurringHaulScheduler();
   });
 }
 

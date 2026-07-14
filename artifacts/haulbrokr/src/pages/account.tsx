@@ -1627,6 +1627,175 @@ function CreditApplicationTab() {
   );
 }
 
+function PrivacyAccountTab() {
+  const { toast } = useToast();
+  const [preview, setPreview] = useState<{
+    willDelete: string[];
+    mayRetain: string[];
+    blockedReason: string | null;
+    organization: { requiresOwnershipTransfer: boolean };
+  } | null>(null);
+  const [exports, setExports] = useState<Array<{ id: number; status: string; requestedAt: string; expiresAt?: string }>>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { apiFetch } = await import("@/lib/apiFetch");
+        const [p, e] = await Promise.all([
+          apiFetch("/account/deletion/preview"),
+          apiFetch("/account/export"),
+        ]);
+        setPreview(p);
+        setExports(Array.isArray(e) ? e : []);
+      } catch {
+        // ignore — user may lack network
+      }
+    })();
+  }, []);
+
+  async function requestExport() {
+    setBusy(true);
+    try {
+      const { apiFetch } = await import("@/lib/apiFetch");
+      await apiFetch("/account/export", { method: "POST", body: "{}" });
+      const list = await apiFetch("/account/export");
+      setExports(Array.isArray(list) ? list : []);
+      toast({ title: "Export requested", description: "You will be notified when your download is ready." });
+    } catch (err: any) {
+      toast({ title: "Export failed", description: err?.message ?? "Try again later", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function downloadExport(id: number) {
+    try {
+      const { apiFetch } = await import("@/lib/apiFetch");
+      const signed = await apiFetch<{ url: string }>(`/account/export/${id}/download`);
+      window.open(signed.url, "_blank", "noopener,noreferrer");
+    } catch (err: any) {
+      toast({ title: "Download unavailable", description: err?.message ?? "Export not ready", variant: "destructive" });
+    }
+  }
+
+  async function deleteAccount() {
+    if (confirmText !== "DELETE") {
+      toast({ title: "Type DELETE to confirm", variant: "destructive" });
+      return;
+    }
+    setBusy(true);
+    try {
+      const { apiFetch } = await import("@/lib/apiFetch");
+      await apiFetch("/account/deletion", {
+        method: "POST",
+        headers: { "X-Reauth-Confirmed": "1" },
+        body: JSON.stringify({ confirmation: "DELETE" }),
+      });
+      toast({ title: "Account deleted", description: "Your account has been permanently deleted." });
+      window.location.href = "/sign-in";
+    } catch (err: any) {
+      toast({
+        title: "Couldn't delete account",
+        description: err?.message ?? "Transfer ownership if you are the sole organization owner, then retry.",
+        variant: "destructive",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Export Account Data</CardTitle>
+          <CardDescription>
+            Download a ZIP archive of your profile, jobs, documents metadata, invoices, and preferences.
+            Exports expire after 7 days. Secrets and other organizations&apos; data are never included.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button onClick={() => void requestExport()} disabled={busy}>
+            {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+            Request Data Export
+          </Button>
+          {exports.length > 0 && (
+            <div className="space-y-2">
+              {exports.map((ex) => (
+                <div key={ex.id} className="flex items-center justify-between gap-3 text-sm border rounded-lg px-3 py-2">
+                  <div>
+                    <div className="font-medium">Export #{ex.id}</div>
+                    <div className="text-muted-foreground">Status: {ex.status}</div>
+                  </div>
+                  {ex.status === "ready" && (
+                    <Button size="sm" variant="outline" onClick={() => void downloadExport(ex.id)}>Download</Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle className="text-destructive">Delete Account</CardTitle>
+          <CardDescription>
+            Permanently delete your HaulBrokr account and personal data. This is not a deactivation —
+            your auth identity is revoked and you cannot sign back in with an orphaned session.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {preview && (
+            <div className="grid gap-4 md:grid-cols-2 text-sm">
+              <div>
+                <div className="font-semibold mb-2">Will be deleted</div>
+                <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                  {preview.willDelete.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div>
+                <div className="font-semibold mb-2">May be legally retained</div>
+                <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                  {preview.mayRetain.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            </div>
+          )}
+          {preview?.blockedReason && (
+            <Alert variant="destructive">
+              <AlertTitle>Ownership transfer required</AlertTitle>
+              <AlertDescription>
+                {preview.blockedReason} Go to Company settings to transfer ownership, then return here.
+              </AlertDescription>
+            </Alert>
+          )}
+          {!confirmOpen ? (
+            <Button variant="destructive" onClick={() => setConfirmOpen(true)} disabled={!!preview?.blockedReason}>
+              Delete Account
+            </Button>
+          ) : (
+            <div className="space-y-3 rounded-lg border border-destructive/40 p-4">
+              <p className="text-sm">Type <strong>DELETE</strong> to confirm permanent account deletion.</p>
+              <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="DELETE" autoComplete="off" />
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => { setConfirmOpen(false); setConfirmText(""); }}>Cancel</Button>
+                <Button variant="destructive" disabled={busy || confirmText !== "DELETE"} onClick={() => void deleteAccount()}>
+                  {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  Yes, delete permanently
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function AccountPage() {
   const { data: profile, isLoading } = useGetMyProfile();
   const initialTab = typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("tab") ?? "status") : "status";
@@ -1660,6 +1829,7 @@ export default function AccountPage() {
           {(isProvider || isCustomer) && <TabsTrigger value="documents" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Documents</TabsTrigger>}
           {isCustomer && <TabsTrigger value="payment" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Payment Method</TabsTrigger>}
           {isCustomer && <TabsTrigger value="credit" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Credit Application</TabsTrigger>}
+          <TabsTrigger value="privacy" className="rounded-xl border-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10">Privacy &amp; Account</TabsTrigger>
         </TabsList>
         
         <TabsContent value="status" className="mt-0"><ComplianceTab /></TabsContent>
@@ -1671,6 +1841,7 @@ export default function AccountPage() {
         {(isProvider || isCustomer) && <TabsContent value="documents" className="mt-0"><AccountDocuments /></TabsContent>}
         {isCustomer && <TabsContent value="payment" className="mt-0"><PaymentMethodTab /></TabsContent>}
         {isCustomer && <TabsContent value="credit" className="mt-0"><CreditApplicationTab /></TabsContent>}
+        <TabsContent value="privacy" className="mt-0"><PrivacyAccountTab /></TabsContent>
       </Tabs>
     </div>
   );

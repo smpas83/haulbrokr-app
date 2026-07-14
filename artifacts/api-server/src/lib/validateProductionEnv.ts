@@ -64,7 +64,10 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   { service: "core", variable: "STAFF_AUTH_SECRET", required: true, description: "Staff session HMAC secret (≥32 chars; TICKET_QR_SECRET may substitute)." },
   { service: "core", variable: "ADMIN_USER_IDS", required: true, description: "Comma-separated Clerk user IDs with admin access." },
   { service: "core", variable: "GOOGLE_MAPS_API_KEY", required: true, description: "Google Maps API key for /api/map/config and geocoding." },
-  { service: "core", variable: "AUTOMATION_KEY", required: false, description: "Optional shared key for internal automation endpoints." },
+  { service: "core", variable: "AUTOMATION_KEY", required: false, description: "Optional shared key for internal automation / worker endpoints." },
+  { service: "core", variable: "CRON_SECRET", required: false, description: "Optional alias for AUTOMATION_KEY used by Render cron jobs." },
+  { service: "core", variable: "FMCSA_WEB_KEY", required: false, description: "Optional FMCSA QCMobile webKey. When unset, staff-manual verification remains the fallback (EXTERNAL BLOCKER for live auto-verify)." },
+  { service: "core", variable: "FMCSA_API_BASE_URL", required: false, description: "Optional override for FMCSA QCMobile base URL." },
 ];
 
 const PLACEHOLDER_PATTERNS = [

@@ -56,9 +56,10 @@ const sections = [
     icon: Shield,
     title: "Your rights & choices",
     body: [
-      "You can access and update most of your information from the Account page within the app.",
-      "You can request that we correct or delete your account information by emailing us.",
-      "Depending on where you live, you may have additional rights under applicable privacy laws — contact us to exercise them.",
+      "You can access and update most of your information from Account Settings within the app.",
+      "You can export your account data as a ZIP archive from Account → Privacy & Account → Export Account Data.",
+      "You can permanently delete your account from Account → Privacy & Account → Delete Account (organization owners must transfer ownership first).",
+      "You can also contact privacy@haulbrokr.com. Depending on where you live, you may have additional rights under applicable privacy laws.",
     ],
   },
 ];

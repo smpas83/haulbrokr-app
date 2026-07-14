@@ -27,6 +27,9 @@ import mapRouter from "./map";
 import trackingRouter from "./tracking";
 import copilotRouter from "./copilot";
 import notificationsRouter from "./notifications";
+import accountPrivacyRouter from "./account-privacy";
+import recurringRouter from "./recurring";
+import workersRouter from "./workers";
 
 const router: IRouter = Router();
 
@@ -39,6 +42,9 @@ router.use(jobsRouter);
 router.use(dashboardRouter);
 router.use(walletRouter);
 router.use(accountRouter);
+router.use(accountPrivacyRouter);
+router.use(recurringRouter);
+router.use(workersRouter);
 router.use(dumpSitesRouter);
 router.use(binOrdersRouter);
 router.use(projectsRouter);

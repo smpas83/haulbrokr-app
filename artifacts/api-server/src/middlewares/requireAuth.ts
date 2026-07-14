@@ -12,6 +12,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return;
   }
   req.clerkId = clerkId;
+  (req as Request & { auth?: unknown }).auth = auth;
   next();
 }
 
@@ -29,6 +30,7 @@ export async function requireProfile(req: Request, res: Response, next: NextFunc
   }
   req.clerkId = clerkId;
   req.profile = profile;
+  (req as Request & { auth?: unknown }).auth = auth;
   next();
 }
 

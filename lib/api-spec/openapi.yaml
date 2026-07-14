@@ -78,6 +78,85 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserProfile"
+    delete:
+      operationId: deleteMyAccount
+      tags: [profiles]
+      summary: Permanently delete the authenticated user's account and associated personal data
+      parameters:
+        - name: X-Confirm-Delete
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: [DELETE]
+      responses:
+        "200":
+          description: Account deleted
+        "409":
+          description: Ownership transfer required
+        "400":
+          description: Confirmation required
+
+  /account/deletion:
+    post:
+      operationId: confirmAccountDeletion
+      tags: [account]
+      summary: Confirm and execute account deletion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmation]
+              properties:
+                confirmation:
+                  type: string
+                  enum: [DELETE]
+                dryRun:
+                  type: boolean
+      responses:
+        "200":
+          description: Deletion completed or dry-run ok
+        "401":
+          description: Recent authentication required
+        "409":
+          description: Ownership transfer required
+
+  /account/export:
+    get:
+      operationId: listAccountExports
+      tags: [account]
+      summary: List data export requests for the authenticated user
+      responses:
+        "200":
+          description: Export list
+    post:
+      operationId: requestAccountExport
+      tags: [account]
+      summary: Request an asynchronous account data export (ZIP)
+      responses:
+        "202":
+          description: Export accepted
+        "201":
+          description: Export completed synchronously
+
+  /workers/recurring-hauls:
+    post:
+      operationId: runRecurringHaulWorker
+      tags: [admin]
+      summary: Materialize open haul requests from active recurring schedules
+      parameters:
+        - name: x-automation-key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Worker summary
+        "401":
+          description: Invalid automation key
 
   /profiles:
     post:

@@ -15,6 +15,7 @@ export const requestStatusEnum = pgEnum("request_status", [
   "in_progress",
   "completed",
   "cancelled",
+  "review_required",
 ]);
 
 export const requestsTable = pgTable("requests", {
@@ -32,6 +33,8 @@ export const requestsTable = pgTable("requests", {
   trucksNeeded: integer("trucks_needed").notNull().default(1),
   budgetPerHour: numeric("budget_per_hour", { precision: 10, scale: 2 }),
   projectId: integer("project_id").references(() => projectsTable.id),
+  /** Set when this request was generated from a recurring schedule. */
+  recurringScheduleId: integer("recurring_schedule_id"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

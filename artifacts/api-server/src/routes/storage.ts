@@ -14,10 +14,29 @@ import {
   issueStorageToken,
 } from "../lib/uploadToken";
 
+/** Evidence / compliance uploads only — reject executables and other risky types. */
+const ALLOWED_UPLOAD_CONTENT_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+  "image/gif",
+  "application/pdf",
+]);
+
 const RequestUploadUrlBody = z.object({
   name: z.string().min(1).max(255),
   size: z.number().int().positive().max(50 * 1024 * 1024),
-  contentType: z.string().min(1).max(255),
+  contentType: z
+    .string()
+    .min(1)
+    .max(255)
+    .refine(
+      (v) => ALLOWED_UPLOAD_CONTENT_TYPES.has(v.split(";")[0].trim().toLowerCase()),
+      { message: "Unsupported content type" },
+    ),
 });
 
 const FinalizeBody = z.object({
