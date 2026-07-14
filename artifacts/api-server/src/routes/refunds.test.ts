@@ -79,6 +79,7 @@ vi.mock("@workspace/db", () => {
     paymentRefundsTable,
     activityTable,
     profilesTable,
+    deviceTokensTable: makeTable("deviceTokens"),
   };
 });
 

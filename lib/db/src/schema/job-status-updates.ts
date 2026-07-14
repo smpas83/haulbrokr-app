@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, pgEnum, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { jobsTable } from "./jobs";
@@ -18,7 +18,10 @@ export const jobStatusUpdatesTable = pgTable("job_status_updates", {
   status: jobStatusUpdateTypeEnum("status").notNull(),
   note: text("note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  index("job_status_updates_job_id_idx").on(table.jobId),
+  index("job_status_updates_created_at_idx").on(table.createdAt),
+]);
 
 export const insertJobStatusUpdateSchema = createInsertSchema(jobStatusUpdatesTable).omit({ id: true, createdAt: true });
 export type InsertJobStatusUpdate = z.infer<typeof insertJobStatusUpdateSchema>;
