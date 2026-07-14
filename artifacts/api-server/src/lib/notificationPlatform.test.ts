@@ -2,7 +2,12 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
   prefs: null as any,
-  profile: { id: 1, email: "a@b.com", phone: "+15551212", companyName: "Acme" } as any,
+  profile: {
+    id: 1,
+    email: "a@b.com",
+    phone: "+15551212",
+    companyName: "Acme",
+  } as any,
   inserts: [] as any[],
   pushCalls: [] as any[],
   smsCalls: [] as any[],
@@ -30,7 +35,10 @@ vi.mock("@workspace/db", () => {
     insert: () => ({
       values: (vals: any) => {
         h.inserts.push(vals);
-        if ((vals as any).profileId != null && (vals as any).pushEnabled != null) {
+        if (
+          (vals as any).profileId != null &&
+          (vals as any).pushEnabled != null
+        ) {
           h.prefs = { id: 1, ...vals };
           return { returning: async () => [h.prefs] };
         }
@@ -101,17 +109,27 @@ describe("notificationPlatform", () => {
   });
 
   it("upserts preferences", async () => {
-    const created = await upsertNotificationPreferences(1, { smsEnabled: true, reminders: false });
+    const created = await upsertNotificationPreferences(1, {
+      smsEnabled: true,
+      reminders: false,
+    });
     expect(created.smsEnabled).toBe(true);
     expect(created.reminders).toBe(false);
 
-    const updated = await upsertNotificationPreferences(1, { emailEnabled: false });
+    const updated = await upsertNotificationPreferences(1, {
+      emailEnabled: false,
+    });
     expect(updated.emailEnabled).toBe(false);
   });
 
   it("gates topics by preference flags", () => {
     expect(topicAllowed(DEFAULT_NOTIFICATION_PREFS, "job")).toBe(true);
-    expect(topicAllowed({ ...DEFAULT_NOTIFICATION_PREFS, marketing: false }, "marketing")).toBe(false);
+    expect(
+      topicAllowed(
+        { ...DEFAULT_NOTIFICATION_PREFS, marketing: false },
+        "marketing",
+      ),
+    ).toBe(false);
   });
 
   it("records activity and fans out to enabled channels", async () => {
@@ -136,7 +154,9 @@ describe("notificationPlatform", () => {
     expect(h.inserts.some((i) => i.type === "job_reminder")).toBe(true);
     expect(h.pushCalls).toHaveLength(1);
     expect(h.emailCalls).toHaveLength(1);
-    expect(h.smsCalls).toEqual([{ to: "+19998887777", body: expect.stringContaining("Reminder") }]);
+    expect(h.smsCalls).toEqual([
+      { to: "+19998887777", body: expect.stringContaining("Reminder") },
+    ]);
   });
 
   it("skips channels when topic is disabled", async () => {

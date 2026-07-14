@@ -32,9 +32,7 @@ vi.mock("@workspace/db", () => {
             return Promise.resolve(h.org ? [h.org] : []);
           }
           if (table === profilesTable) {
-            // members list vs single profile — heuristic on fields requested is hard;
-            // return profile for loadProfile and members array when listing.
-            if (h.members.length && !h._loadingProfile) {
+            if (h.members.length) {
               return Promise.resolve(h.members);
             }
             return Promise.resolve(h.profile ? [h.profile] : []);
@@ -49,7 +47,12 @@ vi.mock("@workspace/db", () => {
         return {
           where: () => ({
             returning: () => {
-              if (h.org && ("name" in vals || "billingEmail" in vals || "inviteCode" in vals)) {
+              if (
+                h.org &&
+                ("name" in vals ||
+                  "billingEmail" in vals ||
+                  "inviteCode" in vals)
+              ) {
                 Object.assign(h.org, vals);
                 return Promise.resolve([h.org]);
               }
@@ -85,7 +88,13 @@ beforeEach(() => {
   h.snapshotProfileId = null;
   h.updates = [];
   h.members = [];
-  h.org = { id: ORG_ID, type: "provider", ownerProfileId: OWNER_PROFILE_ID, name: "Acme Hauling", inviteCode: "ABC123" };
+  h.org = {
+    id: ORG_ID,
+    type: "provider",
+    ownerProfileId: OWNER_PROFILE_ID,
+    name: "Acme Hauling",
+    inviteCode: "ABC123",
+  };
   h.snapshot = {
     w9Status: "verified",
     insuranceStatus: "pending",
@@ -108,7 +117,9 @@ beforeEach(() => {
 
 describe("GET /organizations/compliance-status", () => {
   it("returns carrier compliance snapshot for the provider owner", async () => {
-    const res = await request(makeApp()).get("/organizations/compliance-status");
+    const res = await request(makeApp()).get(
+      "/organizations/compliance-status",
+    );
     expect(res.status).toBe(200);
     expect(h.snapshotProfileId).toBe(OWNER_PROFILE_ID);
     expect(res.body).toMatchObject({
@@ -135,16 +146,46 @@ describe("PATCH /organizations/me", () => {
       .send({ name: "Acme Logistics", billingEmail: "ap@acme.com" });
     expect(res.status).toBe(200);
     expect(res.body.name).toBe("Acme Logistics");
-    expect(h.updates[0]).toMatchObject({ name: "Acme Logistics", billingEmail: "ap@acme.com" });
+    expect(h.updates[0]).toMatchObject({
+      name: "Acme Logistics",
+      billingEmail: "ap@acme.com",
+    });
   });
 });
 
 describe("GET /organizations/roster", () => {
   it("groups drivers, dispatchers, and fleet managers", async () => {
     h.members = [
-      { id: 1, role: "driver", orgRole: "member", contactName: "D1", companyName: "Acme", phone: null, email: null, createdAt: new Date() },
-      { id: 2, role: "provider", orgRole: "dispatcher", contactName: "Disp", companyName: "Acme", phone: null, email: null, createdAt: new Date() },
-      { id: 3, role: "provider", orgRole: "fleet_manager", contactName: "FM", companyName: "Acme", phone: null, email: null, createdAt: new Date() },
+      {
+        id: 1,
+        role: "driver",
+        orgRole: "member",
+        contactName: "D1",
+        companyName: "Acme",
+        phone: null,
+        email: null,
+        createdAt: new Date(),
+      },
+      {
+        id: 2,
+        role: "provider",
+        orgRole: "dispatcher",
+        contactName: "Disp",
+        companyName: "Acme",
+        phone: null,
+        email: null,
+        createdAt: new Date(),
+      },
+      {
+        id: 3,
+        role: "provider",
+        orgRole: "fleet_manager",
+        contactName: "FM",
+        companyName: "Acme",
+        phone: null,
+        email: null,
+        createdAt: new Date(),
+      },
     ];
     // First select is loadProfile — need profile; subsequent is members.
     // Our mock returns members when h.members.length — so loadProfile would get members array incorrectly.

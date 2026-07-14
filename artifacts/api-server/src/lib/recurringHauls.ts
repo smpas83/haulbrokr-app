@@ -29,7 +29,9 @@ export function isoWeekday(date: Date): number {
   return day === 0 ? 7 : day;
 }
 
-export function parseDaysOfWeek(raw: string | null | undefined): number[] | null {
+export function parseDaysOfWeek(
+  raw: string | null | undefined,
+): number[] | null {
   if (!raw) return null;
   const days = raw
     .split(",")
@@ -43,7 +45,10 @@ export function parseDaysOfWeek(raw: string | null | undefined): number[] | null
  * that was just executed — callers should pass the occurrence that just ran).
  */
 export function computeNextRunAt(
-  series: Pick<RecurringHaul, "frequency" | "daysOfWeek" | "dayOfMonth" | "startDate" | "endDate">,
+  series: Pick<
+    RecurringHaul,
+    "frequency" | "daysOfWeek" | "dayOfMonth" | "startDate" | "endDate"
+  >,
   after: Date,
 ): Date | null {
   const end = series.endDate ? new Date(series.endDate) : null;
@@ -56,7 +61,9 @@ export function computeNextRunAt(
         candidate = addDays(cursor, 1);
         break;
       case "weekly": {
-        const days = parseDaysOfWeek(series.daysOfWeek) ?? [isoWeekday(new Date(series.startDate))];
+        const days = parseDaysOfWeek(series.daysOfWeek) ?? [
+          isoWeekday(new Date(series.startDate)),
+        ];
         candidate = addDays(cursor, 1);
         while (!days.includes(isoWeekday(candidate))) {
           candidate = addDays(candidate, 1);
@@ -64,13 +71,17 @@ export function computeNextRunAt(
         break;
       }
       case "biweekly": {
-        const days = parseDaysOfWeek(series.daysOfWeek) ?? [isoWeekday(new Date(series.startDate))];
+        const days = parseDaysOfWeek(series.daysOfWeek) ?? [
+          isoWeekday(new Date(series.startDate)),
+        ];
         // Advance one day, then if we've crossed into a new fortnight from start, skip a week
         candidate = addDays(cursor, 1);
         while (true) {
           if (days.includes(isoWeekday(candidate))) {
             const start = new Date(series.startDate);
-            const diffDays = Math.floor((candidate.getTime() - start.getTime()) / 86_400_000);
+            const diffDays = Math.floor(
+              (candidate.getTime() - start.getTime()) / 86_400_000,
+            );
             const fortnight = Math.floor(diffDays / 14);
             const dayInFortnight = diffDays - fortnight * 14;
             if (dayInFortnight < 7) break;
@@ -81,7 +92,8 @@ export function computeNextRunAt(
         break;
       }
       case "monthly": {
-        const dom = series.dayOfMonth ?? new Date(series.startDate).getUTCDate();
+        const dom =
+          series.dayOfMonth ?? new Date(series.startDate).getUTCDate();
         candidate = addMonths(cursor, 1);
         candidate.setUTCDate(Math.min(dom, 28));
         break;
@@ -110,7 +122,8 @@ export function serializeRecurringHaul(row: RecurringHaul) {
     startTime: row.startTime,
     estimatedHours: parseFloat(row.estimatedHours),
     trucksNeeded: row.trucksNeeded,
-    budgetPerHour: row.budgetPerHour != null ? parseFloat(row.budgetPerHour) : null,
+    budgetPerHour:
+      row.budgetPerHour != null ? parseFloat(row.budgetPerHour) : null,
     notes: row.notes,
     frequency: row.frequency,
     daysOfWeek: parseDaysOfWeek(row.daysOfWeek),
@@ -127,7 +140,10 @@ export function serializeRecurringHaul(row: RecurringHaul) {
   };
 }
 
-async function createOccurrenceRequest(series: RecurringHaul, scheduledDate: Date): Promise<number> {
+async function createOccurrenceRequest(
+  series: RecurringHaul,
+  scheduledDate: Date,
+): Promise<number> {
   const [request] = await db
     .insert(requestsTable)
     .values({
@@ -165,12 +181,20 @@ export async function processDueRecurringHauls(
   const due = await db
     .select()
     .from(recurringHaulsTable)
-    .where(and(eq(recurringHaulsTable.status, "active"), lte(recurringHaulsTable.nextRunAt, now)));
+    .where(
+      and(
+        eq(recurringHaulsTable.status, "active"),
+        lte(recurringHaulsTable.nextRunAt, now),
+      ),
+    );
 
   let created = 0;
   for (const series of due) {
     try {
-      if (series.maxOccurrences != null && series.occurrenceCount >= series.maxOccurrences) {
+      if (
+        series.maxOccurrences != null &&
+        series.occurrenceCount >= series.maxOccurrences
+      ) {
         await db
           .update(recurringHaulsTable)
           .set({ status: "completed" })
@@ -184,7 +208,8 @@ export async function processDueRecurringHauls(
 
       const next = computeNextRunAt(series, scheduledDate);
       const hitMax =
-        series.maxOccurrences != null && series.occurrenceCount + 1 >= series.maxOccurrences;
+        series.maxOccurrences != null &&
+        series.occurrenceCount + 1 >= series.maxOccurrences;
 
       await db
         .update(recurringHaulsTable)
@@ -205,16 +230,23 @@ export async function processDueRecurringHauls(
       });
 
       if (series.organizationId) {
-        await notifyOrgRoles(series.organizationId, ["dispatcher", "fleet_manager"], {
-          type: "recurring_created",
-          topic: "job",
-          title: "Recurring haul posted",
-          description: `Recurring haul #${series.id} created request #${requestId}.`,
-          relatedId: requestId,
-        });
+        await notifyOrgRoles(
+          series.organizationId,
+          ["dispatcher", "fleet_manager"],
+          {
+            type: "recurring_created",
+            topic: "job",
+            title: "Recurring haul posted",
+            description: `Recurring haul #${series.id} created request #${requestId}.`,
+            relatedId: requestId,
+          },
+        );
       }
     } catch (err) {
-      logger.error({ err, seriesId: series.id }, "Failed to process recurring haul");
+      logger.error(
+        { err, seriesId: series.id },
+        "Failed to process recurring haul",
+      );
     }
   }
 
@@ -278,7 +310,10 @@ export async function processRecurringReminders(
         .where(eq(recurringHaulOccurrencesTable.id, occurrence.id));
       reminded += 1;
     } catch (err) {
-      logger.error({ err, occurrenceId: occurrence.id }, "Recurring reminder failed");
+      logger.error(
+        { err, occurrenceId: occurrence.id },
+        "Recurring reminder failed",
+      );
     }
   }
 

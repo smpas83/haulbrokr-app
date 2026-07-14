@@ -46,7 +46,12 @@ const ROLE_PERMISSIONS: Record<string, OrgPermission[]> = {
   member: [],
 };
 
-export const ASSIGNABLE_ORG_ROLES = ["admin", "member", "fleet_manager", "dispatcher"] as const;
+export const ASSIGNABLE_ORG_ROLES = [
+  "admin",
+  "member",
+  "fleet_manager",
+  "dispatcher",
+] as const;
 export type AssignableOrgRole = (typeof ASSIGNABLE_ORG_ROLES)[number];
 
 export function orgPermissionsFor(profile: Profile): OrgPermission[] {
@@ -60,7 +65,10 @@ export function orgPermissionsFor(profile: Profile): OrgPermission[] {
   return [];
 }
 
-export function hasOrgPermission(profile: Profile, permission: OrgPermission): boolean {
+export function hasOrgPermission(
+  profile: Profile,
+  permission: OrgPermission,
+): boolean {
   return orgPermissionsFor(profile).includes(permission);
 }
 
@@ -93,8 +101,12 @@ export function classifyMemberAudience(profile: Profile): {
   isSupervisor: boolean;
 } {
   return {
-    isFleetManager: profile.orgRole === "fleet_manager" || profile.orgRole === "owner" || (profile.orgRole === "admin" && profile.role === "provider"),
-    isDispatcher: profile.orgRole === "dispatcher" || profile.orgRole === "admin",
+    isFleetManager:
+      profile.orgRole === "fleet_manager" ||
+      profile.orgRole === "owner" ||
+      (profile.orgRole === "admin" && profile.role === "provider"),
+    isDispatcher:
+      profile.orgRole === "dispatcher" || profile.orgRole === "admin",
     isDriver: profile.role === "driver",
     isCustomer: profile.role === "customer",
     isSupervisor: profile.role === "supervisor",

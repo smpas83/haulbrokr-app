@@ -1,14 +1,27 @@
-import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  integer,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
 import { verificationStatusEnum } from "./w9";
 
-export const accountTypeEnum = pgEnum("bank_account_type", ["checking", "savings"]);
+export const accountTypeEnum = pgEnum("bank_account_type", [
+  "checking",
+  "savings",
+]);
 
 export const payoutAccountsTable = pgTable("payout_accounts", {
   id: serial("id").primaryKey(),
-  profileId: integer("profile_id").notNull().unique().references(() => profilesTable.id, { onDelete: "cascade" }),
+  profileId: integer("profile_id")
+    .notNull()
+    .unique()
+    .references(() => profilesTable.id, { onDelete: "cascade" }),
   bankName: text("bank_name").notNull().default(""),
   accountHolderName: text("account_holder_name").notNull().default(""),
   accountType: accountTypeEnum("account_type").notNull().default("checking"),
@@ -26,10 +39,17 @@ export const payoutAccountsTable = pgTable("payout_accounts", {
   lastPayoutAt: timestamp("last_payout_at", { withTimezone: true }),
   lastPayoutFailureCode: text("last_payout_failure_code"),
   lastPayoutFailureMessage: text("last_payout_failure_message"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
-export const insertPayoutAccountSchema = createInsertSchema(payoutAccountsTable).omit({ id: true, createdAt: true, updatedAt: true, status: true });
+export const insertPayoutAccountSchema = createInsertSchema(
+  payoutAccountsTable,
+).omit({ id: true, createdAt: true, updatedAt: true, status: true });
 export type InsertPayoutAccount = z.infer<typeof insertPayoutAccountSchema>;
 export type PayoutAccount = typeof payoutAccountsTable.$inferSelect;

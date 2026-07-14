@@ -52,7 +52,12 @@ export const DEFAULT_NOTIFICATION_PREFS: Omit<
 export function topicAllowed(
   prefs: Pick<
     NotificationPreferences,
-    "jobUpdates" | "paymentUpdates" | "bidUpdates" | "complianceUpdates" | "reminders" | "marketing"
+    | "jobUpdates"
+    | "paymentUpdates"
+    | "bidUpdates"
+    | "complianceUpdates"
+    | "reminders"
+    | "marketing"
   >,
   topic: NotificationTopic,
 ): boolean {
@@ -76,7 +81,10 @@ export function topicAllowed(
 
 export async function getNotificationPreferences(
   profileId: number,
-): Promise<NotificationPreferences | typeof DEFAULT_NOTIFICATION_PREFS & { profileId: number; smsPhone: null }> {
+): Promise<
+  | NotificationPreferences
+  | (typeof DEFAULT_NOTIFICATION_PREFS & { profileId: number; smsPhone: null })
+> {
   const [row] = await db
     .select()
     .from(notificationPreferencesTable)
@@ -126,13 +134,26 @@ export async function upsertNotificationPreferences(
 }
 
 function topicFromActivityType(type: string): NotificationTopic {
-  if (type.startsWith("payment") || type.startsWith("invoice") || type.startsWith("payout") || type.includes("refund")) {
+  if (
+    type.startsWith("payment") ||
+    type.startsWith("invoice") ||
+    type.startsWith("payout") ||
+    type.includes("refund")
+  ) {
     return "payment";
   }
   if (type.startsWith("bid")) return "bid";
   if (type.includes("reminder") || type === "job_reminder") return "reminder";
-  if (type.includes("application") || type.includes("compliance")) return "compliance";
-  if (type.startsWith("job") || type.startsWith("request") || type.startsWith("bin") || type.startsWith("delivery") || type.startsWith("driver") || type === "recurring_created") {
+  if (type.includes("application") || type.includes("compliance"))
+    return "compliance";
+  if (
+    type.startsWith("job") ||
+    type.startsWith("request") ||
+    type.startsWith("bin") ||
+    type.startsWith("delivery") ||
+    type.startsWith("driver") ||
+    type === "recurring_created"
+  ) {
     return "job";
   }
   return "general";
@@ -187,14 +208,20 @@ export async function notifyUser(input: NotifyInput): Promise<void> {
       relatedBinOrderId: input.relatedBinOrderId ?? undefined,
     });
   } catch (err) {
-    logger.error({ err, type: input.type, profileId: input.profileId }, "Failed to record activity");
+    logger.error(
+      { err, type: input.type, profileId: input.profileId },
+      "Failed to record activity",
+    );
     return;
   }
 
   const prefs = await getNotificationPreferences(input.profileId);
   if (!topicAllowed(prefs, topic)) return;
 
-  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, input.profileId));
+  const [profile] = await db
+    .select()
+    .from(profilesTable)
+    .where(eq(profilesTable.id, input.profileId));
   if (!profile) return;
 
   const pushOn = input.forceChannels?.push ?? prefs.pushEnabled;
@@ -222,18 +249,35 @@ export async function notifyUser(input: NotifyInput): Promise<void> {
   }
 }
 
-/** Back-compat wrapper used by existing call sites. */
+/** Back-compat helper — activity + push only (no email/SMS prefs). Prefer notifyUser. */
 export async function recordActivity(activity: InsertActivity): Promise<void> {
-  await notifyUser({
-    profileId: activity.profileId,
-    type: activity.type,
-    description: activity.description,
-    relatedId: activity.relatedId ?? null,
-    relatedBinOrderId: activity.relatedBinOrderId ?? null,
-  });
+  try {
+    await db.insert(activityTable).values(activity);
+    await sendExpoPushToProfile(
+      activity.profileId,
+      activityPushTitle(activity.type),
+      activity.description,
+      {
+        type: activity.type,
+        relatedId: activity.relatedId ?? null,
+        relatedBinOrderId: activity.relatedBinOrderId ?? null,
+      },
+    );
+  } catch (err) {
+    logger.error(
+      { err, type: activity.type, profileId: activity.profileId },
+      "Failed to record activity",
+    );
+  }
 }
 
-export type AudienceRole = "driver" | "customer" | "dispatcher" | "fleet_manager" | "provider" | "supervisor";
+export type AudienceRole =
+  | "driver"
+  | "customer"
+  | "dispatcher"
+  | "fleet_manager"
+  | "provider"
+  | "supervisor";
 
 /**
  * Notify every org member matching the given audience roles.
@@ -258,8 +302,12 @@ export async function notifyOrgRoles(
       (roles.includes("supervisor") && member.role === "supervisor") ||
       (roles.includes("dispatcher") && orgRole === "dispatcher") ||
       (roles.includes("fleet_manager") && orgRole === "fleet_manager") ||
-      (roles.includes("dispatcher") && orgRole === "admin" && member.role === "provider") ||
-      (roles.includes("fleet_manager") && (orgRole === "owner" || orgRole === "admin") && member.role === "provider");
+      (roles.includes("dispatcher") &&
+        orgRole === "admin" &&
+        member.role === "provider") ||
+      (roles.includes("fleet_manager") &&
+        (orgRole === "owner" || orgRole === "admin") &&
+        member.role === "provider");
 
     if (!matches) continue;
     await notifyUser({ ...payload, profileId: member.id });

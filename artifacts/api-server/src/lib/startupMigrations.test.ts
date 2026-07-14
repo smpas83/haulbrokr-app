@@ -30,11 +30,31 @@ describe("runStartupMigrations", () => {
     expect(h.connect).toHaveBeenCalledOnce();
     expect(h.query).toHaveBeenCalledWith("BEGIN");
     expect(h.query).toHaveBeenCalledWith("COMMIT");
-    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("payment_refunds"))).toBe(true);
-    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("refunded_amount"))).toBe(true);
-    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("stripe_webhook_events"))).toBe(true);
-    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("notification_preferences"))).toBe(true);
-    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("recurring_hauls"))).toBe(true);
+    expect(
+      h.query.mock.calls.some(([sql]) =>
+        String(sql).includes("payment_refunds"),
+      ),
+    ).toBe(true);
+    expect(
+      h.query.mock.calls.some(([sql]) =>
+        String(sql).includes("refunded_amount"),
+      ),
+    ).toBe(true);
+    expect(
+      h.query.mock.calls.some(([sql]) =>
+        String(sql).includes("stripe_webhook_events"),
+      ),
+    ).toBe(true);
+    expect(
+      h.query.mock.calls.some(([sql]) =>
+        String(sql).includes("notification_preferences"),
+      ),
+    ).toBe(true);
+    expect(
+      h.query.mock.calls.some(([sql]) =>
+        String(sql).includes("recurring_hauls"),
+      ),
+    ).toBe(true);
   });
 
   it("rolls back on failure", async () => {

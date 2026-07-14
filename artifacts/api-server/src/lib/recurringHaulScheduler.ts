@@ -1,5 +1,8 @@
 import { logger } from "./logger";
-import { processDueRecurringHauls, processRecurringReminders } from "./recurringHauls";
+import {
+  processDueRecurringHauls,
+  processRecurringReminders,
+} from "./recurringHauls";
 
 const DEFAULT_INTERVAL_MS = 60 * 1000;
 

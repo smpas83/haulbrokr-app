@@ -10,12 +10,18 @@ export const stripeWebhookEventsTable = pgTable("stripe_webhook_events", {
   handled: boolean("handled").notNull().default(false),
   action: text("action"),
   reason: text("reason"),
-  processedAt: timestamp("processed_at", { withTimezone: true }).notNull().defaultNow(),
+  processedAt: timestamp("processed_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
-export const insertStripeWebhookEventSchema = createInsertSchema(stripeWebhookEventsTable).omit({
+export const insertStripeWebhookEventSchema = createInsertSchema(
+  stripeWebhookEventsTable,
+).omit({
   id: true,
   processedAt: true,
 });
-export type InsertStripeWebhookEvent = z.infer<typeof insertStripeWebhookEventSchema>;
+export type InsertStripeWebhookEvent = z.infer<
+  typeof insertStripeWebhookEventSchema
+>;
 export type StripeWebhookEvent = typeof stripeWebhookEventsTable.$inferSelect;

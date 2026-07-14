@@ -16,7 +16,11 @@ export type WebhookHandleResult =
   | { handled: true; action: string }
   | { handled: false; reason: string };
 
-async function notifyPaymentFailed(job: { id: number; customerId: number; materialType: string }): Promise<void> {
+async function notifyPaymentFailed(job: {
+  id: number;
+  customerId: number;
+  materialType: string;
+}): Promise<void> {
   await notifyUser({
     profileId: job.customerId,
     type: "payment_failed",
@@ -52,15 +56,21 @@ function transferIdFromPaymentIntent(pi: Stripe.PaymentIntent): string | null {
   if (!charge || typeof charge === "string") return null;
   const transfer = charge.transfer;
   if (typeof transfer === "string") return transfer;
-  if (transfer && typeof transfer === "object" && "id" in transfer) return transfer.id;
+  if (transfer && typeof transfer === "object" && "id" in transfer)
+    return transfer.id;
   return null;
 }
 
-async function loadJobByMetadataJobId(jobIdRaw: string | undefined): Promise<(typeof jobsTable.$inferSelect) | null> {
+async function loadJobByMetadataJobId(
+  jobIdRaw: string | undefined,
+): Promise<typeof jobsTable.$inferSelect | null> {
   if (!jobIdRaw) return null;
   const jobId = parseInt(jobIdRaw, 10);
   if (!Number.isFinite(jobId)) return null;
-  const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, jobId));
+  const [job] = await db
+    .select()
+    .from(jobsTable)
+    .where(eq(jobsTable.id, jobId));
   return job ?? null;
 }
 
@@ -126,7 +136,11 @@ async function finalizeChargeTransferFromPaymentIntent(
   }
 
   await settleConfirmedPayout(
-    { id: job.id, providerNetAmount: job.providerNetAmount, paymentAttempts: job.paymentAttempts },
+    {
+      id: job.id,
+      providerNetAmount: job.providerNetAmount,
+      paymentAttempts: job.paymentAttempts,
+    },
     readiness.stripeAccountId,
     pi,
   );
@@ -190,7 +204,7 @@ export async function handleCheckoutSessionCompleted(
   const paymentIntentId =
     typeof session.payment_intent === "string"
       ? session.payment_intent
-      : session.payment_intent?.id ?? null;
+      : (session.payment_intent?.id ?? null);
 
   let transferId: string | null = null;
   if (paymentIntentId) {
@@ -202,7 +216,9 @@ export async function handleCheckoutSessionCompleted(
   return { handled: true, action: "checkout_session_finalized" };
 }
 
-export async function handleAccountUpdated(account: Stripe.Account): Promise<WebhookHandleResult> {
+export async function handleAccountUpdated(
+  account: Stripe.Account,
+): Promise<WebhookHandleResult> {
   const profileIdRaw = account.metadata?.profileId;
   if (profileIdRaw) {
     const profileId = parseInt(profileIdRaw, 10);
@@ -222,13 +238,17 @@ export async function handleAccountUpdated(account: Stripe.Account): Promise<Web
   return { handled: true, action: "payout_status_synced" };
 }
 
-export async function handleRefundEvent(refund: Stripe.Refund): Promise<WebhookHandleResult> {
+export async function handleRefundEvent(
+  refund: Stripe.Refund,
+): Promise<WebhookHandleResult> {
   const record = await upsertRefundFromStripe(refund);
   if (!record) return { handled: false, reason: "refund_job_not_found" };
   return { handled: true, action: `refund_${record.status}` };
 }
 
-export async function handleChargeRefundedEvent(charge: Stripe.Charge): Promise<WebhookHandleResult> {
+export async function handleChargeRefundedEvent(
+  charge: Stripe.Charge,
+): Promise<WebhookHandleResult> {
   const { jobId } = await handleChargeRefunded(charge);
   if (!jobId) return { handled: false, reason: "charge_job_not_found" };
   return { handled: true, action: "charge_refunded_synced" };
@@ -238,12 +258,19 @@ export async function handleChargeRefundedEvent(charge: Stripe.Charge): Promise<
  * Mark a net-terms / Stripe Invoice job paid when Stripe fires invoice.paid.
  * Expects metadata.jobId on the invoice (or its parent subscription metadata).
  */
-export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<WebhookHandleResult> {
+export async function handleInvoicePaid(
+  invoice: Stripe.Invoice,
+): Promise<WebhookHandleResult> {
   const jobIdRaw =
     invoice.metadata?.jobId ??
-    (typeof invoice.parent === "object" && invoice.parent && "subscription_details" in invoice.parent
-      ? (invoice.parent as { subscription_details?: { metadata?: { jobId?: string } } }).subscription_details
-          ?.metadata?.jobId
+    (typeof invoice.parent === "object" &&
+    invoice.parent &&
+    "subscription_details" in invoice.parent
+      ? (
+          invoice.parent as {
+            subscription_details?: { metadata?: { jobId?: string } };
+          }
+        ).subscription_details?.metadata?.jobId
       : undefined);
 
   const job = await loadJobByMetadataJobId(jobIdRaw);
@@ -256,11 +283,14 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<Webhoo
     return { handled: true, action: "invoice_already_paid" };
   }
 
+  const paymentIntentRaw = (
+    invoice as unknown as { payment_intent?: string | { id: string } | null }
+  ).payment_intent;
   const paymentIntentId =
-    typeof (invoice as { payment_intent?: string | { id: string } | null }).payment_intent === "string"
-      ? ((invoice as { payment_intent: string }).payment_intent)
-      : typeof (invoice as { payment_intent?: { id: string } | null }).payment_intent === "object"
-        ? (invoice as { payment_intent: { id: string } | null }).payment_intent?.id ?? null
+    typeof paymentIntentRaw === "string"
+      ? paymentIntentRaw
+      : paymentIntentRaw && typeof paymentIntentRaw === "object"
+        ? paymentIntentRaw.id
         : null;
 
   const now = new Date();
@@ -296,7 +326,7 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<Webhoo
 
 async function loadPayoutAccountByStripeAccount(
   stripeAccountId: string | null | undefined,
-): Promise<(typeof payoutAccountsTable.$inferSelect) | null> {
+): Promise<typeof payoutAccountsTable.$inferSelect | null> {
   if (!stripeAccountId) return null;
   const [row] = await db
     .select()
@@ -328,7 +358,10 @@ export async function handlePayoutEvent(
   if (!account) return { handled: false, reason: "payout_account_not_found" };
 
   const status = payout.status;
-  const failed = eventType === "payout.failed" || status === "failed" || status === "canceled";
+  const failed =
+    eventType === "payout.failed" ||
+    status === "failed" ||
+    status === "canceled";
   await db
     .update(payoutAccountsTable)
     .set({
@@ -336,8 +369,10 @@ export async function handlePayoutEvent(
       lastPayoutStatus: status,
       lastPayoutAmount: payoutAmountDollars(payout),
       lastPayoutAt: new Date((payout.arrival_date || payout.created) * 1000),
-      lastPayoutFailureCode: failed ? payout.failure_code ?? status : null,
-      lastPayoutFailureMessage: failed ? payout.failure_message ?? `Payout ${status}` : null,
+      lastPayoutFailureCode: failed ? (payout.failure_code ?? status) : null,
+      lastPayoutFailureMessage: failed
+        ? (payout.failure_message ?? `Payout ${status}`)
+        : null,
     })
     .where(eq(payoutAccountsTable.id, account.id));
 
@@ -382,7 +417,8 @@ export async function handleTransferEvent(
       .select()
       .from(jobsTable)
       .where(eq(jobsTable.stripeTransferId, transfer.id));
-    if (!byTransfer) return { handled: false, reason: "transfer_job_not_found" };
+    if (!byTransfer)
+      return { handled: false, reason: "transfer_job_not_found" };
 
     if (eventType === "transfer.failed" || eventType === "transfer.reversed") {
       await notifyUser({
@@ -423,7 +459,9 @@ export async function handleTransferEvent(
   return { handled: true, action: "transfer_noted" };
 }
 
-async function claimWebhookEvent(event: Stripe.Event): Promise<"new" | "duplicate"> {
+async function claimWebhookEvent(
+  event: Stripe.Event,
+): Promise<"new" | "duplicate"> {
   const [existing] = await db
     .select()
     .from(stripeWebhookEventsTable)
@@ -439,7 +477,11 @@ async function claimWebhookEvent(event: Stripe.Event): Promise<"new" | "duplicat
     return "new";
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (message.includes("unique") || message.includes("duplicate") || message.includes("stripe_event_id")) {
+    if (
+      message.includes("unique") ||
+      message.includes("duplicate") ||
+      message.includes("stripe_event_id")
+    ) {
       return "duplicate";
     }
     throw err;
@@ -472,16 +514,21 @@ export async function handleStripeEvent(
   try {
     switch (event.type) {
       case "payment_intent.succeeded":
-        result = await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+        result = await handlePaymentIntentSucceeded(
+          event.data.object as Stripe.PaymentIntent,
+        );
         break;
       case "payment_intent.payment_failed":
-        result = await handlePaymentIntentPaymentFailed(event.data.object as Stripe.PaymentIntent);
+        result = await handlePaymentIntentPaymentFailed(
+          event.data.object as Stripe.PaymentIntent,
+        );
         break;
       case "checkout.session.completed":
         result = await handleCheckoutSessionCompleted(
           event.data.object as Stripe.Checkout.Session,
           async (id) => {
-            const { getUncachableStripeClient } = await import("./stripeClient");
+            const { getUncachableStripeClient } =
+              await import("./stripeClient");
             const stripe = await getUncachableStripeClient();
             return stripe.paymentIntents.retrieve(id, {
               expand: ["latest_charge"],
@@ -493,10 +540,14 @@ export async function handleStripeEvent(
         result = await handleInvoicePaid(event.data.object as Stripe.Invoice);
         break;
       case "account.updated":
-        result = await handleAccountUpdated(event.data.object as Stripe.Account);
+        result = await handleAccountUpdated(
+          event.data.object as Stripe.Account,
+        );
         break;
       case "charge.refunded":
-        result = await handleChargeRefundedEvent(event.data.object as Stripe.Charge);
+        result = await handleChargeRefundedEvent(
+          event.data.object as Stripe.Charge,
+        );
         break;
       case "refund.created":
       case "refund.updated":
@@ -514,17 +565,33 @@ export async function handleStripeEvent(
         break;
       case "transfer.created":
       case "transfer.updated":
-      case "transfer.paid":
-      case "transfer.failed":
       case "transfer.reversed":
-        result = await handleTransferEvent(event.data.object as Stripe.Transfer, event.type);
+        result = await handleTransferEvent(
+          event.data.object as Stripe.Transfer,
+          event.type,
+        );
         break;
-      default:
-        result = { handled: false, reason: "ignored_event_type" };
+      default: {
+        // Stripe API versions vary on transfer.paid / transfer.failed naming.
+        if (String(event.type).startsWith("transfer.")) {
+          result = await handleTransferEvent(
+            event.data.object as unknown as Stripe.Transfer,
+            event.type,
+          );
+        } else {
+          result = { handled: false, reason: "ignored_event_type" };
+        }
+      }
     }
   } catch (err) {
-    logger.error({ err, eventId: event.id, eventType: event.type }, "Stripe event handler threw");
-    await finalizeWebhookEvent(event.id, { handled: false, reason: "handler_error" });
+    logger.error(
+      { err, eventId: event.id, eventType: event.type },
+      "Stripe event handler threw",
+    );
+    await finalizeWebhookEvent(event.id, {
+      handled: false,
+      reason: "handler_error",
+    });
     throw err;
   }
 

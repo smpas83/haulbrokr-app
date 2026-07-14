@@ -27,7 +27,11 @@ describe("fmcsaClient", () => {
 
   it("returns fmcsa_not_configured when looking up without a key", async () => {
     const result = await lookupCarrierByDot("123456");
-    expect(result).toMatchObject({ ok: false, code: "fmcsa_not_configured", retryable: false });
+    expect(result).toMatchObject({
+      ok: false,
+      code: "fmcsa_not_configured",
+      retryable: false,
+    });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -96,11 +100,24 @@ describe("fmcsaClient", () => {
   it("retries on 503 then succeeds", async () => {
     process.env.FMCSA_WEB_KEY = "test-web-key";
     fetchMock
-      .mockResolvedValueOnce({ ok: false, status: 503, text: async () => "busy" })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        text: async () => "busy",
+      })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: async () => ({ content: { carrier: { dotNumber: "1", legalName: "Ok", allowToOperate: "Y", outOfService: "N" } } }),
+        json: async () => ({
+          content: {
+            carrier: {
+              dotNumber: "1",
+              legalName: "Ok",
+              allowToOperate: "Y",
+              outOfService: "N",
+            },
+          },
+        }),
       });
 
     const result = await lookupCarrierByDot("1");
@@ -114,7 +131,10 @@ describe("fmcsaClient", () => {
       ok: true,
       status: 200,
       json: async () => ({
-        content: { commonAuthorityStatus: "ACTIVE", contractAuthorityStatus: "INACTIVE" },
+        content: {
+          commonAuthorityStatus: "ACTIVE",
+          contractAuthorityStatus: "INACTIVE",
+        },
       }),
     });
     const result = await lookupCarrierAuthority("44110");

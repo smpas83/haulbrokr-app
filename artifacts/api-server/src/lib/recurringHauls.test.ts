@@ -21,7 +21,8 @@ vi.mock("@workspace/db", () => {
       from: (table: unknown) => {
         if (table === recurringHaulsTable) {
           return {
-            where: () => Promise.resolve(h.series.filter((s) => s.status === "active")),
+            where: () =>
+              Promise.resolve(h.series.filter((s) => s.status === "active")),
             orderBy: () => Promise.resolve(h.series),
           };
         }
@@ -30,10 +31,12 @@ vi.mock("@workspace/db", () => {
             innerJoin: () => ({
               where: () =>
                 Promise.resolve(
-                  h.occurrences.map((o) => ({
-                    occurrence: o,
-                    series: h.series.find((s) => s.id === o.recurringHaulId),
-                  })).filter((r) => r.series),
+                  h.occurrences
+                    .map((o) => ({
+                      occurrence: o,
+                      series: h.series.find((s) => s.id === o.recurringHaulId),
+                    }))
+                    .filter((r) => r.series),
                 ),
             }),
             where: () => ({
@@ -49,13 +52,22 @@ vi.mock("@workspace/db", () => {
     }),
     insert: () => ({
       values: (vals: any) => {
-        if (vals.customerId != null && vals.materialType != null && vals.pickupAddress != null && vals.status === "open") {
+        if (
+          vals.customerId != null &&
+          vals.materialType != null &&
+          vals.pickupAddress != null &&
+          vals.status === "open"
+        ) {
           const row = { id: h.nextRequestId++, ...vals };
           h.requests.push(row);
           return { returning: async () => [row] };
         }
         if (vals.recurringHaulId != null) {
-          const row = { id: h.nextOccurrenceId++, reminderSentAt: null, ...vals };
+          const row = {
+            id: h.nextOccurrenceId++,
+            reminderSentAt: null,
+            ...vals,
+          };
           h.occurrences.push(row);
           return Promise.resolve(undefined);
         }
@@ -189,7 +201,9 @@ describe("processDueRecurringHauls", () => {
       maxOccurrences: null,
     });
 
-    const result = await processDueRecurringHauls(new Date("2026-07-01T13:00:00Z"));
+    const result = await processDueRecurringHauls(
+      new Date("2026-07-01T13:00:00Z"),
+    );
     expect(result.created).toBe(1);
     expect(h.requests).toHaveLength(1);
     expect(h.occurrences).toHaveLength(1);

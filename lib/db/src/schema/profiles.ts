@@ -1,10 +1,28 @@
-import { pgTable, text, serial, timestamp, pgEnum, integer, numeric } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  timestamp,
+  pgEnum,
+  integer,
+  numeric,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const userRoleEnum = pgEnum("user_role", ["customer", "provider", "driver", "supervisor"]);
+export const userRoleEnum = pgEnum("user_role", [
+  "customer",
+  "provider",
+  "driver",
+  "supervisor",
+]);
 
-export const paymentTermsEnum = pgEnum("payment_terms", ["due_on_receipt", "net_15", "net_30", "prepaid"]);
+export const paymentTermsEnum = pgEnum("payment_terms", [
+  "due_on_receipt",
+  "net_15",
+  "net_30",
+  "prepaid",
+]);
 
 export const orgRoleEnum = pgEnum("org_role", [
   "owner",
@@ -24,7 +42,15 @@ export const orgRoleEnum = pgEnum("org_role", [
 // Accounting scope (see ROLE_PERMISSIONS in requireAdmin.ts) and are never
 // offered when assigning a role.
 export const staffRoleEnum = pgEnum("staff_role", [
-  "ap", "ar", "cfo", "cto", "ceo", "accounting", "it", "president", "programmer",
+  "ap",
+  "ar",
+  "cfo",
+  "cto",
+  "ceo",
+  "accounting",
+  "it",
+  "president",
+  "programmer",
 ]);
 
 export const profilesTable = pgTable("profiles", {
@@ -66,10 +92,19 @@ export const profilesTable = pgTable("profiles", {
   stripeCustomerId: text("stripe_customer_id"),
   // Last time a "missing documents" reminder email was sent to this profile.
   lastDocReminderAt: timestamp("last_doc_reminder_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
-export const insertProfileSchema = createInsertSchema(profilesTable).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertProfileSchema = createInsertSchema(profilesTable).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
 export type Profile = typeof profilesTable.$inferSelect;

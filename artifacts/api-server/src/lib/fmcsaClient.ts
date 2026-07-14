@@ -74,39 +74,79 @@ function pickCarrierObject(payload: unknown): Record<string, unknown> | null {
   return null;
 }
 
-function mapCarrier(raw: Record<string, unknown>, fallbackDot?: string): FmcsaCarrier {
-  const dot = String(raw.dotNumber ?? raw.dot_number ?? fallbackDot ?? "").trim();
+function mapCarrier(
+  raw: Record<string, unknown>,
+  fallbackDot?: string,
+): FmcsaCarrier {
+  const dot = String(
+    raw.dotNumber ?? raw.dot_number ?? fallbackDot ?? "",
+  ).trim();
   const mcRaw = raw.mcNumber ?? raw.mc_number ?? raw.docketNumber ?? null;
   return {
     dotNumber: dot,
-    mcNumber: mcRaw != null && String(mcRaw).trim() ? String(mcRaw).trim() : null,
+    mcNumber:
+      mcRaw != null && String(mcRaw).trim() ? String(mcRaw).trim() : null,
     legalName: raw.legalName != null ? String(raw.legalName) : null,
     dbaName: raw.dbaName != null ? String(raw.dbaName) : null,
     allowedToOperate: yn(raw.allowToOperate ?? raw.allowedToOperate),
     outOfService: yn(raw.outOfService),
-    safetyRating: raw.safetyRating != null ? String(raw.safetyRating) : raw.safety_rating != null ? String(raw.safety_rating) : null,
+    safetyRating:
+      raw.safetyRating != null
+        ? String(raw.safetyRating)
+        : raw.safety_rating != null
+          ? String(raw.safety_rating)
+          : null,
     phyStreet: raw.phyStreet != null ? String(raw.phyStreet) : null,
     phyCity: raw.phyCity != null ? String(raw.phyCity) : null,
     phyState: raw.phyState != null ? String(raw.phyState) : null,
     phyZip: raw.phyZip != null ? String(raw.phyZip) : null,
     telephone: raw.telephone != null ? String(raw.telephone) : null,
-    bipdInsuranceOnFile: raw.bipdInsuranceOnFile != null ? String(raw.bipdInsuranceOnFile) : null,
-    bipdInsuranceRequired: raw.bipdInsuranceRequired != null ? String(raw.bipdInsuranceRequired) : null,
-    cargoInsuranceOnFile: raw.cargoInsuranceOnFile != null ? String(raw.cargoInsuranceOnFile) : null,
-    commonAuthorityStatus: raw.commonAuthorityStatus != null ? String(raw.commonAuthorityStatus) : null,
-    contractAuthorityStatus: raw.contractAuthorityStatus != null ? String(raw.contractAuthorityStatus) : null,
-    brokerAuthorityStatus: raw.brokerAuthorityStatus != null ? String(raw.brokerAuthorityStatus) : null,
+    bipdInsuranceOnFile:
+      raw.bipdInsuranceOnFile != null ? String(raw.bipdInsuranceOnFile) : null,
+    bipdInsuranceRequired:
+      raw.bipdInsuranceRequired != null
+        ? String(raw.bipdInsuranceRequired)
+        : null,
+    cargoInsuranceOnFile:
+      raw.cargoInsuranceOnFile != null
+        ? String(raw.cargoInsuranceOnFile)
+        : null,
+    commonAuthorityStatus:
+      raw.commonAuthorityStatus != null
+        ? String(raw.commonAuthorityStatus)
+        : null,
+    contractAuthorityStatus:
+      raw.contractAuthorityStatus != null
+        ? String(raw.contractAuthorityStatus)
+        : null,
+    brokerAuthorityStatus:
+      raw.brokerAuthorityStatus != null
+        ? String(raw.brokerAuthorityStatus)
+        : null,
     raw,
   };
 }
 
-async function fmcsaFetch(path: string, attempt = 1): Promise<FmcsaLookupResult | { ok: true; json: unknown }> {
+type FmcsaFetchFailure = {
+  ok: false;
+  code: string;
+  message: string;
+  retryable: boolean;
+};
+type FmcsaFetchOk = { ok: true; json: unknown };
+type FmcsaFetchResult = FmcsaFetchFailure | FmcsaFetchOk;
+
+async function fmcsaFetch(
+  path: string,
+  attempt = 1,
+): Promise<FmcsaFetchResult> {
   const key = webKey();
   if (!key) {
     return {
       ok: false,
       code: "fmcsa_not_configured",
-      message: "FMCSA_WEB_KEY is not configured. Obtain a web key from https://mobile.fmcsa.dot.gov/QCDevsite/",
+      message:
+        "FMCSA_WEB_KEY is not configured. Obtain a web key from https://mobile.fmcsa.dot.gov/QCDevsite/",
       retryable: false,
     };
   }
@@ -133,12 +173,20 @@ async function fmcsaFetch(path: string, attempt = 1): Promise<FmcsaLookupResult 
     }
 
     if (res.status === 404) {
-      return { ok: false, code: "carrier_not_found", message: "No carrier found for that number.", retryable: false };
+      return {
+        ok: false,
+        code: "carrier_not_found",
+        message: "No carrier found for that number.",
+        retryable: false,
+      };
     }
 
     if (!res.ok) {
       const text = await res.text();
-      logger.warn({ status: res.status, text: text.slice(0, 500), path }, "FMCSA API error");
+      logger.warn(
+        { status: res.status, text: text.slice(0, 500), path },
+        "FMCSA API error",
+      );
       return {
         ok: false,
         code: `fmcsa_http_${res.status}`,
@@ -160,10 +208,17 @@ async function fmcsaFetch(path: string, attempt = 1): Promise<FmcsaLookupResult 
   }
 }
 
-export async function lookupCarrierByDot(dotNumber: string): Promise<FmcsaLookupResult> {
+export async function lookupCarrierByDot(
+  dotNumber: string,
+): Promise<FmcsaLookupResult> {
   const cleaned = String(dotNumber).replace(/\D/g, "");
   if (!cleaned) {
-    return { ok: false, code: "invalid_dot", message: "DOT number is required.", retryable: false };
+    return {
+      ok: false,
+      code: "invalid_dot",
+      message: "DOT number is required.",
+      retryable: false,
+    };
   }
 
   const fetched = await fmcsaFetch(`/carriers/${cleaned}`);
@@ -171,15 +226,27 @@ export async function lookupCarrierByDot(dotNumber: string): Promise<FmcsaLookup
 
   const carrierObj = pickCarrierObject(fetched.json);
   if (!carrierObj) {
-    return { ok: false, code: "carrier_not_found", message: "No carrier found for that DOT number.", retryable: false };
+    return {
+      ok: false,
+      code: "carrier_not_found",
+      message: "No carrier found for that DOT number.",
+      retryable: false,
+    };
   }
   return { ok: true, carrier: mapCarrier(carrierObj, cleaned) };
 }
 
-export async function lookupCarrierByMc(mcNumber: string): Promise<FmcsaLookupResult> {
+export async function lookupCarrierByMc(
+  mcNumber: string,
+): Promise<FmcsaLookupResult> {
   const cleaned = String(mcNumber).replace(/\D/g, "");
   if (!cleaned) {
-    return { ok: false, code: "invalid_mc", message: "MC / docket number is required.", retryable: false };
+    return {
+      ok: false,
+      code: "invalid_mc",
+      message: "MC / docket number is required.",
+      retryable: false,
+    };
   }
 
   const fetched = await fmcsaFetch(`/carriers/docket-number/${cleaned}`);
@@ -195,15 +262,27 @@ export async function lookupCarrierByMc(mcNumber: string): Promise<FmcsaLookupRe
       const c = (first.carrier ?? first) as Record<string, unknown>;
       return { ok: true, carrier: mapCarrier(c) };
     }
-    return { ok: false, code: "carrier_not_found", message: "No carrier found for that MC number.", retryable: false };
+    return {
+      ok: false,
+      code: "carrier_not_found",
+      message: "No carrier found for that MC number.",
+      retryable: false,
+    };
   }
   return { ok: true, carrier: mapCarrier(carrierObj) };
 }
 
-export async function lookupCarrierAuthority(dotNumber: string): Promise<FmcsaAuthorityResult> {
+export async function lookupCarrierAuthority(
+  dotNumber: string,
+): Promise<FmcsaAuthorityResult> {
   const cleaned = String(dotNumber).replace(/\D/g, "");
   if (!cleaned) {
-    return { ok: false, code: "invalid_dot", message: "DOT number is required.", retryable: false };
+    return {
+      ok: false,
+      code: "invalid_dot",
+      message: "DOT number is required.",
+      retryable: false,
+    };
   }
 
   const fetched = await fmcsaFetch(`/carriers/${cleaned}/authority`);
@@ -217,9 +296,20 @@ export async function lookupCarrierAuthority(dotNumber: string): Promise<FmcsaAu
 
   return {
     ok: true,
-    commonAuthority: auth?.commonAuthorityStatus != null ? String(auth.commonAuthorityStatus) : auth?.authorityStatus != null ? String(auth.authorityStatus) : null,
-    contractAuthority: auth?.contractAuthorityStatus != null ? String(auth.contractAuthorityStatus) : null,
-    brokerAuthority: auth?.brokerAuthorityStatus != null ? String(auth.brokerAuthorityStatus) : null,
+    commonAuthority:
+      auth?.commonAuthorityStatus != null
+        ? String(auth.commonAuthorityStatus)
+        : auth?.authorityStatus != null
+          ? String(auth.authorityStatus)
+          : null,
+    contractAuthority:
+      auth?.contractAuthorityStatus != null
+        ? String(auth.contractAuthorityStatus)
+        : null,
+    brokerAuthority:
+      auth?.brokerAuthorityStatus != null
+        ? String(auth.brokerAuthorityStatus)
+        : null,
     raw: fetched.json,
   };
 }
@@ -240,7 +330,10 @@ export type FmcsaComplianceSnapshot = {
 
 export function deriveComplianceFromFmcsa(
   carrier: FmcsaCarrier,
-  authority?: { commonAuthority: string | null; contractAuthority: string | null } | null,
+  authority?: {
+    commonAuthority: string | null;
+    contractAuthority: string | null;
+  } | null,
 ): FmcsaComplianceSnapshot {
   const oos = carrier.outOfService === true;
   const allowed = carrier.allowedToOperate === true;
@@ -256,12 +349,18 @@ export function deriveComplianceFromFmcsa(
     String(carrier.bipdInsuranceOnFile) !== "0";
 
   const operating: "verified" | "failed" | "unknown" =
-    carrier.allowedToOperate == null ? "unknown" : allowed && !oos ? "verified" : "failed";
+    carrier.allowedToOperate == null
+      ? "unknown"
+      : allowed && !oos
+        ? "verified"
+        : "failed";
   const suspended: "verified" | "failed" | "unknown" =
     carrier.outOfService == null ? "unknown" : oos ? "failed" : "verified";
   const authorityStatus: "verified" | "failed" | "unknown" = authActive
     ? "verified"
-    : authority || carrier.commonAuthorityStatus || carrier.contractAuthorityStatus
+    : authority ||
+        carrier.commonAuthorityStatus ||
+        carrier.contractAuthorityStatus
       ? "failed"
       : "unknown";
   const insurance: "verified" | "failed" | "unknown" =
@@ -277,7 +376,9 @@ export function deriveComplianceFromFmcsa(
     (authorityStatus === "verified" || authorityStatus === "unknown") &&
     (insurance === "verified" || insurance === "unknown");
 
-  const anyFailed = [operating, suspended, authorityStatus, insurance].includes("failed");
+  const anyFailed = [operating, suspended, authorityStatus, insurance].includes(
+    "failed",
+  );
 
   return {
     fmcsaAuthority: authorityStatus,
@@ -287,7 +388,8 @@ export function deriveComplianceFromFmcsa(
     safetyRating: carrier.safetyRating,
     fmcsaLegalName: carrier.legalName,
     fmcsaDbaName: carrier.dbaName,
-    fmcsaAllowedToOperate: carrier.allowedToOperate == null ? null : allowed ? "Y" : "N",
+    fmcsaAllowedToOperate:
+      carrier.allowedToOperate == null ? null : allowed ? "Y" : "N",
     fmcsaOutOfService: carrier.outOfService == null ? null : oos ? "Y" : "N",
     status: anyFailed ? "failed" : allGood ? "verified" : "pending",
     reviewNote: anyFailed

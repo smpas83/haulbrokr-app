@@ -79,8 +79,16 @@ describe("orgPermissions", () => {
   });
 
   it("classifies audience roles", () => {
-    expect(classifyMemberAudience(profile({ role: "driver", orgRole: "member" })).isDriver).toBe(true);
-    expect(classifyMemberAudience(profile({ orgRole: "dispatcher" })).isDispatcher).toBe(true);
-    expect(classifyMemberAudience(profile({ orgRole: "fleet_manager" })).isFleetManager).toBe(true);
+    expect(
+      classifyMemberAudience(profile({ role: "driver", orgRole: "member" }))
+        .isDriver,
+    ).toBe(true);
+    expect(
+      classifyMemberAudience(profile({ orgRole: "dispatcher" })).isDispatcher,
+    ).toBe(true);
+    expect(
+      classifyMemberAudience(profile({ orgRole: "fleet_manager" }))
+        .isFleetManager,
+    ).toBe(true);
   });
 });

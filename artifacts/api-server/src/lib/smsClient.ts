@@ -4,7 +4,11 @@ export type SmsSendResult =
   | { ok: true; sid: string }
   | { ok: false; reason: string };
 
-function twilioCredentials(): { accountSid: string; authToken: string; fromNumber: string } | null {
+function twilioCredentials(): {
+  accountSid: string;
+  authToken: string;
+  fromNumber: string;
+} | null {
   const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim();
   const authToken = process.env.TWILIO_AUTH_TOKEN?.trim();
   const fromNumber = process.env.TWILIO_FROM_NUMBER?.trim();
@@ -20,10 +24,15 @@ export function isSmsConfigured(): boolean {
  * Send an SMS via Twilio REST API. No-ops with a clear reason when Twilio is
  * not configured — never invents delivery.
  */
-export async function sendSms(to: string, body: string): Promise<SmsSendResult> {
+export async function sendSms(
+  to: string,
+  body: string,
+): Promise<SmsSendResult> {
   const creds = twilioCredentials();
   if (!creds) {
-    logger.warn("SMS skipped — TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM_NUMBER not configured");
+    logger.warn(
+      "SMS skipped — TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM_NUMBER not configured",
+    );
     return { ok: false, reason: "sms_not_configured" };
   }
 
@@ -41,16 +50,31 @@ export async function sendSms(to: string, body: string): Promise<SmsSendResult> 
     const res = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: "Basic " + Buffer.from(`${creds.accountSid}:${creds.authToken}`).toString("base64"),
+        Authorization:
+          "Basic " +
+          Buffer.from(`${creds.accountSid}:${creds.authToken}`).toString(
+            "base64",
+          ),
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: params.toString(),
     });
 
-    const data = (await res.json()) as { sid?: string; message?: string; error_message?: string };
+    const data = (await res.json()) as {
+      sid?: string;
+      message?: string;
+      error_message?: string;
+    };
     if (!res.ok) {
-      logger.warn({ status: res.status, data, to: normalizedTo }, "Twilio SMS send failed");
-      return { ok: false, reason: data.message || data.error_message || `twilio_http_${res.status}` };
+      logger.warn(
+        { status: res.status, data, to: normalizedTo },
+        "Twilio SMS send failed",
+      );
+      return {
+        ok: false,
+        reason:
+          data.message || data.error_message || `twilio_http_${res.status}`,
+      };
     }
     if (!data.sid) return { ok: false, reason: "twilio_missing_sid" };
     return { ok: true, sid: data.sid };
