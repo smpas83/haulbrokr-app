@@ -6,7 +6,9 @@ export type ProductionService =
   | "r2"
   | "render"
   | "vercel"
-  | "core";
+  | "core"
+  | "fmcsa"
+  | "twilio";
 
 export interface EnvRequirement {
   service: ProductionService;
@@ -24,47 +26,216 @@ export interface EnvValidationIssue {
 /** Audit catalog of production environment variables by integration. */
 export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   // Neon (Postgres)
-  { service: "neon", variable: "DATABASE_URL", required: true, description: "Neon Postgres connection string (pooled URL with sslmode=require)." },
+  {
+    service: "neon",
+    variable: "DATABASE_URL",
+    required: true,
+    description:
+      "Neon Postgres connection string (pooled URL with sslmode=require).",
+  },
 
   // Clerk
-  { service: "clerk", variable: "CLERK_SECRET_KEY", required: true, description: "Clerk secret key for backend auth (sk_…)." },
-  { service: "clerk", variable: "CLERK_PUBLISHABLE_KEY", required: true, description: "Clerk publishable key for JWT verification (pk_…)." },
+  {
+    service: "clerk",
+    variable: "CLERK_SECRET_KEY",
+    required: true,
+    description: "Clerk secret key for backend auth (sk_…).",
+  },
+  {
+    service: "clerk",
+    variable: "CLERK_PUBLISHABLE_KEY",
+    required: true,
+    description: "Clerk publishable key for JWT verification (pk_…).",
+  },
 
   // Stripe
-  { service: "stripe", variable: "STRIPE_SECRET_KEY", required: true, description: "Stripe secret API key (sk_live_… or sk_test_…)." },
-  { service: "stripe", variable: "STRIPE_PUBLISHABLE_KEY", required: true, description: "Stripe publishable key (pk_live_… or pk_test_…)." },
-  { service: "stripe", variable: "STRIPE_WEBHOOK_SECRET", required: true, description: "Stripe webhook signing secret (whsec_…)." },
-  { service: "stripe", variable: "PAYMENTS_MOCK_MODE", required: true, description: "Must be unset or false in production — mock payments are not allowed." },
+  {
+    service: "stripe",
+    variable: "STRIPE_SECRET_KEY",
+    required: true,
+    description: "Stripe secret API key (sk_live_… or sk_test_…).",
+  },
+  {
+    service: "stripe",
+    variable: "STRIPE_PUBLISHABLE_KEY",
+    required: true,
+    description: "Stripe publishable key (pk_live_… or pk_test_…).",
+  },
+  {
+    service: "stripe",
+    variable: "STRIPE_WEBHOOK_SECRET",
+    required: true,
+    description: "Stripe webhook signing secret (whsec_…).",
+  },
+  {
+    service: "stripe",
+    variable: "PAYMENTS_MOCK_MODE",
+    required: true,
+    description:
+      "Must be unset or false in production — mock payments are not allowed.",
+  },
 
   // Resend
-  { service: "resend", variable: "RESEND_API_KEY", required: true, description: "Resend API key (re_…)." },
-  { service: "resend", variable: "RESEND_FROM_EMAIL", required: true, description: "Verified sender address for transactional email." },
+  {
+    service: "resend",
+    variable: "RESEND_API_KEY",
+    required: true,
+    description: "Resend API key (re_…).",
+  },
+  {
+    service: "resend",
+    variable: "RESEND_FROM_EMAIL",
+    required: true,
+    description: "Verified sender address for transactional email.",
+  },
 
   // Cloudflare R2
-  { service: "r2", variable: "R2_ACCOUNT_ID", required: true, description: "Cloudflare account ID for R2 S3 endpoint." },
-  { service: "r2", variable: "R2_ACCESS_KEY_ID", required: true, description: "R2 access key ID." },
-  { service: "r2", variable: "R2_SECRET_ACCESS_KEY", required: true, description: "R2 secret access key." },
-  { service: "r2", variable: "R2_BUCKET", required: true, description: "R2 bucket name." },
-  { service: "r2", variable: "R2_PUBLIC_URL", required: true, description: "Public R2/custom CDN base URL (https://…)." },
-  { service: "r2", variable: "PRIVATE_OBJECT_DIR", required: true, description: "Private object key prefix within R2_BUCKET." },
-  { service: "r2", variable: "PUBLIC_OBJECT_SEARCH_PATHS", required: true, description: "Comma-separated public object key prefixes within R2_BUCKET." },
+  {
+    service: "r2",
+    variable: "R2_ACCOUNT_ID",
+    required: true,
+    description: "Cloudflare account ID for R2 S3 endpoint.",
+  },
+  {
+    service: "r2",
+    variable: "R2_ACCESS_KEY_ID",
+    required: true,
+    description: "R2 access key ID.",
+  },
+  {
+    service: "r2",
+    variable: "R2_SECRET_ACCESS_KEY",
+    required: true,
+    description: "R2 secret access key.",
+  },
+  {
+    service: "r2",
+    variable: "R2_BUCKET",
+    required: true,
+    description: "R2 bucket name.",
+  },
+  {
+    service: "r2",
+    variable: "R2_PUBLIC_URL",
+    required: true,
+    description: "Public R2/custom CDN base URL (https://…).",
+  },
+  {
+    service: "r2",
+    variable: "PRIVATE_OBJECT_DIR",
+    required: true,
+    description: "Private object key prefix within R2_BUCKET.",
+  },
+  {
+    service: "r2",
+    variable: "PUBLIC_OBJECT_SEARCH_PATHS",
+    required: true,
+    description: "Comma-separated public object key prefixes within R2_BUCKET.",
+  },
 
   // Render (API host)
-  { service: "render", variable: "PORT", required: true, description: "HTTP listen port (8080 on Render)." },
-  { service: "render", variable: "NODE_ENV", required: true, description: "Must be production on Render." },
-  { service: "render", variable: "CORS_ALLOWED_ORIGINS", required: false, description: "Optional comma-separated browser origins beyond haulbrokr.com/www/haulbrokr.vercel.app." },
+  {
+    service: "render",
+    variable: "PORT",
+    required: true,
+    description: "HTTP listen port (8080 on Render).",
+  },
+  {
+    service: "render",
+    variable: "NODE_ENV",
+    required: true,
+    description: "Must be production on Render.",
+  },
+  {
+    service: "render",
+    variable: "CORS_ALLOWED_ORIGINS",
+    required: false,
+    description:
+      "Optional comma-separated browser origins beyond haulbrokr.com/www/haulbrokr.vercel.app.",
+  },
 
   // Vercel (web app — validated at build/runtime on Vercel, documented for ops)
-  { service: "vercel", variable: "VITE_CLERK_PUBLISHABLE_KEY", required: true, description: "Clerk publishable key baked into the Vercel web build." },
-  { service: "vercel", variable: "VITE_CLERK_PROXY_URL", required: true, description: "Clerk proxy URL on the Vercel domain (https://your-domain/api/__clerk)." },
+  {
+    service: "vercel",
+    variable: "VITE_CLERK_PUBLISHABLE_KEY",
+    required: true,
+    description: "Clerk publishable key baked into the Vercel web build.",
+  },
+  {
+    service: "vercel",
+    variable: "VITE_CLERK_PROXY_URL",
+    required: true,
+    description:
+      "Clerk proxy URL on the Vercel domain (https://your-domain/api/__clerk).",
+  },
 
   // Core API secrets
-  { service: "core", variable: "UPLOAD_TOKEN_SECRET", required: true, description: "HMAC secret for upload tokens (≥32 chars)." },
-  { service: "core", variable: "TICKET_QR_SECRET", required: true, description: "HMAC secret for ticket QR codes (≥32 chars)." },
-  { service: "core", variable: "STAFF_AUTH_SECRET", required: true, description: "Staff session HMAC secret (≥32 chars; TICKET_QR_SECRET may substitute)." },
-  { service: "core", variable: "ADMIN_USER_IDS", required: true, description: "Comma-separated Clerk user IDs with admin access." },
-  { service: "core", variable: "GOOGLE_MAPS_API_KEY", required: true, description: "Google Maps API key for /api/map/config and geocoding." },
-  { service: "core", variable: "AUTOMATION_KEY", required: false, description: "Optional shared key for internal automation endpoints." },
+  {
+    service: "core",
+    variable: "UPLOAD_TOKEN_SECRET",
+    required: true,
+    description: "HMAC secret for upload tokens (≥32 chars).",
+  },
+  {
+    service: "core",
+    variable: "TICKET_QR_SECRET",
+    required: true,
+    description: "HMAC secret for ticket QR codes (≥32 chars).",
+  },
+  {
+    service: "core",
+    variable: "STAFF_AUTH_SECRET",
+    required: true,
+    description:
+      "Staff session HMAC secret (≥32 chars; TICKET_QR_SECRET may substitute).",
+  },
+  {
+    service: "core",
+    variable: "ADMIN_USER_IDS",
+    required: true,
+    description: "Comma-separated Clerk user IDs with admin access.",
+  },
+  {
+    service: "core",
+    variable: "GOOGLE_MAPS_API_KEY",
+    required: true,
+    description: "Google Maps API key for /api/map/config and geocoding.",
+  },
+  {
+    service: "core",
+    variable: "AUTOMATION_KEY",
+    required: false,
+    description: "Optional shared key for internal automation endpoints.",
+  },
+
+  // FMCSA QCMobile (live carrier verification)
+  {
+    service: "fmcsa",
+    variable: "FMCSA_WEB_KEY",
+    required: false,
+    description:
+      "FMCSA QCMobile webKey for DOT/MC live lookup (https://mobile.fmcsa.dot.gov/QCDevsite/).",
+  },
+
+  // Twilio SMS
+  {
+    service: "twilio",
+    variable: "TWILIO_ACCOUNT_SID",
+    required: false,
+    description: "Twilio Account SID for SMS notifications.",
+  },
+  {
+    service: "twilio",
+    variable: "TWILIO_AUTH_TOKEN",
+    required: false,
+    description: "Twilio Auth Token.",
+  },
+  {
+    service: "twilio",
+    variable: "TWILIO_FROM_NUMBER",
+    required: false,
+    description: "Twilio from phone number (E.164).",
+  },
 ];
 
 const PLACEHOLDER_PATTERNS = [
@@ -108,10 +279,16 @@ function looksLikeHttpsUrl(value: string): boolean {
 
 function containsPlaceholder(value: string): boolean {
   const lower = value.toLowerCase();
-  return PLACEHOLDER_PATTERNS.some((pattern) => lower.includes(pattern.toLowerCase()));
+  return PLACEHOLDER_PATTERNS.some((pattern) =>
+    lower.includes(pattern.toLowerCase()),
+  );
 }
 
-function pushMissing(issues: EnvValidationIssue[], service: ProductionService, variable: string): void {
+function pushMissing(
+  issues: EnvValidationIssue[],
+  service: ProductionService,
+  variable: string,
+): void {
   issues.push({
     service,
     variable,
@@ -128,7 +305,10 @@ function pushInvalid(
   issues.push({ service, variable, message });
 }
 
-function validateDatabaseUrl(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+function validateDatabaseUrl(
+  env: NodeJS.ProcessEnv,
+  issues: EnvValidationIssue[],
+): void {
   let url = envValue(env, "DATABASE_URL");
   if (!url) {
     pushMissing(issues, "neon", "DATABASE_URL");
@@ -137,11 +317,21 @@ function validateDatabaseUrl(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[
 
   url = url.replace(/^DATABASE_URL\s*=\s*/i, "").replace(/^['"]|['"]$/g, "");
   if (containsPlaceholder(url)) {
-    pushInvalid(issues, "neon", "DATABASE_URL", "DATABASE_URL contains placeholder text — paste your real Neon connection string.");
+    pushInvalid(
+      issues,
+      "neon",
+      "DATABASE_URL",
+      "DATABASE_URL contains placeholder text — paste your real Neon connection string.",
+    );
     return;
   }
   if (!url.startsWith("postgres://") && !url.startsWith("postgresql://")) {
-    pushInvalid(issues, "neon", "DATABASE_URL", "DATABASE_URL must start with postgres:// or postgresql://.");
+    pushInvalid(
+      issues,
+      "neon",
+      "DATABASE_URL",
+      "DATABASE_URL must start with postgres:// or postgresql://.",
+    );
     return;
   }
 
@@ -149,12 +339,23 @@ function validateDatabaseUrl(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[
     const normalized = url.replace(/^postgres:/, "postgresql:");
     const parsed = new URL(normalized);
     if (!parsed.hostname.includes(".")) {
-      pushInvalid(issues, "neon", "DATABASE_URL", `DATABASE_URL hostname looks invalid: ${parsed.hostname}`);
+      pushInvalid(
+        issues,
+        "neon",
+        "DATABASE_URL",
+        `DATABASE_URL hostname looks invalid: ${parsed.hostname}`,
+      );
     }
     if (containsPlaceholder(parsed.hostname)) {
-      pushInvalid(issues, "neon", "DATABASE_URL", "DATABASE_URL hostname looks like a documentation example, not a real Neon host.");
+      pushInvalid(
+        issues,
+        "neon",
+        "DATABASE_URL",
+        "DATABASE_URL hostname looks like a documentation example, not a real Neon host.",
+      );
     }
-    const ssl = parsed.searchParams.get("sslmode") ?? parsed.searchParams.get("ssl");
+    const ssl =
+      parsed.searchParams.get("sslmode") ?? parsed.searchParams.get("ssl");
     if (ssl !== "require" && ssl !== "true") {
       pushInvalid(
         issues,
@@ -164,26 +365,47 @@ function validateDatabaseUrl(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[
       );
     }
   } catch {
-    pushInvalid(issues, "neon", "DATABASE_URL", "DATABASE_URL is not a valid Postgres URL.");
+    pushInvalid(
+      issues,
+      "neon",
+      "DATABASE_URL",
+      "DATABASE_URL is not a valid Postgres URL.",
+    );
   }
 }
 
-function validateClerk(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+function validateClerk(
+  env: NodeJS.ProcessEnv,
+  issues: EnvValidationIssue[],
+): void {
   const secret = envValue(env, "CLERK_SECRET_KEY");
   const publishable = envValue(env, "CLERK_PUBLISHABLE_KEY");
 
   if (!secret) pushMissing(issues, "clerk", "CLERK_SECRET_KEY");
   else if (!secret.startsWith("sk_")) {
-    pushInvalid(issues, "clerk", "CLERK_SECRET_KEY", "CLERK_SECRET_KEY must start with sk_.");
+    pushInvalid(
+      issues,
+      "clerk",
+      "CLERK_SECRET_KEY",
+      "CLERK_SECRET_KEY must start with sk_.",
+    );
   }
 
   if (!publishable) pushMissing(issues, "clerk", "CLERK_PUBLISHABLE_KEY");
   else if (!publishable.startsWith("pk_")) {
-    pushInvalid(issues, "clerk", "CLERK_PUBLISHABLE_KEY", "CLERK_PUBLISHABLE_KEY must start with pk_.");
+    pushInvalid(
+      issues,
+      "clerk",
+      "CLERK_PUBLISHABLE_KEY",
+      "CLERK_PUBLISHABLE_KEY must start with pk_.",
+    );
   }
 }
 
-function validateStripe(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+function validateStripe(
+  env: NodeJS.ProcessEnv,
+  issues: EnvValidationIssue[],
+): void {
   if (isTruthyMockFlag(envValue(env, "PAYMENTS_MOCK_MODE"))) {
     pushInvalid(
       issues,
@@ -199,36 +421,67 @@ function validateStripe(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): v
 
   if (!secret) pushMissing(issues, "stripe", "STRIPE_SECRET_KEY");
   else if (!secret.startsWith("sk_")) {
-    pushInvalid(issues, "stripe", "STRIPE_SECRET_KEY", "STRIPE_SECRET_KEY must start with sk_.");
+    pushInvalid(
+      issues,
+      "stripe",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_SECRET_KEY must start with sk_.",
+    );
   }
 
   if (!publishable) pushMissing(issues, "stripe", "STRIPE_PUBLISHABLE_KEY");
   else if (!publishable.startsWith("pk_")) {
-    pushInvalid(issues, "stripe", "STRIPE_PUBLISHABLE_KEY", "STRIPE_PUBLISHABLE_KEY must start with pk_.");
+    pushInvalid(
+      issues,
+      "stripe",
+      "STRIPE_PUBLISHABLE_KEY",
+      "STRIPE_PUBLISHABLE_KEY must start with pk_.",
+    );
   }
 
   if (!webhook) pushMissing(issues, "stripe", "STRIPE_WEBHOOK_SECRET");
   else if (!webhook.startsWith("whsec_")) {
-    pushInvalid(issues, "stripe", "STRIPE_WEBHOOK_SECRET", "STRIPE_WEBHOOK_SECRET must start with whsec_.");
+    pushInvalid(
+      issues,
+      "stripe",
+      "STRIPE_WEBHOOK_SECRET",
+      "STRIPE_WEBHOOK_SECRET must start with whsec_.",
+    );
   }
 }
 
-function validateResend(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+function validateResend(
+  env: NodeJS.ProcessEnv,
+  issues: EnvValidationIssue[],
+): void {
   const apiKey = envValue(env, "RESEND_API_KEY");
   const fromEmail = envValue(env, "RESEND_FROM_EMAIL");
 
   if (!apiKey) pushMissing(issues, "resend", "RESEND_API_KEY");
   else if (!apiKey.startsWith("re_")) {
-    pushInvalid(issues, "resend", "RESEND_API_KEY", "RESEND_API_KEY must start with re_.");
+    pushInvalid(
+      issues,
+      "resend",
+      "RESEND_API_KEY",
+      "RESEND_API_KEY must start with re_.",
+    );
   }
 
   if (!fromEmail) pushMissing(issues, "resend", "RESEND_FROM_EMAIL");
   else if (!looksLikeEmail(fromEmail)) {
-    pushInvalid(issues, "resend", "RESEND_FROM_EMAIL", "RESEND_FROM_EMAIL must be a valid email address.");
+    pushInvalid(
+      issues,
+      "resend",
+      "RESEND_FROM_EMAIL",
+      "RESEND_FROM_EMAIL must be a valid email address.",
+    );
   }
 }
 
-function validateR2(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+function validateR2(
+  env: NodeJS.ProcessEnv,
+  issues: EnvValidationIssue[],
+): void {
   for (const variable of [
     "R2_ACCOUNT_ID",
     "R2_ACCESS_KEY_ID",
@@ -244,39 +497,70 @@ function validateR2(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void 
   if (!publicUrl) {
     pushMissing(issues, "r2", "R2_PUBLIC_URL");
   } else if (!looksLikeHttpsUrl(publicUrl)) {
-    pushInvalid(issues, "r2", "R2_PUBLIC_URL", "R2_PUBLIC_URL must be a valid https:// URL.");
+    pushInvalid(
+      issues,
+      "r2",
+      "R2_PUBLIC_URL",
+      "R2_PUBLIC_URL must be a valid https:// URL.",
+    );
   }
 }
 
-function validateRender(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+function validateRender(
+  env: NodeJS.ProcessEnv,
+  issues: EnvValidationIssue[],
+): void {
   const port = envValue(env, "PORT");
   if (!port) {
     pushMissing(issues, "render", "PORT");
   } else {
     const parsed = Number(port);
     if (Number.isNaN(parsed) || parsed <= 0) {
-      pushInvalid(issues, "render", "PORT", `PORT must be a positive integer (got "${port}").`);
+      pushInvalid(
+        issues,
+        "render",
+        "PORT",
+        `PORT must be a positive integer (got "${port}").`,
+      );
     }
   }
 
   if (env.NODE_ENV !== "production") {
-    pushInvalid(issues, "render", "NODE_ENV", 'NODE_ENV must be "production" on Render.');
+    pushInvalid(
+      issues,
+      "render",
+      "NODE_ENV",
+      'NODE_ENV must be "production" on Render.',
+    );
   }
 }
 
-function validateCoreSecrets(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): void {
+function validateCoreSecrets(
+  env: NodeJS.ProcessEnv,
+  issues: EnvValidationIssue[],
+): void {
   const uploadSecret = envValue(env, "UPLOAD_TOKEN_SECRET");
   if (!uploadSecret) {
     pushMissing(issues, "core", "UPLOAD_TOKEN_SECRET");
   } else if (uploadSecret.length < MIN_SECRET_LENGTH) {
-    pushInvalid(issues, "core", "UPLOAD_TOKEN_SECRET", `UPLOAD_TOKEN_SECRET must be at least ${MIN_SECRET_LENGTH} characters.`);
+    pushInvalid(
+      issues,
+      "core",
+      "UPLOAD_TOKEN_SECRET",
+      `UPLOAD_TOKEN_SECRET must be at least ${MIN_SECRET_LENGTH} characters.`,
+    );
   }
 
   const ticketSecret = envValue(env, "TICKET_QR_SECRET");
   if (!ticketSecret) {
     pushMissing(issues, "core", "TICKET_QR_SECRET");
   } else if (ticketSecret.length < MIN_SECRET_LENGTH) {
-    pushInvalid(issues, "core", "TICKET_QR_SECRET", `TICKET_QR_SECRET must be at least ${MIN_SECRET_LENGTH} characters.`);
+    pushInvalid(
+      issues,
+      "core",
+      "TICKET_QR_SECRET",
+      `TICKET_QR_SECRET must be at least ${MIN_SECRET_LENGTH} characters.`,
+    );
   }
 
   const staffSecret = envValue(env, "STAFF_AUTH_SECRET");
@@ -296,19 +580,31 @@ function validateCoreSecrets(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[
   if (!adminIds) {
     pushMissing(issues, "core", "ADMIN_USER_IDS");
   } else if (adminIds.split(",").every((id) => !id.trim())) {
-    pushInvalid(issues, "core", "ADMIN_USER_IDS", "ADMIN_USER_IDS must contain at least one Clerk user ID.");
+    pushInvalid(
+      issues,
+      "core",
+      "ADMIN_USER_IDS",
+      "ADMIN_USER_IDS must contain at least one Clerk user ID.",
+    );
   }
 
   const mapsKey = envValue(env, "GOOGLE_MAPS_API_KEY");
   if (!mapsKey) {
     pushMissing(issues, "core", "GOOGLE_MAPS_API_KEY");
   } else if (mapsKey.length < 20) {
-    pushInvalid(issues, "core", "GOOGLE_MAPS_API_KEY", "GOOGLE_MAPS_API_KEY looks too short to be a real Google API key.");
+    pushInvalid(
+      issues,
+      "core",
+      "GOOGLE_MAPS_API_KEY",
+      "GOOGLE_MAPS_API_KEY looks too short to be a real Google API key.",
+    );
   }
 }
 
 /** Collect all production configuration issues. Empty when not in production. */
-export function collectProductionEnvIssues(env: NodeJS.ProcessEnv = process.env): EnvValidationIssue[] {
+export function collectProductionEnvIssues(
+  env: NodeJS.ProcessEnv = process.env,
+): EnvValidationIssue[] {
   if (env.NODE_ENV !== "production") {
     return [];
   }
@@ -363,7 +659,9 @@ function formatIssues(issues: EnvValidationIssue[]): string {
 }
 
 /** Fail fast when critical production env vars are missing or invalid. No-op outside production. */
-export function validateProductionEnv(env: NodeJS.ProcessEnv = process.env): void {
+export function validateProductionEnv(
+  env: NodeJS.ProcessEnv = process.env,
+): void {
   const issues = collectProductionEnvIssues(env);
   if (issues.length > 0) {
     throw new Error(formatIssues(issues));

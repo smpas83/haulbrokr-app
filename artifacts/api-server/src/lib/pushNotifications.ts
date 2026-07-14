@@ -43,7 +43,10 @@ export async function sendExpoPushToProfile(
 
     if (!res.ok) {
       const text = await res.text();
-      logger.warn({ profileId, status: res.status, text }, "Expo push send failed");
+      logger.warn(
+        { profileId, status: res.status, text },
+        "Expo push send failed",
+      );
     }
   } catch (err) {
     logger.error({ err, profileId }, "Failed to send Expo push notification");
@@ -54,12 +57,17 @@ const ACTIVITY_TITLES: Record<string, string> = {
   payment_failed: "Payment failed",
   payment_requires_action: "Confirm your payment",
   payment_refunded: "Refund issued",
+  invoice_paid: "Invoice paid",
+  payout_paid: "Payout sent",
+  payout_failed: "Payout failed",
   payout_delayed: "Payout delayed",
   payout_stuck_alert: "Payout needs attention",
   bid_awarded: "Bid awarded",
   bid_accepted: "Bid accepted",
   job_completed: "Job completed",
   job_started: "Job started",
+  job_reminder: "Upcoming haul reminder",
+  recurring_created: "Recurring haul posted",
   driver_event_rejected: "Driver update rejected",
   application_approved: "Application approved",
   application_rejected: "Application update",

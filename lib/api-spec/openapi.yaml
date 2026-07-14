@@ -4100,7 +4100,7 @@ components:
       properties:
         orgRole:
           type: string
-          enum: [admin, member]
+          enum: [admin, member, fleet_manager, dispatcher]
 
     # ── Tickets & Job Status ─────────────────────────────────────────────────
     Ticket:

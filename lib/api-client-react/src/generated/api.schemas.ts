@@ -1792,6 +1792,8 @@ export type UpdateMemberRoleInputOrgRole = typeof UpdateMemberRoleInputOrgRole[k
 export const UpdateMemberRoleInputOrgRole = {
   admin: 'admin',
   member: 'member',
+  fleet_manager: 'fleet_manager',
+  dispatcher: 'dispatcher',
 } as const;
 
 export interface UpdateMemberRoleInput {
