@@ -10,7 +10,12 @@
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "verify:deployment": "node scripts/verify-deployment-readiness.mjs",
-    "verify:staging-e2e": "node scripts/staging-e2e-verify.mjs"
+    "verify:staging-e2e": "node scripts/staging-e2e-verify.mjs",
+    "verify:rc2": "node scripts/rc2-certify.mjs",
+    "verify:rc2-app-store": "node scripts/rc2-app-store-audit.mjs",
+    "verify:rc2-performance": "node scripts/rc2-performance-audit.mjs",
+    "certify:staging": "node scripts/certify-staging.mjs",
+    "test": "pnpm --filter @workspace/api-server test"
   },
   "private": true,
   "devDependencies": {

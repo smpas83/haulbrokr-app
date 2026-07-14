@@ -69,24 +69,24 @@ Business Transfers: In the event of a merger, acquisition, or sale of assets, us
 • Job and bid history: Retained for 3 years
 • Device and usage logs: Retained for 90 days
 
-You may request deletion of your account and associated data by contacting privacy@haulbrokr.com. Note that some data may be retained for legal compliance even after account deletion.`,
+You may delete your account in the app under Account → Privacy & Account → Delete Account. You may also contact privacy@haulbrokr.com. Note that some data may be retained for legal compliance even after account deletion.`,
   },
   {
     id: "5",
     title: "5. Your Privacy Rights",
     body: `Depending on your location, you may have the following rights:
 
-Access: Request a copy of the personal data we hold about you.
+Access: Request a copy of the personal data we hold about you via Account → Export Account Data (ZIP download).
 
 Correction: Request correction of inaccurate or incomplete personal data.
 
-Deletion: Request deletion of your personal data, subject to legal retention requirements.
+Deletion: Delete your account in-app under Account → Delete Account, subject to legal retention requirements.
 
 Opt-Out: Opt out of marketing communications at any time by updating your notification preferences in the Account tab or contacting support.
 
-Data Portability: Request your data in a portable, machine-readable format.
+Data Portability: Request your data in a portable, machine-readable ZIP format from Account → Export Account Data.
 
-To exercise these rights, contact us at privacy@haulbrokr.com. We will respond within 30 days.`,
+To exercise these rights in-app, open Account → Privacy & Account, or contact privacy@haulbrokr.com. We will respond within 30 days.`,
   },
   {
     id: "6",

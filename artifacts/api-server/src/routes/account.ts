@@ -566,6 +566,45 @@ router.post("/account/compliance", requireProfile, async (req, res): Promise<voi
     return;
   }
   const d = parsed.data;
+
+  // Attempt live FMCSA lookup; never auto-verify on incomplete data.
+  const { lookupCarrierByDot } = await import("../lib/fmcsa");
+  let fmcsaPatch: Record<string, unknown> = {
+    fmcsaSource: "manual_review",
+    fmcsaLookupError: null,
+  };
+  try {
+    const lookup = await lookupCarrierByDot(d.dotNumber ?? "");
+    fmcsaPatch = {
+      fmcsaAuthority: lookup.fields.fmcsaAuthority,
+      insuranceActive: lookup.fields.insuranceActive,
+      dotOperatingStatus: lookup.fields.dotOperatingStatus,
+      notSuspended: lookup.fields.notSuspended,
+      safetyRating: lookup.fields.safetyRating,
+      complianceCheckedAt: new Date(lookup.lookedUpAt),
+      fmcsaSource: lookup.source,
+      fmcsaLookupFields: JSON.stringify(lookup.rawFields),
+      fmcsaLookupError: lookup.errorMessage ?? null,
+      // Auto-verify ONLY when the live provider returns a complete positive result.
+      ...(lookup.autoVerifyEligible
+        ? {
+            dotVerified: true,
+            dotVerifiedAt: new Date(lookup.lookedUpAt),
+            status: "verified",
+          }
+        : {
+            dotVerified: false,
+            status: "pending",
+          }),
+    };
+  } catch {
+    fmcsaPatch = {
+      fmcsaSource: "manual_review",
+      fmcsaLookupError: "lookup_exception",
+      status: "pending",
+    };
+  }
+
   const values: Record<string, unknown> = {
     dotNumber: d.dotNumber,
     mcNumber: d.mcNumber,
@@ -573,8 +612,9 @@ router.post("/account/compliance", requireProfile, async (req, res): Promise<voi
     cdlState: d.cdlState,
     cdlClass: d.cdlClass,
     cdlExpiry: d.cdlExpiry ? new Date(d.cdlExpiry) : undefined,
-    status: "pending",
     submittedAt: new Date(),
+    ...fmcsaPatch,
+    status: (fmcsaPatch.status as string) ?? "pending",
   };
   const [existing] = await db.select().from(dotCdlTable).where(eq(dotCdlTable.profileId, profile.id));
   let rec;
@@ -586,7 +626,7 @@ router.post("/account/compliance", requireProfile, async (req, res): Promise<voi
   res.json(rec);
 });
 
-// Staff manually verify carrier DOT/CDL after document review (no live FMCSA API yet).
+// Staff manually verify carrier DOT/CDL after document review (safe fallback when live FMCSA unavailable).
 router.patch("/account/compliance/verify", requireStaffOrProfile, requirePermission("compliance"), async (req, res): Promise<void> => {
   if (!req.staffUser && !req.profile) {
     res.status(403).json({ error: "Staff access required." });
@@ -610,6 +650,8 @@ router.patch("/account/compliance/verify", requireStaffOrProfile, requirePermiss
     notSuspended: "verified",
     safetyRating: "Satisfactory",
     complianceCheckedAt: now,
+    fmcsaSource: "manual_review",
+    fmcsaLookupError: null,
     status: "verified",
   }).where(eq(dotCdlTable.profileId, targetProfileId)).returning();
   if (!rec) {

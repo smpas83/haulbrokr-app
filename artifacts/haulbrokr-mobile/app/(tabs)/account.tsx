@@ -18,7 +18,7 @@ import { LastUpdated } from "@/components/LastUpdated";
 import { ACCENT } from "@/constants/theme";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-import { useCompliance, useSubmitCompliance, useVerifyCompliance, useCreditApplication, useSubmitCreditApplication, useQBStatus, useQBConnect, useQBSync, useQBDisconnect, usePayoutStatus, useConnectStripe, useMyProfile, useAdminAccess, useAdminCompliance, useAdminCreditApplications, useStuckPayouts, useWallet, useAccountStatus, useLiveActivity } from "@/hooks/useLiveApi";
+import { useCompliance, useSubmitCompliance, useVerifyCompliance, useCreditApplication, useSubmitCreditApplication, useQBStatus, useQBConnect, useQBSync, useQBDisconnect, usePayoutStatus, useConnectStripe, useMyProfile, useAdminAccess, useAdminCompliance, useAdminCreditApplications, useStuckPayouts, useWallet, useAccountStatus, useLiveActivity, useDeleteAccount, useDeletionPreview, useRequestDataExport, useDataExports, useDownloadDataExport } from "@/hooks/useLiveApi";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 const COMPLIANCE_ITEMS = [
@@ -48,6 +48,11 @@ export default function AccountScreen() {
   const [notifJobs, setNotifJobs] = useState(true);
   const [notifPayments, setNotifPayments] = useState(true);
   const { signOut } = useAuth();
+  const deleteAccount = useDeleteAccount();
+  const deletionPreview = useDeletionPreview();
+  const requestExport = useRequestDataExport();
+  const dataExports = useDataExports();
+  const downloadExport = useDownloadDataExport();
   const complianceQuery = useCompliance();
   const submitCompliance = useSubmitCompliance();
   const verifyCompliance = useVerifyCompliance();
@@ -1002,6 +1007,142 @@ export default function AccountScreen() {
             </View>
           </Pressable>
         ))}
+      </Animated.View>
+
+      {/* Privacy & Account */}
+      <Animated.View entering={FadeInDown.delay(360).springify()}>
+        <Text style={[styles.sectionLabel, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold" }]}>PRIVACY & ACCOUNT</Text>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Alert.alert(
+              "Export Account Data",
+              "We'll prepare a ZIP of your profile, jobs, documents metadata, invoices, and preferences. You'll be notified when it's ready.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Request Export",
+                  onPress: async () => {
+                    try {
+                      await requestExport.mutateAsync();
+                      Alert.alert("Export requested", "Check back here when status is ready.");
+                    } catch (err: any) {
+                      Alert.alert("Export failed", err?.message ?? "Please try again.");
+                    }
+                  },
+                },
+              ],
+            );
+          }}
+          style={[styles.settingItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+        >
+          <View style={styles.settingLeft}>
+            <Feather name="download" size={18} color={colors.mutedForeground} />
+            <Text style={[styles.settingLabel, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>Export Account Data</Text>
+          </View>
+          <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+        </Pressable>
+        {Array.isArray(dataExports.data) && dataExports.data.slice(0, 3).map((ex: any) => (
+          <Pressable
+            key={ex.id}
+            onPress={async () => {
+              if (ex.status !== "ready") {
+                Alert.alert("Export status", `Export #${ex.id} is ${ex.status}.`);
+                return;
+              }
+              try {
+                const signed = await downloadExport.mutateAsync(ex.id);
+                await Linking.openURL(signed.url);
+              } catch (err: any) {
+                Alert.alert("Download failed", err?.message ?? "Try again later.");
+              }
+            }}
+            style={[styles.settingItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
+            <View style={styles.settingLeft}>
+              <Feather name="archive" size={18} color={colors.mutedForeground} />
+              <Text style={[styles.settingLabel, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
+                Export #{ex.id} · {ex.status}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </Pressable>
+        ))}
+        <Pressable
+          disabled={deleteAccount.isPending || !!deletionPreview.data?.blockedReason}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            const blocked = deletionPreview.data?.blockedReason;
+            if (blocked) {
+              Alert.alert("Ownership transfer required", blocked);
+              return;
+            }
+            const willDelete = (deletionPreview.data?.willDelete ?? []).slice(0, 4).join("\n• ");
+            const mayRetain = (deletionPreview.data?.mayRetain ?? []).slice(0, 3).join("\n• ");
+            Alert.alert(
+              "Delete Account",
+              `This permanently deletes your HaulBrokr account and personal data.\n\nWill be deleted:\n• ${willDelete || "Personal profile data, tokens, preferences"}\n\nMay be legally retained:\n• ${mayRetain || "Financial, tax, dispute, and safety records"}\n\nType DELETE on the next step.`,
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Continue",
+                  style: "destructive",
+                  onPress: () => {
+                    const runDelete = async () => {
+                      try {
+                        await deleteAccount.mutateAsync();
+                        try {
+                          await signOutAndClearLocalState(signOut);
+                        } catch {
+                          // Clerk user may already be gone after server delete.
+                        }
+                        Alert.alert("Account deleted", "Your account has been permanently deleted.");
+                      } catch (err: any) {
+                        Alert.alert("Couldn't delete account", err?.message ?? "Please try again.");
+                      }
+                    };
+                    if (typeof (Alert as any).prompt === "function") {
+                      (Alert as any).prompt(
+                        "Confirm Delete Account",
+                        "Type DELETE to permanently delete your account.",
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          {
+                            text: "Delete Account",
+                            style: "destructive",
+                            onPress: async (value?: string) => {
+                              if ((value ?? "").trim() !== "DELETE") {
+                                Alert.alert("Confirmation required", "You must type DELETE exactly.");
+                                return;
+                              }
+                              await runDelete();
+                            },
+                          },
+                        ],
+                        "plain-text",
+                      );
+                    } else {
+                      Alert.alert(
+                        "Confirm Delete Account",
+                        'Tap "Delete Account" to permanently delete. This cannot be undone.',
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          { text: "Delete Account", style: "destructive", onPress: () => void runDelete() },
+                        ],
+                      );
+                    }
+                  },
+                },
+              ],
+            );
+          }}
+          style={[styles.signOutBtn, { backgroundColor: colors.card, borderColor: colors.border, opacity: deleteAccount.isPending ? 0.6 : 1 }]}
+        >
+          <Feather name="trash-2" size={18} color={colors.destructive} />
+          <Text style={[styles.signOutText, { color: colors.destructive, fontFamily: "Inter_600SemiBold" }]}>
+            {deleteAccount.isPending ? "Deleting…" : "Delete Account"}
+          </Text>
+        </Pressable>
       </Animated.View>
 
       {/* Sign Out */}

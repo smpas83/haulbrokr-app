@@ -63,3 +63,11 @@ services:
         value: /haulbrokr/private
       - key: PUBLIC_OBJECT_SEARCH_PATHS
         value: /haulbrokr/public
+      - key: AUTOMATION_KEY
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: FMCSA_WEB_KEY
+        sync: false
+      # Recurring hauls also run in-process hourly. Optional external cron:
+      #   curl -X POST "$API/api/workers/recurring-hauls" -H "x-automation-key: $AUTOMATION_KEY"

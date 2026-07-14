@@ -185,4 +185,45 @@ router.post("/organizations/rotate-code", requireAuth, async (req, res): Promise
   res.json(updated);
 });
 
+/**
+ * Transfer organization ownership to another member.
+ * Required before sole owners can delete their account.
+ */
+router.post("/organizations/transfer-ownership", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = req.clerkId as string;
+  const profile = await loadProfile(clerkId);
+  if (!profile?.organizationId) {
+    res.status(404).json({ error: "No organization" });
+    return;
+  }
+  if (profile.orgRole !== "owner") {
+    res.status(403).json({ error: "Only the current owner can transfer ownership." });
+    return;
+  }
+  const newOwnerId = Number(req.body?.newOwnerProfileId);
+  if (!Number.isFinite(newOwnerId)) {
+    res.status(400).json({ error: "newOwnerProfileId is required" });
+    return;
+  }
+  if (newOwnerId === profile.id) {
+    res.status(400).json({ error: "Cannot transfer ownership to yourself." });
+    return;
+  }
+  const [target] = await db.select().from(profilesTable).where(eq(profilesTable.id, newOwnerId));
+  if (!target || target.organizationId !== profile.organizationId) {
+    res.status(404).json({ error: "Target member not found in your organization." });
+    return;
+  }
+
+  await db.update(profilesTable).set({ orgRole: "admin" }).where(eq(profilesTable.id, profile.id));
+  await db.update(profilesTable).set({ orgRole: "owner" }).where(eq(profilesTable.id, newOwnerId));
+  const [org] = await db
+    .update(organizationsTable)
+    .set({ ownerProfileId: newOwnerId })
+    .where(eq(organizationsTable.id, profile.organizationId))
+    .returning();
+
+  res.json({ ok: true, organization: org, previousOwnerId: profile.id, newOwnerId });
+});
+
 export default router;

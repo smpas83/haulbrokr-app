@@ -138,6 +138,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
     { href: "/requests", label: isCustomer ? "My Requests" : "Load Board", icon: ClipboardList, show: true },
+    { href: "/recurring", label: "Recurring", icon: ClipboardList, show: isCustomer },
     { href: "/fleet", label: "My Fleet", icon: Truck, show: isProvider },
     { href: "/dispatch", label: "Digital Twin", icon: Radio, show: true },
     { href: "/jobs", label: "Active Jobs", icon: Briefcase, show: true },

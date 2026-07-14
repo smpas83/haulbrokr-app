@@ -83,3 +83,4 @@ coverage
 
 .authfix-backup/
 quarry-orders.patch
+.rc2-certify-summary.json
