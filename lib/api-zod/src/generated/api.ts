@@ -2109,7 +2109,7 @@ export const UpdateOrgMemberRoleParams = zod.object({
 })
 
 export const UpdateOrgMemberRoleBody = zod.object({
-  "orgRole": zod.enum(['admin', 'member'])
+  "orgRole": zod.enum(['admin', 'member', 'fleet_manager', 'dispatcher'])
 })
 
 export const UpdateOrgMemberRoleResponse = zod.object({

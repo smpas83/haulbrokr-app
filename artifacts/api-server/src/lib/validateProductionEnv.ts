@@ -6,7 +6,9 @@ export type ProductionService =
   | "r2"
   | "render"
   | "vercel"
-  | "core";
+  | "core"
+  | "fmcsa"
+  | "twilio";
 
 export interface EnvRequirement {
   service: ProductionService;
@@ -65,6 +67,14 @@ export const PRODUCTION_ENV_REQUIREMENTS: EnvRequirement[] = [
   { service: "core", variable: "ADMIN_USER_IDS", required: true, description: "Comma-separated Clerk user IDs with admin access." },
   { service: "core", variable: "GOOGLE_MAPS_API_KEY", required: true, description: "Google Maps API key for /api/map/config and geocoding." },
   { service: "core", variable: "AUTOMATION_KEY", required: false, description: "Optional shared key for internal automation endpoints." },
+
+  // FMCSA QCMobile (live carrier verification)
+  { service: "fmcsa", variable: "FMCSA_WEB_KEY", required: false, description: "FMCSA QCMobile webKey for DOT/MC live lookup (https://mobile.fmcsa.dot.gov/QCDevsite/)." },
+
+  // Twilio SMS
+  { service: "twilio", variable: "TWILIO_ACCOUNT_SID", required: false, description: "Twilio Account SID for SMS notifications." },
+  { service: "twilio", variable: "TWILIO_AUTH_TOKEN", required: false, description: "Twilio Auth Token." },
+  { service: "twilio", variable: "TWILIO_FROM_NUMBER", required: false, description: "Twilio from phone number (E.164)." },
 ];
 
 const PLACEHOLDER_PATTERNS = [

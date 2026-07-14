@@ -17,6 +17,9 @@ export const activityTypeEnum = pgEnum("activity_type", [
   "payment_failed",
   "payment_requires_action",
   "payment_refunded",
+  "invoice_paid",
+  "payout_paid",
+  "payout_failed",
   "application_approved",
   "application_rejected",
   "payout_delayed",
@@ -25,6 +28,8 @@ export const activityTypeEnum = pgEnum("activity_type", [
   "bin_delivered",
   "bin_picked_up",
   "bin_cancelled",
+  "recurring_created",
+  "job_reminder",
 ]);
 
 export const activityTable = pgTable("activity", {

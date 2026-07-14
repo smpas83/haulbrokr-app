@@ -19,6 +19,13 @@ export const payoutAccountsTable = pgTable("payout_accounts", {
   chargesEnabled: integer("charges_enabled").notNull().default(0),
   payoutsEnabled: integer("payouts_enabled").notNull().default(0),
   detailsSubmitted: integer("details_submitted").notNull().default(0),
+  // Last Connect bank payout observed via Stripe webhooks
+  lastPayoutId: text("last_payout_id"),
+  lastPayoutStatus: text("last_payout_status"),
+  lastPayoutAmount: text("last_payout_amount"),
+  lastPayoutAt: timestamp("last_payout_at", { withTimezone: true }),
+  lastPayoutFailureCode: text("last_payout_failure_code"),
+  lastPayoutFailureMessage: text("last_payout_failure_message"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

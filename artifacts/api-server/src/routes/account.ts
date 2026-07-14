@@ -619,6 +619,130 @@ router.patch("/account/compliance/verify", requireStaffOrProfile, requirePermiss
   res.json(rec);
 });
 
+/**
+ * Live FMCSA QCMobile lookup — DOT and/or MC — updates the compliance record
+ * with authority, insurance, operating status, and safety signals.
+ */
+router.post("/account/compliance/fmcsa-lookup", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const body = req.body ?? {};
+  const dotNumber = typeof body.dotNumber === "string" ? body.dotNumber.trim() : "";
+  const mcNumber = typeof body.mcNumber === "string" ? body.mcNumber.trim() : "";
+
+  const [existing] = await db.select().from(dotCdlTable).where(eq(dotCdlTable.profileId, profile.id));
+  const effectiveDot = dotNumber || existing?.dotNumber || "";
+  const effectiveMc = mcNumber || existing?.mcNumber || "";
+
+  if (!effectiveDot && !effectiveMc) {
+    res.status(400).json({ error: "Provide a DOT or MC number to look up." });
+    return;
+  }
+
+  const {
+    lookupCarrierByDot,
+    lookupCarrierByMc,
+    lookupCarrierAuthority,
+    deriveComplianceFromFmcsa,
+    isFmcsaConfigured,
+  } = await import("../lib/fmcsaClient");
+
+  if (!isFmcsaConfigured()) {
+    res.status(503).json({
+      error: "FMCSA_WEB_KEY is not configured. Live carrier lookup is unavailable.",
+      code: "fmcsa_not_configured",
+    });
+    return;
+  }
+
+  let carrierResult = effectiveDot
+    ? await lookupCarrierByDot(effectiveDot)
+    : await lookupCarrierByMc(effectiveMc);
+
+  if (!carrierResult.ok && effectiveDot && effectiveMc) {
+    carrierResult = await lookupCarrierByMc(effectiveMc);
+  }
+
+  if (!carrierResult.ok) {
+    const attempts = (existing?.fmcsaLookupAttempts ?? 0) + 1;
+    if (existing) {
+      await db
+        .update(dotCdlTable)
+        .set({
+          fmcsaLastError: carrierResult.message,
+          fmcsaLookupAttempts: attempts,
+          complianceCheckedAt: new Date(),
+        })
+        .where(eq(dotCdlTable.profileId, profile.id));
+    }
+    res.status(carrierResult.retryable ? 502 : 404).json({
+      error: carrierResult.message,
+      code: carrierResult.code,
+      retryable: carrierResult.retryable,
+    });
+    return;
+  }
+
+  const carrier = carrierResult.carrier;
+  const authority = carrier.dotNumber
+    ? await lookupCarrierAuthority(carrier.dotNumber)
+    : null;
+  const authOk = authority && authority.ok ? authority : null;
+  const snapshot = deriveComplianceFromFmcsa(
+    carrier,
+    authOk
+      ? { commonAuthority: authOk.commonAuthority, contractAuthority: authOk.contractAuthority }
+      : null,
+  );
+
+  const now = new Date();
+  const values = {
+    dotNumber: carrier.dotNumber || effectiveDot || null,
+    mcNumber: carrier.mcNumber || effectiveMc || null,
+    dotVerified: snapshot.dotOperatingStatus === "verified",
+    dotVerifiedAt: snapshot.dotOperatingStatus === "verified" ? now : null,
+    fmcsaAuthority: snapshot.fmcsaAuthority,
+    insuranceActive: snapshot.insuranceActive,
+    dotOperatingStatus: snapshot.dotOperatingStatus,
+    notSuspended: snapshot.notSuspended,
+    safetyRating: snapshot.safetyRating,
+    fmcsaLegalName: snapshot.fmcsaLegalName,
+    fmcsaDbaName: snapshot.fmcsaDbaName,
+    fmcsaAllowedToOperate: snapshot.fmcsaAllowedToOperate,
+    fmcsaOutOfService: snapshot.fmcsaOutOfService,
+    fmcsaRawPayload: JSON.stringify(carrier.raw).slice(0, 50_000),
+    fmcsaLastError: null as string | null,
+    fmcsaLookupAttempts: (existing?.fmcsaLookupAttempts ?? 0) + 1,
+    complianceCheckedAt: now,
+    status: snapshot.status,
+    reviewNote: snapshot.reviewNote,
+    submittedAt: existing?.submittedAt ?? now,
+  };
+
+  let rec;
+  if (existing) {
+    [rec] = await db.update(dotCdlTable).set(values).where(eq(dotCdlTable.profileId, profile.id)).returning();
+  } else {
+    [rec] = await db.insert(dotCdlTable).values({ ...values, profileId: profile.id }).returning();
+  }
+
+  res.json({
+    record: rec,
+    carrier: {
+      dotNumber: carrier.dotNumber,
+      mcNumber: carrier.mcNumber,
+      legalName: carrier.legalName,
+      dbaName: carrier.dbaName,
+      allowedToOperate: carrier.allowedToOperate,
+      outOfService: carrier.outOfService,
+      safetyRating: carrier.safetyRating,
+      bipdInsuranceOnFile: carrier.bipdInsuranceOnFile,
+      commonAuthorityStatus: authOk?.commonAuthority ?? carrier.commonAuthorityStatus,
+      contractAuthorityStatus: authOk?.contractAuthority ?? carrier.contractAuthorityStatus,
+    },
+    snapshot,
+  });
+});
+
 // ── Credit Application (Customer, for Net invoicing terms) ─────────────────────
 router.get("/account/credit-application", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);

@@ -16,12 +16,20 @@ export const dotCdlTable = pgTable("dot_cdl_compliance", {
   cdlExpiry: timestamp("cdl_expiry", { withTimezone: true }),
   cdlVerified: boolean("cdl_verified").notNull().default(false),
   cdlVerifiedAt: timestamp("cdl_verified_at", { withTimezone: true }),
-  // Automated compliance checks (manual verify now, FMCSA API later): unknown | verified | failed
+  // Automated compliance checks via FMCSA QCMobile API: unknown | verified | failed
   fmcsaAuthority: text("fmcsa_authority").notNull().default("unknown"),
   insuranceActive: text("insurance_active").notNull().default("unknown"),
   dotOperatingStatus: text("dot_operating_status").notNull().default("unknown"),
   safetyRating: text("safety_rating"),
   notSuspended: text("not_suspended").notNull().default("unknown"),
+  // Snapshot fields populated from live FMCSA lookups
+  fmcsaLegalName: text("fmcsa_legal_name"),
+  fmcsaDbaName: text("fmcsa_dba_name"),
+  fmcsaAllowedToOperate: text("fmcsa_allowed_to_operate"),
+  fmcsaOutOfService: text("fmcsa_out_of_service"),
+  fmcsaRawPayload: text("fmcsa_raw_payload"),
+  fmcsaLastError: text("fmcsa_last_error"),
+  fmcsaLookupAttempts: integer("fmcsa_lookup_attempts").notNull().default(0),
   complianceCheckedAt: timestamp("compliance_checked_at", { withTimezone: true }),
   status: text("status").notNull().default("not_submitted"),
   reviewNote: text("review_note"),

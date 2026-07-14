@@ -10,6 +10,13 @@ export const organizationsTable = pgTable("organizations", {
   type: orgTypeEnum("type").notNull(),
   ownerProfileId: integer("owner_profile_id"),
   inviteCode: text("invite_code").notNull().unique(),
+  // Optional company details for administration
+  billingEmail: text("billing_email"),
+  phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  state: text("state"),
+  zip: text("zip"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

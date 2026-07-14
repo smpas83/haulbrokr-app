@@ -6,7 +6,13 @@ export const userRoleEnum = pgEnum("user_role", ["customer", "provider", "driver
 
 export const paymentTermsEnum = pgEnum("payment_terms", ["due_on_receipt", "net_15", "net_30", "prepaid"]);
 
-export const orgRoleEnum = pgEnum("org_role", ["owner", "admin", "member"]);
+export const orgRoleEnum = pgEnum("org_role", [
+  "owner",
+  "admin",
+  "member",
+  "fleet_manager",
+  "dispatcher",
+]);
 
 // HaulBrokr internal staff roles. A profile with a non-null staffRole is a
 // HaulBrokr employee with admin-dashboard access scoped to that role's

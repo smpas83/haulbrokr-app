@@ -27,6 +27,7 @@ import mapRouter from "./map";
 import trackingRouter from "./tracking";
 import copilotRouter from "./copilot";
 import notificationsRouter from "./notifications";
+import recurringHaulsRouter from "./recurring-hauls";
 
 const router: IRouter = Router();
 
@@ -58,5 +59,6 @@ router.use(mapRouter);
 router.use(trackingRouter);
 router.use(copilotRouter);
 router.use(notificationsRouter);
+router.use(recurringHaulsRouter);
 
 export default router;
