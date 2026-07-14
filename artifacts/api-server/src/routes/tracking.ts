@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, jobStatusUpdatesTable, jobsTable, trucksTable, deliveryEvidenceTable } from "@workspace/db";
 import { eq, desc, and, inArray } from "drizzle-orm";
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
-import { loadJobIfMember, DRIVER_SIDE } from "../lib/access";
+import { loadJobIfMember, DRIVER_SIDE, CUSTOMER_SIDE, orgScopedActorIds } from "../lib/access";
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
 
 const router: IRouter = Router();
@@ -89,7 +89,7 @@ router.get("/dispatch/overview", requireProfile, async (req, res): Promise<void>
   const profile = getRequestProfile(req);
 
   const activeStatuses = ["accepted", "active", "in_progress"] as const;
-  const jobs = await db.select({
+  const jobColumns = {
     id: jobsTable.id,
     status: jobsTable.status,
     materialType: jobsTable.materialType,
@@ -98,15 +98,36 @@ router.get("/dispatch/overview", requireProfile, async (req, res): Promise<void>
     customerId: jobsTable.customerId,
     providerId: jobsTable.providerId,
     scheduledDate: jobsTable.scheduledDate,
-  })
-    .from(jobsTable)
-    .where(inArray(jobsTable.status, [...activeStatuses]));
+  };
 
-  const visibleJobs = profile.role === "customer"
-    ? jobs.filter((j) => j.customerId === profile.id)
-    : profile.role === "provider" || profile.role === "driver"
-      ? jobs.filter((j) => j.providerId === profile.id)
-      : jobs;
+  // Org-scoped at query time — never return another organization's active jobs.
+  // Staff with staffRole may see the full active set for ops oversight.
+  let visibleJobs: Array<{
+    id: number;
+    status: string;
+    materialType: string;
+    pickupAddress: string;
+    deliveryAddress: string;
+    customerId: number;
+    providerId: number;
+    scheduledDate: Date | null;
+  }>;
+
+  if (profile.staffRole) {
+    visibleJobs = await db
+      .select(jobColumns)
+      .from(jobsTable)
+      .where(inArray(jobsTable.status, [...activeStatuses]));
+  } else if (CUSTOMER_SIDE.has(profile.role) || DRIVER_SIDE.has(profile.role)) {
+    const actorIds = await orgScopedActorIds(profile);
+    const sideColumn = CUSTOMER_SIDE.has(profile.role) ? jobsTable.customerId : jobsTable.providerId;
+    visibleJobs = await db
+      .select(jobColumns)
+      .from(jobsTable)
+      .where(and(inArray(jobsTable.status, [...activeStatuses]), inArray(sideColumn, actorIds)));
+  } else {
+    visibleJobs = [];
+  }
 
   const jobIds = visibleJobs.map((j) => j.id);
   const positions: Record<number, { lat: number; lng: number; at: string } | null> = {};
@@ -125,12 +146,15 @@ router.get("/dispatch/overview", requireProfile, async (req, res): Promise<void>
   }
 
   let fleet: { id: number; truckType: string; isAvailable: boolean }[] = [];
-  if (profile.role === "provider") {
+  if (profile.role === "provider" || (profile.role === "driver" && profile.organizationId)) {
+    const ownerIds = profile.role === "provider"
+      ? [profile.id]
+      : await orgScopedActorIds(profile);
     fleet = await db.select({
       id: trucksTable.id,
       truckType: trucksTable.truckType,
       isAvailable: trucksTable.isAvailable,
-    }).from(trucksTable).where(eq(trucksTable.ownerId, profile.id));
+    }).from(trucksTable).where(inArray(trucksTable.ownerId, ownerIds));
   }
 
   res.json({
