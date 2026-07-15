@@ -1,14 +1,14 @@
 # Production Onboarding Certification
 
 **Date:** 2026-07-15  
-**PR #124:** Merged into `master` (`cc06a54`)  
-**Follow-on:** Admin Onboarding Center (this branch / PR)
+**PR #124:** Merged into `master` (`cc06a54`) — document upload / admin View fixes  
+**PR #125:** Merged into `master` (`0a00a6c`) — Admin Onboarding Center + certification docs  
 
 ## Verdict
 
 **PRODUCTION BLOCKED**
 
-Deployment of PR #124 succeeded for web + API. Full live carrier upload → R2 → Neon → admin approve proof could not be completed inside Cursor because production Neon / R2 / staff credentials are not available to this agent.
+Deployments of PR #124 and PR #125 succeeded for web + API. Full live carrier upload → R2 → Neon → admin approve proof could not be completed inside Cursor because production Neon / R2 / staff credentials are not available to this agent.
 
 ## 1. PR #124 security / regression review
 
@@ -26,8 +26,8 @@ No secrets in PR. CI on merge: **success**. No high-severity regressions identif
 
 | Surface | Host | Commit | Status |
 |---------|------|--------|--------|
-| Web app | Vercel → `https://haulbrokr.com` | `cc06a54` | **success** (GitHub deployment) |
-| API server | Render → `https://haulbrokr-api.onrender.com` | `cc06a54` | **success** (GitHub deployment) |
+| Web app | Vercel → `https://haulbrokr.com` | `0a00a6c` | **success** (GitHub deployment) |
+| API server | Render → `https://haulbrokr-api.onrender.com` | `0a00a6c` | **success** (GitHub deployment) |
 | Workers | None separate for this change | — | N/A |
 
 Smoke (post-deploy):
