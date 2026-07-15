@@ -28,7 +28,7 @@ export interface AdminOverviewV2 {
   activeJobs: number; inProgressJobs: number; completedJobs: number; cancelledJobs: number;
   newCarriers: number; newCustomers: number; drivers: number; supervisors: number;
   stuckPayouts: number; pendingCompliance: number; pendingCredit: number; openBinOrders: number;
-  documentsPending: number; documentsExpired: number;
+  documentsPending: number; documentsExpired: number; documentsVerified?: number;
 }
 interface JobRow {
   id: number; status: string; paymentStatus: string; materialType: string; truckType: string;
@@ -119,6 +119,22 @@ function docHref(objectPath: string | null): string | null {
   const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
   const rel = objectPath.replace(/^\/objects\//, "");
   return `${base}/api/storage/objects/${rel}`;
+}
+
+/** Open a private document with credentials (staff cookie or Clerk session). */
+async function openDocumentAuthenticated(objectPath: string | null): Promise<void> {
+  const href = docHref(objectPath);
+  if (!href) return;
+  const res = await fetch(href, { credentials: "include" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error || `Failed to open document (${res.status})`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  // Revoke after the browser has a chance to load the blob.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 const isExpired = (expiry: string | null) => !!expiry && new Date(expiry).getTime() < Date.now();
@@ -403,9 +419,18 @@ function DrillDialog({ drill, onClose }: { drill: Drill; onClose: () => void }) 
                       </td>
                       <td className="text-right pr-1">
                         {href ? (
-                          <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void openDocumentAuthenticated(r.objectPath).catch((err) => {
+                                // eslint-disable-next-line no-alert
+                                alert(err instanceof Error ? err.message : "Failed to open document");
+                              });
+                            }}
+                            className="inline-flex items-center gap-1 text-primary hover:underline text-xs"
+                          >
                             <FileStack className="w-3.5 h-3.5" /> View
-                          </a>
+                          </button>
                         ) : <span className="text-xs text-muted-foreground">—</span>}
                       </td>
                     </tr>
@@ -598,6 +623,25 @@ interface ProfileDetailResp {
     docNumber: string | null; expiry: string | null; reviewNote: string | null;
     uploadedAt: string | null; verifiedAt: string | null; updatedAt: string | null;
   }>;
+  onboarding?: {
+    overallStatus: string;
+    reasonBlocked: string | null;
+    nextAction: string;
+    stepsComplete: number;
+    stepsTotal: number;
+    documentCount: number;
+    pendingDocumentCount: number;
+    verifiedDocumentCount: number;
+    profileComplete: boolean;
+    truckAdded: boolean;
+    w9Uploaded: string;
+    coiUploaded: string;
+    w9Form: string;
+    insuranceForm: string;
+    dotVerified: string;
+    payoutReady: string;
+    canBid: boolean;
+  };
 }
 
 const money2 = (n: number) =>
@@ -677,6 +721,35 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
                 <Field label="Joined" value={p?.createdAt ? dateFmt(p.createdAt) : null} />
               </div>
 
+              {d.onboarding ? (
+                <div className="border rounded-none p-4 space-y-2 bg-muted/20">
+                  <div className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4" /> Onboarding status
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className="rounded-none font-mono text-xs">{d.onboarding.overallStatus}</Badge>
+                    <span className="text-sm">{d.onboarding.stepsComplete}/{d.onboarding.stepsTotal} steps complete</span>
+                    {d.onboarding.canBid ? (
+                      <Badge className="rounded-none bg-green-600">Can bid</Badge>
+                    ) : null}
+                  </div>
+                  <div className="text-sm">{d.onboarding.nextAction}</div>
+                  {d.onboarding.reasonBlocked ? (
+                    <div className="text-sm text-amber-700">Blocked: {d.onboarding.reasonBlocked}</div>
+                  ) : null}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-1">
+                    <div>Profile: {d.onboarding.profileComplete ? "✓" : "—"}</div>
+                    <div>Truck: {d.onboarding.truckAdded ? "✓" : "—"}</div>
+                    <div>W-9 file: {d.onboarding.w9Uploaded}</div>
+                    <div>COI file: {d.onboarding.coiUploaded}</div>
+                    <div>W-9 form: {d.onboarding.w9Form}</div>
+                    <div>Insurance form: {d.onboarding.insuranceForm}</div>
+                    <div>DOT: {d.onboarding.dotVerified}</div>
+                    <div>Payout: {d.onboarding.payoutReady}</div>
+                  </div>
+                </div>
+              ) : null}
+
               {/* Job history */}
               <div>
                 <div className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
@@ -732,9 +805,18 @@ function PersonDetail({ id, onClose }: { id: number | null; onClose: () => void 
                             </td>
                             <td className="text-right pr-1">
                               {href ? (
-                                <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    void openDocumentAuthenticated(doc.objectPath).catch((err) => {
+                                      // eslint-disable-next-line no-alert
+                                      alert(err instanceof Error ? err.message : "Failed to open document");
+                                    });
+                                  }}
+                                  className="inline-flex items-center gap-1 text-primary hover:underline text-xs"
+                                >
                                   <FileStack className="w-3.5 h-3.5" /> View
-                                </a>
+                                </button>
                               ) : <span className="text-xs text-muted-foreground">—</span>}
                             </td>
                           </tr>
@@ -876,7 +958,7 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
       <Section title="Compliance documents">
         <MetricCard icon={<FileStack className="w-3.5 h-3.5" />} label="Pending review" value={(d.documentsPending ?? 0).toLocaleString()} hint="Uploaded, awaiting approval" onClick={() => setDrill({ kind: "documents", status: "uploaded", title: "Documents pending review" })} />
         <MetricCard icon={<XCircle className="w-3.5 h-3.5" />} label="Expired" value={(d.documentsExpired ?? 0).toLocaleString()} hint="Past expiry date" accent={(d.documentsExpired ?? 0) > 0} onClick={() => setDrill({ kind: "documents", status: "expired", title: "Expired documents" })} />
-        <MetricCard icon={<PackageCheck className="w-3.5 h-3.5" />} label="Verified" value="View" hint="All approved documents" onClick={() => setDrill({ kind: "documents", status: "verified", title: "Verified documents" })} />
+        <MetricCard icon={<PackageCheck className="w-3.5 h-3.5" />} label="Verified" value={(d.documentsVerified ?? 0).toLocaleString()} hint="All approved documents" onClick={() => setDrill({ kind: "documents", status: "verified", title: "Verified documents" })} />
         <MetricCard icon={<ClipboardList className="w-3.5 h-3.5" />} label="All documents" value="View" hint="Every uploaded file" onClick={() => setDrill({ kind: "documents", status: "", title: "All documents" })} />
       </Section>
 

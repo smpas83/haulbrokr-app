@@ -181,14 +181,30 @@ function UploadedDocReview({
         {doc.objectPath && (
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">View</div>
-            <a
-              href={`/api/storage${doc.objectPath}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
               className="text-sm font-medium text-primary underline"
+              onClick={() => {
+                const href = `/api/storage${doc.objectPath}`;
+                void fetch(href, { credentials: "include" })
+                  .then(async (res) => {
+                    if (!res.ok) {
+                      const body = await res.json().catch(() => ({})) as { error?: string };
+                      throw new Error(body.error || `Failed to open (${res.status})`);
+                    }
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, "_blank", "noopener,noreferrer");
+                    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+                  })
+                  .catch((err) => {
+                    // eslint-disable-next-line no-alert
+                    alert(err instanceof Error ? err.message : "Failed to open document");
+                  });
+              }}
             >
               Open document
-            </a>
+            </button>
           </div>
         )}
       </div>

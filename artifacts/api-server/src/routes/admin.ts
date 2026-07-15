@@ -38,6 +38,11 @@ import {
   profileSummary,
   syncDotCdlUploadedDocs,
 } from "../lib/adminComplianceBundle";
+import {
+  listProviderOnboardingTraces,
+  buildCarrierOnboardingTrace,
+  countPendingComplianceWork,
+} from "../lib/onboardingTrace";
 
 const router: IRouter = Router();
 
@@ -127,14 +132,10 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
     [openRequestsAgg],
     statusRows,
     [realisedAgg],
-    [dotPendingAgg],
-    [w9PendingAgg],
-    [insurancePendingAgg],
     [creditAgg],
     [openBinAgg],
-    [docsPendingAgg],
-    [docsExpiredAgg],
     stuckJobs,
+    complianceCounts,
   ] = await Promise.all([
     db
       .select({
@@ -189,39 +190,15 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
       .where(eq(jobsTable.paymentStatus, "released")),
     db
       .select({ count: sql<number>`count(*)` })
-      .from(dotCdlTable)
-      .where(eq(dotCdlTable.status, "pending")),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(w9SubmissionsTable)
-      .where(eq(w9SubmissionsTable.status, "pending")),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(insuranceSubmissionsTable)
-      .where(eq(insuranceSubmissionsTable.status, "pending")),
-    db
-      .select({ count: sql<number>`count(*)` })
       .from(creditApplicationsTable)
       .where(eq(creditApplicationsTable.status, "pending")),
     db
       .select({ count: sql<number>`count(*)` })
       .from(binOrders)
       .where(notInArray(binOrders.status, ["picked_up", "cancelled"])),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(driverDocumentsTable)
-      .where(eq(driverDocumentsTable.status, "uploaded")),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(driverDocumentsTable)
-      .where(sql`${driverDocumentsTable.expiry} is not null and ${driverDocumentsTable.expiry} < now()`),
     findStuckPayoutJobs(),
+    countPendingComplianceWork(),
   ]);
-
-  const pendingCompliance =
-    Number(dotPendingAgg?.count ?? 0)
-    + Number(w9PendingAgg?.count ?? 0)
-    + Number(insurancePendingAgg?.count ?? 0);
 
   // Build a status -> count map from the grouped job rows.
   const statusCount = (s: string) =>
@@ -255,13 +232,14 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
     newCustomers: Number(customerAgg?.count ?? 0),
     drivers: Number(driverAgg?.count ?? 0),
     supervisors: Number(supervisorAgg?.count ?? 0),
-    // Review queues
+    // Review queues — pendingCompliance includes form pendings + uploaded files
     stuckPayouts: stuckJobs.length,
-    pendingCompliance,
+    pendingCompliance: complianceCounts.totalPending,
     pendingCredit: Number(creditAgg?.count ?? 0),
     openBinOrders: Number(openBinAgg?.count ?? 0),
-    documentsPending: Number(docsPendingAgg?.count ?? 0),
-    documentsExpired: Number(docsExpiredAgg?.count ?? 0),
+    documentsPending: complianceCounts.documentsPending,
+    documentsVerified: complianceCounts.documentsVerified,
+    documentsExpired: complianceCounts.documentsExpired,
   });
 });
 
@@ -580,6 +558,8 @@ router.get("/admin/profile/:id", requireStaffOrProfile, requirePermission("overv
     .orderBy(desc(driverDocumentsTable.updatedAt))
     .limit(200);
 
+  const onboarding = await buildCarrierOnboardingTrace(profile);
+
   const totals = jobs.reduce(
     (acc, j) => {
       acc.jobs += 1;
@@ -622,6 +602,7 @@ router.get("/admin/profile/:id", requireStaffOrProfile, requirePermission("overv
     },
     jobs,
     documents,
+    onboarding,
   });
 });
 
@@ -687,6 +668,36 @@ router.get("/admin/job/:id", requireStaffOrProfile, requirePermission("overview"
 });
 
 //  Staff team management 
+// ── Carrier onboarding forensic trace ────────────────────────────────────────
+// GET /admin/onboarding-trace -> every provider with step-by-step status so ops
+// can see exactly where each signup is stuck (profile, fleet, docs, approval).
+router.get("/admin/onboarding-trace", requireStaffOrProfile, requirePermission("overview"), async (_req, res): Promise<void> => {
+  const traces = await listProviderOnboardingTraces();
+  res.json({
+    generatedAt: new Date().toISOString(),
+    carrierCount: traces.length,
+    stuckCount: traces.filter((t) => t.overallStatus.startsWith("STUCK_")).length,
+    awaitingReviewCount: traces.filter((t) => t.overallStatus === "AWAITING_ADMIN_REVIEW").length,
+    readyCount: traces.filter((t) => t.overallStatus === "READY_TO_BID").length,
+    carriers: traces,
+  });
+});
+
+router.get("/admin/onboarding-trace/:profileId", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const id = Number(req.params.profileId);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid profile id" });
+    return;
+  }
+  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, id));
+  if (!profile) {
+    res.status(404).json({ error: "Profile not found" });
+    return;
+  }
+  const trace = await buildCarrierOnboardingTrace(profile);
+  res.json(trace);
+});
+
 // ── Documents drill-down ─────────────────────────────────────────────────────
 // GET /admin/documents?status=&type=&q= -> uploaded compliance docs across all
 // profiles, joined to the owning company. Staff-only (overview permission).
