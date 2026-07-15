@@ -14,6 +14,7 @@ import { getRequestProfile, requireProfile, attachClerkProfileIfPresent } from "
 import { hasPermission, requirePermission } from "../middlewares/requireAdmin";
 import { attachStaffSession, requireStaffOrProfile } from "../middlewares/staffAuth";
 import { computeProviderCanBid } from "../lib/providerCompliance";
+import { buildCarrierOnboardingTrace } from "../lib/onboardingTrace";
 import { getUncachableStripeClient, getStripePublishableKey } from "../lib/stripeClient";
 import {
   GetW9Response,
@@ -83,6 +84,13 @@ router.get("/account/status", requireProfile, async (req, res): Promise<void> =>
     canBid,
     canPost,
   }));
+});
+
+/** Carrier/customer resume progress — every upload and form is persisted; this reports where they left off. */
+router.get("/account/onboarding-progress", requireProfile, async (req, res): Promise<void> => {
+  const profile = getRequestProfile(req);
+  const trace = await buildCarrierOnboardingTrace(profile);
+  res.json(trace);
 });
 
 // ── W-9 ───────────────────────────────────────────────────────────────────────

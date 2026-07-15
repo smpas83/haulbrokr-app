@@ -508,7 +508,10 @@ describe("GET /admin/overview", () => {
     expect(res.body.completedJobs).toBe(4);
     expect(res.body.newCarriers).toBe(4);
     expect(res.body.newCustomers).toBe(4);
-    expect(res.body.pendingCompliance).toBe(12);
+    // Form pendings (dot+w9+insurance=12) + uploaded files awaiting review (4).
+    expect(res.body.pendingCompliance).toBe(16);
+    expect(res.body.documentsPending).toBe(4);
+    expect(res.body.documentsVerified).toBe(4);
     expect(res.body.pendingCredit).toBe(4);
     expect(res.body.openBinOrders).toBe(4);
   });

@@ -129,8 +129,11 @@ export function AccountDocuments() {
   }
 
   const requiredSpecs = specs.filter((s) => s.required);
+  // Count uploaded (pending review) as half-progress so users see saved work.
   const verifiedCount = requiredSpecs.filter((s) => byType[s.id]?.status === "verified").length;
-  const pct = requiredSpecs.length ? Math.round((verifiedCount / requiredSpecs.length) * 100) : 100;
+  const uploadedCount = requiredSpecs.filter((s) => byType[s.id]?.status === "uploaded").length;
+  const progressUnits = verifiedCount + uploadedCount * 0.5;
+  const pct = requiredSpecs.length ? Math.round((progressUnits / requiredSpecs.length) * 100) : 100;
   const allDone = verifiedCount === requiredSpecs.length;
   const isCustomer = (profile as any)?.role === "customer";
 

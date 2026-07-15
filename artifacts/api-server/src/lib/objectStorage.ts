@@ -156,7 +156,7 @@ export class ObjectStorageService {
     return new Response(webStream, { headers });
   }
 
-  async getObjectEntityUploadURL(): Promise<string> {
+  async getObjectEntityUploadURL(contentType?: string): Promise<string> {
     const privateObjectDir = this.getPrivateObjectDir();
     const objectId = randomUUID();
     const entityId = `uploads/${objectId}`;
@@ -164,9 +164,12 @@ export class ObjectStorageService {
     const client = getObjectStorageClient();
     const bucket = getR2Bucket();
 
+    // Include ContentType in the signed PutObject so R2 stores the declared
+    // type and finalize's content-type check does not falsely reject uploads.
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: objectKey,
+      ...(contentType ? { ContentType: contentType } : {}),
     });
 
     return getSignedUrl(client, command, { expiresIn: 900 });

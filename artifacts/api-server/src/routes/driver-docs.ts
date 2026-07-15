@@ -10,6 +10,7 @@ import {
 import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
 import { verifyStorageToken } from "../lib/uploadToken";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
+import { syncFormPendingFromFileUpload } from "../lib/onboardingTrace";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -93,28 +94,42 @@ router.put("/driver-docs/:docType", requireProfile, async (req, res): Promise<vo
     updates.status = "uploaded";
     updates.uploadedAt = now;
     updates.rejectedAt = null;
+    updates.verifiedAt = null;
   }
   if (docNumber !== undefined) updates.docNumber = docNumber;
   if (expiry !== undefined) updates.expiry = expiry ? new Date(expiry) : null;
 
+  let result;
   if (existing) {
     const [updated] = await db.update(driverDocumentsTable).set(updates)
       .where(eq(driverDocumentsTable.id, existing.id)).returning();
-    res.json(updated);
-    return;
+    result = updated;
+  } else {
+    const [created] = await db.insert(driverDocumentsTable).values({
+      profileId: profile.id,
+      docType,
+      status: isUpload ? "uploaded" : "missing",
+      objectPath: objectPath ?? null,
+      fileName: fileName ?? null,
+      mimeType: mimeType ?? null,
+      docNumber: docNumber ?? null,
+      expiry: expiry ? new Date(expiry) : null,
+      uploadedAt: isUpload ? now : null,
+    }).returning();
+    result = created;
+    res.status(201);
   }
-  const [created] = await db.insert(driverDocumentsTable).values({
-    profileId: profile.id,
-    docType,
-    status: isUpload ? "uploaded" : "missing",
-    objectPath: objectPath ?? null,
-    fileName: fileName ?? null,
-    mimeType: mimeType ?? null,
-    docNumber: docNumber ?? null,
-    expiry: expiry ? new Date(expiry) : null,
-    uploadedAt: isUpload ? now : null,
-  }).returning();
-  res.status(201).json(created);
+
+  // Keep form-based compliance queue aligned when carriers upload W-9 / COI files.
+  if (isUpload) {
+    try {
+      await syncFormPendingFromFileUpload(profile.id, docType);
+    } catch (err) {
+      req.log?.warn?.({ err, docType, profileId: profile.id }, "Failed to sync form pending from file upload");
+    }
+  }
+
+  res.json(result);
 });
 
 router.delete("/driver-docs/:docType", requireProfile, async (req, res): Promise<void> => {

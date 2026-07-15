@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
 import { db, staffUsersTable } from "@workspace/db";
-import type { StaffRole } from "./requireAdmin";
+import { hasPermission, type StaffRole } from "./requireAdmin";
 import { STAFF_SESSION_COOKIE, verifyStaffSession } from "../lib/staffSession";
 import { requireProfile } from "./requireAuth";
 
@@ -50,6 +50,35 @@ export async function attachStaffSession(req: Request, _res: Response, next: Nex
 /** Staff password session OR Clerk profile (for admin routes). */
 export async function requireStaffOrProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (req.staffUser || req.profile) {
+    next();
+    return;
+  }
+  return requireProfile(req, res, next);
+}
+
+/**
+ * Private document viewer: Clerk profile owner OR staff session with compliance.
+ * Staff-password admins previously hit requireProfile → 401 Unauthorized on View.
+ */
+export async function requireProfileOrStaffCompliance(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  if (req.staffUser) {
+    try {
+      if (await hasPermission(req, "compliance")) {
+        next();
+        return;
+      }
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    } catch (err) {
+      next(err);
+      return;
+    }
+  }
+  if (req.profile) {
     next();
     return;
   }

@@ -4,8 +4,13 @@ import { z } from "zod/v4";
 import { and, eq } from "drizzle-orm";
 import { db, driverDocumentsTable } from "@workspace/db";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
-import { getRequestProfile, requireProfile } from "../middlewares/requireAuth";
+import { getRequestProfile, attachClerkProfileIfPresent } from "../middlewares/requireAuth";
 import { hasPermission } from "../middlewares/requireAdmin";
+import {
+  attachStaffSession,
+  requireProfileOrStaffCompliance,
+} from "../middlewares/staffAuth";
+import { requireProfile } from "../middlewares/requireAuth";
 import {
   issueUploadToken,
   verifyUploadToken,
@@ -44,6 +49,19 @@ function checkUploadRateLimit(profileId: string): boolean {
   return true;
 }
 
+/** True when stored content-type is compatible with what the client declared. */
+export function contentTypesCompatible(declared: string, actual: string): boolean {
+  const normalizedDeclared = declared.split(";")[0].trim().toLowerCase();
+  const normalizedActual = actual.split(";")[0].trim().toLowerCase();
+  if (!normalizedDeclared || !normalizedActual) return true;
+  if (normalizedDeclared === normalizedActual) return true;
+  // R2/S3 often stores application/octet-stream when the browser omits or
+  // rewrites Content-Type — do not delete otherwise-valid carrier uploads.
+  if (normalizedActual === "application/octet-stream") return true;
+  if (normalizedDeclared === "application/octet-stream") return true;
+  return false;
+}
+
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
 
@@ -75,7 +93,7 @@ router.post("/storage/uploads/request-url", requireProfile, async (req: Request,
       return;
     }
 
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+    const uploadURL = await objectStorageService.getObjectEntityUploadURL(contentType);
     const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
 
     const uploadToken = issueUploadToken({
@@ -98,9 +116,9 @@ router.post("/storage/uploads/request-url", requireProfile, async (req: Request,
  *
  * After the client has PUT the file to the presigned URL, call this endpoint to:
  * 1. Verify the uploadToken (HMAC, single-use).
- * 2. Fetch actual object metadata from GCS and validate size + content-type.
+ * 2. Fetch actual object metadata from R2 and validate size + content-type.
  * 3. Delete bad objects immediately.
- * 4. Issue a storageToken (with GCS generation) for use in PUT /driver-docs/:docType.
+ * 4. Issue a storageToken (with object generation/ETag) for use in PUT /driver-docs/:docType.
  */
 router.post("/storage/uploads/finalize", requireProfile, async (req: Request, res: Response) => {
   const parsed = FinalizeBody.safeParse(req.body);
@@ -153,9 +171,7 @@ router.post("/storage/uploads/finalize", requireProfile, async (req: Request, re
     return;
   }
 
-  const normalizedDeclared = declaredContentType.split(";")[0].trim().toLowerCase();
-  const normalizedActual = actualContentType.split(";")[0].trim().toLowerCase();
-  if (normalizedActual && normalizedDeclared && normalizedActual !== normalizedDeclared) {
+  if (!contentTypesCompatible(declaredContentType, actualContentType)) {
     try { await objectFile.delete(); } catch (delErr) {
       req.log.warn({ err: delErr, objectPath }, "Failed to delete content-type mismatch upload");
     }
@@ -218,24 +234,38 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
 /**
  * GET /storage/objects/*
  *
- * Serve object entities from PRIVATE_OBJECT_DIR.
- * These are served from a separate path from /public-objects and can optionally
- * be protected with authentication or ACL checks based on the use case.
+ * Serve private object entities. ACL:
+ * - Document owner (Clerk profile that owns the driver_documents row), OR
+ * - Staff session (or Clerk staff) with compliance permission, when a
+ *   driver_documents row exists for the object path.
+ *
+ * Staff-password admins previously received 401 Unauthorized because this
+ * route used requireProfile only (Clerk). attachStaffSession +
+ * requireProfileOrStaffCompliance fixes the admin document viewer.
  */
-router.get("/storage/objects/*path", requireProfile, async (req: Request, res: Response) => {
+router.get(
+  "/storage/objects/*path",
+  attachStaffSession,
+  attachClerkProfileIfPresent,
+  requireProfileOrStaffCompliance,
+  async (req: Request, res: Response) => {
   try {
     const raw = req.params.path;
     const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
     const objectPath = `/objects/${wildcardPath}`;
 
-    // ACL: caller must own the document, or staff with compliance permission.
-    const profile = getRequestProfile(req);
-    const [owned] = await db.select({ id: driverDocumentsTable.id })
-      .from(driverDocumentsTable)
-      .where(and(
-        eq(driverDocumentsTable.profileId, profile.id),
-        eq(driverDocumentsTable.objectPath, objectPath),
-      ));
+    const profile = req.profile;
+    let owned = false;
+    if (profile) {
+      const [row] = await db.select({ id: driverDocumentsTable.id })
+        .from(driverDocumentsTable)
+        .where(and(
+          eq(driverDocumentsTable.profileId, profile.id),
+          eq(driverDocumentsTable.objectPath, objectPath),
+        ));
+      owned = !!row;
+    }
+
     const staffCanView = !owned && (await hasPermission(req, "compliance"));
     if (!owned && !staffCanView) {
       res.status(403).json({ error: "Forbidden" });
