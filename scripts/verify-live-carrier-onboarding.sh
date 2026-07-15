@@ -2,8 +2,13 @@
 # Operator-run live production verification for carrier onboarding.
 # Requires real credentials in the shell environment — never commit secrets.
 #
+# Auth: uses the password staff flow (POST /api/admin/login → haulbrokr_staff
+# cookie). This is the supported admin path — not Clerk. Create/reset accounts
+# with: pnpm create:staff -- --username … --password …
+# See STAFF_LOGIN_SETUP.md.
+#
 # Required env (values never printed):
-#   STAFF_USERNAME / STAFF_PASSWORD   — admin staff login
+#   STAFF_USERNAME / STAFF_PASSWORD   — staff_users login (password staff)
 #   DATABASE_URL                     — Neon Postgres (for optional SQL checks)
 #   R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET
 #   PRIVATE_OBJECT_DIR               — e.g. /haulbrokr/private
@@ -13,6 +18,8 @@
 #   CARRIER_EMAIL / CARRIER_PASSWORD — if you already created the test carrier
 #
 # Usage:
+#   # Ensure the staff row exists first (once per environment):
+#   #   pnpm create:staff -- --username "$STAFF_USERNAME" --password "$STAFF_PASSWORD"
 #   export STAFF_USERNAME=... STAFF_PASSWORD=...
 #   ./scripts/verify-live-carrier-onboarding.sh
 #
@@ -44,14 +51,27 @@ need STAFF_USERNAME
 need STAFF_PASSWORD
 
 echo ""
-echo "==> 1) Staff login"
+echo "==> 1) Staff login (password staff → haulbrokr_staff cookie)"
 LOGIN_CODE="$(curl -sS -o /tmp/hb_staff_login.json -w '%{http_code}' \
   -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
   -X POST "$WEB_URL/api/admin/login" \
   -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
   -d "{\"username\":\"${STAFF_USERNAME}\",\"password\":\"${STAFF_PASSWORD}\"}")"
 echo "  HTTP $LOGIN_CODE"
-[ "$LOGIN_CODE" = "200" ] || { echo "FAIL: staff login"; cat /tmp/hb_staff_login.json | redact; exit 1; }
+if [ "$LOGIN_CODE" != "200" ]; then
+  echo "FAIL: staff login (expected POST /api/admin/login → 200 + Set-Cookie haulbrokr_staff)"
+  echo "Create/reset the account: pnpm create:staff -- --username \"\$STAFF_USERNAME\" --password \"…\""
+  echo "Docs: STAFF_LOGIN_SETUP.md"
+  cat /tmp/hb_staff_login.json | redact
+  exit 1
+fi
+# Confirm the session cookie was stored (name only — never print the value).
+if ! grep -q 'haulbrokr_staff' "$COOKIE_JAR" 2>/dev/null; then
+  echo "FAIL: login succeeded but haulbrokr_staff cookie missing from jar"
+  exit 1
+fi
+echo "  cookie haulbrokr_staff=SET"
 
 echo ""
 echo "==> 2) Staff-protected onboarding-trace"
