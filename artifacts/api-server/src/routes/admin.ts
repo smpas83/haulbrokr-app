@@ -42,7 +42,9 @@ import {
   listProviderOnboardingTraces,
   buildCarrierOnboardingTrace,
   countPendingComplianceWork,
+  markAdminOnboardingViewed,
 } from "../lib/onboardingTrace";
+import type { OnboardingFunnelFilter } from "../lib/onboardingFunnel";
 
 const router: IRouter = Router();
 
@@ -671,14 +673,33 @@ router.get("/admin/job/:id", requireStaffOrProfile, requirePermission("overview"
 // ── Carrier onboarding forensic trace ────────────────────────────────────────
 // GET /admin/onboarding-trace -> every provider with step-by-step status so ops
 // can see exactly where each signup is stuck (profile, fleet, docs, approval).
-router.get("/admin/onboarding-trace", requireStaffOrProfile, requirePermission("overview"), async (_req, res): Promise<void> => {
-  const traces = await listProviderOnboardingTraces();
+// Optional ?filter=all|registered_only|incomplete|waiting_documents|pending_review|approved|stalled
+router.get("/admin/onboarding-trace", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const rawFilter = typeof req.query.filter === "string" ? req.query.filter : "all";
+  const allowed: OnboardingFunnelFilter[] = [
+    "all",
+    "registered_only",
+    "incomplete",
+    "waiting_documents",
+    "pending_review",
+    "approved",
+    "stalled",
+  ];
+  const filter: OnboardingFunnelFilter = allowed.includes(rawFilter as OnboardingFunnelFilter)
+    ? (rawFilter as OnboardingFunnelFilter)
+    : "all";
+  const traces = await listProviderOnboardingTraces(filter);
   res.json({
     generatedAt: new Date().toISOString(),
+    filter,
     carrierCount: traces.length,
-    stuckCount: traces.filter((t) => t.overallStatus.startsWith("STUCK_")).length,
-    awaitingReviewCount: traces.filter((t) => t.overallStatus === "AWAITING_ADMIN_REVIEW").length,
-    readyCount: traces.filter((t) => t.overallStatus === "READY_TO_BID").length,
+    stuckCount: traces.filter((t) => t.overallStatus.startsWith("STUCK_") || t.stalled).length,
+    awaitingReviewCount: traces.filter((t) => t.funnelStage === "waiting_approval" || t.overallStatus === "AWAITING_ADMIN_REVIEW").length,
+    readyCount: traces.filter((t) => t.overallStatus === "READY_TO_BID" || t.funnelStage === "approved").length,
+    newRegistrationCount: traces.filter((t) => t.funnelStage === "new_registration").length,
+    setupStartedCount: traces.filter((t) => t.funnelStage === "setup_started").length,
+    waitingDocumentsCount: traces.filter((t) => t.funnelStage === "waiting_documents").length,
+    stalledCount: traces.filter((t) => t.stalled || t.funnelStage === "stalled").length,
     carriers: traces,
   });
 });
@@ -694,7 +715,10 @@ router.get("/admin/onboarding-trace/:profileId", requireStaffOrProfile, requireP
     res.status(404).json({ error: "Profile not found" });
     return;
   }
-  const trace = await buildCarrierOnboardingTrace(profile);
+  // Opening the detail view records admin inspection for the timeline.
+  await markAdminOnboardingViewed(id);
+  const [refreshed] = await db.select().from(profilesTable).where(eq(profilesTable.id, id));
+  const trace = await buildCarrierOnboardingTrace(refreshed ?? profile);
   res.json(trace);
 });
 
