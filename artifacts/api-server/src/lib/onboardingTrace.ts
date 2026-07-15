@@ -8,9 +8,19 @@ import {
   dotCdlTable,
   payoutAccountsTable,
   trucksTable,
+  uploadSessionsTable,
   type Profile,
 } from "@workspace/db";
 import { computeProviderCanBid } from "./providerCompliance";
+import {
+  buildTimeline,
+  classifyFunnelStage,
+  completionPercent,
+  matchesFunnelFilter,
+  type OnboardingFunnelFilter,
+  type OnboardingFunnelStage,
+  type OnboardingTimelineEvent,
+} from "./onboardingFunnel";
 
 export type OnboardingStepStatus = "complete" | "pending" | "missing" | "rejected" | "n/a";
 
@@ -42,6 +52,15 @@ export interface CarrierOnboardingTrace {
   stepsComplete: number;
   stepsTotal: number;
   nextAction: string;
+  /** Ops funnel stage for the Admin Onboarding Center. */
+  funnelStage: OnboardingFunnelStage;
+  completionPercent: number;
+  missingItems: string[];
+  /** Exact upload/review error when a document was rejected or noted. */
+  uploadError: string | null;
+  stalled: boolean;
+  timeline: OnboardingTimelineEvent[];
+  lastAdminViewAt: string | null;
 }
 
 function formStatus(status: string | undefined | null): OnboardingStepStatus {
@@ -71,14 +90,20 @@ function profileLooksComplete(p: Profile): boolean {
   );
 }
 
+function iso(d: Date | string | null | undefined): string | null {
+  if (!d) return null;
+  return d instanceof Date ? d.toISOString() : new Date(d).toISOString();
+}
+
 export async function buildCarrierOnboardingTrace(profile: Profile): Promise<CarrierOnboardingTrace> {
-  const [w9, insurance, dotCdl, payout, docs, trucks] = await Promise.all([
+  const [w9, insurance, dotCdl, payout, docs, trucks, uploadSessions] = await Promise.all([
     db.select().from(w9SubmissionsTable).where(eq(w9SubmissionsTable.profileId, profile.id)).then((r) => r[0]),
     db.select().from(insuranceSubmissionsTable).where(eq(insuranceSubmissionsTable.profileId, profile.id)).then((r) => r[0]),
     db.select().from(dotCdlTable).where(eq(dotCdlTable.profileId, profile.id)).then((r) => r[0]),
     db.select().from(payoutAccountsTable).where(eq(payoutAccountsTable.profileId, profile.id)).then((r) => r[0]),
     db.select().from(driverDocumentsTable).where(eq(driverDocumentsTable.profileId, profile.id)),
-    db.select({ id: trucksTable.id }).from(trucksTable).where(eq(trucksTable.ownerId, profile.id)).limit(1),
+    db.select().from(trucksTable).where(eq(trucksTable.ownerId, profile.id)).orderBy(trucksTable.createdAt).limit(1),
+    db.select().from(uploadSessionsTable).where(eq(uploadSessionsTable.profileId, profile.id)).orderBy(uploadSessionsTable.createdAt),
   ]);
 
   const docsWithFiles = docs.filter((d) => d.status !== "missing" && d.objectPath);
@@ -129,6 +154,7 @@ export async function buildCarrierOnboardingTrace(profile: Profile): Promise<Car
   const stepsComplete = steps.filter((s) => s.ok).length;
   const stepsTotal = steps.length;
   const nextMissing = steps.find((s) => !s.ok);
+  const missingItems = steps.filter((s) => !s.ok).map((s) => s.label);
 
   let overallStatus: string;
   let reasonBlocked: string | null = null;
@@ -164,13 +190,132 @@ export async function buildCarrierOnboardingTrace(profile: Profile): Promise<Car
     ? "Ready — can bid on loads"
     : (nextMissing?.label ? `Carrier should: ${nextMissing.label}` : "Awaiting admin review");
 
+  const pendingDocumentCount = docs.filter((d) => d.status === "uploaded").length;
+  const hasPendingReview =
+    pendingDocumentCount > 0
+    || w9Form === "pending"
+    || insuranceForm === "pending"
+    || dotVerified === "pending";
+  const hasAnyDocumentOrForm =
+    docsWithFiles.length > 0
+    || w9Form !== "missing"
+    || insuranceForm !== "missing"
+    || dotVerified !== "missing";
+  const isApproved =
+    (w9Form === "complete" || w9Uploaded === "complete")
+    && (insuranceForm === "complete" || coiUploaded === "complete")
+    && (canBid || (dotVerified === "complete" && payoutReady === "complete"));
+
+  const lastActivity = profile.updatedAt.toISOString();
+  const funnelStage = classifyFunnelStage({
+    profileComplete,
+    truckAdded,
+    hasAnyDocumentOrForm,
+    hasPendingReview,
+    isApproved: canBid || isApproved,
+    canBid,
+    lastActivityIso: lastActivity,
+  });
+  const stalled = funnelStage === "stalled";
+
+  const rejectedDoc = docs.find((d) => d.status === "rejected" && (d.reviewNote || d.notes));
+  const uploadError =
+    rejectedDoc?.reviewNote
+    || rejectedDoc?.notes
+    || docs.find((d) => d.notes)?.notes
+    || null;
+
+  const firstUploadSession = uploadSessions[0];
+  const firstUsedSession = uploadSessions.find((s) => s.usedAt);
+  const firstDocWithFile = docsWithFiles
+    .slice()
+    .sort((a, b) => {
+      const at = a.uploadedAt?.getTime() ?? a.createdAt.getTime();
+      const bt = b.uploadedAt?.getTime() ?? b.createdAt.getTime();
+      return at - bt;
+    })[0];
+  const approvedDoc = docs.find((d) => d.status === "verified" && d.verifiedAt);
+  const rejectedAny = docs.find((d) => d.status === "rejected" && d.rejectedAt);
+  const lastAdminViewAt = iso(profile.lastAdminOnboardingViewAt)
+    || iso(approvedDoc?.verifiedAt)
+    || iso(rejectedAny?.rejectedAt);
+
+  const timeline = buildTimeline([
+    {
+      type: "signup",
+      label: "Signup",
+      at: profile.createdAt.toISOString(),
+    },
+    {
+      type: "email_verified",
+      label: "Email verified",
+      // Profile rows are created after Clerk auth; email present implies verified signup path.
+      at: profile.email ? profile.createdAt.toISOString() : null,
+      status: profile.email ? "complete" : "missing",
+      detail: profile.email ? "Clerk account linked to profile" : "No email on profile",
+    },
+    {
+      type: "company_profile_saved",
+      label: "Company profile saved",
+      at: profileComplete ? profile.updatedAt.toISOString() : null,
+      status: profileComplete ? "complete" : "missing",
+    },
+    {
+      type: "equipment_added",
+      label: "Equipment added",
+      at: trucks[0] ? trucks[0].createdAt.toISOString() : null,
+      status: truckAdded ? "complete" : "missing",
+    },
+    {
+      type: "upload_requested",
+      label: "Upload requested",
+      at: firstUploadSession ? firstUploadSession.createdAt.toISOString() : (firstDocWithFile ? iso(firstDocWithFile.uploadedAt ?? firstDocWithFile.createdAt) : null),
+      status: firstUploadSession || firstDocWithFile ? "complete" : "missing",
+    },
+    {
+      type: "r2_upload_completed",
+      label: "R2 upload completed",
+      at: firstUsedSession?.usedAt
+        ? firstUsedSession.usedAt.toISOString()
+        : (firstDocWithFile?.objectPath ? iso(firstDocWithFile.uploadedAt ?? firstDocWithFile.createdAt) : null),
+      status: firstUsedSession?.usedAt || firstDocWithFile?.objectPath ? "complete" : "missing",
+    },
+    {
+      type: "database_finalized",
+      label: "Database finalized",
+      at: firstDocWithFile ? iso(firstDocWithFile.uploadedAt ?? firstDocWithFile.createdAt) : null,
+      status: firstDocWithFile ? "complete" : "missing",
+      detail: firstDocWithFile ? `${firstDocWithFile.docType} → ${firstDocWithFile.status}` : null,
+    },
+    {
+      type: "admin_viewed",
+      label: "Admin viewed",
+      at: lastAdminViewAt,
+      status: lastAdminViewAt ? "complete" : "missing",
+    },
+    {
+      type: "approved",
+      label: "Approved",
+      at: approvedDoc ? iso(approvedDoc.verifiedAt) : null,
+      status: approvedDoc ? "complete" : (rejectedAny ? "missing" : (hasPendingReview ? "pending" : "missing")),
+      detail: approvedDoc ? `${approvedDoc.docType} verified` : null,
+    },
+    {
+      type: "rejected",
+      label: "Rejected",
+      at: rejectedAny ? iso(rejectedAny.rejectedAt) : null,
+      status: rejectedAny ? "rejected" : "missing",
+      detail: rejectedAny?.reviewNote ?? null,
+    },
+  ]);
+
   return {
     carrier: profile.companyName || profile.contactName || `profile#${profile.id}`,
     profileId: profile.id,
     email: profile.email ?? null,
     role: profile.role,
     created: profile.createdAt.toISOString(),
-    lastActivity: profile.updatedAt.toISOString(),
+    lastActivity,
     profileComplete,
     truckAdded,
     insuranceUploaded,
@@ -184,7 +329,7 @@ export async function buildCarrierOnboardingTrace(profile: Profile): Promise<Car
     databaseRecordExists,
     adminCanSeeIt,
     documentCount: docsWithFiles.length,
-    pendingDocumentCount: docs.filter((d) => d.status === "uploaded").length,
+    pendingDocumentCount,
     verifiedDocumentCount: docs.filter((d) => d.status === "verified").length,
     canBid,
     overallStatus,
@@ -192,10 +337,19 @@ export async function buildCarrierOnboardingTrace(profile: Profile): Promise<Car
     stepsComplete,
     stepsTotal,
     nextAction,
+    funnelStage,
+    completionPercent: completionPercent(stepsComplete, stepsTotal),
+    missingItems,
+    uploadError,
+    stalled,
+    timeline,
+    lastAdminViewAt,
   };
 }
 
-export async function listProviderOnboardingTraces(): Promise<CarrierOnboardingTrace[]> {
+export async function listProviderOnboardingTraces(
+  filter: OnboardingFunnelFilter = "all",
+): Promise<CarrierOnboardingTrace[]> {
   const providers = await db
     .select()
     .from(profilesTable)
@@ -203,11 +357,28 @@ export async function listProviderOnboardingTraces(): Promise<CarrierOnboardingT
     .orderBy(desc(profilesTable.createdAt));
 
   const traces: CarrierOnboardingTrace[] = [];
-  // Batch in chunks to avoid overwhelming the DB with N+1 — still simple & correct.
   for (const profile of providers) {
-    traces.push(await buildCarrierOnboardingTrace(profile));
+    const trace = await buildCarrierOnboardingTrace(profile);
+    if (
+      matchesFunnelFilter(trace.funnelStage, filter, {
+        isApproved: trace.canBid || trace.funnelStage === "approved",
+        profileComplete: trace.profileComplete,
+        truckAdded: trace.truckAdded,
+        hasDocs: trace.documentCount > 0 || trace.w9Form !== "missing" || trace.insuranceForm !== "missing",
+      })
+    ) {
+      traces.push(trace);
+    }
   }
   return traces;
+}
+
+/** Record that staff opened a carrier in the Onboarding Center. */
+export async function markAdminOnboardingViewed(profileId: number): Promise<void> {
+  await db
+    .update(profilesTable)
+    .set({ lastAdminOnboardingViewAt: new Date() })
+    .where(eq(profilesTable.id, profileId));
 }
 
 /**

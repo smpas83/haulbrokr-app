@@ -60,6 +60,8 @@ export const profilesTable = pgTable("profiles", {
   stripeCustomerId: text("stripe_customer_id"),
   // Last time a "missing documents" reminder email was sent to this profile.
   lastDocReminderAt: timestamp("last_doc_reminder_at", { withTimezone: true }),
+  // Last time staff opened this carrier in the Admin Onboarding Center.
+  lastAdminOnboardingViewAt: timestamp("last_admin_onboarding_view_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

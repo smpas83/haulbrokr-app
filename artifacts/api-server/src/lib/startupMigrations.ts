@@ -83,8 +83,18 @@ export async function runStartupMigrations(): Promise<void> {
         ON device_tokens (profile_id, expo_push_token);
     `);
 
+    // Onboarding center + document upload hardening (PR #124 follow-on)
+    await client.query(`
+      ALTER TABLE profiles
+        ADD COLUMN IF NOT EXISTS last_admin_onboarding_view_at timestamptz;
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS driver_documents_profile_doc_type_uidx
+        ON driver_documents (profile_id, doc_type);
+    `);
+
     await client.query("COMMIT");
-    logger.info("Startup migrations applied (refund schema)");
+    logger.info("Startup migrations applied (refund + onboarding schema)");
   } catch (err) {
     await client.query("ROLLBACK");
     logger.error({ err }, "Startup migrations failed");
