@@ -1,18 +1,24 @@
 import {
   ArrowRight, CheckCircle2, ClipboardCheck, DollarSign, FileText,
   HardHat, LayoutDashboard, MapPin, Navigation, Search, ShieldCheck,
-  Truck, Zap, Building2, Users, Sparkles, Globe, BarChart3, Clock, Star, Bot
+  Truck, Zap, Building2, Users, Sparkles, Globe, BarChart3, Star, Bot
 } from "lucide-react";
+import { lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { SurfacePanel, AnimatedNationMap, AiCopilotPreview, FaqSection } from "@/components/design";
-import logo from "@/assets/haulbrokr-logo.png";
+import { SurfacePanel } from "@/components/design/surface-panel";
+import { AiCopilotPreview } from "@/components/design/ai-copilot-preview";
+import { FaqSection } from "@/components/design/faq-section";
 import logoWebp from "@/assets/haulbrokr-logo.webp";
-import heroTruck from "@/assets/hero-truck.png";
 import heroTruckWebp from "@/assets/hero-truck.webp";
 import heroTruckSmWebp from "@/assets/hero-truck-sm.webp";
-import ctaTruck from "@/assets/cta-truck.png";
 import ctaTruckWebp from "@/assets/cta-truck.webp";
+
+const AnimatedNationMap = lazy(() =>
+  import("@/components/design/animated-nation-map").then((m) => ({
+    default: m.AnimatedNationMap,
+  })),
+);
 
 const PLATFORM_HIGHLIGHTS = [
   { label: "Coverage", value: "Nationwide", detail: "All 50 states" },
@@ -159,10 +165,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:h-[4.5rem]">
           <a href="/" aria-label="HaulBrokr home">
-            <picture>
-              <source type="image/webp" srcSet={logoWebp} />
-              <img src={logo} alt="HaulBrokr" className="h-8 w-auto sm:h-9" width="400" height="225" />
-            </picture>
+            <img src={logoWebp} alt="HaulBrokr" className="h-8 w-auto sm:h-9" width="400" height="225" />
           </a>
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
             <a href="#platform" className="hover:text-foreground transition-colors">Platform</a>
@@ -186,10 +189,16 @@ export default function LandingPage() {
         {/* Hero */}
         <section className="relative isolate overflow-hidden">
           <div className="absolute inset-0 -z-10">
-            <picture>
-              <source type="image/webp" srcSet={`${heroTruckSmWebp} 768w, ${heroTruckWebp} 1408w`} sizes="100vw" />
-              <img src={heroTruck} alt="" className="h-full w-full object-cover opacity-20" fetchPriority="high" width="1408" height="768" />
-            </picture>
+            <img
+              src={heroTruckSmWebp}
+              srcSet={`${heroTruckSmWebp} 768w, ${heroTruckWebp} 1408w`}
+              sizes="100vw"
+              alt=""
+              className="h-full w-full object-cover opacity-20"
+              fetchPriority="high"
+              width="1408"
+              height="768"
+            />
             <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
           </div>
 
@@ -220,7 +229,13 @@ export default function LandingPage() {
 
               <div className="relative animate-fade-in">
                 <SurfacePanel elevated className="p-1">
-                  <AnimatedNationMap className="h-[420px]" />
+                  <Suspense
+                    fallback={
+                      <div className="h-[420px] rounded-2xl bg-muted/20 animate-pulse" aria-hidden />
+                    }
+                  >
+                    <AnimatedNationMap className="h-[420px]" />
+                  </Suspense>
                 </SurfacePanel>
               </div>
             </div>
@@ -464,10 +479,14 @@ export default function LandingPage() {
         {/* CTA */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0">
-            <picture>
-              <source type="image/webp" srcSet={ctaTruckWebp} />
-              <img src={ctaTruck} alt="" className="h-full w-full object-cover opacity-15" loading="lazy" width="1408" height="768" />
-            </picture>
+            <img
+              src={ctaTruckWebp}
+              alt=""
+              className="h-full w-full object-cover opacity-15"
+              loading="lazy"
+              width="1408"
+              height="768"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/70" />
           </div>
           <div className="container relative z-10 mx-auto px-4 py-24 sm:py-32 text-center">
@@ -496,10 +515,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="grid gap-12 md:grid-cols-4">
             <div className="md:col-span-1">
-              <picture>
-                <source type="image/webp" srcSet={logoWebp} />
-                <img src={logo} alt="HaulBrokr" className="h-8 w-auto" width="400" height="225" />
-              </picture>
+              <img src={logoWebp} alt="HaulBrokr" className="h-8 w-auto" width="400" height="225" />
               <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
                 The premium dump truck marketplace and AI dispatch platform for North America.
               </p>

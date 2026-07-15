@@ -1,15 +1,13 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
-import { shadcn } from '@clerk/themes';
-import { Switch, Route, useLocation, Redirect } from 'wouter';
+import { ClerkProvider, Show, useClerk } from "@clerk/react";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 import { Layout } from "./components/layout";
 import { Toaster } from "@/components/ui/toaster";
 import { useGetMyProfile } from "@workspace/api-client-react";
-import { SignInPage, SignUpPage } from "./pages/auth";
-import LandingPage from "./pages/landing";
+import { clerkAppearance, clerkBasePath, clerkPubKey } from "./lib/clerkAppearance";
 
 const OnboardingPage = lazy(() => import("./pages/onboarding"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
@@ -36,63 +34,14 @@ const AdminLoginPage = lazy(() => import("./pages/admin-login"));
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient();
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 function stripBase(path: string): string {
-  return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || "/" : path;
+  return clerkBasePath && path.startsWith(clerkBasePath)
+    ? path.slice(clerkBasePath.length) || "/"
+    : path;
 }
 
-if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY');
-
-const clerkAppearance = {
-  theme: shadcn,
-  cssLayerName: "clerk",
-  options: {
-    logoPlacement: "inside" as const,
-    logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.png`,
-  },
-  variables: {
-    colorPrimary: "hsl(217 91% 60%)",
-    colorForeground: "hsl(0 0% 96%)",
-    colorMutedForeground: "hsl(240 4% 55%)",
-    colorDanger: "hsl(0 72% 51%)",
-    colorBackground: "hsl(240 6% 4%)",
-    colorInput: "hsl(240 4% 12%)",
-    colorInputForeground: "hsl(0 0% 96%)",
-    colorNeutral: "hsl(240 4% 16%)",
-    fontFamily: '"Inter", ui-sans-serif, system-ui, sans-serif',
-    borderRadius: "0.5rem",
-  },
-  elements: {
-    rootBox: "w-full flex justify-center",
-    cardBox: "bg-card border border-border/60 shadow-2xl shadow-black/40 rounded-xl w-[440px] max-w-full overflow-hidden",
-    card: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    headerTitle: "text-2xl font-bold tracking-tight text-foreground",
-    headerSubtitle: "text-muted-foreground",
-    socialButtonsBlockButtonText: "font-semibold",
-    formFieldLabel: "font-semibold text-foreground",
-    footerActionLink: "text-primary font-semibold hover:underline",
-    footerActionText: "text-muted-foreground",
-    dividerText: "text-muted-foreground font-mono text-xs uppercase tracking-wider",
-    identityPreviewEditButton: "text-primary",
-    formFieldSuccessText: "text-emerald-400",
-    alertText: "text-destructive",
-    logoBox: "mb-6 flex justify-center",
-    logoImage: "h-12 w-auto",
-    socialButtonsBlockButton: "rounded-lg border border-border hover:bg-muted font-semibold h-11",
-    formButtonPrimary: "rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-11 shadow-sm",
-    formFieldInput: "rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary h-11 bg-muted/30",
-    footerAction: "mt-6 border-t border-border pt-6",
-    dividerLine: "bg-border",
-    alert: "rounded-xl border border-destructive/50 bg-destructive/10 text-destructive",
-    otpCodeFieldInput: "rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary",
-    formFieldRow: "mb-4",
-    main: "p-8",
-  },
-};
+if (!clerkPubKey) throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
 
 function AppLoader() {
   return (
@@ -141,10 +90,10 @@ function AuthShellRoutes() {
     <ClerkProvider
       publishableKey={clerkPubKey}
       appearance={clerkAppearance}
-      signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
-      signInFallbackRedirectUrl={`${basePath}/dashboard`}
-      signUpFallbackRedirectUrl={`${basePath}/onboarding`}
+      signInUrl={`${clerkBasePath}/sign-in`}
+      signUpUrl={`${clerkBasePath}/sign-up`}
+      signInFallbackRedirectUrl={`${clerkBasePath}/dashboard`}
+      signUpFallbackRedirectUrl={`${clerkBasePath}/onboarding`}
       localization={{}}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
@@ -153,13 +102,6 @@ function AuthShellRoutes() {
         <ClerkQueryClientCacheInvalidator />
         <Suspense fallback={<AppLoader />}>
           <Switch>
-            <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/">
-              <Show when="signed-in"><Redirect to="/dashboard" /></Show>
-              <Show when="signed-out"><LandingPage /></Show>
-            </Route>
-            <Route path="/sign-up/*?" component={SignUpPage} />
-
             <Route path="/onboarding">
               <Show when="signed-in">
                 <OnboardingPage />
