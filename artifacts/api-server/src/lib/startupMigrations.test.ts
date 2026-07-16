@@ -34,6 +34,7 @@ describe("runStartupMigrations", () => {
     expect(h.query.mock.calls.some(([sql]) => String(sql).includes("refunded_amount"))).toBe(true);
     expect(h.query.mock.calls.some(([sql]) => String(sql).includes("last_admin_onboarding_view_at"))).toBe(true);
     expect(h.query.mock.calls.some(([sql]) => String(sql).includes("driver_documents_profile_doc_type_uidx"))).toBe(true);
+    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("page_views"))).toBe(true);
   });
 
   it("rolls back on failure", async () => {

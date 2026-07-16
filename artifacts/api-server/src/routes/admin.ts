@@ -14,6 +14,7 @@ import {
   insuranceSubmissionsTable,
   driverDocumentsTable,
   factoringRequestsTable,
+  pageViewsTable,
 } from "@workspace/db";
 import { requireStaffOrProfile, attachStaffSession } from "../middlewares/staffAuth";
 import { attachClerkProfileIfPresent } from "../middlewares/requireAuth";
@@ -495,6 +496,103 @@ router.get("/admin/timeseries", requireStaffOrProfile, requirePermission("overvi
   });
 
   res.json({ months: labels.length, series });
+});
+
+//  Website traffic (page views)
+// GET /admin/traffic?days=30 — totals, unique sessions, top pages, daily series.
+router.get("/admin/traffic", requireStaffOrProfile, requirePermission("overview"), async (req, res): Promise<void> => {
+  const daysRaw = Number(req.query.days);
+  const days = Number.isFinite(daysRaw) ? Math.min(Math.max(Math.floor(daysRaw), 1), 90) : 30;
+
+  const now = new Date();
+  const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const startOfRange = new Date(startOfToday);
+  startOfRange.setUTCDate(startOfRange.getUTCDate() - (days - 1));
+  const startOf7d = new Date(startOfToday);
+  startOf7d.setUTCDate(startOf7d.getUTCDate() - 6);
+  const startOf30d = new Date(startOfToday);
+  startOf30d.setUTCDate(startOf30d.getUTCDate() - 29);
+
+  const since = (d: Date) => sql`${pageViewsTable.createdAt} >= ${d.toISOString()}::timestamptz`;
+
+  const [
+    [totalAgg],
+    [todayAgg],
+    [d7Agg],
+    [d30Agg],
+    [uniqToday],
+    [uniq7],
+    [uniq30],
+    topPages,
+    dailyRows,
+  ] = await Promise.all([
+    db.select({ count: sql<number>`count(*)` }).from(pageViewsTable),
+    db.select({ count: sql<number>`count(*)` }).from(pageViewsTable).where(since(startOfToday)),
+    db.select({ count: sql<number>`count(*)` }).from(pageViewsTable).where(since(startOf7d)),
+    db.select({ count: sql<number>`count(*)` }).from(pageViewsTable).where(since(startOf30d)),
+    db
+      .select({ count: sql<number>`count(distinct ${pageViewsTable.sessionId})` })
+      .from(pageViewsTable)
+      .where(since(startOfToday)),
+    db
+      .select({ count: sql<number>`count(distinct ${pageViewsTable.sessionId})` })
+      .from(pageViewsTable)
+      .where(since(startOf7d)),
+    db
+      .select({ count: sql<number>`count(distinct ${pageViewsTable.sessionId})` })
+      .from(pageViewsTable)
+      .where(since(startOf30d)),
+    db
+      .select({
+        path: pageViewsTable.path,
+        views: sql<number>`count(*)`,
+      })
+      .from(pageViewsTable)
+      .where(since(startOfRange))
+      .groupBy(pageViewsTable.path)
+      .orderBy(desc(sql`count(*)`))
+      .limit(10),
+    db
+      .select({
+        day: sql<string>`to_char(date_trunc('day', ${pageViewsTable.createdAt} AT TIME ZONE 'UTC'), 'YYYY-MM-DD')`,
+        views: sql<number>`count(*)`,
+        uniqueSessions: sql<number>`count(distinct ${pageViewsTable.sessionId})`,
+      })
+      .from(pageViewsTable)
+      .where(since(startOfRange))
+      .groupBy(sql`1`)
+      .orderBy(sql`1`),
+  ]);
+
+  const dailyMap = new Map(dailyRows.map((r) => [r.day, r]));
+  const daily: Array<{ date: string; label: string; views: number; uniqueSessions: number }> = [];
+  {
+    const cursor = new Date(startOfRange);
+    while (cursor <= startOfToday) {
+      const key = cursor.toISOString().slice(0, 10);
+      const row = dailyMap.get(key);
+      daily.push({
+        date: key,
+        label: cursor.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
+        views: Number(row?.views ?? 0),
+        uniqueSessions: Number(row?.uniqueSessions ?? 0),
+      });
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+  }
+
+  res.json({
+    days,
+    totalViews: Number(totalAgg?.count ?? 0),
+    viewsToday: Number(todayAgg?.count ?? 0),
+    viewsLast7Days: Number(d7Agg?.count ?? 0),
+    viewsLast30Days: Number(d30Agg?.count ?? 0),
+    uniqueSessionsToday: Number(uniqToday?.count ?? 0),
+    uniqueSessionsLast7Days: Number(uniq7?.count ?? 0),
+    uniqueSessionsLast30Days: Number(uniq30?.count ?? 0),
+    topPages: topPages.map((r) => ({ path: r.path, views: Number(r.views) })),
+    daily,
+  });
 });
 
 //  Single profile detail (everything about one person/company) 

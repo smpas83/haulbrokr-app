@@ -93,8 +93,31 @@ export async function runStartupMigrations(): Promise<void> {
         ON driver_documents (profile_id, doc_type);
     `);
 
+    // Website traffic (page views) for admin dashboard
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS page_views (
+        id serial PRIMARY KEY,
+        path text NOT NULL,
+        referrer text,
+        session_id text NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS page_views_created_at_idx
+        ON page_views (created_at);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS page_views_path_idx
+        ON page_views (path);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS page_views_session_created_idx
+        ON page_views (session_id, created_at);
+    `);
+
     await client.query("COMMIT");
-    logger.info("Startup migrations applied (refund + onboarding schema)");
+    logger.info("Startup migrations applied (refund + onboarding + page_views schema)");
   } catch (err) {
     await client.query("ROLLBACK");
     logger.error({ err }, "Startup migrations failed");
