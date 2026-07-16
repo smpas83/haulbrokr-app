@@ -965,7 +965,7 @@ function WebsiteTraffic({ enabled }: { enabled: boolean }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div id="website-traffic" className="space-y-4 scroll-mt-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Website traffic</h2>
         <div className="flex gap-1">
