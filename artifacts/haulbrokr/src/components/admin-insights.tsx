@@ -18,7 +18,7 @@ import {
   Eye, MousePointerClick, BarChart3,
 } from "lucide-react";
 import {
-  ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
+  ResponsiveContainer, AreaChart, Area, BarChart, Bar, Line, ComposedChart,
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend,
 } from "recharts";
 
