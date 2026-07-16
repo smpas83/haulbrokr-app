@@ -51,9 +51,8 @@ vi.mock("@workspace/db", () => {
         p.where = () => makeChain();
         p.leftJoin = () => makeChain();
         p.innerJoin = () => makeChain();
-        p.groupBy = () => Promise.resolve(h.selectRows);
-        p.orderBy = () => Promise.resolve(h.selectRows);
-        p.limit = () => Promise.resolve(h.selectRows);
+        p.groupBy = () => makeChain();
+        p.orderBy = () => makeChain();
         p.limit = () => Promise.resolve(h.selectRows);
         return p;
       };
@@ -73,6 +72,8 @@ vi.mock("@workspace/db", () => {
     insuranceSubmissionsTable: makeTable("insuranceSubmissions"),
     driverDocumentsTable: makeTable("driverDocuments"),
     payoutAccountsTable: makeTable("payoutAccounts"),
+    pageViewsTable: makeTable("pageViews"),
+    factoringRequestsTable: makeTable("factoringRequests"),
   };
 });
 
@@ -519,6 +520,35 @@ describe("GET /admin/overview", () => {
   it("is denied for a non-staff profile", async () => {
     h.profile = { id: 1, staffRole: null };
     const res = await request(makeApp()).get("/admin/overview");
+    expect(res.status).toBe(403);
+  });
+});
+
+describe("GET /admin/traffic", () => {
+  beforeEach(() => {
+    process.env.ADMIN_USER_IDS = "someone-else";
+  });
+
+  it("returns website traffic KPIs for staff with overview access", async () => {
+    h.profile = { id: 1, staffRole: "accounting" };
+    h.selectRows = [
+      { count: 42, path: "/", views: 20, day: "2026-07-16", uniqueSessions: 8 },
+    ];
+
+    const res = await request(makeApp()).get("/admin/traffic?days=7");
+    expect(res.status).toBe(200);
+    expect(res.body.days).toBe(7);
+    expect(res.body.totalViews).toBe(42);
+    expect(res.body.viewsToday).toBe(42);
+    expect(res.body.uniqueSessionsToday).toBe(42);
+    expect(Array.isArray(res.body.daily)).toBe(true);
+    expect(res.body.daily).toHaveLength(7);
+    expect(Array.isArray(res.body.topPages)).toBe(true);
+  });
+
+  it("is denied for a non-staff profile", async () => {
+    h.profile = { id: 1, staffRole: null };
+    const res = await request(makeApp()).get("/admin/traffic");
     expect(res.status).toBe(403);
   });
 });

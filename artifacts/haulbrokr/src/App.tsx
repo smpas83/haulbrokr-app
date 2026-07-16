@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 
 import SupportPage from "./pages/support";
 import PrivacyPage from "./pages/privacy";
+import { PageViewTracker } from "./components/page-view-tracker";
 
 const AuthShell = lazy(() => import("./AuthShell"));
 
@@ -19,15 +20,18 @@ function AppLoader() {
 
 function PublicRouter() {
   return (
-    <Switch>
-      <Route path="/support" component={SupportPage} />
-      <Route path="/privacy" component={PrivacyPage} />
-      <Route>
-        <Suspense fallback={<AppLoader />}>
-          <AuthShell />
-        </Suspense>
-      </Route>
-    </Switch>
+    <>
+      <PageViewTracker />
+      <Switch>
+        <Route path="/support" component={SupportPage} />
+        <Route path="/privacy" component={PrivacyPage} />
+        <Route>
+          <Suspense fallback={<AppLoader />}>
+            <AuthShell />
+          </Suspense>
+        </Route>
+      </Switch>
+    </>
   );
 }
 

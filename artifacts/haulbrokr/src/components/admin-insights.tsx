@@ -15,9 +15,10 @@ import {
   DollarSign, TrendingUp, Banknote, Briefcase, Activity, PackageCheck,
   ClipboardList, FileStack, XCircle, Truck, Users, UserCog, HardHat,
   MapPin, ArrowRight, Search, ChevronRight, Building2, Phone, Mail, Globe, Loader2, Download, CalendarRange, ShieldCheck,
+  Eye, MousePointerClick, BarChart3,
 } from "lucide-react";
 import {
-  ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
+  ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend,
 } from "recharts";
 
@@ -918,6 +919,128 @@ function JobDetail({ id, onClose }: { id: number | null; onClose: () => void }) 
   );
 }
 
+interface AdminTrafficResp {
+  days: number;
+  totalViews: number;
+  viewsToday: number;
+  viewsLast7Days: number;
+  viewsLast30Days: number;
+  uniqueSessionsToday: number;
+  uniqueSessionsLast7Days: number;
+  uniqueSessionsLast30Days: number;
+  topPages: Array<{ path: string; views: number }>;
+  daily: Array<{ date: string; label: string; views: number; uniqueSessions: number }>;
+}
+
+const TRAFFIC_COLORS = { views: "#0ea5e9", sessions: "#f59e0b" };
+
+function WebsiteTraffic({ enabled }: { enabled: boolean }) {
+  const [days, setDays] = useState(30);
+  const traffic = useQuery({
+    queryKey: ["admin-traffic", days],
+    queryFn: () => apiFetch<AdminTrafficResp>(`/admin/traffic?days=${days}`),
+    enabled,
+  });
+
+  if (traffic.isLoading) {
+    return (
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Website traffic</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
+        </div>
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  const t = traffic.data;
+  if (!t) {
+    return (
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Website traffic</h2>
+        <div className="text-sm text-muted-foreground py-4 text-center border">Couldn't load traffic stats.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Website traffic</h2>
+        <div className="flex gap-1">
+          {[7, 30, 90].map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => setDays(d)}
+              className={`px-3 py-1 text-xs border rounded-none ${days === d ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
+            >
+              {d}d
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard icon={<Eye className="w-3.5 h-3.5" />} label="Views today" value={t.viewsToday.toLocaleString()} hint={`${t.uniqueSessionsToday.toLocaleString()} unique sessions`} accent />
+        <MetricCard icon={<MousePointerClick className="w-3.5 h-3.5" />} label="Views (7 days)" value={t.viewsLast7Days.toLocaleString()} hint={`${t.uniqueSessionsLast7Days.toLocaleString()} unique sessions`} />
+        <MetricCard icon={<BarChart3 className="w-3.5 h-3.5" />} label="Views (30 days)" value={t.viewsLast30Days.toLocaleString()} hint={`${t.uniqueSessionsLast30Days.toLocaleString()} unique sessions`} />
+        <MetricCard icon={<Activity className="w-3.5 h-3.5" />} label="All-time views" value={t.totalViews.toLocaleString()} hint="Since tracking started" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ChartCard title="Page views over time" subtitle={`Daily views and unique sessions · last ${t.days} days`}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={t.daily} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gViews" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={TRAFFIC_COLORS.views} stopOpacity={0.4} />
+                  <stop offset="95%" stopColor={TRAFFIC_COLORS.views} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="label" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+              <RTooltip />
+              <Legend />
+              <Area type="monotone" dataKey="views" name="Views" stroke={TRAFFIC_COLORS.views} fill="url(#gViews)" strokeWidth={2} />
+              <Line type="monotone" dataKey="uniqueSessions" name="Sessions" stroke={TRAFFIC_COLORS.sessions} strokeWidth={2} dot={false} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Top pages" subtitle={`Most viewed paths · last ${t.days} days`}>
+          {t.topPages.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+              No page views recorded yet. Traffic appears as visitors browse the site.
+            </div>
+          ) : (
+            <div className="h-full overflow-auto">
+              <table className="w-full text-sm">
+                <thead className="text-xs uppercase text-muted-foreground border-b sticky top-0 bg-card">
+                  <tr>
+                    <th className="text-left py-2">Path</th>
+                    <th className="text-right">Views</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {t.topPages.map((p) => (
+                    <tr key={p.path} className="border-b last:border-0">
+                      <td className="py-2 font-mono text-xs">{p.path}</td>
+                      <td className="text-right tabular-nums font-medium">{p.views.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </ChartCard>
+      </div>
+    </div>
+  );
+}
+
 export function AdminInsights({ enabled }: { enabled: boolean }) {
   const [drill, setDrill] = useState<Drill>(null);
   const overview = useQuery({
@@ -934,6 +1057,8 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
 
   return (
     <div className="space-y-6">
+      <WebsiteTraffic enabled={enabled} />
+
       <Section title="Money">
         <MetricCard accent icon={<DollarSign className="w-3.5 h-3.5" />} label="GMV (billed)" value={money(d.gmv)} hint="Total customer-billed" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (GMV)" })} />
         <MetricCard accent icon={<TrendingUp className="w-3.5 h-3.5" />} label="Broker-fee revenue" value={money(d.brokerFees)} hint="15% platform fee on all jobs" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (broker fees)" })} />
