@@ -34,8 +34,10 @@ import {
 import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
-type Step = "credentials" | "verify";
-type VerifyReason = "signup" | "trust";
+
+/** Email OTP codes land in junk — prefer Google/Apple instead of resending codes. */
+const NO_EMAIL_CODE_MESSAGE =
+  "Email verification codes are disabled. Continue with Google or Apple instead.";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -158,13 +160,10 @@ export default function SignInScreen() {
   };
 
   const [mode, setMode] = useState<Mode>("signin");
-  const [step, setStep] = useState<Step>("credentials");
-  const [verifyReason, setVerifyReason] = useState<VerifyReason>("signup");
   const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -185,9 +184,7 @@ export default function SignInScreen() {
 
   const resetFormForMode = (nextMode: Mode) => {
     setMode(nextMode);
-    setStep("credentials");
     setError("");
-    setCode("");
     if (nextMode === "signin") {
       setEmail("");
       setUsername("");
@@ -289,22 +286,6 @@ export default function SignInScreen() {
     return false;
   };
 
-  const beginSecondFactorEmail = async (): Promise<boolean> => {
-    if (!signIn) return false;
-    const hasEmailCode = signIn.supportedSecondFactors?.some((factor) => factor.strategy === "email_code");
-    if (!hasEmailCode) return false;
-
-    const { error: sendError } = await signIn.mfa.sendEmailCode();
-    if (sendError) {
-      setError(clerkErrorMessage(sendError));
-      return false;
-    }
-
-    setVerifyReason("trust");
-    setStep("verify");
-    return true;
-  };
-
   const handleSignIn = async () => {
     setError("");
     const id = identifier.trim();
@@ -342,14 +323,12 @@ export default function SignInScreen() {
       }
 
       if (signIn.status === "needs_client_trust" || signIn.status === "needs_second_factor") {
-        const started = await beginSecondFactorEmail();
-        if (!started) {
-          setError(
-            signIn.status === "needs_second_factor"
-              ? "Two-factor authentication is required for this account."
-              : "Additional verification is required. Check your email for a code."
-          );
-        }
+        logClerkAuthError("signIn.emailCodeSkipped", new Error(signIn.status), {
+          status: signIn.status,
+          supportedSecondFactors: signIn.supportedSecondFactors?.map((f) => f.strategy),
+        });
+        setError(NO_EMAIL_CODE_MESSAGE);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
 
@@ -406,15 +385,17 @@ export default function SignInScreen() {
         return;
       }
 
+      // Do not send email OTP — messages hit junk. Try finalize; otherwise steer to OAuth.
       if (signUp.status === "missing_requirements") {
-        const { error: sendError } = await signUp.verifications.sendEmailCode();
-        if (sendError) {
-          logClerkAuthError("signUp.sendEmailCode", sendError);
-          setError(clerkErrorMessage(sendError));
-          return;
-        }
-        setVerifyReason("signup");
-        setStep("verify");
+        const finalized = await finalizeSignUp();
+        if (finalized) return;
+        logClerkAuthError("signUp.emailCodeSkipped", new Error("missing_requirements"), {
+          status: signUp.status,
+          unverifiedFields: (signUp as { unverifiedFields?: string[] }).unverifiedFields,
+          missingFields: (signUp as { missingFields?: string[] }).missingFields,
+        });
+        setError(NO_EMAIL_CODE_MESSAGE);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
 
@@ -432,126 +413,6 @@ export default function SignInScreen() {
     }
   };
 
-  const handleResendCode = async () => {
-    setError("");
-    if (!clerkReady) {
-      setError("Authentication is initialising. Please wait a moment.");
-      return;
-    }
-    setLoading(true);
-    try {
-      if (verifyReason === "trust") {
-        if (!signIn) return;
-        const { error: sendError } = await signIn.mfa.sendEmailCode();
-        if (sendError) {
-          logClerkAuthError("signIn.resendMfaCode", sendError);
-          setError(clerkErrorMessage(sendError));
-          return;
-        }
-        setError("");
-        return;
-      }
-      if (!signUp) return;
-      const { error: sendError } = await signUp.verifications.sendEmailCode();
-      if (sendError) {
-        logClerkAuthError("signUp.resendEmailCode", sendError);
-        setError(clerkErrorMessage(sendError));
-        return;
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    setError("");
-    if (!code.trim()) {
-      setError("Please enter the 6-digit code from your email.");
-      return;
-    }
-    if (!clerkReady) {
-      setError("Authentication is initialising. Please wait a moment.");
-      return;
-    }
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLoading(true);
-    try {
-      if (verifyReason === "trust") {
-        if (!signIn) {
-          setError("Authentication is initialising. Please wait a moment.");
-          return;
-        }
-        const { error: verifyError } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
-        if (verifyError) {
-          logClerkAuthError("signIn.verifyMfaCode", verifyError);
-          setError(clerkErrorMessage(verifyError));
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          return;
-        }
-        if (signIn.status === "complete") {
-          await finalizeSignIn();
-        } else {
-          logClerkAuthError("signIn.verifyMfaIncomplete", new Error("MFA verify succeeded but sign-in not complete"), {
-            status: signIn.status,
-          });
-          setError("Additional verification is still required. Check your email or try signing in again.");
-        }
-        return;
-      }
-
-      if (!signUp) {
-        setError("Authentication is initialising. Please wait a moment.");
-        return;
-      }
-      const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code: code.trim() });
-      if (verifyError) {
-        logClerkAuthError("signUp.verifyEmailCode", verifyError, { status: signUp.status });
-        setError(clerkErrorMessage(verifyError));
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        return;
-      }
-
-      const sessionId = signUp.createdSessionId ?? null;
-      if (signUp.status === "complete" || sessionId) {
-        if (sessionId) {
-          const activated = await activateSession(sessionId);
-          if (!activated && signUp.status !== "complete") {
-            setError("Verification succeeded but session activation failed. Please try again.");
-            return;
-          }
-        }
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        const finalized = await finalizeSignUp();
-        if (!finalized && signUp.status === "complete") {
-          await markClerkActiveSession();
-          router.replace("/onboarding" as any);
-        }
-      } else {
-        logClerkAuthError("signUp.verifyIncomplete", new Error("Email verify succeeded without session"), {
-          status: signUp.status,
-        });
-        setError("Email verified but sign-up could not finish. Tap Resend or go back and try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBackToCredentials = async () => {
-    if (verifyReason === "trust" && signIn?.status === "complete") {
-      setError("Enter your verification code to finish signing in.");
-      return;
-    }
-    if (verifyReason === "trust" && signIn) {
-      await signIn.reset();
-    }
-    setError("");
-    setCode("");
-    setStep("credentials");
-  };
-
-  const verifyEmail = email.trim() || identifier.trim();
   const stuckSignedIn =
     /already signed in/i.test(error || activeFieldError) ||
     (mode === "signin" && signIn?.status === "complete" && !isSignedIn);
@@ -575,252 +436,189 @@ export default function SignInScreen() {
           />
         </View>
 
-        {step === "credentials" && (
-          <View style={styles.modeRow}>
-            <Pressable
-              onPress={() => resetFormForMode("signin")}
-              style={[styles.modeTab, mode === "signin" && styles.modeTabActive]}
-            >
-              <Text style={[styles.modeTabText, mode === "signin" && styles.modeTabTextActive]}>
-                Sign In
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => resetFormForMode("signup")}
-              style={[styles.modeTab, mode === "signup" && styles.modeTabActive]}
-            >
-              <Text style={[styles.modeTabText, mode === "signup" && styles.modeTabTextActive]}>
-                Sign Up
-              </Text>
-            </Pressable>
-          </View>
-        )}
+        <View style={styles.modeRow}>
+          <Pressable
+            onPress={() => resetFormForMode("signin")}
+            style={[styles.modeTab, mode === "signin" && styles.modeTabActive]}
+          >
+            <Text style={[styles.modeTabText, mode === "signin" && styles.modeTabTextActive]}>
+              Sign In
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => resetFormForMode("signup")}
+            style={[styles.modeTab, mode === "signup" && styles.modeTabActive]}
+          >
+            <Text style={[styles.modeTabText, mode === "signup" && styles.modeTabTextActive]}>
+              Sign Up
+            </Text>
+          </Pressable>
+        </View>
 
         <Text style={styles.subtitle}>
-          {step === "credentials"
-            ? mode === "signin"
-              ? "Welcome back — sign in with your username or email and password"
-              : "Create your account with a username, email, and password"
-            : verifyReason === "trust"
-              ? `Verify this device once — enter the code sent to\n${verifyEmail}`
-              : `We sent a 6-digit code to\n${verifyEmail}`}
+          {mode === "signin"
+            ? "Welcome back — sign in with Google, Apple, or your password"
+            : "Create your account with Google, Apple, or a username and password"}
         </Text>
 
-        {step === "credentials" ? (
-          <>
-            <Pressable
-              style={[styles.ssoBtn, styles.ssoGoogle, (ssoBusy !== null || !clerkReady) && styles.btnDisabled]}
-              onPress={() => handleSSO("oauth_google")}
-              disabled={ssoBusy !== null || !clerkReady}
-            >
-              {ssoBusy === "google" ? (
-                <ActivityIndicator color="#1e2235" />
-              ) : (
-                <>
-                  <FontAwesome name="google" size={17} color="#1e2235" />
-                  <Text style={styles.ssoGoogleText}>Continue with Google</Text>
-                </>
-              )}
-            </Pressable>
-            <Pressable
-              style={[styles.ssoBtn, styles.ssoApple, (ssoBusy !== null || !clerkReady) && styles.btnDisabled]}
-              onPress={() => handleSSO("oauth_apple")}
-              disabled={ssoBusy !== null || !clerkReady}
-            >
-              {ssoBusy === "apple" ? (
-                <ActivityIndicator color="#f0f6ff" />
-              ) : (
-                <>
-                  <FontAwesome name="apple" size={19} color="#f0f6ff" />
-                  <Text style={styles.ssoAppleText}>Continue with Apple</Text>
-                </>
-              )}
-            </Pressable>
+        <Pressable
+          style={[styles.ssoBtn, styles.ssoGoogle, (ssoBusy !== null || !clerkReady) && styles.btnDisabled]}
+          onPress={() => handleSSO("oauth_google")}
+          disabled={ssoBusy !== null || !clerkReady}
+        >
+          {ssoBusy === "google" ? (
+            <ActivityIndicator color="#1e2235" />
+          ) : (
+            <>
+              <FontAwesome name="google" size={17} color="#1e2235" />
+              <Text style={styles.ssoGoogleText}>Continue with Google</Text>
+            </>
+          )}
+        </Pressable>
+        <Pressable
+          style={[styles.ssoBtn, styles.ssoApple, (ssoBusy !== null || !clerkReady) && styles.btnDisabled]}
+          onPress={() => handleSSO("oauth_apple")}
+          disabled={ssoBusy !== null || !clerkReady}
+        >
+          {ssoBusy === "apple" ? (
+            <ActivityIndicator color="#f0f6ff" />
+          ) : (
+            <>
+              <FontAwesome name="apple" size={19} color="#f0f6ff" />
+              <Text style={styles.ssoAppleText}>Continue with Apple</Text>
+            </>
+          )}
+        </Pressable>
 
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or use password</Text>
-              <View style={styles.dividerLine} />
-            </View>
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or use password</Text>
+          <View style={styles.dividerLine} />
+        </View>
 
-            {mode === "signin" ? (
-              <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-                <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Username or email"
-                  placeholderTextColor="#4a5568"
-                  value={identifier}
-                  onChangeText={(t) => { setIdentifier(t); setError(""); }}
-                  autoCapitalize="none"
-                  autoComplete="username"
-                  returnKeyType="next"
-                  editable={clerkReady}
-                />
-              </View>
-            ) : (
-              <>
-                <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-                  <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Username"
-                    placeholderTextColor="#4a5568"
-                    value={username}
-                    onChangeText={(t) => { setUsername(t); setError(""); }}
-                    autoCapitalize="none"
-                    autoComplete="username"
-                    returnKeyType="next"
-                    editable={clerkReady}
-                  />
-                </View>
-                <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-                  <Feather name="mail" size={16} color="#8ba0b8" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="your@email.com"
-                    placeholderTextColor="#4a5568"
-                    value={email}
-                    onChangeText={(t) => { setEmail(t); setError(""); }}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    returnKeyType="next"
-                    editable={clerkReady}
-                  />
-                </View>
-              </>
-            )}
-
-            <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-              <Feather name="lock" size={16} color="#8ba0b8" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#4a5568"
-                value={password}
-                onChangeText={(t) => { setPassword(t); setError(""); }}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoComplete={mode === "signin" ? "password" : "new-password"}
-                returnKeyType="go"
-                onSubmitEditing={handleSubmit}
-                editable={clerkReady}
-              />
-              <Pressable
-                onPress={() => setShowPassword((v) => !v)}
-                hitSlop={8}
-                disabled={!clerkReady}
-              >
-                <Feather name={showPassword ? "eye-off" : "eye"} size={16} color="#8ba0b8" />
-              </Pressable>
-            </View>
-
-            {error || activeFieldError ? (
-              <Text style={styles.errorText}>{error || activeFieldError}</Text>
-            ) : null}
-
-            {stuckSignedIn ? (
-              <Pressable
-                style={[styles.btn, busy && styles.btnDisabled]}
-                onPress={() => void finalizeSignIn()}
-                disabled={busy}
-              >
-                {busy ? (
-                  <ActivityIndicator color="#1e2235" />
-                ) : (
-                  <Text style={styles.btnText}>Continue to app</Text>
-                )}
-              </Pressable>
-            ) : null}
-
-            <Pressable
-              style={[styles.btn, (busy || !clerkReady || ssoBusy !== null) && styles.btnDisabled]}
-              onPress={handleSubmit}
-              disabled={busy || !clerkReady || ssoBusy !== null}
-            >
-              {busy ? (
-                <ActivityIndicator color="#1e2235" />
-              ) : (
-                <Text style={styles.btnText}>
-                  {mode === "signin" ? "Sign In" : "Create Account"}
-                </Text>
-              )}
-            </Pressable>
-
-            {!clerkReady && (
-              <>
-                <Text style={styles.initText}>
-                  {authStuck
-                    ? "Clerk could not start. Enable Native applications in the Clerk dashboard, then reset below."
-                    : "Authentication initialising…"}
-                </Text>
-                <Pressable
-                  onPress={handleResetAuth}
-                  disabled={resettingAuth}
-                  style={styles.resetBtn}
-                >
-                  {resettingAuth ? (
-                    <ActivityIndicator size="small" color="#e9a600" />
-                  ) : (
-                    <Text style={styles.resetText}>Reset saved auth data</Text>
-                  )}
-                </Pressable>
-              </>
-            )}
-          </>
+        {mode === "signin" ? (
+          <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
+            <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Username or email"
+              placeholderTextColor="#4a5568"
+              value={identifier}
+              onChangeText={(t) => { setIdentifier(t); setError(""); }}
+              autoCapitalize="none"
+              autoComplete="username"
+              returnKeyType="next"
+              editable={clerkReady}
+            />
+          </View>
         ) : (
           <>
-            <View style={styles.codeHint}>
-              <Feather name="mail" size={14} color="#e9a600" />
-              <Text style={styles.codeHintText}>
-                {verifyReason === "trust"
-                  ? "One-time check for new devices — you won't need this again on this phone"
-                  : "Verify your email to finish creating your account"}
-              </Text>
-            </View>
-
-            <View style={styles.inputRow}>
-              <Feather name="hash" size={16} color="#8ba0b8" style={styles.inputIcon} />
+            <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
+              <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
               <TextInput
-                style={[styles.input, styles.codeInput]}
-                placeholder="000000"
+                style={styles.input}
+                placeholder="Username"
                 placeholderTextColor="#4a5568"
-                value={code}
-                onChangeText={(t) => { setCode(t.replace(/\D/g, "").slice(0, 6)); setError(""); }}
-                keyboardType="number-pad"
-                maxLength={6}
-                returnKeyType="go"
-                onSubmitEditing={handleVerifyCode}
-                autoFocus
+                value={username}
+                onChangeText={(t) => { setUsername(t); setError(""); }}
+                autoCapitalize="none"
+                autoComplete="username"
+                returnKeyType="next"
+                editable={clerkReady}
               />
             </View>
+            <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
+              <Feather name="mail" size={16} color="#8ba0b8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="your@email.com"
+                placeholderTextColor="#4a5568"
+                value={email}
+                onChangeText={(t) => { setEmail(t); setError(""); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                returnKeyType="next"
+                editable={clerkReady}
+              />
+            </View>
+          </>
+        )}
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
+          <Feather name="lock" size={16} color="#8ba0b8" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#4a5568"
+            value={password}
+            onChangeText={(t) => { setPassword(t); setError(""); }}
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+            autoComplete={mode === "signin" ? "password" : "new-password"}
+            returnKeyType="go"
+            onSubmitEditing={handleSubmit}
+            editable={clerkReady}
+          />
+          <Pressable
+            onPress={() => setShowPassword((v) => !v)}
+            hitSlop={8}
+            disabled={!clerkReady}
+          >
+            <Feather name={showPassword ? "eye-off" : "eye"} size={16} color="#8ba0b8" />
+          </Pressable>
+        </View>
 
+        {error || activeFieldError ? (
+          <Text style={styles.errorText}>{error || activeFieldError}</Text>
+        ) : null}
+
+        {stuckSignedIn ? (
+          <Pressable
+            style={[styles.btn, busy && styles.btnDisabled]}
+            onPress={() => void finalizeSignIn()}
+            disabled={busy}
+          >
+            {busy ? (
+              <ActivityIndicator color="#1e2235" />
+            ) : (
+              <Text style={styles.btnText}>Continue to app</Text>
+            )}
+          </Pressable>
+        ) : null}
+
+        <Pressable
+          style={[styles.btn, (busy || !clerkReady || ssoBusy !== null) && styles.btnDisabled]}
+          onPress={handleSubmit}
+          disabled={busy || !clerkReady || ssoBusy !== null}
+        >
+          {busy ? (
+            <ActivityIndicator color="#1e2235" />
+          ) : (
+            <Text style={styles.btnText}>
+              {mode === "signin" ? "Sign In" : "Create Account"}
+            </Text>
+          )}
+        </Pressable>
+
+        {!clerkReady && (
+          <>
+            <Text style={styles.initText}>
+              {authStuck
+                ? "Clerk could not start. Enable Native applications in the Clerk dashboard, then reset below."
+                : "Authentication initialising…"}
+            </Text>
             <Pressable
-              style={[styles.btn, (busy || code.length < 6) && styles.btnDisabled]}
-              onPress={handleVerifyCode}
-              disabled={busy || code.length < 6}
+              onPress={handleResetAuth}
+              disabled={resettingAuth}
+              style={styles.resetBtn}
             >
-              {busy ? (
-                <ActivityIndicator color="#1e2235" />
+              {resettingAuth ? (
+                <ActivityIndicator size="small" color="#e9a600" />
               ) : (
-                <Text style={styles.btnText}>Verify & Continue</Text>
+                <Text style={styles.resetText}>Reset saved auth data</Text>
               )}
             </Pressable>
-
-            <View style={styles.resendRow}>
-              <Text style={styles.resendLabel}>Didn't get a code? </Text>
-              <Pressable onPress={() => void handleResendCode()} disabled={busy}>
-                <Text style={styles.resendLink}>Resend</Text>
-              </Pressable>
-              <Text style={styles.resendLabel}> · </Text>
-              <Text style={styles.resendLabel}>Wrong email? </Text>
-              <Pressable onPress={handleBackToCredentials}>
-                <Text style={styles.resendLink}>Go back</Text>
-              </Pressable>
-            </View>
           </>
         )}
 
@@ -880,9 +678,6 @@ const styles = StyleSheet.create({
     flex: 1, height: 52, color: "#f0f6ff",
     fontFamily: "Inter_400Regular", fontSize: 15,
   },
-  codeInput: {
-    fontSize: 22, fontFamily: "Inter_700Bold", letterSpacing: 6, textAlign: "center",
-  },
   btn: {
     width: "100%", backgroundColor: "#e9a600", borderRadius: 12,
     height: 52, alignItems: "center", justifyContent: "center", marginBottom: 14,
@@ -921,20 +716,6 @@ const styles = StyleSheet.create({
     color: "#e9a600", fontFamily: "Inter_600SemiBold", fontSize: 12,
     textAlign: "center",
   },
-  codeHint: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#e9a60012", borderWidth: 1, borderColor: "#e9a60030",
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
-    marginBottom: 16, width: "100%",
-  },
-  codeHintText: {
-    color: "#e9a600", fontFamily: "Inter_400Regular", fontSize: 13,
-  },
-  resendRow: {
-    flexDirection: "row", alignItems: "center", marginBottom: 24,
-  },
-  resendLabel: { color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 13 },
-  resendLink: { color: "#e9a600", fontFamily: "Inter_600SemiBold", fontSize: 13 },
   footerNote: {
     color: "#3a4565", fontFamily: "Inter_400Regular",
     fontSize: 11, textAlign: "center", lineHeight: 16, marginTop: 8,
