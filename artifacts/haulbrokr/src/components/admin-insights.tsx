@@ -544,7 +544,7 @@ function AdminCharts({ enabled, overview }: { enabled: boolean; overview: AdminO
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard title="Revenue over time" subtitle="GMV billed and your 15% broker fee per month">
+          <ChartCard title="Revenue over time" subtitle="GMV billed and customer marketplace fee revenue per month">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={series} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
                 <defs>
@@ -1061,7 +1061,7 @@ export function AdminInsights({ enabled }: { enabled: boolean }) {
 
       <Section title="Money">
         <MetricCard accent icon={<DollarSign className="w-3.5 h-3.5" />} label="GMV (billed)" value={money(d.gmv)} hint="Total customer-billed" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (GMV)" })} />
-        <MetricCard accent icon={<TrendingUp className="w-3.5 h-3.5" />} label="Broker-fee revenue" value={money(d.brokerFees)} hint="15% platform fee on all jobs" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (broker fees)" })} />
+        <MetricCard accent icon={<TrendingUp className="w-3.5 h-3.5" />} label="Marketplace fee revenue" value={money(d.brokerFees)} hint="Customer marketplace fee retained on jobs" onClick={() => setDrill({ kind: "jobs", status: "", title: "All jobs (marketplace fees)" })} />
         <MetricCard accent icon={<Banknote className="w-3.5 h-3.5" />} label="Profit realised" value={money(d.realisedProfit)} hint="Broker fees on paid-out jobs" onClick={() => setDrill({ kind: "jobs", status: "completed", title: "Completed jobs" })} />
         <MetricCard icon={<Activity className="w-3.5 h-3.5" />} label="Avg job value" value={money(d.avgJobValue)} hint="GMV · total jobs" />
       </Section>

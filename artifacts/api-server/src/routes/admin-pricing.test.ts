@@ -9,7 +9,7 @@ const h = vi.hoisted(() => ({
         id: 1,
         key: "marketplace_fee_rate",
         value: "0.15",
-        description: "Marketplace fee",
+        description: "Customer marketplace fee",
         updatedAt: new Date("2026-07-01T00:00:00Z"),
       },
     ],
@@ -26,10 +26,12 @@ const h = vi.hoisted(() => ({
     ],
     rates: {
       marketplaceFeeRate: 0.15,
+      marketplaceFeeBasis: "base_haul_only" as const,
       fuelSurchargeRate: 0.05,
       emergencyDispatchRate: 0.1,
       holidaySurchargeRate: 0.15,
       waitTimeRatePerHour: 75,
+      waitTimeGracePeriodMinutes: 15,
       taxRate: 0,
       taxesEnabled: false,
     },
@@ -171,13 +173,14 @@ beforeEach(() => {
 });
 
 describe("GET /admin/pricing", () => {
-  it("returns configurable settings and active 15% marketplace fee", async () => {
+  it("returns configurable settings and active customer marketplace fee", async () => {
     const res = await request(makeApp()).get("/admin/pricing");
     expect(res.status).toBe(200);
     expect(res.body.settings[0].key).toBe("marketplace_fee_rate");
     expect(res.body.settings[0].value).toBe(0.15);
     expect(res.body.fuelSurchargeWeeks[0].surchargeRate).toBe(0.05);
     expect(res.body.activeRates.marketplaceFeeRate).toBe(0.15);
+    expect(res.body.activeRates.marketplaceFeeBasis).toBe("base_haul_only");
     expect(res.body.activeRates.fuelSurchargeRate).toBe(0.05);
   });
 });

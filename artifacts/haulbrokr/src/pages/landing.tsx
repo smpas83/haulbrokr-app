@@ -85,21 +85,26 @@ const PRICING = [
     period: "to post loads",
     desc: "For contractors exploring the network.",
     features: ["Post haul requests", "Compare bids", "Live tracking", "Digital tickets"],
+    note: null as string | null,
     cta: "Get started",
     highlighted: false,
   },
   {
-    name: "Marketplace",
-    price: "15%",
-    period: "marketplace fee on base haul",
-    desc: "Transparent pricing on every completed load — plus fuel surcharge and pass-through charges where applicable.",
+    name: "Pro Fleet",
+    price: "Pay only",
+    period: "when loads move",
+    desc: "For owner-operators and growing fleets.",
     features: [
-      "15% marketplace fee on base haul",
-      "Weekly national diesel fuel surcharge",
-      "Tolls, wait time & holiday surcharges",
-      "Taxes where applicable",
+      "Everything in Starter",
+      "AI dispatch copilot",
+      "Fleet dashboard",
+      "Live GPS tracking",
+      "Digital tickets and proof of delivery",
+      "Automated billing and payments",
+      "Priority support",
     ],
-    cta: "Join as vendor",
+    note: "Transparent pricing is shown before every booking.",
+    cta: "Join as a carrier",
     highlighted: true,
   },
   {
@@ -108,6 +113,7 @@ const PRICING = [
     period: "volume pricing",
     desc: "For GCs and multi-site operations.",
     features: ["Dedicated CSM", "API access", "Custom workflows", "SLA & compliance"],
+    note: null as string | null,
     cta: "Contact sales",
     highlighted: false,
   },
@@ -138,7 +144,7 @@ const FAQ = [
   {
     question: "How does HaulBrokr pricing work?",
     answer:
-      "Customers post loads for free. On each completed haul, the customer pays a transparent 15% marketplace fee on the base haul, plus any fuel surcharge, tolls, and taxes where applicable. Carriers receive the base haul and pass-through charges (fuel, tolls, wait time). Enterprise teams receive custom volume pricing with dedicated support.",
+      "No monthly fees. Customers receive transparent, upfront pricing before confirming a haul. Quotes may include the haul rate, marketplace service fee, fuel surcharge, tolls, wait time, and applicable taxes or other approved charges. Carriers receive the accepted base haul rate plus approved reimbursements. Enterprise teams receive custom volume pricing with dedicated support.",
   },
   {
     question: "Is HaulBrokr available nationwide?",
@@ -392,7 +398,11 @@ export default function LandingPage() {
             <div className="mx-auto mb-14 max-w-2xl text-center">
               <p className="text-sm font-semibold uppercase tracking-wider text-primary">Transparent pricing</p>
               <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Built to scale with your fleet</h2>
-              <p className="mt-4 text-muted-foreground text-lg">No hidden fees. Pay when loads move.</p>
+              <p className="mt-4 text-muted-foreground text-lg">
+                No monthly fees. Customers receive transparent, upfront pricing before confirming a haul.
+                Quotes may include the haul rate, marketplace service fee, fuel surcharge, tolls, wait time,
+                and applicable taxes or other approved charges.
+              </p>
             </div>
             <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
               {PRICING.map((plan) => (
@@ -408,10 +418,13 @@ export default function LandingPage() {
                   )}
                   <h3 className="text-xl font-bold">{plan.name}</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{plan.desc}</p>
-                  <div className="mt-6 mb-6">
+                  <div className="mt-6 mb-2">
                     <span className="text-4xl font-bold stat-number">{plan.price}</span>
                     <span className="text-sm text-muted-foreground ml-2">{plan.period}</span>
                   </div>
+                  {plan.note && (
+                    <p className="mb-4 text-xs text-muted-foreground leading-relaxed">{plan.note}</p>
+                  )}
                   <ul className="space-y-3 flex-1">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-center gap-2 text-sm">

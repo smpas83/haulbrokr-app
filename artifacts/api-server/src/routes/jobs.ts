@@ -29,6 +29,7 @@ import {
   computeJobPricing,
   loadPricingRates,
   DEFAULT_PRICING_RATES,
+  roundCents,
 } from "../lib/pricing";
 import {
   ListJobsQueryParams,
@@ -89,13 +90,24 @@ function serializeJob(j: any, customerCompany: string, providerCompany: string) 
   const customerTotalAmount = num(j.customerTotalAmount);
   const providerNetAmount = num(j.providerNetAmount);
 
+  const customerSubtotal = roundCents(
+    (baseHaul ?? 0) +
+      fuelSurchargeAmount +
+      tollsAmount +
+      waitTimeAmount +
+      emergencyDispatchAmount +
+      holidaySurchargeAmount,
+  );
+
   const customerCheckout =
     baseHaul != null && platformFeeAmount != null && customerTotalAmount != null
       ? {
           baseHaul,
           fuelSurcharge: fuelSurchargeAmount,
           marketplaceFee: platformFeeAmount,
-          marketplaceFeeRate: platformFeeRate ?? 0.15,
+          marketplaceFeeRate: platformFeeRate ?? DEFAULT_PRICING_RATES.marketplaceFeeRate,
+          marketplaceFeeBasis: "base_haul_only" as const,
+          customerSubtotal,
           tolls: tollsAmount,
           waitTime: waitTimeAmount,
           emergencyDispatch: emergencyDispatchAmount,
@@ -110,8 +122,9 @@ function serializeJob(j: any, customerCompany: string, providerCompany: string) 
     baseHaul != null && platformFeeAmount != null && providerNetAmount != null
       ? {
           baseHaul,
+          // Informational only — customer-side fee; NOT deducted from netPayout.
           marketplaceFee: platformFeeAmount,
-          marketplaceFeeRate: platformFeeRate ?? 0.15,
+          marketplaceFeeRate: platformFeeRate ?? DEFAULT_PRICING_RATES.marketplaceFeeRate,
           fuel: fuelSurchargeAmount,
           tolls: tollsAmount,
           waitTime: waitTimeAmount,
@@ -281,7 +294,7 @@ async function settleProviderPayout(job: any, stripeAccountId: string, customer:
       currency: "usd",
       destination: stripeAccountId,
       source_transaction: chargeId,
-      description: `HaulBrokr payout for job #${job.id} (net of 15% broker fee)`,
+      description: `HaulBrokr payout for job #${job.id} (carrier base haul + reimbursements)`,
       metadata: { jobId: String(job.id), attempt: String(attempt) },
     },
     { idempotencyKey: `job-transfer:${job.id}:${attempt}` },
@@ -771,7 +784,7 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
 /**
  * POST /jobs/:id/charge — customer pays for a completed job.
  * - Instant methods (credit_card / ach): charge gross, immediately transfer net
- *   to the provider (15% retained). Marks job released.
+ *   to the provider (customer marketplace fee retained). Marks job released.
  * - Net terms (net_15/30/45): create an invoice with a due date. No money moves
  *   and the provider is NOT paid until the customer's invoice is paid (release).
  */
@@ -910,7 +923,7 @@ router.post("/jobs/:id/charge", requireProfile, async (req, res): Promise<void> 
 
 /**
  * POST /jobs/:id/release — release the provider's net payout for a Net-terms
- * invoice once the customer has paid it. The 15% broker fee is retained.
+ * invoice once the customer has paid it. The customer marketplace fee is retained.
  */
 router.post("/jobs/:id/release", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
@@ -1039,7 +1052,7 @@ router.get("/jobs/:id/payment-confirmation", requireProfile, async (req, res): P
  * POST /jobs/:id/confirm-payment — finalize a job after the customer has
  * re-authenticated the card on-session. The charge is already captured; here we
  * verify the PaymentIntent succeeded and release the provider's net payout
- * (15% broker fee retained), marking the job released.
+ * (customer marketplace fee retained), marking the job released.
  */
 router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promise<void> => {
   const profile = getRequestProfile(req);
@@ -1108,8 +1121,8 @@ router.post("/jobs/:id/confirm-payment", requireProfile, async (req, res): Promi
  * off-session /charge flow (charge on the platform + a separate Transfer of the
  * net), Checkout uses a DESTINATION CHARGE: the gross is charged on the platform
  * and the net is routed to the provider's connected account automatically, with
- * the 15% broker fee taken as the application fee. The provider nets the same
- * amount either way; the fee never leaves the platform.
+ * the customer marketplace fee (plus any taxes) taken as the application fee.
+ * The carrier nets providerNetAmount either way; the fee is never deducted from carrier pay.
  *
  * Gating mirrors /charge so a job that is already paid/released/awaiting
  * authentication can't start a Checkout (prevents double payment). No money
@@ -1167,7 +1180,8 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
 
   const grossCents = Math.round(parseFloat(job.customerTotalAmount) * 100);
   const netCents = Math.round(parseFloat(job.providerNetAmount) * 100);
-  const feeCents = grossCents - netCents; // the retained 15% broker fee
+  // Platform retains customer marketplace fee (+ taxes if any); carrier gets providerNetAmount.
+  const feeCents = grossCents - netCents;
 
   const base = returnUrlBase(req);
   const rawReturnTo = parsedBody.data.returnTo ?? "";
@@ -1185,7 +1199,7 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
             unit_amount: grossCents,
             product_data: {
               name: `HaulBrokr job #${job.id} — ${job.materialType} delivery`,
-              description: "Includes the 15% HaulBrokr broker fee.",
+              description: "Includes haul rate, marketplace service fee, and any disclosed surcharges.",
             },
           },
           quantity: 1,
@@ -1194,7 +1208,7 @@ router.post("/jobs/:id/checkout-session", requireProfile, async (req, res): Prom
       payment_intent_data: {
         application_fee_amount: feeCents,
         transfer_data: { destination: readiness.stripeAccountId },
-        description: `HaulBrokr job #${job.id} (gross, net of 15% fee routed to provider)`,
+        description: `HaulBrokr job #${job.id} (customer total; carrier receives accepted haul + reimbursements)`,
         metadata: { jobId: String(job.id), kind: "checkout" },
       },
       metadata: { jobId: String(job.id), kind: "checkout" },

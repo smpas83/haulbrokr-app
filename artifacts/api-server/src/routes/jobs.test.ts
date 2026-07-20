@@ -233,7 +233,7 @@ describe("POST /jobs/:id/charge", () => {
     expect(piArgs.confirm).toBe(true);
 
     // Only the NET ($100.00 → 10000 cents) is transferred to the provider; the
-    // 15% broker fee is retained on the platform.
+    // Customer marketplace fee is retained on the platform.
     expect(stripe.transfers.create).toHaveBeenCalledTimes(1);
     const [trArgs] = stripe.transfers.create.mock.calls[0];
     expect(trArgs.amount).toBe(10000);
@@ -733,7 +733,7 @@ describe("POST /jobs/:id/confirm-payment", () => {
   });
 });
 
-describe("computeBreakdown (15% broker-fee model)", () => {
+describe("computeBreakdown (customer marketplace fee model)", () => {
   it("splits a clean amount into base, fee, and gross", () => {
     expect(computeBreakdown(100, 1, 0.15)).toEqual({ base: 100, fee: 15, gross: 115 });
   });
@@ -773,7 +773,7 @@ function mockStripeCheckout(opts: {
 }
 
 describe("POST /jobs/:id/checkout-session", () => {
-  it("creates a destination-charge Checkout Session: gross line item, 15% application fee, transfer to provider", async () => {
+  it("creates a destination-charge Checkout Session: customer total, marketplace application fee, transfer to carrier", async () => {
     h.rows.set(jobsTable, [baseJob({ paymentStatus: "unpaid" })]);
     const stripe = mockStripeCheckout();
 
@@ -789,7 +789,7 @@ describe("POST /jobs/:id/checkout-session", () => {
     expect(args.mode).toBe("payment");
     // Customer pays the GROSS ($115.00 → 11500 cents).
     expect(args.line_items[0].price_data.unit_amount).toBe(11500);
-    // The 15% broker fee ($15.00 → 1500 cents) is the application fee.
+    // The customer marketplace fee ($15.00 → 1500 cents) is the application fee.
     expect(args.payment_intent_data.application_fee_amount).toBe(1500);
     // Net is routed to the provider's connected account (destination charge).
     expect(args.payment_intent_data.transfer_data.destination).toBe("acct_ok");

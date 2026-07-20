@@ -19,18 +19,24 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const SETTING_LABELS: Record<string, string> = {
-  marketplace_fee_rate: "Marketplace fee rate",
+  marketplace_fee_rate: "Customer marketplace fee",
+  marketplace_fee_basis: "Fee basis (0 = base haul only, 1 = base + surcharges)",
   fuel_surcharge_rate: "Fallback fuel surcharge rate",
-  emergency_dispatch_rate: "Emergency dispatch rate",
+  emergency_dispatch_rate: "Emergency surcharge rate",
   holiday_surcharge_rate: "Holiday surcharge rate",
-  wait_time_rate_per_hour: "Wait time rate ($/hr)",
+  wait_time_rate_per_hour: "Wait-time rate ($/hr)",
+  wait_time_grace_period_minutes: "Wait-time grace period (minutes)",
   tax_rate: "Default tax rate",
   tax_enabled: "Taxes enabled (1 = yes, 0 = no)",
 };
 
 function formatRateDisplay(key: string, value: number): string {
   if (key === "wait_time_rate_per_hour") return `$${value.toFixed(2)}/hr`;
+  if (key === "wait_time_grace_period_minutes") return `${value} min`;
   if (key === "tax_enabled") return value >= 1 ? "Enabled" : "Disabled";
+  if (key === "marketplace_fee_basis") {
+    return value >= 1 ? "Base haul + surcharges" : "Base haul only";
+  }
   return `${(value * 100).toFixed(2)}%`;
 }
 
@@ -157,30 +163,52 @@ export function AdminPricing({ enabled }: { enabled: boolean }) {
       <Card className="rounded-xl border-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Percent className="h-5 w-5 text-primary" /> Active marketplace rates
+            <Percent className="h-5 w-5 text-primary" /> Active customer marketplace rates
           </CardTitle>
           <CardDescription>
-            Resolved from configurable settings and the current weekly diesel schedule. No pricing percentages are hardcoded in checkout or settlement.
+            The customer marketplace fee is charged to the customer only. Carrier payouts are never reduced by this fee.
+            Percentages are loaded from the database — not hardcoded in checkout or settlement.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {[
-            ["Marketplace fee", active.marketplaceFeeRate],
-            ["Fuel surcharge", active.fuelSurchargeRate],
-            ["Emergency dispatch", active.emergencyDispatchRate],
-            ["Holiday surcharge", active.holidaySurchargeRate],
-            ["Wait time $/hr", active.waitTimeRatePerHour],
-            ["Tax rate", active.taxRate],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="rounded-xl border border-border p-3">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
-              <p className="text-lg font-bold tabular-nums mt-1">
-                {label === "Wait time $/hr"
-                  ? `$${Number(value).toFixed(2)}`
-                  : `${(Number(value) * 100).toFixed(2)}%`}
-              </p>
-            </div>
-          ))}
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Customer marketplace fee</p>
+            <p className="text-lg font-bold tabular-nums mt-1">{(Number(active.marketplaceFeeRate) * 100).toFixed(2)}%</p>
+          </div>
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Fee basis</p>
+            <p className="text-lg font-bold mt-1">
+              {(active as { marketplaceFeeBasis?: string }).marketplaceFeeBasis === "base_plus_surcharges"
+                ? "Base + surcharges"
+                : "Base haul only"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Fuel surcharge</p>
+            <p className="text-lg font-bold tabular-nums mt-1">{(Number(active.fuelSurchargeRate) * 100).toFixed(2)}%</p>
+          </div>
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Emergency surcharge</p>
+            <p className="text-lg font-bold tabular-nums mt-1">{(Number(active.emergencyDispatchRate) * 100).toFixed(2)}%</p>
+          </div>
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Holiday surcharge</p>
+            <p className="text-lg font-bold tabular-nums mt-1">{(Number(active.holidaySurchargeRate) * 100).toFixed(2)}%</p>
+          </div>
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Wait time $/hr</p>
+            <p className="text-lg font-bold tabular-nums mt-1">${Number(active.waitTimeRatePerHour).toFixed(2)}</p>
+          </div>
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Wait grace (min)</p>
+            <p className="text-lg font-bold tabular-nums mt-1">
+              {Number((active as { waitTimeGracePeriodMinutes?: number }).waitTimeGracePeriodMinutes ?? 15)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border p-3">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Tax rate</p>
+            <p className="text-lg font-bold tabular-nums mt-1">{(Number(active.taxRate) * 100).toFixed(2)}%</p>
+          </div>
           <div className="rounded-xl border border-border p-3">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Taxes</p>
             <p className="text-lg font-bold mt-1">{active.taxesEnabled ? "Enabled" : "Disabled"}</p>
@@ -192,7 +220,9 @@ export function AdminPricing({ enabled }: { enabled: boolean }) {
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
             <CardTitle>Configurable pricing variables</CardTitle>
-            <CardDescription>Rates are stored in the database and applied by the centralized pricing engine.</CardDescription>
+            <CardDescription>
+              Label the marketplace percentage as a customer fee only — never as a carrier, vendor, fleet, or provider commission.
+            </CardDescription>
           </div>
           <Button className="rounded-xl font-bold shrink-0" onClick={saveSettings} disabled={updateSettings.isPending}>
             {updateSettings.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -201,7 +231,7 @@ export function AdminPricing({ enabled }: { enabled: boolean }) {
         </CardHeader>
         <CardContent className="space-y-4">
           {settings.map((s) => (
-            <div key={s.key} className="grid sm:grid-cols-[1fr_160px_120px] gap-3 items-end border-b border-border/60 pb-4 last:border-0 last:pb-0">
+            <div key={s.key} className="grid sm:grid-cols-[1fr_160px_140px] gap-3 items-end border-b border-border/60 pb-4 last:border-0 last:pb-0">
               <div>
                 <Label className="font-medium">{SETTING_LABELS[s.key] ?? s.key}</Label>
                 <p className="text-xs text-muted-foreground mt-1">{s.description}</p>
@@ -228,7 +258,8 @@ export function AdminPricing({ enabled }: { enabled: boolean }) {
             <Fuel className="h-5 w-5 text-primary" /> Weekly national diesel fuel surcharge
           </CardTitle>
           <CardDescription>
-            Publish a surcharge rate for each week. The pricing engine uses the most recent active week on or before today.
+            Publish a surcharge rate and optional national diesel $/gal reference for each week.
+            The rate in effect at booking/completion is frozen onto the job so historical invoices do not change.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -246,8 +277,8 @@ export function AdminPricing({ enabled }: { enabled: boolean }) {
               <Input className="rounded-xl mt-1" placeholder="3.850" value={weekDiesel} onChange={(e) => setWeekDiesel(e.target.value)} />
             </div>
             <div>
-              <Label>Notes</Label>
-              <Input className="rounded-xl mt-1" value={weekNotes} onChange={(e) => setWeekNotes(e.target.value)} />
+              <Label>Notes / source</Label>
+              <Input className="rounded-xl mt-1" placeholder="EIA weekly" value={weekNotes} onChange={(e) => setWeekNotes(e.target.value)} />
             </div>
             <Button className="rounded-xl font-bold" onClick={addFuelWeek} disabled={upsertFuel.isPending}>
               {upsertFuel.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
@@ -269,6 +300,7 @@ export function AdminPricing({ enabled }: { enabled: boolean }) {
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {w.isActive ? "Active" : "Inactive"}
                     {w.notes ? ` · ${w.notes}` : ""}
+                    {w.updatedAt ? ` · updated ${new Date(w.updatedAt).toLocaleDateString()}` : ""}
                   </p>
                 </div>
                 <Button
@@ -283,6 +315,34 @@ export function AdminPricing({ enabled }: { enabled: boolean }) {
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-xl border-2">
+        <CardHeader>
+          <CardTitle>Enterprise overrides, promotions &amp; audit</CardTitle>
+          <CardDescription>
+            Platform defaults apply unless an enterprise or promotional override is configured by operations.
+            Each setting and fuel-week row stores an updatedAt timestamp for audit. Job completion freezes the
+            rates used so historical invoices and carrier settlements do not change when defaults are edited later.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground space-y-2">
+          <p>
+            <span className="font-medium text-foreground">Enterprise / custom volume pricing:</span>{" "}
+            negotiated outside the public site; account managers apply overrides via pricing settings or
+            contract-specific job amounts before confirmation.
+          </p>
+          <p>
+            <span className="font-medium text-foreground">Promotional overrides:</span>{" "}
+            temporary fee or surcharge changes are made by updating the Customer marketplace fee / surcharge
+            settings with an effective window communicated to customers in quote/checkout.
+          </p>
+          <p>
+            <span className="font-medium text-foreground">Effective dates:</span>{" "}
+            weekly fuel surcharge rows are date-keyed; marketplace fee changes take effect for new completions
+            after save (existing jobs keep frozen amounts).
+          </p>
         </CardContent>
       </Card>
     </div>

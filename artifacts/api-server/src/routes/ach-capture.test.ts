@@ -335,7 +335,7 @@ describe("ACH capture → charge (account page)", () => {
     expect(piArgs.payment_method_types).toEqual(["us_bank_account"]);
     expect(piOpts.idempotencyKey).toBe(`job-charge:${JOB_ID}:1`);
 
-    // Only the provider's net is transferred; the 15% broker fee is retained.
+    // Only the provider's net is transferred; the customer marketplace fee is retained.
     const [trArgs] = stripe.transfers.create.mock.calls[0];
     expect(trArgs.amount).toBe(10000);
     expect(trArgs.destination).toBe("acct_provider_ok");

@@ -64,7 +64,7 @@ export default function InvoiceScreen() {
   }
 
   // Live jobs carry server-computed marketplace pricing amounts. Demo jobs
-  // estimate base haul and apply the same 15% marketplace fee model.
+  // estimate base haul using the engine default rate for offline preview only.
   const rawHours = isLiveJob ? (liveJob!.totalHours as number | null) : null;
   const hoursWorked = rawHours ?? (job.checkInTime && job.checkOutTime ? 9.65 : 8);
   const checkout = isLiveJob
@@ -90,20 +90,25 @@ export default function InvoiceScreen() {
     const rawBase = (liveJob!.totalAmount as number | null) ?? checkout?.baseHaul ?? null;
     const rawFee = (liveJob!.platformFeeAmount as number | null) ?? checkout?.marketplaceFee ?? null;
     const rawCustomer = (liveJob!.customerTotalAmount as number | null) ?? checkout?.grandTotal ?? null;
-    const feeRate = checkout?.marketplaceFeeRate ?? (liveJob!.platformFeeRate as number | undefined) ?? 0.15;
+    const feeRate = checkout?.marketplaceFeeRate ?? (liveJob!.platformFeeRate as number | undefined) ?? null;
     subtotal = rawBase ?? Math.round(job.budgetPerHour * hoursWorked * job.trucksNeeded);
-    feeAmount = rawFee ?? Math.round(subtotal * feeRate);
+    feeAmount = rawFee ?? (feeRate != null ? Math.round(subtotal * feeRate) : 0);
     fuelAmount = checkout?.fuelSurcharge ?? (liveJob!.fuelSurchargeAmount as number | undefined) ?? 0;
     tollsAmount = checkout?.tolls ?? (liveJob!.tollsAmount as number | undefined) ?? 0;
     taxAmount = checkout?.taxes ?? (liveJob!.taxAmount as number | undefined) ?? 0;
     total = rawCustomer ?? subtotal + feeAmount + fuelAmount + tollsAmount + taxAmount;
-    feeLabel = `Marketplace Fee (${Math.round(feeRate * 100)}%)`;
+    feeLabel =
+      feeRate != null
+        ? `Marketplace service fee (${Math.round(feeRate * 100)}%)`
+        : "Marketplace service fee";
     feeIsDeduction = false;
   } else {
     subtotal = Math.round(job.budgetPerHour * hoursWorked * job.trucksNeeded);
-    feeAmount = Math.round(subtotal * 0.15);
+    // Offline demo preview only — production totals always come from the API pricing engine.
+    const demoFeeRate = 0.15;
+    feeAmount = Math.round(subtotal * demoFeeRate);
     total = subtotal + feeAmount;
-    feeLabel = "Marketplace Fee (15%)";
+    feeLabel = "Marketplace service fee";
     feeIsDeduction = false;
   }
   const invoiceNum = `INV-${new Date().getFullYear()}-${job.id.padStart(4, "0")}`;

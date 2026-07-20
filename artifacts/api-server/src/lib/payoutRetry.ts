@@ -43,7 +43,7 @@ export async function settleConfirmedPayout(
       currency: "usd",
       destination: stripeAccountId,
       source_transaction: chargeId,
-      description: `HaulBrokr payout for job #${job.id} (net of 15% broker fee)`,
+      description: `HaulBrokr payout for job #${job.id} (carrier base haul + reimbursements)`,
       metadata: { jobId: String(job.id), attempt: String(attempt) },
     },
     { idempotencyKey: `job-transfer:${job.id}:${attempt}` },

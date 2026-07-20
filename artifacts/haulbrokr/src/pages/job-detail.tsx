@@ -639,7 +639,8 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
   const status = job.paymentStatus ?? "unpaid";
   const checkout = job.customerCheckout;
   const settlement = job.carrierSettlement;
-  const feeRate = checkout?.marketplaceFeeRate ?? job.platformFeeRate ?? 0.15;
+  const feeRate = checkout?.marketplaceFeeRate ?? job.platformFeeRate ?? null;
+  const feePctLabel = feeRate != null ? ` (${Math.round(feeRate * 100)}%)` : "";
   const base = checkout?.baseHaul ?? job.providerNetAmount ?? job.totalAmount;
   const pending = charge.isPending || release.isPending;
 
@@ -676,7 +677,12 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
           <div className="border border-border/60 divide-y divide-border">
             {line("Base Haul", job.totalHours ? `${job.totalHours} hrs @ $${job.ratePerHour}/hr` : null, checkout?.baseHaul ?? base)}
             {line("Fuel Surcharge", job.fuelSurchargeRate ? `${Math.round((job.fuelSurchargeRate ?? 0) * 1000) / 10}% of base` : "Weekly national diesel schedule", checkout?.fuelSurcharge ?? job.fuelSurchargeAmount ?? 0, { muted: true })}
-            {line(`Marketplace Fee (${Math.round(feeRate * 100)}%)`, "Configurable marketplace fee on base haul", checkout?.marketplaceFee ?? job.platformFeeAmount, { accent: true })}
+            {line(
+              `Marketplace service fee${feePctLabel}`,
+              "Customer marketplace fee on configured fee basis — not deducted from carrier pay",
+              checkout?.marketplaceFee ?? job.platformFeeAmount,
+              { accent: true },
+            )}
             {line("Tolls", "Pass-through", checkout?.tolls ?? job.tollsAmount ?? 0)}
             {(checkout?.waitTime ?? job.waitTimeAmount ?? 0) > 0 && line("Wait Time", null, checkout?.waitTime ?? job.waitTimeAmount)}
             {(checkout?.emergencyDispatch ?? job.emergencyDispatchAmount ?? 0) > 0 && line("Emergency Dispatch", null, checkout?.emergencyDispatch ?? job.emergencyDispatchAmount)}
@@ -695,12 +701,20 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Carrier settlement</p>
           <div className="border border-border/60 divide-y divide-border">
             {line("Base Haul", null, settlement?.baseHaul ?? base)}
-            {line("Marketplace Fee", `${Math.round(feeRate * 100)}% retained by HaulBrokr`, settlement?.marketplaceFee ?? job.platformFeeAmount, { muted: true, accent: true })}
-            {line("Fuel", null, settlement?.fuel ?? job.fuelSurchargeAmount ?? 0)}
-            {line("Tolls", null, settlement?.tolls ?? job.tollsAmount ?? 0)}
-            {line("Wait Time", null, settlement?.waitTime ?? job.waitTimeAmount ?? 0)}
+            {line("Fuel reimbursement", "Pass-through to carrier", settlement?.fuel ?? job.fuelSurchargeAmount ?? 0)}
+            {line("Toll reimbursement", "Pass-through to carrier", settlement?.tolls ?? job.tollsAmount ?? 0)}
+            {line("Approved wait time", null, settlement?.waitTime ?? job.waitTimeAmount ?? 0)}
             {(settlement?.emergencyDispatch ?? job.emergencyDispatchAmount ?? 0) > 0 && line("Emergency Dispatch", null, settlement?.emergencyDispatch ?? job.emergencyDispatchAmount)}
             {(settlement?.holidaySurcharge ?? job.holidaySurchargeAmount ?? 0) > 0 && line("Holiday Surcharge", null, settlement?.holidaySurcharge ?? job.holidaySurchargeAmount)}
+            <div className="flex items-center justify-between p-4 bg-muted/30">
+              <div>
+                <p className="text-sm font-medium">Customer marketplace fee (info)</p>
+                <p className="text-xs text-muted-foreground">
+                  {feeRate != null ? `${Math.round(feeRate * 100)}% ` : ""}charged to customer — not deducted from this payout
+                </p>
+              </div>
+              <p className="font-bold tabular-nums text-muted-foreground">{fmtMoney(settlement?.marketplaceFee ?? job.platformFeeAmount)}</p>
+            </div>
             <div className="flex items-center justify-between p-4">
               <p className="text-sm font-medium flex items-center gap-2"><Wallet className="h-4 w-4 text-muted-foreground" /> Net Payout</p>
               <p className="font-bold tabular-nums text-green-700 dark:text-green-400">{fmtMoney(settlement?.netPayout ?? job.providerNetAmount)}</p>
@@ -712,7 +726,7 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
       {!isCustomer && !isProvider && (
         <div className="border border-border/60 divide-y divide-border">
           {line("Base Haul", null, base)}
-          {line(`Marketplace Fee (${Math.round(feeRate * 100)}%)`, null, job.platformFeeAmount, { muted: true, accent: true })}
+          {line(`Marketplace Fee${feePctLabel}`, null, job.platformFeeAmount, { muted: true, accent: true })}
           <div className="flex items-center justify-between p-4 bg-secondary text-secondary-foreground">
             <p className="text-sm font-black uppercase tracking-wider">Customer total</p>
             <p className="text-xl font-black tabular-nums">{fmtMoney(job.customerTotalAmount)}</p>

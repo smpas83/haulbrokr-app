@@ -606,11 +606,21 @@ export const JobCompletionApproval = {
   flagged: 'flagged',
 } as const;
 
+export type CustomerCheckoutBreakdownMarketplaceFeeBasis = typeof CustomerCheckoutBreakdownMarketplaceFeeBasis[keyof typeof CustomerCheckoutBreakdownMarketplaceFeeBasis];
+
+
+export const CustomerCheckoutBreakdownMarketplaceFeeBasis = {
+  base_haul_only: 'base_haul_only',
+  base_plus_surcharges: 'base_plus_surcharges',
+} as const;
+
 export interface CustomerCheckoutBreakdown {
   baseHaul: number;
   fuelSurcharge: number;
   marketplaceFee: number;
   marketplaceFeeRate: number;
+  marketplaceFeeBasis?: CustomerCheckoutBreakdownMarketplaceFeeBasis;
+  customerSubtotal: number;
   tolls: number;
   waitTime?: number;
   emergencyDispatch?: number;
@@ -756,12 +766,23 @@ export interface FuelSurchargeWeek {
   updatedAt?: string;
 }
 
+export type PricingConfigActiveRatesMarketplaceFeeBasis = typeof PricingConfigActiveRatesMarketplaceFeeBasis[keyof typeof PricingConfigActiveRatesMarketplaceFeeBasis];
+
+
+export const PricingConfigActiveRatesMarketplaceFeeBasis = {
+  base_haul_only: 'base_haul_only',
+  base_plus_surcharges: 'base_plus_surcharges',
+} as const;
+
 export type PricingConfigActiveRates = {
+  /** Customer marketplace fee rate (decimal). Never applied to carrier payout. */
   marketplaceFeeRate: number;
+  marketplaceFeeBasis: PricingConfigActiveRatesMarketplaceFeeBasis;
   fuelSurchargeRate: number;
   emergencyDispatchRate: number;
   holidaySurchargeRate: number;
   waitTimeRatePerHour: number;
+  waitTimeGracePeriodMinutes: number;
   taxRate: number;
   taxesEnabled: boolean;
 };

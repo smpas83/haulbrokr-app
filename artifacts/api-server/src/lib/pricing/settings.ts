@@ -5,39 +5,63 @@ import {
   fuelSurchargeWeeksTable,
   type PricingSettingKey,
 } from "@workspace/db";
-import { DEFAULT_PRICING_RATES, type PricingRates } from "./engine";
+import {
+  DEFAULT_PRICING_RATES,
+  resolveFeeBasis,
+  type PricingRates,
+  type MarketplaceFeeBasis,
+} from "./engine";
 
 /** Human-readable descriptions seeded with each setting row. */
 export const PRICING_SETTING_META: Record<
   PricingSettingKey,
-  { description: string; defaultValue: number }
+  { description: string; defaultValue: number; label: string }
 > = {
   marketplace_fee_rate: {
-    description: "Marketplace / broker fee charged to the customer on base haul (decimal, e.g. 0.15 = 15%)",
+    label: "Customer marketplace fee",
+    description:
+      "Customer marketplace / service fee charged on the configured fee basis (decimal, e.g. 0.15). Never deducted from carrier payout.",
     defaultValue: DEFAULT_PRICING_RATES.marketplaceFeeRate,
   },
+  marketplace_fee_basis: {
+    label: "Fee basis",
+    description:
+      "0 = base haul only (default); 1 = base haul plus surcharges (fuel/tolls/wait/emergency/holiday). Taxes are never in the fee basis.",
+    defaultValue: 0,
+  },
   fuel_surcharge_rate: {
+    label: "Fallback fuel surcharge rate",
     description:
       "Fallback fuel surcharge rate when no weekly diesel schedule row is active (decimal of base haul)",
     defaultValue: DEFAULT_PRICING_RATES.fuelSurchargeRate,
   },
   emergency_dispatch_rate: {
+    label: "Emergency surcharge rate",
     description: "Emergency dispatch surcharge as a decimal of base haul",
     defaultValue: DEFAULT_PRICING_RATES.emergencyDispatchRate,
   },
   holiday_surcharge_rate: {
+    label: "Holiday surcharge rate",
     description: "Holiday haul surcharge as a decimal of base haul",
     defaultValue: DEFAULT_PRICING_RATES.holidaySurchargeRate,
   },
   wait_time_rate_per_hour: {
-    description: "Wait-time charge in USD per billable hour",
+    label: "Wait-time rate ($/hr)",
+    description: "Wait-time charge in USD per billable hour (after grace period)",
     defaultValue: DEFAULT_PRICING_RATES.waitTimeRatePerHour,
   },
+  wait_time_grace_period_minutes: {
+    label: "Wait-time grace period (minutes)",
+    description: "Minutes of wait time before billing begins",
+    defaultValue: DEFAULT_PRICING_RATES.waitTimeGracePeriodMinutes,
+  },
   tax_rate: {
-    description: "Default sales/use tax rate as a decimal (applied when tax_enabled = 1)",
+    label: "Default tax rate",
+    description: "Default sales/use tax rate as a decimal (applied when tax_enabled = 1). Marketplace fee is not taxed.",
     defaultValue: DEFAULT_PRICING_RATES.taxRate,
   },
   tax_enabled: {
+    label: "Taxes enabled",
     description: "Whether taxes are applied by default (1 = yes, 0 = no)",
     defaultValue: DEFAULT_PRICING_RATES.taxesEnabled ? 1 : 0,
   },
@@ -110,18 +134,19 @@ export async function resolveFuelSurchargeRate(
 /** Build a PricingRates object from DB settings + active fuel week. */
 export async function loadPricingRates(asOf: Date = new Date()): Promise<PricingRates> {
   const map = await loadPricingSettingsMap();
-  const fallbackFuel = parseSettingValue(
-    map.fuel_surcharge_rate != null ? String(map.fuel_surcharge_rate) : null,
-    DEFAULT_PRICING_RATES.fuelSurchargeRate,
-  );
+  const fallbackFuel = map.fuel_surcharge_rate ?? DEFAULT_PRICING_RATES.fuelSurchargeRate;
   const fuel = await resolveFuelSurchargeRate(asOf, fallbackFuel);
+  const basis: MarketplaceFeeBasis = resolveFeeBasis(map.marketplace_fee_basis);
 
   return {
     marketplaceFeeRate: map.marketplace_fee_rate ?? DEFAULT_PRICING_RATES.marketplaceFeeRate,
+    marketplaceFeeBasis: basis,
     fuelSurchargeRate: fuel.rate,
     emergencyDispatchRate: map.emergency_dispatch_rate ?? DEFAULT_PRICING_RATES.emergencyDispatchRate,
     holidaySurchargeRate: map.holiday_surcharge_rate ?? DEFAULT_PRICING_RATES.holidaySurchargeRate,
     waitTimeRatePerHour: map.wait_time_rate_per_hour ?? DEFAULT_PRICING_RATES.waitTimeRatePerHour,
+    waitTimeGracePeriodMinutes:
+      map.wait_time_grace_period_minutes ?? DEFAULT_PRICING_RATES.waitTimeGracePeriodMinutes,
     taxRate: map.tax_rate ?? DEFAULT_PRICING_RATES.taxRate,
     taxesEnabled: (map.tax_enabled ?? 0) >= 1,
   };

@@ -5,12 +5,15 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
+import type { CustomerCheckoutBreakdownMarketplaceFeeBasis } from './customerCheckoutBreakdownMarketplaceFeeBasis';
 
 export interface CustomerCheckoutBreakdown {
   baseHaul: number;
   fuelSurcharge: number;
   marketplaceFee: number;
   marketplaceFeeRate: number;
+  marketplaceFeeBasis?: CustomerCheckoutBreakdownMarketplaceFeeBasis;
+  customerSubtotal: number;
   tolls: number;
   waitTime?: number;
   emergencyDispatch?: number;
