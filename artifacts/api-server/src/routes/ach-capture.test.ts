@@ -245,7 +245,11 @@ function mockStripe() {
     attach: vi.fn(async (_id: string, _opts: any) => ({})),
   };
   const paymentIntents = {
-    create: vi.fn(async (_args: any, _opts?: any) => ({ id: "pi_ach_e2e", latest_charge: "ch_ach_e2e" })),
+    create: vi.fn(async (_args: any, _opts?: any) => ({
+      id: "pi_ach_e2e",
+      status: "succeeded",
+      latest_charge: "ch_ach_e2e",
+    })),
   };
   const transfers = {
     create: vi.fn(async (_args: any, _opts?: any) => ({ id: "tr_ach_e2e" })),

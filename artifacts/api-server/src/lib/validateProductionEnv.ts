@@ -200,11 +200,25 @@ function validateStripe(env: NodeJS.ProcessEnv, issues: EnvValidationIssue[]): v
   if (!secret) pushMissing(issues, "stripe", "STRIPE_SECRET_KEY");
   else if (!secret.startsWith("sk_")) {
     pushInvalid(issues, "stripe", "STRIPE_SECRET_KEY", "STRIPE_SECRET_KEY must start with sk_.");
+  } else if (secret.startsWith("sk_test_")) {
+    pushInvalid(
+      issues,
+      "stripe",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_SECRET_KEY must use live mode in production (sk_live_…).",
+    );
   }
 
   if (!publishable) pushMissing(issues, "stripe", "STRIPE_PUBLISHABLE_KEY");
   else if (!publishable.startsWith("pk_")) {
     pushInvalid(issues, "stripe", "STRIPE_PUBLISHABLE_KEY", "STRIPE_PUBLISHABLE_KEY must start with pk_.");
+  } else if (publishable.startsWith("pk_test_")) {
+    pushInvalid(
+      issues,
+      "stripe",
+      "STRIPE_PUBLISHABLE_KEY",
+      "STRIPE_PUBLISHABLE_KEY must use live mode in production (pk_live_…).",
+    );
   }
 
   if (!webhook) pushMissing(issues, "stripe", "STRIPE_WEBHOOK_SECRET");

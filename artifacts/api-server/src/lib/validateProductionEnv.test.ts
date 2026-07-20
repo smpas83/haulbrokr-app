@@ -95,6 +95,20 @@ describe("validateProductionEnv", () => {
     expect(issues.some((issue) => issue.variable === "DATABASE_URL")).toBe(true);
   });
 
+  it("rejects test Stripe keys in production", () => {
+    const issues = collectProductionEnvIssues({
+      ...VALID_PRODUCTION_ENV,
+      STRIPE_SECRET_KEY: "sk_test_stripe_secret",
+    });
+    expect(issues.some((issue) => issue.variable === "STRIPE_SECRET_KEY")).toBe(true);
+
+    const pubIssues = collectProductionEnvIssues({
+      ...VALID_PRODUCTION_ENV,
+      STRIPE_PUBLISHABLE_KEY: "pk_test_stripe_publishable",
+    });
+    expect(pubIssues.some((issue) => issue.variable === "STRIPE_PUBLISHABLE_KEY")).toBe(true);
+  });
+
   it("throws a grouped error message on startup validation failure", () => {
     expect(() => validateProductionEnv({ NODE_ENV: "production", PORT: "8080" })).toThrow(
       /Production environment validation failed/,
