@@ -42,6 +42,22 @@
       "destination": "https://kashventure.com/_next/:path*"
     },
     {
+      "source": "/sign-in",
+      "destination": "https://kashventure.com/sign-in"
+    },
+    {
+      "source": "/sign-in/:path*",
+      "destination": "https://kashventure.com/sign-in/:path*"
+    },
+    {
+      "source": "/sign-up",
+      "destination": "https://kashventure.com/sign-up"
+    },
+    {
+      "source": "/sign-up/:path*",
+      "destination": "https://kashventure.com/sign-up/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://haulbrokr-api.onrender.com/api/:path*"
     },
@@ -88,6 +104,42 @@
     },
     {
       "source": "/api/haulbrokr/marketing/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sign-in",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sign-in/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sign-up",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sign-up/:path*",
       "headers": [
         {
           "key": "Cache-Control",
