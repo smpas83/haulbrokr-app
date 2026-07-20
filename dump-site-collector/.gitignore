@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Collector runtime artifacts
+output/*
+!output/.gitkeep
+.state/*
+!.state/.gitkeep
+.state/facilities/
+logs/
+*.sqlite3
+*.xlsx
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
