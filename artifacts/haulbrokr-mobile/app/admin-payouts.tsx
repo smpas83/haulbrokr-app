@@ -85,7 +85,7 @@ export default function AdminPayoutsScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: 40 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e9a600" colors={["#e9a600"]} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF5500" colors={["#FF5500"]} />
         }
       >
         {access.isLoading ? (

@@ -232,7 +232,7 @@ export default function BinsScreen() {
           },
         ]}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e9a600" colors={["#e9a600"]} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF5500" colors={["#FF5500"]} />
         }
       >
         {/* Bin grid */}

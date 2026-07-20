@@ -40,7 +40,7 @@ function fmtMoney(n: number): string {
 }
 
 const ACTIVITY_ICON_COLORS: Record<string, string> = {
-  bid: "#e9a600", job: "#16a34a", payment: "#0891b2", bin: "#7c3aed", alert: "#ef4444",
+  bid: "#FF5500", job: "#16a34a", payment: "#0891b2", bin: "#7c3aed", alert: "#ef4444",
 };
 
 export default function HomeScreen() {
@@ -139,7 +139,7 @@ export default function HomeScreen() {
       contentContainerStyle={[styles.content, { paddingTop: topPad + 16, paddingBottom: 100 }]}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e9a600" colors={["#e9a600"]} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF5500" colors={["#FF5500"]} />
       }
     >
       {/* Header */}
@@ -347,10 +347,11 @@ export default function HomeScreen() {
               <Text style={[styles.miniJobAddress, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>{job.scheduledDate}</Text>
             </View>
             <View style={[styles.statusPill, {
-              backgroundColor: job.status === "open" ? colors.primary + "20" : job.status === "in_progress" ? "#16a34a20" : job.status === "bidding" ? "#3b82f620" : colors.border,
+              backgroundColor: job.status === "open" ? colors.primary + "20" : job.status === "in_progress" ? "#16a34a20" : job.status === "bidding" ? "#F59E0B20" : colors.border,
+              borderColor: job.status === "open" ? colors.primary + "40" : job.status === "in_progress" ? "#16a34a40" : job.status === "bidding" ? "#F59E0B40" : colors.border,
             }]}>
               <Text style={[styles.statusPillText, {
-                color: job.status === "open" ? colors.primary : job.status === "in_progress" ? "#16a34a" : job.status === "bidding" ? "#3b82f6" : colors.mutedForeground,
+                color: job.status === "open" ? colors.primary : job.status === "in_progress" ? "#16a34a" : job.status === "bidding" ? "#F59E0B" : colors.mutedForeground,
                 fontFamily: "Inter_600SemiBold",
               }]}>
                 {job.status.replace("_", " ").toUpperCase()}
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
   surgeZone: { position: "absolute", width: 44, height: 44, borderRadius: 22, backgroundColor: "#f59e0b20", alignItems: "center", justifyContent: "center" },
   surgeZoneEmoji: { fontSize: 18 },
   mapDot: { position: "absolute", width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: "#ffffff30" },
-  userDot: { position: "absolute", width: 20, height: 20, borderRadius: 10, backgroundColor: "#3b82f620", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#3b82f640" },
+  userDot: { position: "absolute", width: 20, height: 20, borderRadius: 10, backgroundColor: "#FF550020", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#FF550040" },
   userDotInner: { width: 10, height: 10, borderRadius: 5 },
   mapOverlay: { position: "absolute", bottom: 10, left: 10, right: 10, flexDirection: "row", alignItems: "center", gap: 8 },
   mapBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },

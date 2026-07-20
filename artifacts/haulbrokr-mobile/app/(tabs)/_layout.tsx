@@ -71,6 +71,6 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   onlineDot: {
     position: "absolute", top: -2, right: -4,
-    width: 8, height: 8, borderRadius: 4, borderWidth: 1.5, borderColor: "#0f172a",
+    width: 8, height: 8, borderRadius: 4, borderWidth: 1.5, borderColor: "#0A0A0C",
   },
 });

@@ -217,7 +217,7 @@ export default function DashboardPage() {
                     tickLine={false}
                     width={24}
                   />
-                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "hsl(217 91% 60% / 0.08)" }} />
+                  <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "hsl(20 100% 50% / 0.08)" }} />
                   <Bar dataKey="events" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>

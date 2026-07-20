@@ -74,7 +74,7 @@
   /* Charcoal surfaces */
   --border: 240 4% 16%;
   --input: 240 4% 12%;
-  --ring: 217 91% 60%;
+  --ring: 20 100% 50%;
 
   /* Dark glass panels */
   --card: 240 5% 8%;
@@ -85,10 +85,10 @@
   --popover-foreground: 0 0% 96%;
   --popover-border: 240 4% 14%;
 
-  /* Electric blue — primary accent */
-  --primary: 217 91% 60%;
+  /* Neon fire orange — primary accent */
+  --primary: 20 100% 50%;
   --primary-foreground: 0 0% 100%;
-  --primary-border: hsl(217 91% 50%);
+  --primary-border: hsl(20 100% 42%);
 
   /* Charcoal secondary */
   --secondary: 240 4% 12%;
@@ -99,10 +99,10 @@
   --muted-foreground: 240 4% 55%;
   --muted-border: hsl(240 4% 16%);
 
-  /* Construction orange — secondary accent */
-  --accent: 24 95% 53%;
+  /* Neon fire orange — brand accent */
+  --accent: 20 100% 50%;
   --accent-foreground: 0 0% 100%;
-  --accent-border: hsl(24 95% 43%);
+  --accent-border: hsl(20 100% 42%);
 
   /* Semantic colors */
   --destructive: 0 72% 51%;
@@ -121,7 +121,7 @@
   --sidebar: 240 6% 5%;
   --sidebar-foreground: 0 0% 90%;
   --sidebar-border: 240 4% 12%;
-  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary: 20 100% 50%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 240 4% 10%;
   --sidebar-accent-foreground: 0 0% 96%;
@@ -138,20 +138,20 @@
   --foreground: 0 0% 96%;
   --border: 240 4% 16%;
   --input: 240 4% 12%;
-  --ring: 217 91% 60%;
+  --ring: 20 100% 50%;
   --card: 240 5% 8%;
   --card-foreground: 0 0% 96%;
   --card-border: 240 4% 14%;
   --popover: 240 5% 7%;
   --popover-foreground: 0 0% 96%;
   --popover-border: 240 4% 14%;
-  --primary: 217 91% 60%;
+  --primary: 20 100% 50%;
   --primary-foreground: 0 0% 100%;
   --secondary: 240 4% 12%;
   --secondary-foreground: 0 0% 90%;
   --muted: 240 4% 10%;
   --muted-foreground: 240 4% 55%;
-  --accent: 24 95% 53%;
+  --accent: 20 100% 50%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 98%;
@@ -164,7 +164,7 @@
   --sidebar: 240 6% 5%;
   --sidebar-foreground: 0 0% 90%;
   --sidebar-border: 240 4% 12%;
-  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary: 20 100% 50%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 240 4% 10%;
   --sidebar-accent-foreground: 0 0% 96%;
@@ -187,7 +187,7 @@
   }
 
   ::selection {
-    background: hsl(217 91% 60% / 0.35);
+    background: hsl(20 100% 50% / 0.35);
     color: white;
   }
 }
@@ -225,7 +225,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top right, hsl(217 91% 60% / 0.04) 0%, transparent 55%);
+    background: radial-gradient(ellipse at top right, hsl(20 100% 50% / 0.04) 0%, transparent 55%);
     pointer-events: none;
   }
 
@@ -235,7 +235,7 @@
 
   .hover-elevate:hover {
     transform: translateY(-1px);
-    box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.55), 0 0 0 1px hsl(217 91% 60% / 0.08);
+    box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.55), 0 0 0 1px hsl(20 100% 50% / 0.08);
   }
 
   .active-elevate-2:active {
@@ -346,6 +346,6 @@
 
 /* Focus visible for accessibility */
 :focus-visible {
-  outline: 2px solid hsl(217 91% 60%);
+  outline: 2px solid hsl(20 100% 50%);
   outline-offset: 2px;
 }

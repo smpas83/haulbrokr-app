@@ -312,7 +312,7 @@ export default function AccountScreen() {
       contentContainerStyle={[styles.content, { paddingTop: topPad + 16, paddingBottom: 100 + insets.bottom }]}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#e9a600" colors={["#e9a600"]} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF5500" colors={["#FF5500"]} />
       }
     >
       {/* Profile Card */}
@@ -325,13 +325,13 @@ export default function AccountScreen() {
               </Text>
             </View>
             <View style={styles.profileInfo}>
-              <Text style={[styles.profileName, { color: "#f0f6ff", fontFamily: "Inter_700Bold" }]}>{profile.name}</Text>
-              <Text style={[styles.profileCompany, { color: "#8ba0b8", fontFamily: "Inter_400Regular" }]}>{profile.company}</Text>
-              <Text style={[styles.profilePhone, { color: "#8ba0b8", fontFamily: "Inter_400Regular" }]}>{profile.phone}</Text>
+              <Text style={[styles.profileName, { color: "#F4F4F5", fontFamily: "Inter_700Bold" }]}>{profile.name}</Text>
+              <Text style={[styles.profileCompany, { color: "#8B8B96", fontFamily: "Inter_400Regular" }]}>{profile.company}</Text>
+              <Text style={[styles.profilePhone, { color: "#8B8B96", fontFamily: "Inter_400Regular" }]}>{profile.phone}</Text>
             </View>
             <View style={styles.ratingWrap}>
               <Text style={[styles.ratingValue, { color: colors.primary, fontFamily: "Inter_700Bold" }]}>{profile.rating}★</Text>
-              <Text style={[styles.ratingLabel, { color: "#8ba0b8", fontFamily: "Inter_400Regular" }]}>Rating</Text>
+              <Text style={[styles.ratingLabel, { color: "#8B8B96", fontFamily: "Inter_400Regular" }]}>Rating</Text>
             </View>
             <Pressable
               onPress={() => {
@@ -361,12 +361,12 @@ export default function AccountScreen() {
               </Text>
             </View>
             <View style={styles.locationBadge}>
-              <Feather name="map-pin" size={12} color="#8ba0b8" />
-              <Text style={[styles.locationText, { color: "#8ba0b8", fontFamily: "Inter_400Regular" }]}>{profile.city}, {profile.state}</Text>
+              <Feather name="map-pin" size={12} color="#8B8B96" />
+              <Text style={[styles.locationText, { color: "#8B8B96", fontFamily: "Inter_400Regular" }]}>{profile.city}, {profile.state}</Text>
             </View>
             <View style={styles.locationBadge}>
-              <Feather name="calendar" size={12} color="#8ba0b8" />
-              <Text style={[styles.locationText, { color: "#8ba0b8", fontFamily: "Inter_400Regular" }]}>Since {profile.memberSince}</Text>
+              <Feather name="calendar" size={12} color="#8B8B96" />
+              <Text style={[styles.locationText, { color: "#8B8B96", fontFamily: "Inter_400Regular" }]}>Since {profile.memberSince}</Text>
             </View>
           </View>
         </View>
@@ -939,7 +939,7 @@ export default function AccountScreen() {
 
           {/* Topics */}
           <Text style={[styles.prefGroupLabel, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold" }]}>NOTIFY ME ABOUT</Text>
-          <NotifToggle label="Bid Activity" icon="trending-up" value={notifBids} onChange={setNotifBids} colors={colors} accent="#e9a600" />
+          <NotifToggle label="Bid Activity" icon="trending-up" value={notifBids} onChange={setNotifBids} colors={colors} accent="#FF5500" />
           <View style={[styles.prefDivider, { backgroundColor: colors.border }]} />
           <NotifToggle label="Job Updates" icon="briefcase" value={notifJobs} onChange={setNotifJobs} colors={colors} accent={ACCENT.green} />
           <View style={[styles.prefDivider, { backgroundColor: colors.border }]} />

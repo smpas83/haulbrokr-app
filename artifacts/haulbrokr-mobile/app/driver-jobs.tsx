@@ -64,8 +64,8 @@ export default function DriverJobsScreen() {
       <Stack.Screen
         options={{
           title: "My Loads",
-          headerStyle: { backgroundColor: "#1e2235" },
-          headerTintColor: "#f0f6ff",
+          headerStyle: { backgroundColor: "#0A0A0C" },
+          headerTintColor: "#F4F4F5",
         }}
       />
       <ScrollView

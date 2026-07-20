@@ -614,10 +614,10 @@ export default function SignInScreen() {
               disabled={ssoBusy !== null || !clerkReady}
             >
               {ssoBusy === "google" ? (
-                <ActivityIndicator color="#1e2235" />
+                <ActivityIndicator color="#0A0A0C" />
               ) : (
                 <>
-                  <FontAwesome name="google" size={17} color="#1e2235" />
+                  <FontAwesome name="google" size={17} color="#0A0A0C" />
                   <Text style={styles.ssoGoogleText}>Continue with Google</Text>
                 </>
               )}
@@ -628,10 +628,10 @@ export default function SignInScreen() {
               disabled={ssoBusy !== null || !clerkReady}
             >
               {ssoBusy === "apple" ? (
-                <ActivityIndicator color="#f0f6ff" />
+                <ActivityIndicator color="#F4F4F5" />
               ) : (
                 <>
-                  <FontAwesome name="apple" size={19} color="#f0f6ff" />
+                  <FontAwesome name="apple" size={19} color="#F4F4F5" />
                   <Text style={styles.ssoAppleText}>Continue with Apple</Text>
                 </>
               )}
@@ -645,7 +645,7 @@ export default function SignInScreen() {
 
             {mode === "signin" ? (
               <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-                <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
+                <Feather name="user" size={16} color="#8B8B96" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Username or email"
@@ -661,7 +661,7 @@ export default function SignInScreen() {
             ) : (
               <>
                 <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-                  <Feather name="user" size={16} color="#8ba0b8" style={styles.inputIcon} />
+                  <Feather name="user" size={16} color="#8B8B96" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Username"
@@ -675,7 +675,7 @@ export default function SignInScreen() {
                   />
                 </View>
                 <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-                  <Feather name="mail" size={16} color="#8ba0b8" style={styles.inputIcon} />
+                  <Feather name="mail" size={16} color="#8B8B96" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="your@email.com"
@@ -693,7 +693,7 @@ export default function SignInScreen() {
             )}
 
             <View style={[styles.inputRow, !clerkReady && styles.inputDisabled]}>
-              <Feather name="lock" size={16} color="#8ba0b8" style={styles.inputIcon} />
+              <Feather name="lock" size={16} color="#8B8B96" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -712,7 +712,7 @@ export default function SignInScreen() {
                 hitSlop={8}
                 disabled={!clerkReady}
               >
-                <Feather name={showPassword ? "eye-off" : "eye"} size={16} color="#8ba0b8" />
+                <Feather name={showPassword ? "eye-off" : "eye"} size={16} color="#8B8B96" />
               </Pressable>
             </View>
 
@@ -727,7 +727,7 @@ export default function SignInScreen() {
                 disabled={busy}
               >
                 {busy ? (
-                  <ActivityIndicator color="#1e2235" />
+                  <ActivityIndicator color="#FFFFFF" />
                 ) : (
                   <Text style={styles.btnText}>Continue to app</Text>
                 )}
@@ -740,7 +740,7 @@ export default function SignInScreen() {
               disabled={busy || !clerkReady || ssoBusy !== null}
             >
               {busy ? (
-                <ActivityIndicator color="#1e2235" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={styles.btnText}>
                   {mode === "signin" ? "Sign In" : "Create Account"}
@@ -761,7 +761,7 @@ export default function SignInScreen() {
                   style={styles.resetBtn}
                 >
                   {resettingAuth ? (
-                    <ActivityIndicator size="small" color="#e9a600" />
+                    <ActivityIndicator size="small" color="#FF5500" />
                   ) : (
                     <Text style={styles.resetText}>Reset saved auth data</Text>
                   )}
@@ -772,7 +772,7 @@ export default function SignInScreen() {
         ) : (
           <>
             <View style={styles.codeHint}>
-              <Feather name="mail" size={14} color="#e9a600" />
+              <Feather name="mail" size={14} color="#FF5500" />
               <Text style={styles.codeHintText}>
                 {verifyReason === "trust"
                   ? "One-time check for new devices — you won't need this again on this phone"
@@ -781,7 +781,7 @@ export default function SignInScreen() {
             </View>
 
             <View style={styles.inputRow}>
-              <Feather name="hash" size={16} color="#8ba0b8" style={styles.inputIcon} />
+              <Feather name="hash" size={16} color="#8B8B96" style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, styles.codeInput]}
                 placeholder="000000"
@@ -804,7 +804,7 @@ export default function SignInScreen() {
               disabled={busy || code.length < 6}
             >
               {busy ? (
-                <ActivityIndicator color="#1e2235" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={styles.btnText}>Verify & Continue</Text>
               )}
@@ -833,7 +833,7 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#1e2235" },
+  root: { flex: 1, backgroundColor: "#0A0A0C" },
   scroll: {
     flexGrow: 1,
     alignItems: "center",
@@ -843,7 +843,7 @@ const styles = StyleSheet.create({
   logoImg: { width: "82%", height: 96 },
   modeRow: {
     flexDirection: "row",
-    backgroundColor: "#2a3352",
+    backgroundColor: "#141416",
     borderRadius: 12,
     padding: 4,
     marginBottom: 16,
@@ -853,63 +853,63 @@ const styles = StyleSheet.create({
     flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: "center",
   },
   modeTabActive: {
-    backgroundColor: "#e9a600",
+    backgroundColor: "#FF5500",
   },
   modeTabText: {
-    fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#8ba0b8",
+    fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#8B8B96",
   },
   modeTabTextActive: {
-    color: "#1e2235",
+    color: "#FFFFFF",
   },
   subtitle: {
     fontSize: 14,
     fontFamily: "Inter_400Regular",
-    color: "#8ba0b8",
+    color: "#8B8B96",
     textAlign: "center",
     marginBottom: 24,
     lineHeight: 21,
   },
   inputRow: {
     width: "100%", flexDirection: "row", alignItems: "center",
-    backgroundColor: "#2a3352", borderRadius: 12, borderWidth: 1, borderColor: "#3a4565",
+    backgroundColor: "#141416", borderRadius: 12, borderWidth: 1, borderColor: "#27272A",
     paddingHorizontal: 14, marginBottom: 14,
   },
   inputDisabled: { opacity: 0.6 },
   inputIcon: { marginRight: 10 },
   input: {
-    flex: 1, height: 52, color: "#f0f6ff",
+    flex: 1, height: 52, color: "#F4F4F5",
     fontFamily: "Inter_400Regular", fontSize: 15,
   },
   codeInput: {
     fontSize: 22, fontFamily: "Inter_700Bold", letterSpacing: 6, textAlign: "center",
   },
   btn: {
-    width: "100%", backgroundColor: "#e9a600", borderRadius: 12,
+    width: "100%", backgroundColor: "#FF5500", borderRadius: 12,
     height: 52, alignItems: "center", justifyContent: "center", marginBottom: 14,
   },
   btnDisabled: { opacity: 0.55 },
-  btnText: { color: "#1e2235", fontFamily: "Inter_700Bold", fontSize: 16 },
+  btnText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 16 },
   ssoBtn: {
     width: "100%", height: 50, borderRadius: 12, flexDirection: "row",
     alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 10,
     borderWidth: 1,
   },
-  ssoGoogle: { backgroundColor: "#f0f6ff", borderColor: "#f0f6ff" },
-  ssoGoogleText: { color: "#1e2235", fontFamily: "Inter_700Bold", fontSize: 15 },
-  ssoApple: { backgroundColor: "#0a0a0a", borderColor: "#2a3352" },
-  ssoAppleText: { color: "#f0f6ff", fontFamily: "Inter_700Bold", fontSize: 15 },
+  ssoGoogle: { backgroundColor: "#F4F4F5", borderColor: "#F4F4F5" },
+  ssoGoogleText: { color: "#0A0A0C", fontFamily: "Inter_700Bold", fontSize: 15 },
+  ssoApple: { backgroundColor: "#0a0a0a", borderColor: "#141416" },
+  ssoAppleText: { color: "#F4F4F5", fontFamily: "Inter_700Bold", fontSize: 15 },
   dividerRow: {
     flexDirection: "row", alignItems: "center", width: "100%",
     marginVertical: 12, gap: 10,
   },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#3a4565" },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#27272A" },
   dividerText: { color: "#6b7280", fontFamily: "Inter_500Medium", fontSize: 11, letterSpacing: 1 },
   errorText: {
     color: "#f87171", fontFamily: "Inter_400Regular", fontSize: 13,
     textAlign: "center", marginBottom: 12, lineHeight: 18,
   },
   initText: {
-    color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 12,
+    color: "#8B8B96", fontFamily: "Inter_400Regular", fontSize: 12,
     textAlign: "center", marginTop: -4,
   },
   resetBtn: {
@@ -918,25 +918,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   resetText: {
-    color: "#e9a600", fontFamily: "Inter_600SemiBold", fontSize: 12,
+    color: "#FF5500", fontFamily: "Inter_600SemiBold", fontSize: 12,
     textAlign: "center",
   },
   codeHint: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#e9a60012", borderWidth: 1, borderColor: "#e9a60030",
+    backgroundColor: "#FF550012", borderWidth: 1, borderColor: "#FF550030",
     borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
     marginBottom: 16, width: "100%",
   },
   codeHintText: {
-    color: "#e9a600", fontFamily: "Inter_400Regular", fontSize: 13,
+    color: "#FF5500", fontFamily: "Inter_400Regular", fontSize: 13,
   },
   resendRow: {
     flexDirection: "row", alignItems: "center", marginBottom: 24,
   },
-  resendLabel: { color: "#8ba0b8", fontFamily: "Inter_400Regular", fontSize: 13 },
-  resendLink: { color: "#e9a600", fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  resendLabel: { color: "#8B8B96", fontFamily: "Inter_400Regular", fontSize: 13 },
+  resendLink: { color: "#FF5500", fontFamily: "Inter_600SemiBold", fontSize: 13 },
   footerNote: {
-    color: "#3a4565", fontFamily: "Inter_400Regular",
+    color: "#27272A", fontFamily: "Inter_400Regular",
     fontSize: 11, textAlign: "center", lineHeight: 16, marginTop: 8,
   },
 });

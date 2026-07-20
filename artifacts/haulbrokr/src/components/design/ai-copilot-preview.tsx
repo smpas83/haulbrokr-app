@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Bot, Send, Sparkles, TrendingUp, Truck, DollarSign } from "lucide-react";
+import { Bot, Send, Sparkles, TrendingUp, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DumpTruckIcon } from "./dump-truck-icon";
 
 const SUGGESTED_PROMPTS = [
   "Which routes have highest demand today?",
@@ -11,16 +12,16 @@ const SUGGESTED_PROMPTS = [
 const DEMO_MESSAGES = [
   {
     role: "assistant" as const,
-    content: "Good morning! I've analyzed your fleet data. You have 3 trucks idle in the Houston area — I found 7 matching loads within 15 miles.",
+    content: "Good morning! I've analyzed your fleet data. You have 3 dump trucks idle in the Houston area — I found 7 matching loads within 15 miles.",
     insight: { label: "Potential revenue", value: "$4,200", icon: DollarSign },
   },
   {
     role: "user" as const,
-    content: "Dispatch the closest truck to the gravel load",
+    content: "Dispatch the closest dump truck to the gravel load",
   },
   {
     role: "assistant" as const,
-    content: "Done. Truck #247 (Mike R.) dispatched to gravel load at I-45 & Beltway. ETA 12 min. Customer notified.",
+    content: "Done. Dump truck #247 (Mike R.) dispatched to gravel load at I-45 & Beltway. ETA 12 min. Customer notified.",
     insight: { label: "Fleet utilization", value: "94%", icon: TrendingUp },
   },
 ];
@@ -108,7 +109,7 @@ export function AiCopilotPreview({ className }: { className?: string }) {
       {/* Input */}
       <div className="px-5 pb-5">
         <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5">
-          <Truck className="h-4 w-4 text-muted-foreground shrink-0" />
+          <DumpTruckIcon className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             id="copilot-preview-input"
             name="copilot-preview-input"

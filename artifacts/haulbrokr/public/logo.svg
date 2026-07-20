@@ -1,5 +1,18 @@
 <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="256" height="256" rx="32" fill="#111111"/>
-<path d="M64 160L128 80L192 160H64Z" fill="#F59E0B"/>
-<rect x="96" y="160" width="64" height="40" fill="#F59E0B"/>
+  <rect width="256" height="256" rx="48" fill="#0A0A0C"/>
+  <!-- Raised dump bed -->
+  <path d="M28 118 L118 48 L138 148 L42 178 Z" fill="#FF5500"/>
+  <!-- Hydraulic -->
+  <path d="M78 155 L112 95" stroke="#0A0A0C" stroke-width="10" stroke-linecap="round"/>
+  <!-- Cab -->
+  <path d="M148 118 H210 L232 152 V188 H148 V118 Z" fill="#FF5500"/>
+  <path d="M168 118 V92 H200 L216 118" fill="#FF5500"/>
+  <rect x="172" y="100" width="28" height="18" rx="2" fill="#0A0A0C"/>
+  <!-- Chassis -->
+  <rect x="40" y="182" width="192" height="12" rx="4" fill="#FF5500"/>
+  <!-- Wheels -->
+  <circle cx="78" cy="204" r="18" fill="#FF5500"/>
+  <circle cx="78" cy="204" r="8" fill="#0A0A0C"/>
+  <circle cx="188" cy="204" r="18" fill="#FF5500"/>
+  <circle cx="188" cy="204" r="8" fill="#0A0A0C"/>
 </svg>

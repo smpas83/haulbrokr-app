@@ -41,27 +41,27 @@ const OPEN_STATUSES = new Set(["open", "bidding", "bid_received"]);
 
 const TRUCK_PIN_COLOR: Record<MarketplaceTruck["status"], string> = {
   available: "#16a34a",
-  assigned: "#3b82f6",
-  en_route: "#e9a600",
+  assigned: "#3B82F6",
+  en_route: "#FF5500",
   offline: "#6b7280",
 };
 
 // ── Dark map style ────────────────────────────────────────────────────
 const DARK_MAP_STYLE = [
-  { elementType: "geometry",            stylers: [{ color: "#0f172a" }] },
+  { elementType: "geometry",            stylers: [{ color: "#0A0A0C" }] },
   { elementType: "labels.text.fill",    stylers: [{ color: "#6b7280" }] },
-  { elementType: "labels.text.stroke",  stylers: [{ color: "#0f172a" }] },
+  { elementType: "labels.text.stroke",  stylers: [{ color: "#0A0A0C" }] },
   { featureType: "administrative",      elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },
   { featureType: "road",                elementType: "geometry",        stylers: [{ color: "#1c2333" }] },
   { featureType: "road",                elementType: "geometry.stroke", stylers: [{ color: "#0a1020" }] },
   { featureType: "road.highway",        elementType: "geometry",        stylers: [{ color: "#1e3a54" }] },
-  { featureType: "road.highway",        elementType: "geometry.stroke", stylers: [{ color: "#0f172a" }] },
+  { featureType: "road.highway",        elementType: "geometry.stroke", stylers: [{ color: "#0A0A0C" }] },
   { featureType: "road.highway",        elementType: "labels.text.fill",stylers: [{ color: "#4b6080" }] },
-  { featureType: "water",               elementType: "geometry",        stylers: [{ color: "#0a1628" }] },
+  { featureType: "water",               elementType: "geometry",        stylers: [{ color: "#0A0A0C" }] },
   { featureType: "water",               elementType: "labels.text.fill",stylers: [{ color: "#1e3a54" }] },
   { featureType: "poi",                 stylers: [{ visibility: "off" }] },
   { featureType: "transit",             stylers: [{ visibility: "off" }] },
-  { featureType: "landscape",           elementType: "geometry",        stylers: [{ color: "#111827" }] },
+  { featureType: "landscape",           elementType: "geometry",        stylers: [{ color: "#141416" }] },
 ];
 
 // ── Map type options ──────────────────────────────────────────────────
@@ -512,7 +512,7 @@ export default function MapScreen() {
         {/* ── Map type toggle (Standard → Satellite → Hybrid) ────── */}
         <Pressable
           onPress={cycleMapType}
-          style={[styles.mapTypeBtn, { backgroundColor: "#0a1628cc", borderColor: "#ffffff20" }]}
+          style={[styles.mapTypeBtn, { backgroundColor: "#0A0A0Ccc", borderColor: "#ffffff20" }]}
         >
           <Feather
             name={MAP_TYPES.find((m) => m.type === mapType)?.icon as any ?? "map"}
@@ -532,7 +532,7 @@ export default function MapScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 void recenterGps();
               }}
-              style={[styles.gpsBtn, { backgroundColor: "#0a1628cc", borderColor: "#ffffff20" }]}
+              style={[styles.gpsBtn, { backgroundColor: "#0A0A0Ccc", borderColor: "#ffffff20" }]}
             >
               {gpsLocating ? (
                 <Feather name="loader" size={16} color="#ffffff" />
@@ -551,7 +551,7 @@ export default function MapScreen() {
               void centerOnUser(true);
             }}
             style={[styles.gpsBtn, {
-              backgroundColor: gpsFollowing ? colors.primary : "#0a1628cc",
+              backgroundColor: gpsFollowing ? colors.primary : "#0A0A0Ccc",
               borderColor: gpsFollowing ? colors.primary : "#ffffff20",
             }]}
           >
@@ -580,16 +580,16 @@ export default function MapScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setIsFullscreen((v) => !v);
           }}
-          style={[styles.fullscreenBtn, { backgroundColor: "#0a162890" }]}
+          style={[styles.fullscreenBtn, { backgroundColor: "#0A0A0C90" }]}
         >
           <Feather name={isFullscreen ? "minimize-2" : "maximize-2"} size={16} color="#ffffff" />
         </Pressable>
 
         {/* ── Legend ─────────────────────────────────────────────── */}
-        <View style={[styles.legend, { backgroundColor: "#0a162890" }]}>
+        <View style={[styles.legend, { backgroundColor: "#0A0A0C90" }]}>
           {[
-            { color: "#e9a600", label: "Open"    },
-            { color: "#3b82f6", label: "Bidding" },
+            { color: "#FF5500", label: "Open"    },
+            { color: "#F59E0B", label: "Bidding" },
             { color: "#16a34a", label: "Active"  },
             { color: "#22c55e", label: "Trucks"  },
           ].map((l) => (
@@ -616,7 +616,7 @@ export default function MapScreen() {
             <Pressable
               onPress={() => setShowLocationModal(true)}
               style={[styles.fullscreenLocBtn, {
-                backgroundColor: "#0a1628cc",
+                backgroundColor: "#0A0A0Ccc",
                 borderColor:     "#ffffff20",
               }]}
             >
@@ -635,7 +635,7 @@ export default function MapScreen() {
                     setActiveFilter(f);
                   }}
                   style={[styles.fullscreenChip, {
-                    backgroundColor: activeFilter === f ? colors.primary : "#0a1628cc",
+                    backgroundColor: activeFilter === f ? colors.primary : "#0A0A0Ccc",
                     borderColor:     activeFilter === f ? colors.primary : "#ffffff20",
                   }]}
                 >
@@ -718,8 +718,8 @@ export default function MapScreen() {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={onRefresh}
-                  tintColor="#e9a600"
-                  colors={["#e9a600"]}
+                  tintColor="#FF5500"
+                  colors={["#FF5500"]}
                 />
               }
             >

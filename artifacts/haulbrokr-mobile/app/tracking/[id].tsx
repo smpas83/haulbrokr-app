@@ -172,7 +172,7 @@ export default function TrackingScreen() {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 120 + insets.bottom }]} showsVerticalScrollIndicator={false}>
 
         {/* Live vehicle map */}
-        <View style={[styles.mapBox, { backgroundColor: "#0a1628", overflow: "hidden" }]}>
+        <View style={[styles.mapBox, { backgroundColor: "#0A0A0C", overflow: "hidden" }]}>
           {isLiveJob && trackingLoading ? (
             <View style={styles.center}>
               <ActivityIndicator color={colors.primary} />

@@ -781,8 +781,8 @@ export default function JobDetailScreen() {
                               onPress={() => handleTicketClockIn(t.id)}
                               style={[styles.ticketActionBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
                             >
-                              <Feather name="play" size={12} color="#1e2235" />
-                              <Text style={[styles.ticketActionText, { color: "#1e2235" }]}>Clock In</Text>
+                              <Feather name="play" size={12} color="#0A0A0C" />
+                              <Text style={[styles.ticketActionText, { color: "#0A0A0C" }]}>Clock In</Text>
                             </Pressable>
                           )}
                           {t.clockedInAt && !t.clockedOutAt && (
@@ -1837,8 +1837,8 @@ function LiveTicketsPanel({ numericId, role, status }: { numericId: number | nul
                         onPress={() => clockIn.mutate(t.id, { onError: (e: any) => Alert.alert("Error", e?.message ?? "Try again.") })}
                         style={[styles.ticketActionBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
                       >
-                        <Feather name="play" size={12} color="#1e2235" />
-                        <Text style={[styles.ticketActionText, { color: "#1e2235" }]}>Clock In</Text>
+                        <Feather name="play" size={12} color="#0A0A0C" />
+                        <Text style={[styles.ticketActionText, { color: "#0A0A0C" }]}>Clock In</Text>
                       </Pressable>
                     )}
                     {t.clockedInAt && !t.clockedOutAt && (
