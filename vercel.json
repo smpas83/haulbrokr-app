@@ -6,7 +6,6 @@
   "framework": null,
   "rewrites": [
     {
-<<<<<<< Updated upstream
       "source": "/admin/marketing",
       "destination": "https://kashventure.com/haulbrokr/admin/marketing"
     },
@@ -41,7 +40,8 @@
     {
       "source": "/_next/:path*",
       "destination": "https://kashventure.com/_next/:path*"
-=======
+    },
+    {
       "source": "/sign-in",
       "destination": "https://kashventure.com/sign-in"
     },
@@ -56,7 +56,6 @@
     {
       "source": "/sign-up/:path*",
       "destination": "https://kashventure.com/sign-up/:path*"
->>>>>>> Stashed changes
     },
     {
       "source": "/api/:path*",
@@ -77,29 +76,42 @@
   ],
   "headers": [
     {
-<<<<<<< Updated upstream
       "source": "/admin",
       "headers": [
-        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/admin/:path*",
       "headers": [
-        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/haulbrokr/admin/:path*",
       "headers": [
-        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/api/haulbrokr/marketing/:path*",
       "headers": [
-        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
-=======
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/sign-in",
       "headers": [
         {
@@ -133,7 +145,6 @@
           "key": "Cache-Control",
           "value": "private, no-cache, no-store, max-age=0, must-revalidate"
         }
->>>>>>> Stashed changes
       ]
     },
     {
