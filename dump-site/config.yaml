@@ -1,0 +1,121 @@
+# HaulBrokr Dump Site Collector configuration
+
+app:
+  name: "HaulBrokr Dump Site Collector"
+  version: "1.0.0"
+  log_level: INFO
+  log_dir: logs
+  output_dir: output
+  state_dir: .state
+  data_dir: data
+
+# Fuzzy deduplication thresholds (0–100)
+dedupe:
+  name_similarity_threshold: 88
+  address_similarity_threshold: 90
+  require_same_state: true
+  require_same_zip_when_present: false
+
+# HTTP client / retry defaults
+http:
+  timeout_seconds: 30
+  max_retries: 3
+  retry_backoff_seconds: 1.5
+  retry_max_wait_seconds: 30
+  user_agent: "HaulBrokrDumpSiteCollector/1.0 (+https://haulbrokr.com)"
+
+# Progress bars
+progress:
+  enabled: true
+  leave: true
+
+# Export defaults
+export:
+  default_formats:
+    - csv
+    - sqlite
+  csv_encoding: utf-8
+  excel_sheet_name: facilities
+  sqlite_table: facilities
+  supabase_filename: facilities_supabase.csv
+  supabase_table: dump_sites
+  supabase_upsert: true
+
+# Optional live Supabase push (also reads SUPABASE_URL / SUPABASE_KEY)
+supabase:
+  url: ""
+  key: ""
+  table: dump_sites
+  enabled: false
+
+# Importer toggles (all enabled by default)
+importers:
+  epa_landfill: true
+  state_agency: true
+  transfer_stations: true
+  cd_facilities: true
+  dirt_disposal: true
+  rock_quarries: true
+  gravel_pits: true
+  aggregate_yards: true
+  asphalt_recycling: true
+  concrete_recycling: true
+
+# Optional remote source URLs (leave empty to use bundled seed data)
+sources:
+  epa_landfill_url: ""
+  state_agency_url_template: ""
+
+# US states + DC
+states:
+  - AL
+  - AK
+  - AZ
+  - AR
+  - CA
+  - CO
+  - CT
+  - DE
+  - FL
+  - GA
+  - HI
+  - ID
+  - IL
+  - IN
+  - IA
+  - KS
+  - KY
+  - LA
+  - ME
+  - MD
+  - MA
+  - MI
+  - MN
+  - MS
+  - MO
+  - MT
+  - NE
+  - NV
+  - NH
+  - NJ
+  - NM
+  - NY
+  - NC
+  - ND
+  - OH
+  - OK
+  - OR
+  - PA
+  - RI
+  - SC
+  - SD
+  - TN
+  - TX
+  - UT
+  - VT
+  - VA
+  - WA
+  - WV
+  - WI
+  - WY
+  - DC

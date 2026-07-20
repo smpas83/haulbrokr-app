@@ -1,0 +1,54 @@
+[project]
+name = "haulbrokr-dump-site-collector"
+version = "1.0.0"
+description = "HaulBrokr Dump Site Collector — facility data importer, deduplicator, and exporter"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1.7",
+    "httpx>=0.27.0",
+    "openpyxl>=3.1.5",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "pyyaml>=6.0.1",
+    "rapidfuzz>=3.9.0",
+    "rich>=13.7.0",
+    "tenacity>=8.3.0",
+    "tqdm>=4.66.0",
+    "supabase>=2.5.0",
+    "postgrest>=0.16.0",
+    "python-dotenv>=1.0.1",
+    "pytest>=8.2.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "respx>=0.21.0",
+]
+
+[project.scripts]
+haulbrokr-collector = "haulbrokr_collector.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/haulbrokr_collector"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q --tb=short"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["haulbrokr_collector"]
+mypy_path = "src"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
