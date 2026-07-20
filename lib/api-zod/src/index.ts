@@ -6,10 +6,14 @@ export * from "./generated/api";
 export {
   ConnectQuickBooksBody,
   CreateBinOrderBody,
+  CreateDriverEventBody,
   CreateFactoringRequestBody,
   CreateJobEvidenceBody,
   CreateProjectBody,
+  UpdateAdminPricingSettingsBody,
   UpdateProjectBody,
   UpsertDriverDocBody,
+  UpsertFuelSurchargeWeekBody,
   VerifyTicketQrBody,
 } from "./generated/api";
+export * from './generated/types';

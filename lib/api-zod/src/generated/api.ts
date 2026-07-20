@@ -516,6 +516,41 @@ export const ListJobsResponseItem = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -565,6 +600,41 @@ export const GetJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -590,7 +660,14 @@ export const UpdateJobParams = zod.object({
 export const UpdateJobBody = zod.object({
   "status": zod.enum(['in_progress', 'completed']),
   "totalHours": zod.number().optional(),
-  "notes": zod.string().optional()
+  "notes": zod.string().optional(),
+  "tollsAmount": zod.number().optional(),
+  "waitTimeHours": zod.number().optional(),
+  "waitTimeAmount": zod.number().optional(),
+  "isEmergencyDispatch": zod.boolean().optional(),
+  "emergencyDispatchAmount": zod.number().optional(),
+  "isHolidayHaul": zod.boolean().optional(),
+  "holidaySurchargeAmount": zod.number().optional()
 })
 
 export const UpdateJobResponse = zod.object({
@@ -619,6 +696,41 @@ export const UpdateJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -667,6 +779,41 @@ export const AcceptJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -715,6 +862,41 @@ export const DeclineJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -1673,6 +1855,112 @@ export const ListAdminCreditApplicationsResponse = zod.array(ListAdminCreditAppl
 
 
 /**
+ * @summary Get all configurable marketplace pricing settings and the weekly fuel surcharge schedule
+ */
+export const GetAdminPricingResponse = zod.object({
+  "settings": zod.array(zod.object({
+  "id": zod.number(),
+  "key": zod.string(),
+  "value": zod.number(),
+  "description": zod.string().nullish(),
+  "updatedAt": zod.coerce.date().optional()
+})),
+  "fuelSurchargeWeeks": zod.array(zod.object({
+  "id": zod.number(),
+  "weekStartDate": zod.coerce.date(),
+  "nationalDieselPrice": zod.number().nullish(),
+  "surchargeRate": zod.number(),
+  "notes": zod.string().nullish(),
+  "isActive": zod.boolean(),
+  "updatedAt": zod.coerce.date().optional()
+})),
+  "activeRates": zod.object({
+  "marketplaceFeeRate": zod.number(),
+  "fuelSurchargeRate": zod.number(),
+  "emergencyDispatchRate": zod.number(),
+  "holidaySurchargeRate": zod.number(),
+  "waitTimeRatePerHour": zod.number(),
+  "taxRate": zod.number(),
+  "taxesEnabled": zod.boolean()
+})
+})
+
+
+/**
+ * @summary Update one or more marketplace pricing settings (no hardcoded percentages)
+ */
+export const UpdateAdminPricingSettingsBody = zod.object({
+  "settings": zod.array(zod.object({
+  "key": zod.string(),
+  "value": zod.number(),
+  "description": zod.string().optional()
+}))
+})
+
+export const UpdateAdminPricingSettingsResponse = zod.object({
+  "settings": zod.array(zod.object({
+  "id": zod.number(),
+  "key": zod.string(),
+  "value": zod.number(),
+  "description": zod.string().nullish(),
+  "updatedAt": zod.coerce.date().optional()
+})),
+  "fuelSurchargeWeeks": zod.array(zod.object({
+  "id": zod.number(),
+  "weekStartDate": zod.coerce.date(),
+  "nationalDieselPrice": zod.number().nullish(),
+  "surchargeRate": zod.number(),
+  "notes": zod.string().nullish(),
+  "isActive": zod.boolean(),
+  "updatedAt": zod.coerce.date().optional()
+})),
+  "activeRates": zod.object({
+  "marketplaceFeeRate": zod.number(),
+  "fuelSurchargeRate": zod.number(),
+  "emergencyDispatchRate": zod.number(),
+  "holidaySurchargeRate": zod.number(),
+  "waitTimeRatePerHour": zod.number(),
+  "taxRate": zod.number(),
+  "taxesEnabled": zod.boolean()
+})
+})
+
+
+/**
+ * @summary Create or update a weekly national diesel fuel surcharge value
+ */
+export const UpsertFuelSurchargeWeekBody = zod.object({
+  "weekStartDate": zod.coerce.date(),
+  "surchargeRate": zod.number(),
+  "nationalDieselPrice": zod.number().optional(),
+  "notes": zod.string().optional(),
+  "isActive": zod.boolean().optional()
+})
+
+export const UpsertFuelSurchargeWeekResponse = zod.object({
+  "id": zod.number(),
+  "weekStartDate": zod.coerce.date(),
+  "nationalDieselPrice": zod.number().nullish(),
+  "surchargeRate": zod.number(),
+  "notes": zod.string().nullish(),
+  "isActive": zod.boolean(),
+  "updatedAt": zod.coerce.date().optional()
+})
+
+
+/**
+ * @summary Delete a weekly fuel surcharge schedule row
+ */
+export const DeleteFuelSurchargeWeekParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteFuelSurchargeWeekResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary List provider payouts stuck in requires_action with a succeeded charge
  */
 export const ListStuckPayoutsResponseItem = zod.object({
@@ -1859,7 +2147,7 @@ export const AdvanceBinOrderStatusResponse = zod.object({
 
 
 /**
- * @summary Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+ * @summary Charge the customer for a completed job (gross from centralized pricing engine — base haul + marketplace fee + surcharges). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
  */
 export const ChargeJobParams = zod.object({
   "id": zod.coerce.number()
@@ -1891,6 +2179,41 @@ export const ChargeJobResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -1939,6 +2262,41 @@ export const ReleaseJobPaymentResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -2001,6 +2359,41 @@ export const ConfirmJobPaymentResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -2069,6 +2462,41 @@ export const VerifyJobCheckoutResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -2212,6 +2640,41 @@ export const ApproveJobCompletionResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),
@@ -2264,6 +2727,41 @@ export const FlagJobCompletionResponse = zod.object({
   "platformFeeAmount": zod.number().nullish(),
   "customerTotalAmount": zod.number().nullish(),
   "providerNetAmount": zod.number().nullish(),
+  "fuelSurchargeRate": zod.number().nullish(),
+  "fuelSurchargeAmount": zod.number().nullish(),
+  "tollsAmount": zod.number().nullish(),
+  "waitTimeHours": zod.number().nullish(),
+  "waitTimeAmount": zod.number().nullish(),
+  "emergencyDispatchAmount": zod.number().nullish(),
+  "holidaySurchargeAmount": zod.number().nullish(),
+  "taxRate": zod.number().nullish(),
+  "taxAmount": zod.number().nullish(),
+  "isEmergencyDispatch": zod.boolean().nullish(),
+  "isHolidayHaul": zod.boolean().nullish(),
+  "customerCheckout": zod.object({
+  "baseHaul": zod.number(),
+  "fuelSurcharge": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number().optional(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "taxes": zod.number(),
+  "taxRate": zod.number().optional(),
+  "grandTotal": zod.number()
+}).optional(),
+  "carrierSettlement": zod.object({
+  "baseHaul": zod.number(),
+  "marketplaceFee": zod.number(),
+  "marketplaceFeeRate": zod.number(),
+  "fuel": zod.number(),
+  "tolls": zod.number(),
+  "waitTime": zod.number(),
+  "emergencyDispatch": zod.number().optional(),
+  "holidaySurcharge": zod.number().optional(),
+  "netPayout": zod.number()
+}).optional(),
   "paymentStatus": zod.enum(['unpaid', 'invoiced', 'paid', 'released', 'failed', 'requires_action']).optional(),
   "paymentDueDate": zod.coerce.date().nullish(),
   "invoicedAt": zod.coerce.date().nullish(),

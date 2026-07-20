@@ -25,6 +25,12 @@ import { loadJobIfMember, isOrgManager, DRIVER_SIDE, CUSTOMER_SIDE, canReviewCom
 import { recordJobTimelineEvent } from "../lib/jobTimeline";
 import { recordActivity } from "../lib/activityNotify";
 import {
+  computeBreakdown,
+  computeJobPricing,
+  loadPricingRates,
+  DEFAULT_PRICING_RATES,
+} from "../lib/pricing";
+import {
   ListJobsQueryParams,
   ListJobsResponse,
   GetJobParams,
@@ -60,23 +66,84 @@ import {
 
 const router: IRouter = Router();
 
-const DEFAULT_FEE_RATE = 0.15;
-
 function num(v: string | null | undefined): number | null {
   return v == null ? null : parseFloat(v);
 }
 
+/** @deprecated Prefer loadPricingRates() — kept for tests importing DEFAULT rate. */
+export const DEFAULT_FEE_RATE = DEFAULT_PRICING_RATES.marketplaceFeeRate;
+
+/** Re-export for existing unit tests. */
+export { computeBreakdown };
+
 function serializeJob(j: any, customerCompany: string, providerCompany: string) {
+  const fuelSurchargeAmount = num(j.fuelSurchargeAmount) ?? 0;
+  const tollsAmount = num(j.tollsAmount) ?? 0;
+  const waitTimeAmount = num(j.waitTimeAmount) ?? 0;
+  const emergencyDispatchAmount = num(j.emergencyDispatchAmount) ?? 0;
+  const holidaySurchargeAmount = num(j.holidaySurchargeAmount) ?? 0;
+  const taxAmount = num(j.taxAmount) ?? 0;
+  const platformFeeAmount = num(j.platformFeeAmount);
+  const platformFeeRate = num(j.platformFeeRate);
+  const baseHaul = num(j.totalAmount) ?? num(j.providerNetAmount);
+  const customerTotalAmount = num(j.customerTotalAmount);
+  const providerNetAmount = num(j.providerNetAmount);
+
+  const customerCheckout =
+    baseHaul != null && platformFeeAmount != null && customerTotalAmount != null
+      ? {
+          baseHaul,
+          fuelSurcharge: fuelSurchargeAmount,
+          marketplaceFee: platformFeeAmount,
+          marketplaceFeeRate: platformFeeRate ?? 0.15,
+          tolls: tollsAmount,
+          waitTime: waitTimeAmount,
+          emergencyDispatch: emergencyDispatchAmount,
+          holidaySurcharge: holidaySurchargeAmount,
+          taxes: taxAmount,
+          taxRate: num(j.taxRate) ?? 0,
+          grandTotal: customerTotalAmount,
+        }
+      : undefined;
+
+  const carrierSettlement =
+    baseHaul != null && platformFeeAmount != null && providerNetAmount != null
+      ? {
+          baseHaul,
+          marketplaceFee: platformFeeAmount,
+          marketplaceFeeRate: platformFeeRate ?? 0.15,
+          fuel: fuelSurchargeAmount,
+          tolls: tollsAmount,
+          waitTime: waitTimeAmount,
+          emergencyDispatch: emergencyDispatchAmount,
+          holidaySurcharge: holidaySurchargeAmount,
+          netPayout: providerNetAmount,
+        }
+      : undefined;
+
   return {
     ...j,
     ratePerHour: parseFloat(j.ratePerHour),
     estimatedHours: parseFloat(j.estimatedHours),
     totalHours: num(j.totalHours),
     totalAmount: num(j.totalAmount),
-    platformFeeRate: num(j.platformFeeRate),
-    platformFeeAmount: num(j.platformFeeAmount),
-    customerTotalAmount: num(j.customerTotalAmount),
-    providerNetAmount: num(j.providerNetAmount),
+    platformFeeRate,
+    platformFeeAmount,
+    customerTotalAmount,
+    providerNetAmount,
+    fuelSurchargeRate: num(j.fuelSurchargeRate) ?? 0,
+    fuelSurchargeAmount,
+    tollsAmount,
+    waitTimeHours: num(j.waitTimeHours) ?? 0,
+    waitTimeAmount,
+    emergencyDispatchAmount,
+    holidaySurchargeAmount,
+    taxRate: num(j.taxRate) ?? 0,
+    taxAmount,
+    isEmergencyDispatch: !!j.isEmergencyDispatch,
+    isHolidayHaul: !!j.isHolidayHaul,
+    customerCheckout,
+    carrierSettlement,
     customerCompany,
     providerCompany,
   };
@@ -141,26 +208,11 @@ async function notifyPayoutDelayed(
 }
 
 /**
- * Broker-fee model: the customer is billed the work value PLUS a 15% broker fee.
- * HaulBrokr deducts that 15% from the customer's gross payment BEFORE the
- * provider/driver is paid, so the driver receives the full work value (net) and
- * HaulBrokr retains the fee.
- *   base  = ratePerHour * hours   (work value → provider net)
- *   fee   = base * feeRate        (HaulBrokr's retained profit)
- *   gross = base + fee            (what the customer pays)
- */
-export function computeBreakdown(ratePerHour: number, hours: number, feeRate: number) {
-  const base = Math.round(ratePerHour * hours * 100) / 100;
-  const fee = Math.round(base * feeRate * 100) / 100;
-  const gross = Math.round((base + fee) * 100) / 100;
-  return { base, fee, gross };
-}
-
-/**
  * Funds the provider's net payout via Stripe Connect using separate
  * charge + transfer: charge the customer the GROSS on the platform account,
- * then transfer ONLY the net to the provider's connected account. The 15%
- * broker fee therefore never leaves the platform — it is retained by design.
+ * then transfer ONLY the net to the provider's connected account. The
+ * marketplace fee (and taxes) therefore never leave the platform — they are
+ * retained by design.
  */
 interface CustomerInstrument {
   stripeCustomerId: string | null;
@@ -591,7 +643,10 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     return;
   }
 
-  const updates: Record<string, any> = { ...parsed.data };
+  const updates: Record<string, any> = {
+    status: parsed.data.status,
+    ...(parsed.data.notes !== undefined ? { notes: parsed.data.notes } : {}),
+  };
   if (parsed.data.totalHours !== undefined) updates.totalHours = String(parsed.data.totalHours);
 
   if (parsed.data.status === "in_progress") {
@@ -601,13 +656,80 @@ router.patch("/jobs/:id", requireProfile, async (req, res): Promise<void> => {
     const hours = parsed.data.totalHours ?? (existingJob.totalHours ? parseFloat(existingJob.totalHours) : null);
     if (hours != null) {
       const rate = parseFloat(existingJob.ratePerHour);
-      const feeRate = existingJob.platformFeeRate ? parseFloat(existingJob.platformFeeRate) : DEFAULT_FEE_RATE;
-      const { base, fee, gross } = computeBreakdown(rate, hours, feeRate);
+      // Prefer rates already frozen on the job; otherwise load live admin config.
+      const liveRates = await loadPricingRates(new Date());
+      const feeRate =
+        existingJob.platformFeeRate != null
+          ? parseFloat(existingJob.platformFeeRate)
+          : liveRates.marketplaceFeeRate;
+      const fuelRate =
+        existingJob.fuelSurchargeRate != null && parseFloat(existingJob.fuelSurchargeRate) > 0
+          ? parseFloat(existingJob.fuelSurchargeRate)
+          : liveRates.fuelSurchargeRate;
+
+      const body = parsed.data as {
+        tollsAmount?: number;
+        waitTimeHours?: number;
+        waitTimeAmount?: number;
+        isEmergencyDispatch?: boolean;
+        emergencyDispatchAmount?: number;
+        isHolidayHaul?: boolean;
+        holidaySurchargeAmount?: number;
+      };
+
+      const pricing = computeJobPricing(
+        {
+          ratePerHour: rate,
+          hours,
+          tollsAmount:
+            body.tollsAmount ??
+            (existingJob.tollsAmount != null ? parseFloat(existingJob.tollsAmount) : 0),
+          waitTimeHours:
+            body.waitTimeHours ??
+            (existingJob.waitTimeHours != null ? parseFloat(existingJob.waitTimeHours) : 0),
+          waitTimeAmount:
+            body.waitTimeAmount ??
+            (existingJob.waitTimeAmount != null ? parseFloat(existingJob.waitTimeAmount) : undefined),
+          isEmergencyDispatch:
+            body.isEmergencyDispatch ?? !!existingJob.isEmergencyDispatch,
+          emergencyDispatchAmount:
+            body.emergencyDispatchAmount ??
+            (existingJob.emergencyDispatchAmount != null
+              ? parseFloat(existingJob.emergencyDispatchAmount)
+              : undefined),
+          isHolidayHaul: body.isHolidayHaul ?? !!existingJob.isHolidayHaul,
+          holidaySurchargeAmount:
+            body.holidaySurchargeAmount ??
+            (existingJob.holidaySurchargeAmount != null
+              ? parseFloat(existingJob.holidaySurchargeAmount)
+              : undefined),
+          taxRate: liveRates.taxRate,
+          taxesEnabled: liveRates.taxesEnabled,
+        },
+        {
+          ...liveRates,
+          marketplaceFeeRate: feeRate,
+          fuelSurchargeRate: fuelRate,
+        },
+      );
+
       updates.totalHours = String(hours);
-      updates.totalAmount = String(base);
-      updates.customerTotalAmount = String(gross);
-      updates.platformFeeAmount = String(fee);
-      updates.providerNetAmount = String(base);
+      updates.totalAmount = String(pricing.amounts.baseHaul);
+      updates.platformFeeRate = String(pricing.rates.marketplaceFeeRate);
+      updates.platformFeeAmount = String(pricing.amounts.marketplaceFeeAmount);
+      updates.customerTotalAmount = String(pricing.amounts.customerTotalAmount);
+      updates.providerNetAmount = String(pricing.amounts.providerNetAmount);
+      updates.fuelSurchargeRate = String(pricing.rates.fuelSurchargeRate);
+      updates.fuelSurchargeAmount = String(pricing.amounts.fuelSurchargeAmount);
+      updates.tollsAmount = String(pricing.amounts.tollsAmount);
+      updates.waitTimeHours = String(pricing.amounts.waitTimeHours);
+      updates.waitTimeAmount = String(pricing.amounts.waitTimeAmount);
+      updates.emergencyDispatchAmount = String(pricing.amounts.emergencyDispatchAmount);
+      updates.holidaySurchargeAmount = String(pricing.amounts.holidaySurchargeAmount);
+      updates.taxRate = String(pricing.rates.taxRate);
+      updates.taxAmount = String(pricing.amounts.taxAmount);
+      updates.isEmergencyDispatch = pricing.flags.isEmergencyDispatch;
+      updates.isHolidayHaul = pricing.flags.isHolidayHaul;
     }
   }
 

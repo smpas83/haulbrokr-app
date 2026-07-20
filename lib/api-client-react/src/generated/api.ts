@@ -60,9 +60,11 @@ import type {
   CreditApplication,
   CreditApplicationInput,
   DashboardStats,
+  DeleteFuelSurchargeWeek200,
   DisconnectQuickBooks200,
   DumpSite,
   FlagCompletionInput,
+  FuelSurchargeWeek,
   GetBinOrder200,
   GetJobRating200,
   GetMyOrganization200,
@@ -102,6 +104,7 @@ import type {
   PayoutConnectLink,
   PayoutConnectLinkInput,
   PayoutStatus,
+  PricingConfig,
   ProjectAssignment,
   ProjectAssignmentInput,
   RatingResponse,
@@ -116,12 +119,14 @@ import type {
   Truck,
   TruckInput,
   TruckUpdate,
+  UpdateAdminPricingSettingsBody,
   UpdateMemberRoleInput,
   UpdateProject200,
   UpdateProjectBody,
   UpdateStaffRoleInput,
   UpsertDriverDoc200,
   UpsertDriverDocBody,
+  UpsertFuelSurchargeWeekBody,
   UserProfile,
   UserProfileInput,
   UserProfileUpdate,
@@ -4680,6 +4685,295 @@ export function useListAdminCreditApplications<TData = Awaited<ReturnType<typeof
 
 
 
+export const getGetAdminPricingUrl = () => {
+
+
+
+
+  return `/api/admin/pricing`
+}
+
+/**
+ * @summary Get all configurable marketplace pricing settings and the weekly fuel surcharge schedule
+ */
+export const getAdminPricing = async ( options?: RequestInit): Promise<PricingConfig> => {
+
+  return customFetch<PricingConfig>(getGetAdminPricingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminPricingQueryKey = () => {
+    return [
+    `/api/admin/pricing`
+    ] as const;
+    }
+
+
+export const getGetAdminPricingQueryOptions = <TData = Awaited<ReturnType<typeof getAdminPricing>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminPricingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminPricing>>> = ({ signal }) => getAdminPricing({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminPricing>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminPricingQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminPricing>>>
+export type GetAdminPricingQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get all configurable marketplace pricing settings and the weekly fuel surcharge schedule
+ */
+
+export function useGetAdminPricing<TData = Awaited<ReturnType<typeof getAdminPricing>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminPricing>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminPricingQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateAdminPricingSettingsUrl = () => {
+
+
+
+
+  return `/api/admin/pricing`
+}
+
+/**
+ * @summary Update one or more marketplace pricing settings (no hardcoded percentages)
+ */
+export const updateAdminPricingSettings = async (updateAdminPricingSettingsBody: UpdateAdminPricingSettingsBody, options?: RequestInit): Promise<PricingConfig> => {
+
+  return customFetch<PricingConfig>(getUpdateAdminPricingSettingsUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateAdminPricingSettingsBody,)
+  }
+);}
+
+
+
+
+export const getUpdateAdminPricingSettingsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminPricingSettings>>, TError,{data: BodyType<UpdateAdminPricingSettingsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminPricingSettings>>, TError,{data: BodyType<UpdateAdminPricingSettingsBody>}, TContext> => {
+
+const mutationKey = ['updateAdminPricingSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminPricingSettings>>, {data: BodyType<UpdateAdminPricingSettingsBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateAdminPricingSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminPricingSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminPricingSettings>>>
+    export type UpdateAdminPricingSettingsMutationBody = BodyType<UpdateAdminPricingSettingsBody>
+    export type UpdateAdminPricingSettingsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update one or more marketplace pricing settings (no hardcoded percentages)
+ */
+export const useUpdateAdminPricingSettings = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminPricingSettings>>, TError,{data: BodyType<UpdateAdminPricingSettingsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminPricingSettings>>,
+        TError,
+        {data: BodyType<UpdateAdminPricingSettingsBody>},
+        TContext
+      > => {
+      return useMutation(getUpdateAdminPricingSettingsMutationOptions(options));
+    }
+
+export const getUpsertFuelSurchargeWeekUrl = () => {
+
+
+
+
+  return `/api/admin/pricing/fuel-surcharge`
+}
+
+/**
+ * @summary Create or update a weekly national diesel fuel surcharge value
+ */
+export const upsertFuelSurchargeWeek = async (upsertFuelSurchargeWeekBody: UpsertFuelSurchargeWeekBody, options?: RequestInit): Promise<FuelSurchargeWeek> => {
+
+  return customFetch<FuelSurchargeWeek>(getUpsertFuelSurchargeWeekUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      upsertFuelSurchargeWeekBody,)
+  }
+);}
+
+
+
+
+export const getUpsertFuelSurchargeWeekMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertFuelSurchargeWeek>>, TError,{data: BodyType<UpsertFuelSurchargeWeekBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof upsertFuelSurchargeWeek>>, TError,{data: BodyType<UpsertFuelSurchargeWeekBody>}, TContext> => {
+
+const mutationKey = ['upsertFuelSurchargeWeek'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof upsertFuelSurchargeWeek>>, {data: BodyType<UpsertFuelSurchargeWeekBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  upsertFuelSurchargeWeek(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpsertFuelSurchargeWeekMutationResult = NonNullable<Awaited<ReturnType<typeof upsertFuelSurchargeWeek>>>
+    export type UpsertFuelSurchargeWeekMutationBody = BodyType<UpsertFuelSurchargeWeekBody>
+    export type UpsertFuelSurchargeWeekMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create or update a weekly national diesel fuel surcharge value
+ */
+export const useUpsertFuelSurchargeWeek = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upsertFuelSurchargeWeek>>, TError,{data: BodyType<UpsertFuelSurchargeWeekBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof upsertFuelSurchargeWeek>>,
+        TError,
+        {data: BodyType<UpsertFuelSurchargeWeekBody>},
+        TContext
+      > => {
+      return useMutation(getUpsertFuelSurchargeWeekMutationOptions(options));
+    }
+
+export const getDeleteFuelSurchargeWeekUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/pricing/fuel-surcharge/${id}`
+}
+
+/**
+ * @summary Delete a weekly fuel surcharge schedule row
+ */
+export const deleteFuelSurchargeWeek = async (id: number, options?: RequestInit): Promise<DeleteFuelSurchargeWeek200> => {
+
+  return customFetch<DeleteFuelSurchargeWeek200>(getDeleteFuelSurchargeWeekUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteFuelSurchargeWeekMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFuelSurchargeWeek>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteFuelSurchargeWeek>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteFuelSurchargeWeek'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteFuelSurchargeWeek>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteFuelSurchargeWeek(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteFuelSurchargeWeekMutationResult = NonNullable<Awaited<ReturnType<typeof deleteFuelSurchargeWeek>>>
+
+    export type DeleteFuelSurchargeWeekMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a weekly fuel surcharge schedule row
+ */
+export const useDeleteFuelSurchargeWeek = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFuelSurchargeWeek>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteFuelSurchargeWeek>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteFuelSurchargeWeekMutationOptions(options));
+    }
+
 export const getListStuckPayoutsUrl = () => {
 
 
@@ -5276,7 +5570,7 @@ export const getChargeJobUrl = (id: number,) => {
 }
 
 /**
- * @summary Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+ * @summary Charge the customer for a completed job (gross from centralized pricing engine — base haul + marketplace fee + surcharges). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
  */
 export const chargeJob = async (id: number, options?: RequestInit): Promise<Job> => {
 
@@ -5324,7 +5618,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ChargeJobMutationError = ErrorType<unknown>
 
     /**
- * @summary Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+ * @summary Charge the customer for a completed job (gross from centralized pricing engine — base haul + marketplace fee + surcharges). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
  */
 export const useChargeJob = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chargeJob>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}

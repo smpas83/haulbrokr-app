@@ -76,7 +76,7 @@ const FAQS = [
     id: "f10",
     category: "Payments",
     q: "How does payment work?",
-    a: "Customers are charged after job completion. HaulBrokr charges:\n\n• Customer platform fee: 8% of total job value\n• Provider platform fee: 5% of total job value\n\nProviders receive payment via direct deposit within 3–5 business days after the Customer confirms job completion.",
+    a: "Customers are charged after job completion using HaulBrokr's marketplace pricing engine:\n\n• Base haul (rate × hours)\n• Fuel surcharge (weekly national diesel schedule)\n• Marketplace fee: 15% of base haul\n• Tolls, wait time, emergency/holiday surcharges when applicable\n• Taxes where applicable\n\nProviders receive the base haul plus fuel, tolls, and wait time via direct deposit after the customer pays.",
   },
   {
     id: "f11",

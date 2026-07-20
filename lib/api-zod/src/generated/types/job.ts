@@ -5,6 +5,8 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
+import type { CarrierSettlementBreakdown } from './carrierSettlementBreakdown';
+import type { CustomerCheckoutBreakdown } from './customerCheckoutBreakdown';
 import type { JobCompletionApproval } from './jobCompletionApproval';
 import type { JobPaymentStatus } from './jobPaymentStatus';
 import type { JobStatus } from './jobStatus';
@@ -44,6 +46,30 @@ export interface Job {
   customerTotalAmount?: number | null;
   /** @nullable */
   providerNetAmount?: number | null;
+  /** @nullable */
+  fuelSurchargeRate?: number | null;
+  /** @nullable */
+  fuelSurchargeAmount?: number | null;
+  /** @nullable */
+  tollsAmount?: number | null;
+  /** @nullable */
+  waitTimeHours?: number | null;
+  /** @nullable */
+  waitTimeAmount?: number | null;
+  /** @nullable */
+  emergencyDispatchAmount?: number | null;
+  /** @nullable */
+  holidaySurchargeAmount?: number | null;
+  /** @nullable */
+  taxRate?: number | null;
+  /** @nullable */
+  taxAmount?: number | null;
+  /** @nullable */
+  isEmergencyDispatch?: boolean | null;
+  /** @nullable */
+  isHolidayHaul?: boolean | null;
+  customerCheckout?: CustomerCheckoutBreakdown;
+  carrierSettlement?: CarrierSettlementBreakdown;
   paymentStatus?: JobPaymentStatus;
   /** @nullable */
   paymentDueDate?: Date | null;

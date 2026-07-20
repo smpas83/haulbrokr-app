@@ -126,7 +126,7 @@ const FAQS = [
   },
   {
     q: "What are HaulBrokr's fees?",
-    a: "Customers pay a 5% platform fee on completed jobs. Providers keep 95% of every accepted bid. No monthly fees.",
+    a: "Customers pay a transparent 15% marketplace fee on the base haul of each completed load, plus any fuel surcharge, tolls, and taxes where applicable. Carriers receive the base haul and pass-through charges (fuel, tolls, wait time). No monthly fees.",
   },
   {
     q: "What if there's a dispute?",

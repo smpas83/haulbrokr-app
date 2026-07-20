@@ -89,11 +89,16 @@ const PRICING = [
     highlighted: false,
   },
   {
-    name: "Pro Fleet",
-    price: "3%",
-    period: "per completed load",
-    desc: "For owner-operators and small fleets.",
-    features: ["Everything in Starter", "AI dispatch copilot", "Fleet dashboard", "Priority support"],
+    name: "Marketplace",
+    price: "15%",
+    period: "marketplace fee on base haul",
+    desc: "Transparent pricing on every completed load — plus fuel surcharge and pass-through charges where applicable.",
+    features: [
+      "15% marketplace fee on base haul",
+      "Weekly national diesel fuel surcharge",
+      "Tolls, wait time & holiday surcharges",
+      "Taxes where applicable",
+    ],
     cta: "Join as vendor",
     highlighted: true,
   },
@@ -132,7 +137,8 @@ const TESTIMONIALS = [
 const FAQ = [
   {
     question: "How does HaulBrokr pricing work?",
-    answer: "Customers post loads for free. Vendors pay a transparent platform fee on completed loads. Enterprise teams receive custom volume pricing with dedicated support.",
+    answer:
+      "Customers post loads for free. On each completed haul, the customer pays a transparent 15% marketplace fee on the base haul, plus any fuel surcharge, tolls, and taxes where applicable. Carriers receive the base haul and pass-through charges (fuel, tolls, wait time). Enterprise teams receive custom volume pricing with dedicated support.",
   },
   {
     question: "Is HaulBrokr available nationwide?",

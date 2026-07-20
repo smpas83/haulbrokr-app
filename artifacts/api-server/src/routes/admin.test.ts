@@ -53,11 +53,17 @@ vi.mock("@workspace/db", () => {
         p.innerJoin = () => makeChain();
         p.groupBy = () => makeChain();
         p.orderBy = () => makeChain();
-        p.limit = () => Promise.resolve(h.selectRows);
+        p.limit = () => makeChain();
+        p.delete = undefined;
         return p;
       };
       return { from: () => makeChain() };
     },
+    delete: () => ({
+      where: () => ({
+        returning: () => Promise.resolve(h.selectRows.slice(0, 1)),
+      }),
+    }),
   };
   return {
     db,
@@ -74,6 +80,8 @@ vi.mock("@workspace/db", () => {
     payoutAccountsTable: makeTable("payoutAccounts"),
     pageViewsTable: makeTable("pageViews"),
     factoringRequestsTable: makeTable("factoringRequests"),
+    pricingSettingsTable: makeTable("pricingSettings"),
+    fuelSurchargeWeeksTable: makeTable("fuelSurchargeWeeks"),
   };
 });
 

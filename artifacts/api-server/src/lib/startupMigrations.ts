@@ -116,8 +116,70 @@ export async function runStartupMigrations(): Promise<void> {
         ON page_views (session_id, created_at);
     `);
 
+    // ── Centralized marketplace pricing engine ────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pricing_settings (
+        id serial PRIMARY KEY,
+        key text NOT NULL,
+        value numeric(12, 6) NOT NULL,
+        description text,
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS pricing_settings_key_uidx
+        ON pricing_settings (key);
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS fuel_surcharge_weeks (
+        id serial PRIMARY KEY,
+        week_start_date date NOT NULL,
+        national_diesel_price numeric(8, 3),
+        surcharge_rate numeric(5, 4) NOT NULL,
+        notes text,
+        is_active boolean NOT NULL DEFAULT true,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS fuel_surcharge_weeks_week_start_uidx
+        ON fuel_surcharge_weeks (week_start_date);
+    `);
+
+    await client.query(`
+      ALTER TABLE jobs
+        ADD COLUMN IF NOT EXISTS fuel_surcharge_rate numeric(5, 4) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS fuel_surcharge_amount numeric(12, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS tolls_amount numeric(12, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS wait_time_hours numeric(8, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS wait_time_amount numeric(12, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS emergency_dispatch_amount numeric(12, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS holiday_surcharge_amount numeric(12, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS tax_rate numeric(5, 4) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS tax_amount numeric(12, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS is_emergency_dispatch boolean NOT NULL DEFAULT false,
+        ADD COLUMN IF NOT EXISTS is_holiday_haul boolean NOT NULL DEFAULT false;
+    `);
+
+    // Seed marketplace fee at 15% and other defaults (idempotent).
+    await client.query(`
+      INSERT INTO pricing_settings (key, value, description)
+      VALUES
+        ('marketplace_fee_rate', 0.15, 'Marketplace / broker fee charged to the customer on base haul (decimal, e.g. 0.15 = 15%)'),
+        ('fuel_surcharge_rate', 0, 'Fallback fuel surcharge rate when no weekly diesel schedule row is active'),
+        ('emergency_dispatch_rate', 0.10, 'Emergency dispatch surcharge as a decimal of base haul'),
+        ('holiday_surcharge_rate', 0.15, 'Holiday haul surcharge as a decimal of base haul'),
+        ('wait_time_rate_per_hour', 75, 'Wait-time charge in USD per billable hour'),
+        ('tax_rate', 0, 'Default sales/use tax rate as a decimal (applied when tax_enabled = 1)'),
+        ('tax_enabled', 0, 'Whether taxes are applied by default (1 = yes, 0 = no)')
+      ON CONFLICT (key) DO NOTHING;
+    `);
+
     await client.query("COMMIT");
-    logger.info("Startup migrations applied (refund + onboarding + page_views schema)");
+    logger.info("Startup migrations applied (refund + onboarding + page_views + pricing schema)");
   } catch (err) {
     await client.query("ROLLBACK");
     logger.error({ err }, "Startup migrations failed");

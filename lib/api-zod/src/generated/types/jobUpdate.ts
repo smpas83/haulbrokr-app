@@ -11,4 +11,11 @@ export interface JobUpdate {
   status: JobUpdateStatus;
   totalHours?: number;
   notes?: string;
+  tollsAmount?: number;
+  waitTimeHours?: number;
+  waitTimeAmount?: number;
+  isEmergencyDispatch?: boolean;
+  emergencyDispatchAmount?: number;
+  isHolidayHaul?: boolean;
+  holidaySurchargeAmount?: number;
 }
