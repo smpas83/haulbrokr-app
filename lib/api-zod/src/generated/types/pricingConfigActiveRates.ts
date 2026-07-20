@@ -5,13 +5,17 @@
  * HaulBrokr API — Uber for dump trucks
  * OpenAPI spec version: 1.0.0
  */
+import type { PricingConfigActiveRatesMarketplaceFeeBasis } from './pricingConfigActiveRatesMarketplaceFeeBasis';
 
 export type PricingConfigActiveRates = {
+  /** Customer marketplace fee rate (decimal). Never applied to carrier payout. */
   marketplaceFeeRate: number;
+  marketplaceFeeBasis: PricingConfigActiveRatesMarketplaceFeeBasis;
   fuelSurchargeRate: number;
   emergencyDispatchRate: number;
   holidaySurchargeRate: number;
   waitTimeRatePerHour: number;
+  waitTimeGracePeriodMinutes: number;
   taxRate: number;
   taxesEnabled: boolean;
 };

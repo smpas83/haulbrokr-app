@@ -5640,7 +5640,7 @@ export const getReleaseJobPaymentUrl = (id: number,) => {
 }
 
 /**
- * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+ * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (customer marketplace fee already retained).
  */
 export const releaseJobPayment = async (id: number, options?: RequestInit): Promise<Job> => {
 
@@ -5688,7 +5688,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ReleaseJobPaymentMutationError = ErrorType<unknown>
 
     /**
- * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+ * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (customer marketplace fee already retained).
  */
 export const useReleaseJobPayment = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof releaseJobPayment>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -5857,7 +5857,7 @@ export const getCreateJobCheckoutSessionUrl = (id: number,) => {
 }
 
 /**
- * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+ * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the customer total. The carrier receives the accepted haul plus reimbursements; HaulBrokr retains the customer marketplace fee as the application fee.
  */
 export const createJobCheckoutSession = async (id: number,
     checkoutSessionInput?: CheckoutSessionInput, options?: RequestInit): Promise<CheckoutSession> => {
@@ -5907,7 +5907,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateJobCheckoutSessionMutationError = ErrorType<unknown>
 
     /**
- * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+ * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the customer total. The carrier receives the accepted haul plus reimbursements; HaulBrokr retains the customer marketplace fee as the application fee.
  */
 export const useCreateJobCheckoutSession = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJobCheckoutSession>>, TError,{id: number;data?: BodyType<CheckoutSessionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}

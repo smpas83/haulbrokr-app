@@ -532,6 +532,8 @@ export const ListJobsResponseItem = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -616,6 +618,8 @@ export const GetJobResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -712,6 +716,8 @@ export const UpdateJobResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -795,6 +801,8 @@ export const AcceptJobResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -878,6 +886,8 @@ export const DeclineJobResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -1875,11 +1885,13 @@ export const GetAdminPricingResponse = zod.object({
   "updatedAt": zod.coerce.date().optional()
 })),
   "activeRates": zod.object({
-  "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeRate": zod.number().describe('Customer marketplace fee rate (decimal). Never applied to carrier payout.'),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']),
   "fuelSurchargeRate": zod.number(),
   "emergencyDispatchRate": zod.number(),
   "holidaySurchargeRate": zod.number(),
   "waitTimeRatePerHour": zod.number(),
+  "waitTimeGracePeriodMinutes": zod.number(),
   "taxRate": zod.number(),
   "taxesEnabled": zod.boolean()
 })
@@ -1915,11 +1927,13 @@ export const UpdateAdminPricingSettingsResponse = zod.object({
   "updatedAt": zod.coerce.date().optional()
 })),
   "activeRates": zod.object({
-  "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeRate": zod.number().describe('Customer marketplace fee rate (decimal). Never applied to carrier payout.'),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']),
   "fuelSurchargeRate": zod.number(),
   "emergencyDispatchRate": zod.number(),
   "holidaySurchargeRate": zod.number(),
   "waitTimeRatePerHour": zod.number(),
+  "waitTimeGracePeriodMinutes": zod.number(),
   "taxRate": zod.number(),
   "taxesEnabled": zod.boolean()
 })
@@ -2195,6 +2209,8 @@ export const ChargeJobResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -2230,7 +2246,7 @@ export const ChargeJobResponse = zod.object({
 
 
 /**
- * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+ * @summary Release the provider's net payout after a Net-terms customer invoice has been paid (customer marketplace fee already retained).
  */
 export const ReleaseJobPaymentParams = zod.object({
   "id": zod.coerce.number()
@@ -2278,6 +2294,8 @@ export const ReleaseJobPaymentResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -2375,6 +2393,8 @@ export const ConfirmJobPaymentResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -2410,7 +2430,7 @@ export const ConfirmJobPaymentResponse = zod.object({
 
 
 /**
- * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+ * @summary Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the customer total. The carrier receives the accepted haul plus reimbursements; HaulBrokr retains the customer marketplace fee as the application fee.
  */
 export const CreateJobCheckoutSessionParams = zod.object({
   "id": zod.coerce.number()
@@ -2478,6 +2498,8 @@ export const VerifyJobCheckoutResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -2656,6 +2678,8 @@ export const ApproveJobCompletionResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
@@ -2743,6 +2767,8 @@ export const FlagJobCompletionResponse = zod.object({
   "fuelSurcharge": zod.number(),
   "marketplaceFee": zod.number(),
   "marketplaceFeeRate": zod.number(),
+  "marketplaceFeeBasis": zod.enum(['base_haul_only', 'base_plus_surcharges']).optional(),
+  "customerSubtotal": zod.number(),
   "tolls": zod.number(),
   "waitTime": zod.number().optional(),
   "emergencyDispatch": zod.number().optional(),
