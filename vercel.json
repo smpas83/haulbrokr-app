@@ -42,6 +42,28 @@
       "destination": "https://kashventure.com/_next/:path*"
     },
     {
+      "source": "/sign-in",
+      "has": [
+        {
+          "type": "query",
+          "key": "redirect_url",
+          "value": "(?<ru>.*(?:haulbrokr/admin|admin/marketing).*)"
+        }
+      ],
+      "destination": "https://kashventure.com/sign-in"
+    },
+    {
+      "source": "/sign-in/:path*",
+      "has": [
+        {
+          "type": "query",
+          "key": "redirect_url",
+          "value": "(?<ru>.*(?:haulbrokr/admin|admin/marketing).*)"
+        }
+      ],
+      "destination": "https://kashventure.com/sign-in/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://haulbrokr-api.onrender.com/api/:path*"
     },
@@ -62,35 +84,62 @@
     {
       "source": "/admin",
       "headers": [
-        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/admin/:path*",
       "headers": [
-        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/haulbrokr/admin/:path*",
       "headers": [
-        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/api/haulbrokr/marketing/:path*",
       "headers": [
-        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(self)" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(self)"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
       ]
     }
   ]
