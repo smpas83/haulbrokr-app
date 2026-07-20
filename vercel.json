@@ -6,6 +6,42 @@
   "framework": null,
   "rewrites": [
     {
+      "source": "/admin/marketing",
+      "destination": "https://kashventure.com/haulbrokr/admin/marketing"
+    },
+    {
+      "source": "/admin/marketing/:path*",
+      "destination": "https://kashventure.com/haulbrokr/admin/marketing/:path*"
+    },
+    {
+      "source": "/admin",
+      "destination": "https://kashventure.com/haulbrokr/admin"
+    },
+    {
+      "source": "/haulbrokr/admin",
+      "destination": "https://kashventure.com/haulbrokr/admin"
+    },
+    {
+      "source": "/haulbrokr/admin/:path*",
+      "destination": "https://kashventure.com/haulbrokr/admin/:path*"
+    },
+    {
+      "source": "/api/haulbrokr/marketing/:path*",
+      "destination": "https://kashventure.com/api/haulbrokr/marketing/:path*"
+    },
+    {
+      "source": "/__clerk",
+      "destination": "https://kashventure.com/__clerk"
+    },
+    {
+      "source": "/__clerk/:path*",
+      "destination": "https://kashventure.com/__clerk/:path*"
+    },
+    {
+      "source": "/_next/:path*",
+      "destination": "https://kashventure.com/_next/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://haulbrokr-api.onrender.com/api/:path*"
     },
@@ -23,6 +59,30 @@
     }
   ],
   "headers": [
+    {
+      "source": "/admin",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/admin/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/haulbrokr/admin/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/api/haulbrokr/marketing/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
