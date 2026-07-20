@@ -46,11 +46,14 @@ import {
   markAdminOnboardingViewed,
 } from "../lib/onboardingTrace";
 import type { OnboardingFunnelFilter } from "../lib/onboardingFunnel";
+import { registerPricingAdminRoutes } from "./admin-pricing";
 
 const router: IRouter = Router();
 
 router.use(attachStaffSession);
 router.use(attachClerkProfileIfPresent);
+
+registerPricingAdminRoutes(router);
 
 /**
  * Records an in-app notification telling an applicant their carrier or credit

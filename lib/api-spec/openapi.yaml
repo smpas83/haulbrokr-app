@@ -1170,6 +1170,105 @@ paths:
                 items:
                   $ref: "#/components/schemas/AdminCreditApplicationItem"
 
+  /admin/pricing:
+    get:
+      operationId: getAdminPricing
+      tags: [admin]
+      summary: Get all configurable marketplace pricing settings and the weekly fuel surcharge schedule
+      responses:
+        "200":
+          description: Pricing configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricingConfig"
+    patch:
+      operationId: updateAdminPricingSettings
+      tags: [admin]
+      summary: Update one or more marketplace pricing settings (no hardcoded percentages)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [settings]
+              properties:
+                settings:
+                  type: array
+                  items:
+                    type: object
+                    required: [key, value]
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: number
+                      description:
+                        type: string
+      responses:
+        "200":
+          description: Updated pricing configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricingConfig"
+
+  /admin/pricing/fuel-surcharge:
+    post:
+      operationId: upsertFuelSurchargeWeek
+      tags: [admin]
+      summary: Create or update a weekly national diesel fuel surcharge value
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [weekStartDate, surchargeRate]
+              properties:
+                weekStartDate:
+                  type: string
+                  format: date
+                surchargeRate:
+                  type: number
+                nationalDieselPrice:
+                  type: number
+                notes:
+                  type: string
+                isActive:
+                  type: boolean
+      responses:
+        "200":
+          description: Upserted weekly fuel surcharge row
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelSurchargeWeek"
+
+  /admin/pricing/fuel-surcharge/{id}:
+    delete:
+      operationId: deleteFuelSurchargeWeek
+      tags: [admin]
+      summary: Delete a weekly fuel surcharge schedule row
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted row
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok:
+                    type: boolean
+
   /admin/stuck-payouts:
     get:
       operationId: listStuckPayouts
@@ -1338,7 +1437,7 @@ paths:
     post:
       operationId: chargeJob
       tags: [jobs]
-      summary: Charge the customer for a completed job (gross = work + 15% broker fee). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
+      summary: Charge the customer for a completed job (gross from centralized pricing engine — base haul + marketplace fee + surcharges). Instant methods immediately transfer the net to the provider; Net terms create an invoice.
       parameters:
         - name: id
           in: path
@@ -2828,6 +2927,32 @@ components:
           type: ["number", "null"]
         providerNetAmount:
           type: ["number", "null"]
+        fuelSurchargeRate:
+          type: ["number", "null"]
+        fuelSurchargeAmount:
+          type: ["number", "null"]
+        tollsAmount:
+          type: ["number", "null"]
+        waitTimeHours:
+          type: ["number", "null"]
+        waitTimeAmount:
+          type: ["number", "null"]
+        emergencyDispatchAmount:
+          type: ["number", "null"]
+        holidaySurchargeAmount:
+          type: ["number", "null"]
+        taxRate:
+          type: ["number", "null"]
+        taxAmount:
+          type: ["number", "null"]
+        isEmergencyDispatch:
+          type: ["boolean", "null"]
+        isHolidayHaul:
+          type: ["boolean", "null"]
+        customerCheckout:
+          $ref: "#/components/schemas/CustomerCheckoutBreakdown"
+        carrierSettlement:
+          $ref: "#/components/schemas/CarrierSettlementBreakdown"
         paymentStatus:
           type: string
           enum: [unpaid, invoiced, paid, released, failed, requires_action]
@@ -2872,6 +2997,159 @@ components:
           type: number
         notes:
           type: string
+        tollsAmount:
+          type: number
+        waitTimeHours:
+          type: number
+        waitTimeAmount:
+          type: number
+        isEmergencyDispatch:
+          type: boolean
+        emergencyDispatchAmount:
+          type: number
+        isHolidayHaul:
+          type: boolean
+        holidaySurchargeAmount:
+          type: number
+
+    CustomerCheckoutBreakdown:
+      type: object
+      required:
+        - baseHaul
+        - fuelSurcharge
+        - marketplaceFee
+        - marketplaceFeeRate
+        - tolls
+        - taxes
+        - grandTotal
+      properties:
+        baseHaul:
+          type: number
+        fuelSurcharge:
+          type: number
+        marketplaceFee:
+          type: number
+        marketplaceFeeRate:
+          type: number
+        tolls:
+          type: number
+        waitTime:
+          type: number
+        emergencyDispatch:
+          type: number
+        holidaySurcharge:
+          type: number
+        taxes:
+          type: number
+        taxRate:
+          type: number
+        grandTotal:
+          type: number
+
+    CarrierSettlementBreakdown:
+      type: object
+      required:
+        - baseHaul
+        - marketplaceFee
+        - marketplaceFeeRate
+        - fuel
+        - tolls
+        - waitTime
+        - netPayout
+      properties:
+        baseHaul:
+          type: number
+        marketplaceFee:
+          type: number
+        marketplaceFeeRate:
+          type: number
+        fuel:
+          type: number
+        tolls:
+          type: number
+        waitTime:
+          type: number
+        emergencyDispatch:
+          type: number
+        holidaySurcharge:
+          type: number
+        netPayout:
+          type: number
+
+    PricingSetting:
+      type: object
+      required: [id, key, value]
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        value:
+          type: number
+        description:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+          format: date-time
+
+    FuelSurchargeWeek:
+      type: object
+      required: [id, weekStartDate, surchargeRate, isActive]
+      properties:
+        id:
+          type: integer
+        weekStartDate:
+          type: string
+          format: date
+        nationalDieselPrice:
+          type: ["number", "null"]
+        surchargeRate:
+          type: number
+        notes:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+
+    PricingConfig:
+      type: object
+      required: [settings, fuelSurchargeWeeks, activeRates]
+      properties:
+        settings:
+          type: array
+          items:
+            $ref: "#/components/schemas/PricingSetting"
+        fuelSurchargeWeeks:
+          type: array
+          items:
+            $ref: "#/components/schemas/FuelSurchargeWeek"
+        activeRates:
+          type: object
+          required:
+            - marketplaceFeeRate
+            - fuelSurchargeRate
+            - emergencyDispatchRate
+            - holidaySurchargeRate
+            - waitTimeRatePerHour
+            - taxRate
+            - taxesEnabled
+          properties:
+            marketplaceFeeRate:
+              type: number
+            fuelSurchargeRate:
+              type: number
+            emergencyDispatchRate:
+              type: number
+            holidaySurchargeRate:
+              type: number
+            waitTimeRatePerHour:
+              type: number
+            taxRate:
+              type: number
+            taxesEnabled:
+              type: boolean
 
     # ── Dashboard ─────────────────────────────────────────────────────────────
     DashboardStats:

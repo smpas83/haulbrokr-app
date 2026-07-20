@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, numeric, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, numeric, boolean, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { profilesTable } from "./profiles";
@@ -51,11 +51,23 @@ export const jobsTable = pgTable("jobs", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
   totalHours: numeric("total_hours", { precision: 8, scale: 2 }),
   totalAmount: numeric("total_amount", { precision: 12, scale: 2 }),
-  // ── Broker-fee revenue model (15% taken before the driver is paid) ──
+  // ── Marketplace pricing (rates frozen on the job at completion) ──
   platformFeeRate: numeric("platform_fee_rate", { precision: 5, scale: 4 }).notNull().default("0.15"),
   platformFeeAmount: numeric("platform_fee_amount", { precision: 12, scale: 2 }),
   customerTotalAmount: numeric("customer_total_amount", { precision: 12, scale: 2 }),
   providerNetAmount: numeric("provider_net_amount", { precision: 12, scale: 2 }),
+  // Additional line items from the centralized pricing engine
+  fuelSurchargeRate: numeric("fuel_surcharge_rate", { precision: 5, scale: 4 }).notNull().default("0"),
+  fuelSurchargeAmount: numeric("fuel_surcharge_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  tollsAmount: numeric("tolls_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  waitTimeHours: numeric("wait_time_hours", { precision: 8, scale: 2 }).notNull().default("0"),
+  waitTimeAmount: numeric("wait_time_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  emergencyDispatchAmount: numeric("emergency_dispatch_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  holidaySurchargeAmount: numeric("holiday_surcharge_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  taxRate: numeric("tax_rate", { precision: 5, scale: 4 }).notNull().default("0"),
+  taxAmount: numeric("tax_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  isEmergencyDispatch: boolean("is_emergency_dispatch").notNull().default(false),
+  isHolidayHaul: boolean("is_holiday_haul").notNull().default(false),
   paymentStatus: jobPaymentStatusEnum("payment_status").notNull().default("unpaid"),
   paymentDueDate: timestamp("payment_due_date", { withTimezone: true }),
   invoicedAt: timestamp("invoiced_at", { withTimezone: true }),

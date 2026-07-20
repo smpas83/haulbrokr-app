@@ -234,7 +234,7 @@ const en = {
   guide_faq_1_q: "What materials can I haul?",
   guide_faq_1_a: "We handle dirt, fill, concrete debris, asphalt millings, rock & gravel, sand, demolition debris, scrap metal, and more.",
   guide_faq_2_q: "What are HaulBrokr's fees?",
-  guide_faq_2_a: "Customers pay a 5% platform fee on completed jobs. Providers keep 95% of every accepted bid. No monthly fees.",
+  guide_faq_2_a: "Customers pay a transparent 15% marketplace fee on the base haul of each completed load, plus any fuel surcharge, tolls, and taxes where applicable. Carriers receive the base haul and pass-through charges. No monthly fees.",
   guide_faq_3_q: "What if there's a dispute?",
   guide_faq_3_a: "Our support team mediates all disputes. Payment is held in escrow until both parties confirm delivery — protecting everyone.",
 

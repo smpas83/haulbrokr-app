@@ -35,6 +35,10 @@ describe("runStartupMigrations", () => {
     expect(h.query.mock.calls.some(([sql]) => String(sql).includes("last_admin_onboarding_view_at"))).toBe(true);
     expect(h.query.mock.calls.some(([sql]) => String(sql).includes("driver_documents_profile_doc_type_uidx"))).toBe(true);
     expect(h.query.mock.calls.some(([sql]) => String(sql).includes("page_views"))).toBe(true);
+    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("pricing_settings"))).toBe(true);
+    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("fuel_surcharge_weeks"))).toBe(true);
+    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("marketplace_fee_rate"))).toBe(true);
+    expect(h.query.mock.calls.some(([sql]) => String(sql).includes("fuel_surcharge_amount"))).toBe(true);
   });
 
   it("rolls back on failure", async () => {

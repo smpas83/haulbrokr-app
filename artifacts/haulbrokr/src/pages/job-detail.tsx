@@ -637,8 +637,10 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
   }, []);
 
   const status = job.paymentStatus ?? "unpaid";
-  const feeRate = job.platformFeeRate ?? 0.15;
-  const base = job.providerNetAmount ?? job.totalAmount;
+  const checkout = job.customerCheckout;
+  const settlement = job.carrierSettlement;
+  const feeRate = checkout?.marketplaceFeeRate ?? job.platformFeeRate ?? 0.15;
+  const base = checkout?.baseHaul ?? job.providerNetAmount ?? job.totalAmount;
   const pending = charge.isPending || release.isPending;
 
   // A failed job that already carries an invoice failed on payout release, so it
@@ -647,41 +649,80 @@ function PaymentPanel({ job, isCustomer, isProvider }: { job: Job; isCustomer: b
   const showCharge = status === "unpaid" || (status === "failed" && !failedWithInvoice);
   const showRelease = status === "invoiced" || status === "paid" || failedWithInvoice;
 
+  const line = (label: string, hint: string | null, amount: number | null | undefined, opts?: { accent?: boolean; muted?: boolean }) => (
+    <div className={`flex items-center justify-between p-4 ${opts?.muted ? "bg-muted/30" : ""}`}>
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      </div>
+      <p className={`font-bold tabular-nums ${opts?.accent ? "text-primary" : ""}`}>{fmtMoney(amount)}</p>
+    </div>
+  );
+
   return (
     <div className="border-t-2 border-border p-6 md:p-8 space-y-5">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-lg flex items-center gap-2">
-          <Receipt className="h-5 w-5 text-muted-foreground" /> Payment &amp; Broker Fee
+          <Receipt className="h-5 w-5 text-muted-foreground" /> Payment &amp; Marketplace Pricing
         </h3>
         <Badge className={`rounded-xl border-2 font-bold uppercase text-xs px-3 py-1 ${paymentBadgeClass(status)}`}>
           {PAYMENT_LABEL[status] ?? status}
         </Badge>
       </div>
 
-      <div className="border border-border/60 divide-y divide-border">
-        <div className="flex items-center justify-between p-4">
-          <div>
-            <p className="text-sm font-medium">Work value (provider rate × hours)</p>
-            <p className="text-xs text-muted-foreground">{job.totalHours ? `${job.totalHours} hrs @ $${job.ratePerHour}/hr` : "Driver's full earnings"}</p>
+      {isCustomer && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Customer checkout</p>
+          <div className="border border-border/60 divide-y divide-border">
+            {line("Base Haul", job.totalHours ? `${job.totalHours} hrs @ $${job.ratePerHour}/hr` : null, checkout?.baseHaul ?? base)}
+            {line("Fuel Surcharge", job.fuelSurchargeRate ? `${Math.round((job.fuelSurchargeRate ?? 0) * 1000) / 10}% of base` : "Weekly national diesel schedule", checkout?.fuelSurcharge ?? job.fuelSurchargeAmount ?? 0, { muted: true })}
+            {line(`Marketplace Fee (${Math.round(feeRate * 100)}%)`, "Configurable marketplace fee on base haul", checkout?.marketplaceFee ?? job.platformFeeAmount, { accent: true })}
+            {line("Tolls", "Pass-through", checkout?.tolls ?? job.tollsAmount ?? 0)}
+            {(checkout?.waitTime ?? job.waitTimeAmount ?? 0) > 0 && line("Wait Time", null, checkout?.waitTime ?? job.waitTimeAmount)}
+            {(checkout?.emergencyDispatch ?? job.emergencyDispatchAmount ?? 0) > 0 && line("Emergency Dispatch", null, checkout?.emergencyDispatch ?? job.emergencyDispatchAmount)}
+            {(checkout?.holidaySurcharge ?? job.holidaySurchargeAmount ?? 0) > 0 && line("Holiday Surcharge", null, checkout?.holidaySurcharge ?? job.holidaySurchargeAmount)}
+            {line("Taxes", (checkout?.taxRate ?? job.taxRate) ? `${Math.round(((checkout?.taxRate ?? job.taxRate) ?? 0) * 1000) / 10}% where applicable` : "Where applicable", checkout?.taxes ?? job.taxAmount ?? 0, { muted: true })}
+            <div className="flex items-center justify-between p-4 bg-secondary text-secondary-foreground">
+              <p className="text-sm font-black uppercase tracking-wider">Grand Total</p>
+              <p className="text-xl font-black tabular-nums">{fmtMoney(checkout?.grandTotal ?? job.customerTotalAmount)}</p>
+            </div>
           </div>
-          <p className="font-bold tabular-nums">{fmtMoney(base)}</p>
         </div>
-        <div className="flex items-center justify-between p-4 bg-muted/30">
-          <div>
-            <p className="text-sm font-medium">HaulBrokr broker fee</p>
-            <p className="text-xs text-muted-foreground">{Math.round(feeRate * 100)}% — deducted before the driver is paid</p>
+      )}
+
+      {isProvider && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Carrier settlement</p>
+          <div className="border border-border/60 divide-y divide-border">
+            {line("Base Haul", null, settlement?.baseHaul ?? base)}
+            {line("Marketplace Fee", `${Math.round(feeRate * 100)}% retained by HaulBrokr`, settlement?.marketplaceFee ?? job.platformFeeAmount, { muted: true, accent: true })}
+            {line("Fuel", null, settlement?.fuel ?? job.fuelSurchargeAmount ?? 0)}
+            {line("Tolls", null, settlement?.tolls ?? job.tollsAmount ?? 0)}
+            {line("Wait Time", null, settlement?.waitTime ?? job.waitTimeAmount ?? 0)}
+            {(settlement?.emergencyDispatch ?? job.emergencyDispatchAmount ?? 0) > 0 && line("Emergency Dispatch", null, settlement?.emergencyDispatch ?? job.emergencyDispatchAmount)}
+            {(settlement?.holidaySurcharge ?? job.holidaySurchargeAmount ?? 0) > 0 && line("Holiday Surcharge", null, settlement?.holidaySurcharge ?? job.holidaySurchargeAmount)}
+            <div className="flex items-center justify-between p-4">
+              <p className="text-sm font-medium flex items-center gap-2"><Wallet className="h-4 w-4 text-muted-foreground" /> Net Payout</p>
+              <p className="font-bold tabular-nums text-green-700 dark:text-green-400">{fmtMoney(settlement?.netPayout ?? job.providerNetAmount)}</p>
+            </div>
           </div>
-          <p className="font-bold tabular-nums text-primary">+ {fmtMoney(job.platformFeeAmount)}</p>
         </div>
-        <div className="flex items-center justify-between p-4 bg-secondary text-secondary-foreground">
-          <p className="text-sm font-black uppercase tracking-wider">Customer total</p>
-          <p className="text-xl font-black tabular-nums">{fmtMoney(job.customerTotalAmount)}</p>
+      )}
+
+      {!isCustomer && !isProvider && (
+        <div className="border border-border/60 divide-y divide-border">
+          {line("Base Haul", null, base)}
+          {line(`Marketplace Fee (${Math.round(feeRate * 100)}%)`, null, job.platformFeeAmount, { muted: true, accent: true })}
+          <div className="flex items-center justify-between p-4 bg-secondary text-secondary-foreground">
+            <p className="text-sm font-black uppercase tracking-wider">Customer total</p>
+            <p className="text-xl font-black tabular-nums">{fmtMoney(job.customerTotalAmount)}</p>
+          </div>
+          <div className="flex items-center justify-between p-4">
+            <p className="text-sm font-medium flex items-center gap-2"><Wallet className="h-4 w-4 text-muted-foreground" /> Provider net payout</p>
+            <p className="font-bold tabular-nums text-green-700 dark:text-green-400">{fmtMoney(job.providerNetAmount)}</p>
+          </div>
         </div>
-        <div className="flex items-center justify-between p-4">
-          <p className="text-sm font-medium flex items-center gap-2"><Wallet className="h-4 w-4 text-muted-foreground" /> Provider net payout</p>
-          <p className="font-bold tabular-nums text-green-700 dark:text-green-400">{fmtMoney(job.providerNetAmount)}</p>
-        </div>
-      </div>
+      )}
 
       {status === "invoiced" && job.paymentDueDate && (
         <p className="text-sm text-muted-foreground">

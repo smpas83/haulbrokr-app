@@ -63,32 +63,48 @@ export default function InvoiceScreen() {
     );
   }
 
-  // Live jobs carry real, server-computed amounts (in dollars): totalAmount is
-  // the provider work value, platformFeeAmount is the 15% broker fee, and
-  // customerTotalAmount is the gross the customer is billed. Demo jobs keep the
-  // legacy estimate (rate × hours × trucks with a 3% deduction).
+  // Live jobs carry server-computed marketplace pricing amounts. Demo jobs
+  // estimate base haul and apply the same 15% marketplace fee model.
   const rawHours = isLiveJob ? (liveJob!.totalHours as number | null) : null;
   const hoursWorked = rawHours ?? (job.checkInTime && job.checkOutTime ? 9.65 : 8);
+  const checkout = isLiveJob
+    ? ((liveJob!.customerCheckout ?? null) as {
+        baseHaul?: number;
+        fuelSurcharge?: number;
+        marketplaceFee?: number;
+        marketplaceFeeRate?: number;
+        tolls?: number;
+        taxes?: number;
+        grandTotal?: number;
+      } | null)
+    : null;
   let subtotal: number;
   let feeLabel: string;
   let feeAmount: number;
   let feeIsDeduction: boolean;
+  let fuelAmount = 0;
+  let tollsAmount = 0;
+  let taxAmount = 0;
   let total: number;
   if (isLiveJob) {
-    const rawBase = liveJob!.totalAmount as number | null;
-    const rawFee = liveJob!.platformFeeAmount as number | null;
-    const rawCustomer = liveJob!.customerTotalAmount as number | null;
+    const rawBase = (liveJob!.totalAmount as number | null) ?? checkout?.baseHaul ?? null;
+    const rawFee = (liveJob!.platformFeeAmount as number | null) ?? checkout?.marketplaceFee ?? null;
+    const rawCustomer = (liveJob!.customerTotalAmount as number | null) ?? checkout?.grandTotal ?? null;
+    const feeRate = checkout?.marketplaceFeeRate ?? (liveJob!.platformFeeRate as number | undefined) ?? 0.15;
     subtotal = rawBase ?? Math.round(job.budgetPerHour * hoursWorked * job.trucksNeeded);
-    feeAmount = rawFee ?? Math.round(subtotal * 0.15);
-    total = rawCustomer ?? subtotal + feeAmount;
-    feeLabel = "Broker Fee (15%)";
+    feeAmount = rawFee ?? Math.round(subtotal * feeRate);
+    fuelAmount = checkout?.fuelSurcharge ?? (liveJob!.fuelSurchargeAmount as number | undefined) ?? 0;
+    tollsAmount = checkout?.tolls ?? (liveJob!.tollsAmount as number | undefined) ?? 0;
+    taxAmount = checkout?.taxes ?? (liveJob!.taxAmount as number | undefined) ?? 0;
+    total = rawCustomer ?? subtotal + feeAmount + fuelAmount + tollsAmount + taxAmount;
+    feeLabel = `Marketplace Fee (${Math.round(feeRate * 100)}%)`;
     feeIsDeduction = false;
   } else {
     subtotal = Math.round(job.budgetPerHour * hoursWorked * job.trucksNeeded);
-    feeAmount = Math.round(subtotal * 0.03);
-    total = subtotal - feeAmount;
-    feeLabel = "Platform Fee (3%)";
-    feeIsDeduction = true;
+    feeAmount = Math.round(subtotal * 0.15);
+    total = subtotal + feeAmount;
+    feeLabel = "Marketplace Fee (15%)";
+    feeIsDeduction = false;
   }
   const invoiceNum = `INV-${new Date().getFullYear()}-${job.id.padStart(4, "0")}`;
   const issueDate = job.checkOutTime ? job.scheduledDate : new Date().toISOString().split("T")[0];
@@ -204,18 +220,36 @@ export default function InvoiceScreen() {
             <Text style={[styles.sectionTitle, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold" }]}>BILLING</Text>
             <View style={styles.lineItem}>
               <Text style={[styles.lineLabel, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
-                Hauling Service ({job.trucksNeeded} truck{job.trucksNeeded !== 1 ? "s" : ""} × ${job.budgetPerHour}/hr × {hoursWorked}h)
+                Base Haul ({job.trucksNeeded} truck{job.trucksNeeded !== 1 ? "s" : ""} × ${job.budgetPerHour}/hr × {hoursWorked}h)
               </Text>
               <Text style={[styles.lineValue, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
                 ${subtotal.toLocaleString()}
               </Text>
             </View>
+            {fuelAmount > 0 && (
+              <View style={styles.lineItem}>
+                <Text style={[styles.lineLabel, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>Fuel Surcharge</Text>
+                <Text style={[styles.lineValue, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>+${fuelAmount.toLocaleString()}</Text>
+              </View>
+            )}
             <View style={styles.lineItem}>
               <Text style={[styles.lineLabel, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>{feeLabel}</Text>
               <Text style={[styles.lineValue, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>{feeIsDeduction ? "-" : "+"}${feeAmount.toLocaleString()}</Text>
             </View>
+            {tollsAmount > 0 && (
+              <View style={styles.lineItem}>
+                <Text style={[styles.lineLabel, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>Tolls</Text>
+                <Text style={[styles.lineValue, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>+${tollsAmount.toLocaleString()}</Text>
+              </View>
+            )}
+            {taxAmount > 0 && (
+              <View style={styles.lineItem}>
+                <Text style={[styles.lineLabel, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>Taxes</Text>
+                <Text style={[styles.lineValue, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>+${taxAmount.toLocaleString()}</Text>
+              </View>
+            )}
             <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
-              <Text style={[styles.totalLabel, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>TOTAL</Text>
+              <Text style={[styles.totalLabel, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>GRAND TOTAL</Text>
               <Text style={[styles.totalValue, { color: colors.primary, fontFamily: "Inter_700Bold" }]}>
                 ${total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </Text>

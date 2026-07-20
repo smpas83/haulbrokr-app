@@ -5,10 +5,11 @@ import {
   ShieldCheck, CreditCard, Truck, Building2, X, Banknote, ArrowRight, RotateCcw,
   Users, UserCog, Package, MapPin, Calendar, PackageCheck,
   LayoutDashboard, DollarSign, TrendingUp, Briefcase, Activity, UserPlus, Lock,
-  Route,
+  Route, Percent,
 } from "lucide-react";
 import { AdminInsights } from "@/components/admin-insights";
 import { AdminOnboarding } from "@/components/admin-onboarding";
+import { AdminPricing } from "@/components/admin-pricing";
 import {
   useGetAdminAccess,
   useGetAdminOverview, getGetAdminOverviewQueryKey,
@@ -1396,6 +1397,11 @@ export default function AdminPage() {
               )}
             </TabsTrigger>
           )}
+          {canOverview && (
+            <TabsTrigger value="pricing" className="rounded-xl gap-2">
+              <Percent className="w-4 h-4" /> Pricing
+            </TabsTrigger>
+          )}
           {canCompliance && (
             <TabsTrigger value="compliance" className="rounded-xl gap-2">
               <Truck className="w-4 h-4" /> Carriers
@@ -1444,6 +1450,12 @@ export default function AdminPage() {
         {canOverview && (
           <TabsContent value="onboarding" className="space-y-4 mt-4">
             <AdminOnboarding enabled={canOverview && activeTab === "onboarding"} />
+          </TabsContent>
+        )}
+
+        {canOverview && (
+          <TabsContent value="pricing" className="space-y-4 mt-4">
+            <AdminPricing enabled={canOverview && activeTab === "pricing"} />
           </TabsContent>
         )}
 

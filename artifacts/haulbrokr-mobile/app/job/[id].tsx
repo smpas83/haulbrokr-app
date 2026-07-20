@@ -1343,7 +1343,7 @@ function LivePaymentPanel({ numericId, isLiveJob }: { numericId: number | null; 
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.cardRow}>
             <Feather name="file-text" size={15} color={colors.mutedForeground} />
-            <Text style={[styles.cardTitle, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", marginLeft: 6 }]}>PAYMENT & BROKER FEE</Text>
+            <Text style={[styles.cardTitle, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", marginLeft: 6 }]}>PAYMENT & MARKETPLACE PRICING</Text>
           </View>
           <Text style={[{ fontSize: 13, lineHeight: 19, marginTop: 8, fontFamily: "Inter_400Regular" }, { color: colors.mutedForeground }]}>
             Live payment isn't available for this sample job. Real charges and provider payouts are processed only for jobs created on the platform.
@@ -1356,8 +1356,32 @@ function LivePaymentPanel({ numericId, isLiveJob }: { numericId: number | null; 
   const jobId: number = numericId as number;
   const fmt = (n: number | null | undefined) => `$${(n ?? 0).toLocaleString()}`;
   const status: string = liveJob.paymentStatus ?? "unpaid";
-  const feeRate: number = liveJob.platformFeeRate ?? 0.15;
-  const base: number = liveJob.providerNetAmount ?? liveJob.totalAmount ?? 0;
+  const checkout = (liveJob.customerCheckout ?? null) as {
+    baseHaul?: number;
+    fuelSurcharge?: number;
+    marketplaceFee?: number;
+    marketplaceFeeRate?: number;
+    tolls?: number;
+    waitTime?: number;
+    emergencyDispatch?: number;
+    holidaySurcharge?: number;
+    taxes?: number;
+    taxRate?: number;
+    grandTotal?: number;
+  } | null;
+  const settlement = (liveJob.carrierSettlement ?? null) as {
+    baseHaul?: number;
+    marketplaceFee?: number;
+    marketplaceFeeRate?: number;
+    fuel?: number;
+    tolls?: number;
+    waitTime?: number;
+    emergencyDispatch?: number;
+    holidaySurcharge?: number;
+    netPayout?: number;
+  } | null;
+  const feeRate: number = checkout?.marketplaceFeeRate ?? (liveJob.platformFeeRate as number | undefined) ?? 0.15;
+  const base: number = checkout?.baseHaul ?? settlement?.baseHaul ?? (liveJob.totalAmount as number | undefined) ?? (liveJob.providerNetAmount as number | undefined) ?? 0;
   const isCustomer = !!liveProfile && liveProfile.id === liveJob.customerId;
   const isProviderLive = !!liveProfile && liveProfile.id === liveJob.providerId;
   const payoutsEnabled = !!payoutStatusData?.payoutsEnabled;
@@ -1375,7 +1399,7 @@ function LivePaymentPanel({ numericId, isLiveJob }: { numericId: number | null; 
   const onCharge = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     charge.mutate(jobId, {
-      onSuccess: () => Alert.alert("Payment processed", "The broker fee was charged and the provider payout was transferred."),
+      onSuccess: () => Alert.alert("Payment processed", "Marketplace pricing was charged and the provider payout was transferred."),
       onError: (err: any) => Alert.alert("Payment failed", err?.message ?? "Unable to process payment."),
     });
   };
@@ -1424,13 +1448,20 @@ function LivePaymentPanel({ numericId, isLiveJob }: { numericId: number | null; 
     }
   };
 
+  const feeRow = (label: string, amount: number | null | undefined, opts?: { bold?: boolean; color?: string }) => (
+    <View style={[styles.feeRow, opts?.bold ? { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8, marginTop: 4 } : null]}>
+      <Text style={[styles.feeLabel, { color: opts?.bold ? colors.foreground : colors.mutedForeground, fontFamily: opts?.bold ? "Inter_700Bold" : "Inter_400Regular" }]}>{label}</Text>
+      <Text style={[styles.feeVal, { color: opts?.color ?? colors.foreground, fontFamily: opts?.bold ? "Inter_700Bold" : "Inter_600SemiBold", fontSize: opts?.bold ? 16 : 14 }]}>{fmt(amount)}</Text>
+    </View>
+  );
+
   return (
     <Animated.View entering={FadeInDown.delay(150).springify()}>
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={[styles.cardRow, { justifyContent: "space-between" }]}>
           <View style={styles.cardRow}>
             <Feather name="file-text" size={15} color={colors.mutedForeground} />
-            <Text style={[styles.cardTitle, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", marginLeft: 6 }]}>PAYMENT & BROKER FEE</Text>
+            <Text style={[styles.cardTitle, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", marginLeft: 6 }]}>PAYMENT & MARKETPLACE PRICING</Text>
           </View>
           <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: payColor + "20" }}>
             <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: payColor }}>{PAY_LABEL[status] ?? status}</Text>
@@ -1438,28 +1469,29 @@ function LivePaymentPanel({ numericId, isLiveJob }: { numericId: number | null; 
         </View>
 
         <View style={{ marginTop: 8, gap: 2 }}>
-          <View style={styles.feeRow}>
-            <Text style={[styles.feeLabel, { color: colors.mutedForeground }]}>
-              Work value{liveJob.totalHours ? ` (${liveJob.totalHours}h × $${liveJob.ratePerHour}/hr)` : ""}
-            </Text>
-            <Text style={[styles.feeVal, { color: colors.foreground }]}>{fmt(base)}</Text>
-          </View>
-          <View style={styles.feeRow}>
-            <Text style={[styles.feeLabel, { color: colors.mutedForeground }]}>HaulBrokr broker fee ({Math.round(feeRate * 100)}%)</Text>
-            <Text style={[styles.feeVal, { color: colors.primary }]}>+ {fmt(liveJob.platformFeeAmount)}</Text>
-          </View>
-          <View style={[styles.feeRow, { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8, marginTop: 4 }]}>
-            <Text style={[styles.feeLabel, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>Customer total</Text>
-            <Text style={[styles.feeVal, { color: colors.foreground, fontFamily: "Inter_700Bold", fontSize: 16 }]}>{fmt(liveJob.customerTotalAmount)}</Text>
-          </View>
-          <View style={styles.feeRow}>
-            <Text style={[styles.feeLabel, { color: colors.mutedForeground }]}>Provider net payout</Text>
-            <Text style={[styles.feeVal, { color: ACCENT.green, fontFamily: "Inter_700Bold" }]}>{fmt(liveJob.providerNetAmount)}</Text>
-          </View>
+          {isCustomer ? (
+            <>
+              {feeRow("Base Haul", checkout?.baseHaul ?? base)}
+              {feeRow("Fuel Surcharge", checkout?.fuelSurcharge ?? (liveJob.fuelSurchargeAmount as number | undefined) ?? 0)}
+              {feeRow(`Marketplace Fee (${Math.round(feeRate * 100)}%)`, checkout?.marketplaceFee ?? (liveJob.platformFeeAmount as number | undefined), { color: colors.primary })}
+              {feeRow("Tolls", checkout?.tolls ?? (liveJob.tollsAmount as number | undefined) ?? 0)}
+              {(checkout?.taxes ?? (liveJob.taxAmount as number | undefined) ?? 0) > 0 && feeRow("Taxes", checkout?.taxes ?? (liveJob.taxAmount as number | undefined))}
+              {feeRow("Grand Total", checkout?.grandTotal ?? (liveJob.customerTotalAmount as number | undefined), { bold: true })}
+            </>
+          ) : (
+            <>
+              {feeRow("Base Haul", settlement?.baseHaul ?? base)}
+              {feeRow("Marketplace Fee", settlement?.marketplaceFee ?? (liveJob.platformFeeAmount as number | undefined), { color: colors.primary })}
+              {feeRow("Fuel", settlement?.fuel ?? (liveJob.fuelSurchargeAmount as number | undefined) ?? 0)}
+              {feeRow("Tolls", settlement?.tolls ?? (liveJob.tollsAmount as number | undefined) ?? 0)}
+              {feeRow("Wait Time", settlement?.waitTime ?? (liveJob.waitTimeAmount as number | undefined) ?? 0)}
+              {feeRow("Net Payout", settlement?.netPayout ?? (liveJob.providerNetAmount as number | undefined), { bold: true, color: ACCENT.green })}
+            </>
+          )}
         </View>
 
         <Text style={[{ fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 8 }, { color: colors.mutedForeground }]}>
-          The {Math.round(feeRate * 100)}% broker fee is deducted before the driver is paid. On Net terms the provider is paid once the customer settles the invoice.
+          The {Math.round(feeRate * 100)}% marketplace fee is retained by HaulBrokr. Carriers receive base haul plus fuel, tolls, and wait time. On Net terms the provider is paid once the customer settles the invoice.
         </Text>
 
         {status === "released" && (
@@ -1552,7 +1584,7 @@ function LivePaymentPanel({ numericId, isLiveJob }: { numericId: number | null; 
         )}
         {isProviderLive && status === "released" && (
           <Text style={[{ fontSize: 12, fontFamily: "Inter_500Medium", marginTop: 12 }, { color: ACCENT.green }]}>
-            You received {fmt(liveJob.providerNetAmount)} (net of the {Math.round(feeRate * 100)}% broker fee).
+            You received {fmt(liveJob.providerNetAmount)} (base haul + pass-throughs; marketplace fee retained by HaulBrokr).
           </Text>
         )}
       </View>

@@ -606,6 +606,32 @@ export const JobCompletionApproval = {
   flagged: 'flagged',
 } as const;
 
+export interface CustomerCheckoutBreakdown {
+  baseHaul: number;
+  fuelSurcharge: number;
+  marketplaceFee: number;
+  marketplaceFeeRate: number;
+  tolls: number;
+  waitTime?: number;
+  emergencyDispatch?: number;
+  holidaySurcharge?: number;
+  taxes: number;
+  taxRate?: number;
+  grandTotal: number;
+}
+
+export interface CarrierSettlementBreakdown {
+  baseHaul: number;
+  marketplaceFee: number;
+  marketplaceFeeRate: number;
+  fuel: number;
+  tolls: number;
+  waitTime: number;
+  emergencyDispatch?: number;
+  holidaySurcharge?: number;
+  netPayout: number;
+}
+
 export interface Job {
   id: number;
   requestId: number;
@@ -640,6 +666,30 @@ export interface Job {
   customerTotalAmount?: number | null;
   /** @nullable */
   providerNetAmount?: number | null;
+  /** @nullable */
+  fuelSurchargeRate?: number | null;
+  /** @nullable */
+  fuelSurchargeAmount?: number | null;
+  /** @nullable */
+  tollsAmount?: number | null;
+  /** @nullable */
+  waitTimeHours?: number | null;
+  /** @nullable */
+  waitTimeAmount?: number | null;
+  /** @nullable */
+  emergencyDispatchAmount?: number | null;
+  /** @nullable */
+  holidaySurchargeAmount?: number | null;
+  /** @nullable */
+  taxRate?: number | null;
+  /** @nullable */
+  taxAmount?: number | null;
+  /** @nullable */
+  isEmergencyDispatch?: boolean | null;
+  /** @nullable */
+  isHolidayHaul?: boolean | null;
+  customerCheckout?: CustomerCheckoutBreakdown;
+  carrierSettlement?: CarrierSettlementBreakdown;
   paymentStatus?: JobPaymentStatus;
   /** @nullable */
   paymentDueDate?: string | null;
@@ -676,6 +726,50 @@ export interface JobUpdate {
   status: JobUpdateStatus;
   totalHours?: number;
   notes?: string;
+  tollsAmount?: number;
+  waitTimeHours?: number;
+  waitTimeAmount?: number;
+  isEmergencyDispatch?: boolean;
+  emergencyDispatchAmount?: number;
+  isHolidayHaul?: boolean;
+  holidaySurchargeAmount?: number;
+}
+
+export interface PricingSetting {
+  id: number;
+  key: string;
+  value: number;
+  /** @nullable */
+  description?: string | null;
+  updatedAt?: string;
+}
+
+export interface FuelSurchargeWeek {
+  id: number;
+  weekStartDate: string;
+  /** @nullable */
+  nationalDieselPrice?: number | null;
+  surchargeRate: number;
+  /** @nullable */
+  notes?: string | null;
+  isActive: boolean;
+  updatedAt?: string;
+}
+
+export type PricingConfigActiveRates = {
+  marketplaceFeeRate: number;
+  fuelSurchargeRate: number;
+  emergencyDispatchRate: number;
+  holidaySurchargeRate: number;
+  waitTimeRatePerHour: number;
+  taxRate: number;
+  taxesEnabled: boolean;
+};
+
+export interface PricingConfig {
+  settings: PricingSetting[];
+  fuelSurchargeWeeks: FuelSurchargeWeek[];
+  activeRates: PricingConfigActiveRates;
 }
 
 export interface DashboardStats {
@@ -2009,6 +2103,28 @@ export const ListDumpSitesType = {
   hazardous_waste: 'hazardous_waste',
   compost: 'compost',
 } as const;
+
+export type UpdateAdminPricingSettingsBodySettingsItem = {
+  key: string;
+  value: number;
+  description?: string;
+};
+
+export type UpdateAdminPricingSettingsBody = {
+  settings: UpdateAdminPricingSettingsBodySettingsItem[];
+};
+
+export type UpsertFuelSurchargeWeekBody = {
+  weekStartDate: string;
+  surchargeRate: number;
+  nationalDieselPrice?: number;
+  notes?: string;
+  isActive?: boolean;
+};
+
+export type DeleteFuelSurchargeWeek200 = {
+  ok: boolean;
+};
 
 export type GetMyOrganization200 = { [key: string]: unknown };
 

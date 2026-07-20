@@ -44,6 +44,13 @@ export type JobInvoiceData = {
   providerNetAmount: number;
   customerTotalAmount: number;
   workAmount: number;
+  fuelSurchargeAmount: number;
+  tollsAmount: number;
+  waitTimeAmount: number;
+  emergencyDispatchAmount: number;
+  holidaySurchargeAmount: number;
+  taxAmount: number;
+  taxRate: number;
 };
 
 /** Completed jobs and net-terms invoiced jobs may download a PDF invoice. */
@@ -89,6 +96,16 @@ function formatDate(d: Date): string {
 }
 
 function computeInvoiceAmounts(job: Job) {
+  const fuelSurchargeAmount = job.fuelSurchargeAmount != null ? parseFloat(job.fuelSurchargeAmount) : 0;
+  const tollsAmount = job.tollsAmount != null ? parseFloat(job.tollsAmount) : 0;
+  const waitTimeAmount = job.waitTimeAmount != null ? parseFloat(job.waitTimeAmount) : 0;
+  const emergencyDispatchAmount =
+    job.emergencyDispatchAmount != null ? parseFloat(job.emergencyDispatchAmount) : 0;
+  const holidaySurchargeAmount =
+    job.holidaySurchargeAmount != null ? parseFloat(job.holidaySurchargeAmount) : 0;
+  const taxAmount = job.taxAmount != null ? parseFloat(job.taxAmount) : 0;
+  const taxRate = job.taxRate != null ? parseFloat(job.taxRate) : 0;
+
   if (job.customerTotalAmount != null && job.providerNetAmount != null && job.platformFeeAmount != null) {
     return {
       workAmount: job.totalAmount != null ? parseFloat(job.totalAmount) : parseFloat(job.providerNetAmount),
@@ -96,6 +113,13 @@ function computeInvoiceAmounts(job: Job) {
       providerNetAmount: parseFloat(job.providerNetAmount),
       customerTotalAmount: parseFloat(job.customerTotalAmount),
       platformFeeRate: parseFloat(job.platformFeeRate),
+      fuelSurchargeAmount,
+      tollsAmount,
+      waitTimeAmount,
+      emergencyDispatchAmount,
+      holidaySurchargeAmount,
+      taxAmount,
+      taxRate,
     };
   }
 
@@ -104,13 +128,24 @@ function computeInvoiceAmounts(job: Job) {
   const feeRate = parseFloat(job.platformFeeRate);
   const workAmount = Math.round(rate * hours * 100) / 100;
   const platformFeeAmount = Math.round(workAmount * feeRate * 100) / 100;
-  const customerTotalAmount = Math.round((workAmount + platformFeeAmount) * 100) / 100;
+  const fuelRate = job.fuelSurchargeRate != null ? parseFloat(job.fuelSurchargeRate) : 0;
+  const fuel = Math.round(workAmount * fuelRate * 100) / 100;
+  const taxable = Math.round((workAmount + fuel + tollsAmount + waitTimeAmount + emergencyDispatchAmount + holidaySurchargeAmount) * 100) / 100;
+  const tax = Math.round(taxable * taxRate * 100) / 100;
+  const customerTotalAmount = Math.round((taxable + platformFeeAmount + tax) * 100) / 100;
   return {
     workAmount,
     platformFeeAmount,
-    providerNetAmount: workAmount,
+    providerNetAmount: taxable,
     customerTotalAmount,
     platformFeeRate: feeRate,
+    fuelSurchargeAmount: fuel,
+    tollsAmount,
+    waitTimeAmount,
+    emergencyDispatchAmount,
+    holidaySurchargeAmount,
+    taxAmount: tax,
+    taxRate,
   };
 }
 
@@ -208,6 +243,13 @@ export async function loadJobInvoiceData(jobId: number): Promise<JobInvoiceData 
     providerNetAmount: amounts.providerNetAmount,
     customerTotalAmount: amounts.customerTotalAmount,
     workAmount: amounts.workAmount,
+    fuelSurchargeAmount: amounts.fuelSurchargeAmount,
+    tollsAmount: amounts.tollsAmount,
+    waitTimeAmount: amounts.waitTimeAmount,
+    emergencyDispatchAmount: amounts.emergencyDispatchAmount,
+    holidaySurchargeAmount: amounts.holidaySurchargeAmount,
+    taxAmount: amounts.taxAmount,
+    taxRate: amounts.taxRate,
   };
 }
 
@@ -324,10 +366,24 @@ export async function generateJobInvoicePdf(data: JobInvoiceData): Promise<Uint8
 
   const feePct = `${Math.round(data.platformFeeRate * 1000) / 10}%`;
   const summaryRows: Array<[string, string]> = [
-    [`Platform fee (${feePct})`, formatUsd(data.platformFeeAmount)],
-    ["Provider net amount", formatUsd(data.providerNetAmount)],
-    ["Customer total amount", formatUsd(data.customerTotalAmount)],
+    ["Base haul", formatUsd(data.workAmount)],
+    ["Fuel surcharge", formatUsd(data.fuelSurchargeAmount)],
+    [`Marketplace fee (${feePct})`, formatUsd(data.platformFeeAmount)],
+    ["Tolls", formatUsd(data.tollsAmount)],
   ];
+  if (data.waitTimeAmount > 0) summaryRows.push(["Wait time", formatUsd(data.waitTimeAmount)]);
+  if (data.emergencyDispatchAmount > 0) {
+    summaryRows.push(["Emergency dispatch", formatUsd(data.emergencyDispatchAmount)]);
+  }
+  if (data.holidaySurchargeAmount > 0) {
+    summaryRows.push(["Holiday surcharge", formatUsd(data.holidaySurchargeAmount)]);
+  }
+  if (data.taxAmount > 0) {
+    const taxPct = `${Math.round(data.taxRate * 1000) / 10}%`;
+    summaryRows.push([`Taxes (${taxPct})`, formatUsd(data.taxAmount)]);
+  }
+  summaryRows.push(["Provider net payout", formatUsd(data.providerNetAmount)]);
+  summaryRows.push(["Customer grand total", formatUsd(data.customerTotalAmount)]);
   for (const [label, value] of summaryRows) {
     page.drawText(label, { x: margin, y, size: 10, font });
     const valueWidth = bold.widthOfTextAtSize(value, 11);
