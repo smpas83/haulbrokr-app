@@ -24,6 +24,12 @@ import {
   clerkOAuthRedirectUri,
 } from "../lib/clerkOAuth";
 import { clerkErrorMessage, isInvalidVerificationCodeError } from "../lib/clerkAuthLogging";
+import {
+  isOAuthUserCancel,
+  resolveOAuthSessionId,
+  sanitizeClerkUsername,
+  usernameFromEmail,
+} from "../lib/completeOAuthSignUp";
 
 describe("clerkOAuth", () => {
   it("uses stable haulbrokr sso-callback redirect for production", () => {
@@ -53,5 +59,221 @@ describe("clerkAuthLogging", () => {
   it("detects invalid verification codes only", () => {
     expect(isInvalidVerificationCodeError({ code: "form_code_incorrect", message: "is incorrect" })).toBe(true);
     expect(isInvalidVerificationCodeError({ message: "session activation failed" })).toBe(false);
+  });
+});
+
+describe("completeOAuthSignUp", () => {
+  it("sanitizes usernames for Clerk", () => {
+    expect(sanitizeClerkUsername("Apple Review!")).toMatch(/^apple_review/);
+    expect(sanitizeClerkUsername("ab").length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("builds usernames from email local-parts", () => {
+    const name = usernameFromEmail("reviewer@privaterelay.appleid.com");
+    expect(name.startsWith("reviewer_")).toBe(true);
+    expect(name.length).toBeLessThanOrEqual(48);
+  });
+
+  it("returns existing session ids without updating sign-up", async () => {
+    const update = vi.fn();
+    const session = await resolveOAuthSessionId({
+      createdSessionId: "sess_existing",
+      signUp: { status: "missing_requirements", missingFields: ["username"], update },
+    });
+    expect(session).toBe("sess_existing");
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("fills missing username via Future API { error: null } and finalizes", async () => {
+    const signUp = {
+      id: "su_1",
+      status: "missing_requirements" as string | null,
+      emailAddress: "newuser@example.com",
+      missingFields: ["username"] as string[] | null,
+      createdSessionId: null as string | null,
+      update: vi.fn(async () => {
+        signUp.status = "complete";
+        signUp.missingFields = [];
+        signUp.createdSessionId = null;
+        return { error: null };
+      }),
+      finalize: vi.fn(async () => {
+        signUp.createdSessionId = "sess_after_finalize";
+        return { error: null };
+      }),
+    };
+
+    const session = await resolveOAuthSessionId({
+      createdSessionId: null,
+      signUp,
+    });
+
+    expect(signUp.update).toHaveBeenCalled();
+    expect(signUp.update).toHaveBeenCalledWith(
+      expect.objectContaining({ username: expect.stringMatching(/^newuser_/) }),
+    );
+    expect(signUp.finalize).toHaveBeenCalled();
+    expect(session).toBe("sess_after_finalize");
+  });
+
+  it("surfaces Future API update errors instead of swallowing them", async () => {
+    const signUp = {
+      id: "su_2",
+      status: "missing_requirements",
+      emailAddress: "newuser@example.com",
+      missingFields: ["username"],
+      createdSessionId: null as string | null,
+      update: vi.fn(async () => ({
+        error: { longMessage: "Username is invalid.", code: "form_param_format_invalid" },
+      })),
+    };
+
+    await expect(
+      resolveOAuthSessionId({
+        createdSessionId: null,
+        signUp,
+      }),
+    ).rejects.toThrow(/Username is invalid/i);
+  });
+
+  it("fills legal_accepted when required", async () => {
+    const signUp = {
+      id: "su_legal",
+      status: "missing_requirements" as string | null,
+      emailAddress: "newuser@example.com",
+      missingFields: ["username", "legal_accepted"] as string[] | null,
+      createdSessionId: null as string | null,
+      update: vi.fn(async (params: Record<string, unknown>) => {
+        expect(params.legalAccepted).toBe(true);
+        expect(params.username).toMatch(/^newuser_/);
+        signUp.status = "complete";
+        signUp.missingFields = [];
+        signUp.createdSessionId = "sess_legal";
+        return { error: null };
+      }),
+    };
+
+    const session = await resolveOAuthSessionId({ createdSessionId: null, signUp });
+    expect(session).toBe("sess_legal");
+  });
+
+  it("rejects update when SignUp has no attempt id", async () => {
+    const update = vi.fn();
+    await expect(
+      resolveOAuthSessionId({
+        createdSessionId: null,
+        signUp: {
+          status: "missing_requirements",
+          missingFields: ["username"],
+          emailAddress: "a@b.com",
+          update,
+        },
+      }),
+    ).rejects.toThrow(/No sign up attempt was found/i);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("does not treat missing_requirements as a user cancel", () => {
+    expect(
+      isOAuthUserCancel({
+        createdSessionId: null,
+        signUp: { status: "missing_requirements", missingFields: ["username"] },
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("appleNativeAuth exchange", () => {
+  it("transfers then falls back to direct Apple sign-up when transfer has no id", async () => {
+    const { exchangeAppleIdentityToken } = await import("../lib/appleNativeAuth");
+
+    const signIn = {
+      status: "needs_first_factor" as string | null,
+      isTransferable: true,
+      firstFactorVerification: { status: "transferable" },
+      createdSessionId: null as string | null,
+      create: vi.fn(async () => {
+        signIn.isTransferable = true;
+        return { error: null };
+      }),
+    };
+
+    const signUp = {
+      id: null as string | null,
+      status: null as string | null,
+      createdSessionId: null as string | null,
+      missingFields: null as string[] | null,
+      emailAddress: null as string | null,
+      create: vi.fn(async (params: Record<string, unknown>) => {
+        if (params.transfer) {
+          // Simulate Future transfer that does not attach an attempt id.
+          return { error: null };
+        }
+        if (params.strategy === "oauth_token_apple") {
+          signUp.id = "su_apple_direct";
+          signUp.status = "missing_requirements";
+          signUp.missingFields = ["username"];
+          signUp.emailAddress = "relay@privaterelay.appleid.com";
+          return { error: null };
+        }
+        return { error: { message: "unexpected" } };
+      }),
+      update: vi.fn(async () => {
+        signUp.status = "complete";
+        signUp.missingFields = [];
+        signUp.createdSessionId = "sess_apple";
+        return { error: null };
+      }),
+      finalize: vi.fn(async () => {
+        signUp.createdSessionId = "sess_apple";
+        return { error: null };
+      }),
+    };
+
+    const flow = await exchangeAppleIdentityToken({
+      signIn,
+      signUp,
+      identityToken: "fake.apple.token",
+    });
+
+    expect(signIn.create).toHaveBeenCalledWith(
+      expect.objectContaining({ strategy: "oauth_token_apple", token: "fake.apple.token" }),
+    );
+    expect(signUp.create).toHaveBeenCalledWith(expect.objectContaining({ transfer: true }));
+    expect(signUp.create).toHaveBeenCalledWith(
+      expect.objectContaining({ strategy: "oauth_token_apple", token: "fake.apple.token" }),
+    );
+    expect(signUp.id).toBe("su_apple_direct");
+
+    const session = await resolveOAuthSessionId(flow);
+    expect(session).toBe("sess_apple");
+  });
+
+  it("finalizes existing Apple users without transfer", async () => {
+    const { exchangeAppleIdentityToken } = await import("../lib/appleNativeAuth");
+
+    const signIn = {
+      status: "complete" as string | null,
+      isTransferable: false,
+      createdSessionId: "sess_existing_apple" as string | null,
+      create: vi.fn(async () => {
+        signIn.status = "complete";
+        signIn.createdSessionId = "sess_existing_apple";
+        return { error: null };
+      }),
+    };
+    const signUp = {
+      id: null as string | null,
+      create: vi.fn(),
+    };
+
+    const flow = await exchangeAppleIdentityToken({
+      signIn,
+      signUp,
+      identityToken: "fake.apple.token",
+    });
+
+    expect(signUp.create).not.toHaveBeenCalled();
+    expect(flow.createdSessionId).toBe("sess_existing_apple");
   });
 });

@@ -1,5 +1,4 @@
 import { useAuth, useClerk, useSignIn, useSignUp, useSSO } from "@clerk/expo";
-import { useSignInWithApple } from "@clerk/expo/apple";
 import { useSignInWithGoogle } from "@clerk/expo/google";
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -31,6 +30,15 @@ import {
   hasGoogleNativeSignInConfig,
   shouldUseNativeAppleSignIn,
 } from "@/lib/clerkOAuth";
+import {
+  completeNativeAppleSignIn,
+} from "@/lib/appleNativeAuth";
+import {
+  isOAuthUserCancel,
+  oauthFlowDebugSnapshot,
+  resolveOAuthSessionId,
+  type OAuthFlowResult,
+} from "@/lib/completeOAuthSignUp";
 import { resetAllClerkLocalState, markClerkActiveSession } from "@/lib/clerkTokenCache";
 
 type Mode = "signin" | "signup";
@@ -46,7 +54,6 @@ export default function SignInScreen() {
   const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
-  const { startAppleAuthenticationFlow } = useSignInWithApple();
   const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
   const [ssoBusy, setSsoBusy] = useState<null | "google" | "apple">(null);
   const [resettingAuth, setResettingAuth] = useState(false);
@@ -84,14 +91,83 @@ export default function SignInScreen() {
     }
   };
 
+  const activateExistingClerkSession = async (): Promise<boolean> => {
+    const sessionId =
+      clerk.session?.id ??
+      (clerk as { client?: { activeSessions?: Array<{ id?: string; status?: string }> } }).client
+        ?.activeSessions?.find((s) => s.status === "active" || !!s.id)?.id ??
+      signIn?.createdSessionId ??
+      signIn?.existingSession?.sessionId ??
+      signUp?.createdSessionId ??
+      null;
+
+    if (!sessionId) {
+      if (signIn?.status === "complete") {
+        return finalizeSignIn();
+      }
+      return false;
+    }
+    return activateSession(sessionId);
+  };
+
   const completeOAuthSession = async (
-    createdSessionId: string | null | undefined,
-    setActive: ((params: { session: string }) => Promise<void>) | undefined,
+    flow: OAuthFlowResult,
     which: "google" | "apple",
   ) => {
-    console.log("[COMPLETE OAUTH]", { createdSessionId, hasSetActive: !!setActive });
+    const setActive = flow.setActive;
+    const snapshot = oauthFlowDebugSnapshot(flow);
+    console.log("[COMPLETE OAUTH] before resolve", snapshot);
+
+    let createdSessionId: string | null = null;
+    try {
+      createdSessionId = await resolveOAuthSessionId(flow);
+    } catch (err) {
+      logClerkAuthError(`${which}-complete-signup`, err, snapshot);
+      const detail = clerkErrorMessage(err as any) || (err as Error)?.message || "";
+
+      // Partial Apple success can leave a Clerk session while SignUp update fails.
+      const recovered = await activateExistingClerkSession();
+      if (recovered) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace("/" as any);
+        return;
+      }
+
+      setError(
+        detail ||
+          `Sign-in with ${which} couldn't finish account setup. Please try again.`,
+      );
+      return;
+    }
+
+    console.log("[COMPLETE OAUTH] after resolve", {
+      createdSessionId,
+      hasSetActive: !!setActive,
+      ...oauthFlowDebugSnapshot(flow),
+    });
+
     if (!createdSessionId) {
-      setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+      if (isOAuthUserCancel(flow)) {
+        // User dismissed the native sheet — not an error.
+        return;
+      }
+      logClerkAuthError(`${which}-no-session`, new Error("OAuth completed without session"), snapshot);
+      const recovered = await activateExistingClerkSession();
+      if (recovered) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace("/" as any);
+        return;
+      }
+      const missing = (flow.signUp?.missingFields ?? []).join(", ");
+      if (missing) {
+        setError(
+          `Sign-in with ${which} needs more account details (${missing}). Check Clerk required fields or try again.`,
+        );
+      } else {
+        setError(
+          `Sign-in with ${which} couldn't complete. Confirm Clerk Apple is enabled for bundle ID "haulbrokr".`,
+        );
+      }
       return;
     }
     try {
@@ -109,7 +185,10 @@ export default function SignInScreen() {
       router.replace("/" as any);
     } catch (err) {
       logClerkAuthError(`${which}-setActive`, err, { createdSessionId });
-      setError(`Sign-in with ${which} couldn't complete. Please try again.`);
+      setError(
+        clerkErrorMessage(err as any) ||
+          `Sign-in with ${which} couldn't activate your session. Please try again.`,
+      );
     }
   };
 
@@ -119,33 +198,81 @@ export default function SignInScreen() {
     setError("");
     try {
       if (which === "apple" && shouldUseNativeAppleSignIn()) {
-        const result = await startAppleAuthenticationFlow();
-      console.log("[APPLE AUTH RESULT]", JSON.stringify(result, null, 2));
-      const { createdSessionId, setActive } = result;
-        await completeOAuthSession(createdSessionId, setActive, which);
+        if (!signIn || !signUp) {
+          setError("Authentication is initialising. Please wait a moment.");
+          return;
+        }
+        // Future-API Apple flow — do not use legacy useSignInWithApple.
+        const appleResult = await completeNativeAppleSignIn({
+          signIn: signIn as any,
+          signUp: signUp as any,
+          setActive: clerk.setActive ? (params) => clerk.setActive!(params as any) : undefined,
+        });
+        if (appleResult.cancelled) return;
+        console.log("[APPLE AUTH RESULT]", {
+          sessionId: appleResult.sessionId,
+          names: appleResult.names,
+          signInStatus: signIn.status,
+          signUpStatus: signUp.status,
+          signUpId: (signUp as { id?: string }).id ?? null,
+        });
+        if (appleResult.sessionId) {
+          const activated = await activateSession(appleResult.sessionId);
+          if (activated) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.replace("/" as any);
+            return;
+          }
+        }
+        await completeOAuthSession(
+          {
+            createdSessionId: appleResult.sessionId,
+            setActive: clerk.setActive ? (params) => clerk.setActive!(params as any) : undefined,
+            signIn: signIn as any,
+            signUp: signUp as any,
+          },
+          which,
+        );
         return;
       }
 
       if (which === "google" && hasGoogleNativeSignInConfig()) {
-        const { createdSessionId, setActive } = await startGoogleAuthenticationFlow();
-        await completeOAuthSession(createdSessionId, setActive, which);
+        const result = await startGoogleAuthenticationFlow();
+        await completeOAuthSession(result as OAuthFlowResult, which);
         return;
       }
 
       const redirectUrl = clerkOAuthRedirectUri();
-      const { createdSessionId, setActive } = await startSSOFlow({
+      const result = await startSSOFlow({
         strategy,
         redirectUrl,
       });
-      await completeOAuthSession(createdSessionId, setActive, which);
+      await completeOAuthSession(result as OAuthFlowResult, which);
     } catch (err: any) {
+      if (err?.code === "ERR_REQUEST_CANCELED" || err?.code === "SIGN_IN_CANCELLED") {
+        return;
+      }
       logClerkAuthError(`${which}-sso`, err, { which, redirectUrl: clerkOAuthRedirectUri() });
       const msg = clerkErrorMessage(err) || err?.message || "";
+      if (/already signed in/i.test(msg)) {
+        const recovered = await activateExistingClerkSession();
+        if (recovered) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          router.replace("/" as any);
+          return;
+        }
+        setError("You're already signed in.");
+        return;
+      }
       if (/not enabled|provider.*not.*configured|strategy.*not.*allowed/i.test(msg)) {
         setError(`Sign in with ${which === "google" ? "Google" : "Apple"} isn't enabled yet — turn it on in the Auth pane.`);
       } else if (/redirect|callback|native application/i.test(msg)) {
         setError(
-          `Sign in with ${which === "google" ? "Google" : "Apple"} failed — confirm Clerk Native Applications includes haulbrokr://sso-callback.`
+          `Sign in with ${which === "google" ? "Google" : "Apple"} failed — confirm Clerk Native Applications includes haulbrokr://sso-callback and bundle ID haulbrokr.`
+        );
+      } else if (/bundle|app.?id|team.?id|audience|token|jwt|nonce/i.test(msg)) {
+        setError(
+          `Sign in with Apple failed — confirm Clerk Native Application uses iOS bundle ID "haulbrokr" (Team B7Z55AHC9L).`
         );
       } else if (msg) {
         setError(msg);
@@ -723,7 +850,15 @@ export default function SignInScreen() {
             {stuckSignedIn ? (
               <Pressable
                 style={[styles.btn, busy && styles.btnDisabled]}
-                onPress={() => void finalizeSignIn()}
+                onPress={async () => {
+                  const recovered = await activateExistingClerkSession();
+                  if (recovered) {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    router.replace("/" as any);
+                    return;
+                  }
+                  await finalizeSignIn();
+                }}
                 disabled={busy}
               >
                 {busy ? (

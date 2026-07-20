@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, profilesTable, organizationsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
 import { computeDocumentStatus } from "../lib/documentStatus";
+import { deleteAccountForClerkUser } from "../lib/deleteAccount";
 
 const router: IRouter = Router();
 
@@ -84,6 +85,27 @@ router.patch("/profiles/me", requireAuth, async (req, res): Promise<void> => {
     return;
   }
   res.json(profile);
+});
+
+/**
+ * DELETE /profiles/me — permanent account deletion (App Store 5.1.1(v)).
+ * Removes PII, anonymizes marketplace history, and deletes the Clerk user.
+ */
+router.delete("/profiles/me", requireAuth, async (req, res): Promise<void> => {
+  const clerkId = req.clerkId as string;
+  try {
+    const result = await deleteAccountForClerkUser(clerkId);
+    res.json({
+      deleted: true,
+      profileId: result.profileId,
+      message: "Your account has been permanently deleted.",
+    });
+  } catch (err: any) {
+    console.error("[deleteAccount]", err);
+    res.status(500).json({
+      error: err?.message ?? "Account deletion failed. Please try again or contact support.",
+    });
+  }
 });
 
 const VALID_ROLES = ["customer", "provider", "driver", "supervisor"] as const;

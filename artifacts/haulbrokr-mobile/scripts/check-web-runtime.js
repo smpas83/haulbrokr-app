@@ -125,7 +125,15 @@ function resolveChromiumExecutable(env = process.env) {
     }
   }
 
-  for (const name of ["chromium", "chromium-browser", "google-chrome", "chrome"]) {
+  // Prefer real Chrome builds over Ubuntu's snap-backed `chromium` wrapper, which
+  // Puppeteer cannot launch in CI (WS endpoint timeout).
+  for (const name of [
+    "google-chrome-stable",
+    "google-chrome",
+    "chrome",
+    "chromium-browser",
+    "chromium",
+  ]) {
     try {
       const resolved = execFileSync("which", [name], {
         encoding: "utf-8",

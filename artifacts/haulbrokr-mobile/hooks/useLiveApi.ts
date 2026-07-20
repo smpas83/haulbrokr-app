@@ -67,6 +67,18 @@ export function useCreateProfile() {
   });
 }
 
+/** Permanently delete the signed-in account (App Store Guideline 5.1.1(v)). */
+export function useDeleteAccount() {
+  const { getToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch(getToken, "DELETE", "/profiles/me"),
+    onSuccess: () => {
+      qc.clear();
+    },
+  });
+}
+
 export function useProjects() {
   const { getToken, isSignedIn } = useAuth();
   return useQuery({

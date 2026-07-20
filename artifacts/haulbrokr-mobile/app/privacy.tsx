@@ -69,7 +69,7 @@ Business Transfers: In the event of a merger, acquisition, or sale of assets, us
 • Job and bid history: Retained for 3 years
 • Device and usage logs: Retained for 90 days
 
-You may request deletion of your account and associated data by contacting privacy@haulbrokr.com. Note that some data may be retained for legal compliance even after account deletion.`,
+You may delete your account at any time from Account → Delete Account in the HaulBrokr app. You may also request deletion by contacting privacy@haulbrokr.com. Note that some transaction records may be retained in anonymized form for legal and financial compliance even after account deletion.`,
   },
   {
     id: "5",

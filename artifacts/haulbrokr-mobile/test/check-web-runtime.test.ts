@@ -309,7 +309,33 @@ const chromiumExecutable = runtime.resolveChromiumExecutable();
 // each case plenty of headroom over Vitest's 5s default so it never flakes.
 const E2E_TIMEOUT = 60_000;
 
-describe.skipIf(!chromiumExecutable)("checkWebRuntime (headless Chromium)", () => {
+/** True when Chromium is installed *and* Puppeteer can actually launch it. */
+let chromiumLaunchable = false;
+
+if (chromiumExecutable) {
+  try {
+    const puppeteer = require("puppeteer-core") as {
+      launch: (opts: Record<string, unknown>) => Promise<{ close: () => Promise<void> }>;
+    };
+    const browser = await puppeteer.launch({
+      executablePath: chromiumExecutable,
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+      ],
+      timeout: 10_000,
+    });
+    await browser.close();
+    chromiumLaunchable = true;
+  } catch {
+    chromiumLaunchable = false;
+  }
+}
+
+describe.skipIf(!chromiumLaunchable)("checkWebRuntime (headless Chromium)", () => {
   const fixtureDirs: string[] = [];
 
   function writeFixture(html: string): string {
