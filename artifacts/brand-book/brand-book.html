@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HaulBrokr Brand Book</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @page {
+      size: Letter;
+      margin: 0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: #141414;
+      color: #ffffff;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 8.5in;
+      height: 11in;
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+      padding: 0.85in 0.9in;
+    }
+
+    .page:last-child { page-break-after: auto; }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #A0785A;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: 42px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    h3 {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #A0785A;
+      margin-bottom: 12px;
+    }
+
+    p, li {
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.65;
+      color: #cccccc;
+    }
+
+    .rule {
+      width: 48px;
+      height: 2px;
+      background: #A0785A;
+      margin: 22px 0 28px;
+    }
+
+    .footer {
+      position: absolute;
+      left: 0.9in;
+      right: 0.9in;
+      bottom: 0.55in;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #666666;
+      border-top: 1px solid #2a2a2a;
+      padding-top: 14px;
+    }
+
+    .footer .accent { color: #A0785A; }
+
+    /* Cover */
+    .cover {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background:
+        radial-gradient(ellipse at 50% 20%, rgba(233, 166, 0, 0.12), transparent 55%),
+        linear-gradient(180deg, #1a1a1a 0%, #141414 55%, #0d0d0d 100%);
+    }
+
+    .cover-logo {
+      width: 4.8in;
+      height: auto;
+      margin-bottom: 28px;
+    }
+
+    .cover .rule {
+      margin: 0 auto 28px;
+    }
+
+    .cover-tagline {
+      font-size: 18px;
+      font-weight: 300;
+      color: #cccccc;
+      max-width: 5.2in;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .cover-sub {
+      font-size: 13px;
+      color: #888888;
+      max-width: 4.6in;
+      line-height: 1.6;
+      margin-bottom: 56px;
+    }
+
+    .cover-meta {
+      position: absolute;
+      bottom: 0.7in;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #666666;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cover-meta .accent { color: #A0785A; }
+
+    /* Grid helpers */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 8px;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Color swatches */
+    .swatch {
+      border: 1px solid #2a2a2a;
+      overflow: hidden;
+      background: #1a1a1a;
+    }
+
+    .swatch-chip {
+      height: 92px;
+      width: 100%;
+    }
+
+    .swatch-body {
+      padding: 14px 14px 16px;
+    }
+
+    .swatch-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .swatch-hex {
+      font-size: 12px;
+      font-weight: 500;
+      color: #E9A600;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .swatch-meta {
+      font-size: 11px;
+      color: #888888;
+      line-height: 1.45;
+    }
+
+    .swatch-wide {
+      margin-top: 16px;
+    }
+
+    .swatch-wide .swatch-chip {
+      height: 64px;
+    }
+
+    /* Logo usage */
+    .logo-panel {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      padding: 36px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+    }
+
+    .logo-panel.light {
+      background: #f4f4f5;
+    }
+
+    .logo-panel img {
+      max-width: 78%;
+      height: auto;
+    }
+
+    .logo-panel.icon img {
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
+    }
+
+    .note-list {
+      margin-top: 22px;
+      list-style: none;
+    }
+
+    .note-list li {
+      padding-left: 16px;
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .note-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 6px;
+      height: 6px;
+      background: #A0785A;
+    }
+
+    /* Typography samples */
+    .type-row {
+      border-bottom: 1px solid #2a2a2a;
+      padding: 18px 0;
+      display: grid;
+      grid-template-columns: 1.4in 1fr;
+      gap: 18px;
+      align-items: baseline;
+    }
+
+    .type-label {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #888888;
+    }
+
+    .type-sample-xl {
+      font-size: 40px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .type-sample-lg {
+      font-size: 24px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    .type-sample-md {
+      font-size: 16px;
+      font-weight: 400;
+      color: #cccccc;
+      line-height: 1.6;
+    }
+
+    .type-sample-sm {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #A0785A;
+    }
+
+    /* Do / Don't */
+    .do-card, .dont-card {
+      border: 1px solid #2a2a2a;
+      padding: 20px;
+      background: #1a1a1a;
+      min-height: 150px;
+    }
+
+    .do-card h4 {
+      color: #10B981;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .dont-card h4 {
+      color: #EF4444;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .do-card p, .dont-card p {
+      font-size: 13px;
+    }
+
+    /* Product tokens */
+    .token-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    .token-table th,
+    .token-table td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid #2a2a2a;
+      font-size: 13px;
+    }
+
+    .token-table th {
+      color: #A0785A;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    .token-table td {
+      color: #cccccc;
+      font-weight: 300;
+    }
+
+    .token-table .hex {
+      color: #E9A600;
+      font-weight: 500;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .mini-swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .cta-box {
+      margin-top: 36px;
+      border-left: 3px solid #A0785A;
+      padding: 18px 20px;
+      background: #1a1a1a;
+    }
+
+    .cta-box .label {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #A0785A;
+      margin-bottom: 8px;
+    }
+
+    .cta-box .value {
+      font-size: 18px;
+      color: #ffffff;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Cover -->
+  <section class="page cover">
+    <div class="eyebrow">Brand Guidelines · 2026</div>
+    <img class="cover-logo" src="haulbrokr-logo.png" alt="HaulBrokr" />
+    <div class="rule"></div>
+    <p class="cover-tagline">The Digital Marketplace for Heavy Hauling</p>
+    <p class="cover-sub">Official brand book — colors, logo usage, typography, and product UI tokens for HaulBrokr.</p>
+    <div class="cover-meta">
+      <span class="accent">haulbrokr.com</span>
+      <span>HaulBrokr, Inc.</span>
+      <span>Confidential</span>
+    </div>
+  </section>
+
+  <!-- 2. Brand overview -->
+  <section class="page">
+    <div class="eyebrow">01 — Overview</div>
+    <h1>Brand identity</h1>
+    <div class="rule"></div>
+    <p style="max-width: 6.2in; margin-bottom: 28px;">
+      HaulBrokr is the digital marketplace connecting contractors with licensed dump truck operators.
+      The brand should feel industrial, trustworthy, and premium — dark surfaces, warm metal accents,
+      and clear hierarchy.
+    </p>
+
+    <div class="two-col">
+      <div>
+        <h3>Personality</h3>
+        <ul class="note-list">
+          <li>Industrial luxury — heavy industry, refined finish</li>
+          <li>Reliable and operational — built for the job site</li>
+          <li>Confident, not flashy</li>
+          <li>Texas-rooted, national ambition</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Voice</h3>
+        <ul class="note-list">
+          <li>Direct and practical</li>
+          <li>Short sentences over marketing fluff</li>
+          <li>Technical when needed, always clear</li>
+          <li>Product name is always <strong style="color:#fff;font-weight:600;">HaulBrokr</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="cta-box">
+      <div class="label">Primary tagline</div>
+      <div class="value">The Digital Marketplace for Heavy Hauling</div>
+    </div>
+
+    <div class="footer">
+      <span class="accent">HaulBrokr Brand Book</span>
+      <span>02</span>
+    </div>
+  </section>
+
+  <!-- 3. Logo -->
+  <section class="page">
+    <div class="eyebrow">02 — Logo</div>
+    <h1>Logo system</h1>
+    <div class="rule"></div>
+
+    <div class="two-col" style="margin-bottom: 18px;">
+      <div>
+        <h3>Primary mark · Dark</h3>
+        <div class="logo-panel">
+          <img src="haulbrokr-logo.png" alt="HaulBrokr logo on dark" />
+        </div>
+      </div>
+      <div>
+        <h3>App icon</h3>
+        <div class="logo-panel icon">
+          <img src="haulbrokr-icon.png" alt="HaulBrokr icon" />
+        </div>
+      </div>
+    </div>
+
+    <h3>Usage rules</h3>
+    <ul class="note-list">
+      <li>Prefer the full wordmark on dark backgrounds (#141414 or darker).</li>
+      <li>Keep clear space around the logo equal to at least the height of the “H”.</li>
+      <li>Do not stretch, rotate, recolor, or add outlines/shadows to the logo.</li>
+      <li>Minimum digital width for the wordmark: 120px.</li>
+      <li>Use the app icon for mobile home screens, favicons, and avatars only.</li>
+    </ul>
+
+    <div class="footer">
+      <span class="accent">HaulBrokr Brand Book</span>
+      <span>03</span>
+    </div>
+  </section>
+
+  <!-- 4. Core brand colors -->
+  <section class="page">
+    <div class="eyebrow">03 — Color</div>
+    <h1>Core brand palette</h1>
+    <div class="rule"></div>
+    <p style="margin-bottom: 22px; max-width: 6.2in;">
+      These are the primary brand colors used in the founding deck, marketing surfaces, and splash experiences.
+    </p>
+
+    <div class="three-col">
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#E9A600;"></div>
+        <div class="swatch-body">
+          <div class="swatch-name">Brand Gold</div>
+          <div class="swatch-hex">#E9A600</div>
+          <div class="swatch-meta">Accent highlights, CTAs, active states</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#A0785A;"></div>
+        <div class="swatch-body">
+          <div class="swatch-name">Bronze</div>
+          <div class="swatch-hex">#A0785A</div>
+          <div class="swatch-meta">Eyebrows, rules, secondary accents</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#141414; border-bottom:1px solid #2a2a2a;"></div>
+        <div class="swatch-body">
+          <div class="swatch-name">Near Black</div>
+          <div class="swatch-hex">#141414</div>
+          <div class="swatch-meta">Primary background for brand surfaces</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="three-col" style="margin-top: 16px;">
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#FFFFFF;"></div>
+        <div class="swatch-body">
+          <div class="swatch-name">White</div>
+          <div class="swatch-hex">#FFFFFF</div>
+          <div class="swatch-meta">Primary text on dark backgrounds</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#CCCCCC;"></div>
+        <div class="swatch-body">
+          <div class="swatch-name">Soft Gray</div>
+          <div class="swatch-hex">#CCCCCC</div>
+          <div class="swatch-meta">Supporting body copy</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-chip" style="background:#888888;"></div>
+        <div class="swatch-body">
+          <div class="swatch-name">Muted</div>
+          <div class="swatch-hex">#888888</div>
+          <div class="swatch-meta">Captions, metadata, footers</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="swatch swatch-wide">
+      <div class="swatch-chip" style="background:#1E2235;"></div>
+      <div class="swatch-body" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="swatch-name">Navy Splash</div>
+          <div class="swatch-meta">Mobile splash / loading screens</div>
+        </div>
+        <div class="swatch-hex">#1E2235</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="accent">HaulBrokr Brand Book</span>
+      <span>04</span>
+    </div>
+  </section>
+
+  <!-- 5. Product UI colors -->
+  <section class="page">
+    <div class="eyebrow">04 — Product UI</div>
+    <h1>App & web tokens</h1>
+    <div class="rule"></div>
+    <p style="margin-bottom: 18px; max-width: 6.2in;">
+      Product interfaces use an “Industrial Luxury” dark-first system with electric blue as the primary action color
+      and construction orange as the secondary accent.
+    </p>
+
+    <table class="token-table">
+      <thead>
+        <tr>
+          <th>Token</th>
+          <th>Hex</th>
+          <th>Use</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="mini-swatch" style="background:#0A0A0C;"></span>Background</td>
+          <td class="hex">#0A0A0C</td>
+          <td>App / web canvas</td>
+        </tr>
+        <tr>
+          <td><span class="mini-swatch" style="background:#141416;"></span>Card</td>
+          <td class="hex">#141416</td>
+          <td>Panels and elevated surfaces</td>
+        </tr>
+        <tr>
+          <td><span class="mini-swatch" style="background:#3B82F6;"></span>Primary Blue</td>
+          <td class="hex">#3B82F6</td>
+          <td>Buttons, links, focus rings</td>
+        </tr>
+        <tr>
+          <td><span class="mini-swatch" style="background:#FF6A00;"></span>Accent Orange</td>
+          <td class="hex">#FF6A00</td>
+          <td>Highlights and secondary CTAs</td>
+        </tr>
+        <tr>
+          <td><span class="mini-swatch" style="background:#10B981;"></span>Success</td>
+          <td class="hex">#10B981</td>
+          <td>Positive / completed states</td>
+        </tr>
+        <tr>
+          <td><span class="mini-swatch" style="background:#F59E0B;"></span>Warning</td>
+          <td class="hex">#F59E0B</td>
+          <td>Attention / pending states</td>
+        </tr>
+        <tr>
+          <td><span class="mini-swatch" style="background:#EF4444;"></span>Destructive</td>
+          <td class="hex">#EF4444</td>
+          <td>Errors and destructive actions</td>
+        </tr>
+        <tr>
+          <td><span class="mini-swatch" style="background:#27272A;"></span>Border</td>
+          <td class="hex">#27272A</td>
+          <td>Dividers and input edges</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <span class="accent">HaulBrokr Brand Book</span>
+      <span>05</span>
+    </div>
+  </section>
+
+  <!-- 6. Typography -->
+  <section class="page">
+    <div class="eyebrow">05 — Typography</div>
+    <h1>Type system</h1>
+    <div class="rule"></div>
+    <p style="margin-bottom: 8px;">Primary typeface: <strong style="color:#fff;font-weight:600;">Inter</strong></p>
+    <p style="margin-bottom: 24px; color:#888888;">Weights used: 300 Light · 400 Regular · 500 Medium · 600 Semibold · 700 Bold</p>
+
+    <div class="type-row">
+      <div class="type-label">Display</div>
+      <div class="type-sample-xl">HaulBrokr</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Headline</div>
+      <div class="type-sample-lg">The Digital Marketplace for Heavy Hauling</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Body</div>
+      <div class="type-sample-md">Connecting contractors with licensed dump truck operators across Texas — on demand, in real time.</div>
+    </div>
+    <div class="type-row" style="border-bottom: none;">
+      <div class="type-label">Eyebrow</div>
+      <div class="type-sample-sm">Founding Partner Presentation</div>
+    </div>
+
+    <div class="cta-box">
+      <div class="label">Naming</div>
+      <div class="value" style="font-size:15px; line-height:1.5; font-weight:400; color:#cccccc;">
+        User-facing name: <strong style="color:#fff;">HaulBrokr</strong> &nbsp;·&nbsp;
+        Domains / packages: <strong style="color:#fff;">haulbrokr</strong>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="accent">HaulBrokr Brand Book</span>
+      <span>06</span>
+    </div>
+  </section>
+
+  <!-- 7. Do / Don't -->
+  <section class="page">
+    <div class="eyebrow">06 — Application</div>
+    <h1>Do and don’t</h1>
+    <div class="rule"></div>
+
+    <div class="two-col" style="margin-bottom: 16px;">
+      <div class="do-card">
+        <h4>Do</h4>
+        <p>Use dark backgrounds with gold or bronze accents for marketing and deck surfaces.</p>
+      </div>
+      <div class="dont-card">
+        <h4>Don’t</h4>
+        <p>Don’t place the logo on busy photographic backgrounds without a dark overlay.</p>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom: 16px;">
+      <div class="do-card">
+        <h4>Do</h4>
+        <p>Keep one clear hierarchy: brand → headline → one supporting sentence → CTA.</p>
+      </div>
+      <div class="dont-card">
+        <h4>Don’t</h4>
+        <p>Don’t stretch, recolor, or outline the wordmark. Never replace “HaulBrokr” with “DumpBroker.”</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="do-card">
+        <h4>Do</h4>
+        <p>Use product blue (#3B82F6) for interactive UI and brand gold (#E9A600) for brand emphasis.</p>
+      </div>
+      <div class="dont-card">
+        <h4>Don’t</h4>
+        <p>Don’t mix purple glow themes or light cream “AI default” palettes into HaulBrokr surfaces.</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="accent">HaulBrokr Brand Book</span>
+      <span>07</span>
+    </div>
+  </section>
+
+  <!-- 8. Closing -->
+  <section class="page">
+    <div class="eyebrow">07 — Contact</div>
+    <h1>Assets & contact</h1>
+    <div class="rule"></div>
+
+    <p style="margin-bottom: 22px; max-width: 6in;">
+      This brand book consolidates the HaulBrokr visual system used across the pitch deck,
+      web app, and mobile app. For the full founding deck, see the <strong style="color:#fff;font-weight:600;">haulbrokr-deck</strong> package.
+    </p>
+
+    <h3>Quick reference</h3>
+    <table class="token-table" style="margin-bottom: 28px;">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Brand gold</td><td class="hex">#E9A600</td></tr>
+        <tr><td>Bronze</td><td class="hex">#A0785A</td></tr>
+        <tr><td>Background</td><td class="hex">#141414</td></tr>
+        <tr><td>Primary UI blue</td><td class="hex">#3B82F6</td></tr>
+        <tr><td>Accent orange</td><td class="hex">#FF6A00</td></tr>
+        <tr><td>Typeface</td><td>Inter</td></tr>
+        <tr><td>Website</td><td>haulbrokr.com</td></tr>
+      </tbody>
+    </table>
+
+    <div class="cta-box">
+      <div class="label">HaulBrokr, Inc.</div>
+      <div class="value">haulbrokr.com</div>
+    </div>
+
+    <div class="footer">
+      <span class="accent">HaulBrokr Brand Book</span>
+      <span>08</span>
+    </div>
+  </section>
+
+</body>
+</html>
