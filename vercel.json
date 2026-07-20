@@ -42,14 +42,6 @@
       "destination": "https://kashventure.com/_next/:path*"
     },
     {
-      "source": "/sign-up",
-      "destination": "https://kashventure.com/sign-up"
-    },
-    {
-      "source": "/sign-up/:path*",
-      "destination": "https://kashventure.com/sign-up/:path*"
-    },
-    {
       "source": "/sign-in",
       "has": [
         {
@@ -118,42 +110,6 @@
     },
     {
       "source": "/api/haulbrokr/marketing/:path*",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/sign-in",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/sign-in/:path*",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/sign-up",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/sign-up/:path*",
       "headers": [
         {
           "key": "Cache-Control",
