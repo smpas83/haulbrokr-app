@@ -174,6 +174,13 @@ describe("POST /storage/uploads/request-url", () => {
       .send({ name: "id.jpg", size: 60 * 1024 * 1024, contentType: "image/jpeg" });
     expect(res.status).toBe(400);
   });
+
+  it("rejects unsupported content types (RC2 upload hardening)", async () => {
+    const res = await request(app)
+      .post("/storage/uploads/request-url")
+      .send({ name: "evil.html", size: 512, contentType: "text/html" });
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("POST /storage/uploads/finalize", () => {
