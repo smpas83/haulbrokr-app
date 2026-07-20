@@ -6,6 +6,7 @@
   "framework": null,
   "rewrites": [
     {
+<<<<<<< Updated upstream
       "source": "/admin/marketing",
       "destination": "https://kashventure.com/haulbrokr/admin/marketing"
     },
@@ -40,6 +41,22 @@
     {
       "source": "/_next/:path*",
       "destination": "https://kashventure.com/_next/:path*"
+=======
+      "source": "/sign-in",
+      "destination": "https://kashventure.com/sign-in"
+    },
+    {
+      "source": "/sign-in/:path*",
+      "destination": "https://kashventure.com/sign-in/:path*"
+    },
+    {
+      "source": "/sign-up",
+      "destination": "https://kashventure.com/sign-up"
+    },
+    {
+      "source": "/sign-up/:path*",
+      "destination": "https://kashventure.com/sign-up/:path*"
+>>>>>>> Stashed changes
     },
     {
       "source": "/api/:path*",
@@ -60,6 +77,7 @@
   ],
   "headers": [
     {
+<<<<<<< Updated upstream
       "source": "/admin",
       "headers": [
         { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
@@ -81,16 +99,66 @@
       "source": "/api/haulbrokr/marketing/:path*",
       "headers": [
         { "key": "Cache-Control", "value": "private, no-cache, no-store, max-age=0, must-revalidate" }
+=======
+      "source": "/sign-in",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sign-in/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sign-up",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sign-up/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+>>>>>>> Stashed changes
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(self)" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(self)"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
       ]
     }
   ]

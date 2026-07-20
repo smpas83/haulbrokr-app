@@ -6,6 +6,7 @@
   "framework": null,
   "rewrites": [
     {
+<<<<<<< Updated upstream
       "source": "/admin/marketing",
       "destination": "https://kashventure.com/haulbrokr/admin/marketing"
     },
@@ -40,6 +41,22 @@
     {
       "source": "/_next/:path*",
       "destination": "https://kashventure.com/_next/:path*"
+=======
+      "source": "/sign-in",
+      "destination": "https://kashventure.com/sign-in"
+    },
+    {
+      "source": "/sign-in/:path*",
+      "destination": "https://kashventure.com/sign-in/:path*"
+    },
+    {
+      "source": "/sign-up",
+      "destination": "https://kashventure.com/sign-up"
+    },
+    {
+      "source": "/sign-up/:path*",
+      "destination": "https://kashventure.com/sign-up/:path*"
+>>>>>>> Stashed changes
     },
     {
       "source": "/api/:path*",
@@ -60,7 +77,11 @@
   ],
   "headers": [
     {
+<<<<<<< Updated upstream
       "source": "/admin",
+=======
+      "source": "/sign-in",
+>>>>>>> Stashed changes
       "headers": [
         {
           "key": "Cache-Control",
@@ -69,7 +90,11 @@
       ]
     },
     {
+<<<<<<< Updated upstream
       "source": "/admin/:path*",
+=======
+      "source": "/sign-in/:path*",
+>>>>>>> Stashed changes
       "headers": [
         {
           "key": "Cache-Control",
@@ -78,7 +103,11 @@
       ]
     },
     {
+<<<<<<< Updated upstream
       "source": "/haulbrokr/admin/:path*",
+=======
+      "source": "/sign-up",
+>>>>>>> Stashed changes
       "headers": [
         {
           "key": "Cache-Control",
@@ -87,7 +116,11 @@
       ]
     },
     {
+<<<<<<< Updated upstream
       "source": "/api/haulbrokr/marketing/:path*",
+=======
+      "source": "/sign-up/:path*",
+>>>>>>> Stashed changes
       "headers": [
         {
           "key": "Cache-Control",
