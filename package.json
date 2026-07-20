@@ -10,7 +10,8 @@
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "verify:deployment": "node scripts/verify-deployment-readiness.mjs",
-    "verify:staging-e2e": "node scripts/staging-e2e-verify.mjs"
+    "verify:staging-e2e": "node scripts/staging-e2e-verify.mjs",
+    "create:staff": "pnpm --filter @workspace/api-server run create-staff --"
   },
   "private": true,
   "devDependencies": {
