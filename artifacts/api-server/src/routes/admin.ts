@@ -186,7 +186,7 @@ router.get("/admin/overview", requireStaffOrProfile, requirePermission("overview
       .select({ status: jobsTable.status, count: sql<number>`count(*)` })
       .from(jobsTable)
       .groupBy(jobsTable.status),
-    // Realised profit: broker fees on jobs whose payment has been released.
+    // Realised profit: customer marketplace fees on jobs whose payment has been released.
     db
       .select({
         releasedProfit: sql<number>`coalesce(sum(coalesce(${jobsTable.platformFeeAmount}, 0)), 0)`,

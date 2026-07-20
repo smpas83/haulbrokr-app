@@ -126,7 +126,7 @@ const FAQS = [
   },
   {
     q: "What are HaulBrokr's fees?",
-    a: "Customers pay a transparent 15% marketplace fee on the base haul of each completed load, plus any fuel surcharge, tolls, and taxes where applicable. Carriers receive the base haul and pass-through charges (fuel, tolls, wait time). No monthly fees.",
+    a: "No monthly fees. Customers receive transparent, upfront pricing before confirming a haul. Quotes may include the haul rate, marketplace service fee, fuel surcharge, tolls, wait time, and applicable taxes. Carriers receive the accepted base haul rate plus approved reimbursements — the marketplace fee is charged to the customer, not the carrier.",
   },
   {
     q: "What if there's a dispute?",

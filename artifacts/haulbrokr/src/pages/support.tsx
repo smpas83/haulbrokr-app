@@ -20,7 +20,7 @@ const faqs = [
     icon: Wallet,
     question: "Payouts",
     answer:
-      "Providers connect a bank account during onboarding to receive payouts. After a job is marked complete, funds are transferred automatically, minus the platform fee. You can track payout status from the Account screen at any time.",
+      "Carriers connect a bank account during onboarding to receive payouts. After a job is marked complete, carriers receive the accepted base haul rate plus approved reimbursements (fuel, tolls, wait time). The marketplace service fee is charged to the customer, not deducted from carrier pay. You can track payout status from the Account screen at any time.",
   },
   {
     icon: ReceiptText,

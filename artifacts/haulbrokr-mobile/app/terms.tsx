@@ -84,14 +84,15 @@ Customers who cancel an accepted bid within 24 hours of the scheduled job start 
   {
     id: "7",
     title: "7. Payments & Fees",
-    body: `HaulBrokr uses a centralized marketplace pricing engine on each completed haul. The current fee schedule is:
+    body: `HaulBrokr uses a centralized marketplace pricing engine on each completed haul. Transparent pricing is shown before the Customer confirms a load and may include:
 
-• Marketplace fee: 15% of base haul (configurable; charged to the customer)
-• Fuel surcharge: weekly national diesel schedule (pass-through)
+• Base haul rate
+• Customer marketplace / service fee (configurable; charged to the Customer only — never deducted from Carrier pay)
+• Fuel surcharge (weekly national diesel schedule; pass-through reimbursement to Carrier when applicable)
 • Additional charges when applicable: tolls, wait time, emergency dispatch, holiday surcharge
 • Taxes where applicable
 
-Fees are subject to change with 30 days' notice and are configurable by HaulBrokr administrators. Payment is processed via the secured payment method on file. Providers receive the base haul plus pass-through charges (fuel, tolls, wait time) after job completion and Customer payment.
+Fees are subject to change with 30 days' notice and are configurable by HaulBrokr administrators. Payment is processed via the secured payment method on file. Carriers receive the accepted base haul plus approved reimbursements after job completion and Customer payment.
 
 Disputed jobs may have payments held pending resolution. The Company is not responsible for disputes arising from disagreements over quantity, quality, or scope of work — those disputes are between Customer and Provider.`,
   },

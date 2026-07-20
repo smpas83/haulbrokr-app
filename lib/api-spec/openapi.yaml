@@ -1456,7 +1456,7 @@ paths:
     post:
       operationId: releaseJobPayment
       tags: [jobs]
-      summary: Release the provider's net payout after a Net-terms customer invoice has been paid (broker fee already retained).
+      summary: Release the provider's net payout after a Net-terms customer invoice has been paid (customer marketplace fee already retained).
       parameters:
         - name: id
           in: path
@@ -1513,7 +1513,7 @@ paths:
     post:
       operationId: createJobCheckoutSession
       tags: [jobs]
-      summary: Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the gross amount. The provider nets the work value and HaulBrokr retains the 15% broker fee as the application fee.
+      summary: Create a Stripe-hosted Checkout Session (payment mode, destination charge) for the customer total. The carrier receives the accepted haul plus reimbursements; HaulBrokr retains the customer marketplace fee as the application fee.
       parameters:
         - name: id
           in: path
@@ -3019,6 +3019,7 @@ components:
         - fuelSurcharge
         - marketplaceFee
         - marketplaceFeeRate
+        - customerSubtotal
         - tolls
         - taxes
         - grandTotal
@@ -3030,6 +3031,11 @@ components:
         marketplaceFee:
           type: number
         marketplaceFeeRate:
+          type: number
+        marketplaceFeeBasis:
+          type: string
+          enum: [base_haul_only, base_plus_surcharges]
+        customerSubtotal:
           type: number
         tolls:
           type: number
@@ -3129,15 +3135,21 @@ components:
           type: object
           required:
             - marketplaceFeeRate
+            - marketplaceFeeBasis
             - fuelSurchargeRate
             - emergencyDispatchRate
             - holidaySurchargeRate
             - waitTimeRatePerHour
+            - waitTimeGracePeriodMinutes
             - taxRate
             - taxesEnabled
           properties:
             marketplaceFeeRate:
               type: number
+              description: Customer marketplace fee rate (decimal). Never applied to carrier payout.
+            marketplaceFeeBasis:
+              type: string
+              enum: [base_haul_only, base_plus_surcharges]
             fuelSurchargeRate:
               type: number
             emergencyDispatchRate:
@@ -3145,6 +3157,8 @@ components:
             holidaySurchargeRate:
               type: number
             waitTimeRatePerHour:
+              type: number
+            waitTimeGracePeriodMinutes:
               type: number
             taxRate:
               type: number

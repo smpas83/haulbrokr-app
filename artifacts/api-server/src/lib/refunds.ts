@@ -165,7 +165,10 @@ export async function issueJobRefund(input: IssueRefundInput): Promise<IssueRefu
         createdByProfileId: createdByProfileId != null ? String(createdByProfileId) : "",
         createdByStaffUsername: createdByStaffUsername ?? "",
       },
+      // Destination-charge path: also refund the platform application fee so the
+      // customer-side marketplace fee can be returned without only clawing the carrier.
       reverse_transfer: true,
+      refund_application_fee: true,
     },
     { idempotencyKey },
   );

@@ -76,7 +76,7 @@ const FAQS = [
     id: "f10",
     category: "Payments",
     q: "How does payment work?",
-    a: "Customers are charged after job completion using HaulBrokr's marketplace pricing engine:\n\n• Base haul (rate × hours)\n• Fuel surcharge (weekly national diesel schedule)\n• Marketplace fee: 15% of base haul\n• Tolls, wait time, emergency/holiday surcharges when applicable\n• Taxes where applicable\n\nProviders receive the base haul plus fuel, tolls, and wait time via direct deposit after the customer pays.",
+    a: "Customers are charged after job completion using HaulBrokr's marketplace pricing engine. Before you confirm, you see:\n\n• Base haul (rate × hours)\n• Fuel surcharge (weekly national diesel schedule)\n• Customer marketplace service fee (configured rate on base haul)\n• Tolls, wait time, emergency/holiday surcharges when applicable\n• Taxes where applicable\n\nCarriers receive the accepted base haul plus fuel, tolls, and wait time. The marketplace fee is charged to the customer and is not deducted from carrier pay.",
   },
   {
     id: "f11",

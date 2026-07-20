@@ -164,18 +164,27 @@ export async function runStartupMigrations(): Promise<void> {
         ADD COLUMN IF NOT EXISTS is_holiday_haul boolean NOT NULL DEFAULT false;
     `);
 
-    // Seed marketplace fee at 15% and other defaults (idempotent).
+    // Seed customer marketplace fee (default 15%, base-haul basis) and other defaults.
     await client.query(`
       INSERT INTO pricing_settings (key, value, description)
       VALUES
-        ('marketplace_fee_rate', 0.15, 'Marketplace / broker fee charged to the customer on base haul (decimal, e.g. 0.15 = 15%)'),
+        ('marketplace_fee_rate', 0.15, 'Customer marketplace / service fee charged on the configured fee basis (decimal, e.g. 0.15). Never deducted from carrier payout.'),
+        ('marketplace_fee_basis', 0, '0 = base haul only (default); 1 = base haul plus surcharges. Taxes are never in the fee basis.'),
         ('fuel_surcharge_rate', 0, 'Fallback fuel surcharge rate when no weekly diesel schedule row is active'),
         ('emergency_dispatch_rate', 0.10, 'Emergency dispatch surcharge as a decimal of base haul'),
         ('holiday_surcharge_rate', 0.15, 'Holiday haul surcharge as a decimal of base haul'),
-        ('wait_time_rate_per_hour', 75, 'Wait-time charge in USD per billable hour'),
-        ('tax_rate', 0, 'Default sales/use tax rate as a decimal (applied when tax_enabled = 1)'),
+        ('wait_time_rate_per_hour', 75, 'Wait-time charge in USD per billable hour (after grace period)'),
+        ('wait_time_grace_period_minutes', 15, 'Minutes of wait time before billing begins'),
+        ('tax_rate', 0, 'Default sales/use tax rate as a decimal (applied when tax_enabled = 1). Marketplace fee is not taxed.'),
         ('tax_enabled', 0, 'Whether taxes are applied by default (1 = yes, 0 = no)')
       ON CONFLICT (key) DO NOTHING;
+    `);
+    // Relabel legacy description if an older seed is already present.
+    await client.query(`
+      UPDATE pricing_settings
+      SET description = 'Customer marketplace / service fee charged on the configured fee basis (decimal, e.g. 0.15). Never deducted from carrier payout.'
+      WHERE key = 'marketplace_fee_rate'
+        AND (description IS NULL OR description NOT LIKE 'Customer marketplace%');
     `);
 
     await client.query("COMMIT");

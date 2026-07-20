@@ -63,10 +63,12 @@ export type FuelSurchargeWeek = typeof fuelSurchargeWeeksTable.$inferSelect;
 /** Canonical setting keys used by the pricing engine. */
 export const PRICING_SETTING_KEYS = [
   "marketplace_fee_rate",
+  "marketplace_fee_basis",
   "fuel_surcharge_rate",
   "emergency_dispatch_rate",
   "holiday_surcharge_rate",
   "wait_time_rate_per_hour",
+  "wait_time_grace_period_minutes",
   "tax_rate",
   "tax_enabled",
 ] as const;
