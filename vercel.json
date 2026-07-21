@@ -64,6 +64,28 @@
       "destination": "https://kashventure.com/sign-in/:path*"
     },
     {
+      "source": "/sign-in",
+      "has": [
+        {
+          "type": "query",
+          "key": "ru",
+          "value": "(?<ru>.*(?:haulbrokr/admin|admin/marketing|haulbrokr\\.com).*)"
+        }
+      ],
+      "destination": "https://kashventure.com/sign-in"
+    },
+    {
+      "source": "/sign-in/:path*",
+      "has": [
+        {
+          "type": "query",
+          "key": "ru",
+          "value": "(?<ru>.*(?:haulbrokr/admin|admin/marketing|haulbrokr\\.com).*)"
+        }
+      ],
+      "destination": "https://kashventure.com/sign-in/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://haulbrokr-api.onrender.com/api/:path*"
     },
@@ -82,7 +104,7 @@
   ],
   "headers": [
     {
-      "source": "/admin",
+      "source": "/sign-in/:path*",
       "headers": [
         {
           "key": "Cache-Control",
@@ -91,7 +113,34 @@
       ]
     },
     {
-      "source": "/admin/:path*",
+      "source": "/sign-in",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/__clerk/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/__clerk",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/api/haulbrokr/marketing/:path*",
       "headers": [
         {
           "key": "Cache-Control",
@@ -109,7 +158,16 @@
       ]
     },
     {
-      "source": "/api/haulbrokr/marketing/:path*",
+      "source": "/admin/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/admin",
       "headers": [
         {
           "key": "Cache-Control",
