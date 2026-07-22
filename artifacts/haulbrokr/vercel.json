@@ -14,16 +14,12 @@
       "destination": "https://kashventure.com/haulbrokr/admin/marketing/:path*"
     },
     {
-      "source": "/admin",
-      "destination": "https://kashventure.com/haulbrokr/admin"
+      "source": "/haulbrokr/admin/marketing",
+      "destination": "https://kashventure.com/haulbrokr/admin/marketing"
     },
     {
-      "source": "/haulbrokr/admin",
-      "destination": "https://kashventure.com/haulbrokr/admin"
-    },
-    {
-      "source": "/haulbrokr/admin/:path*",
-      "destination": "https://kashventure.com/haulbrokr/admin/:path*"
+      "source": "/haulbrokr/admin/marketing/:path*",
+      "destination": "https://kashventure.com/haulbrokr/admin/marketing/:path*"
     },
     {
       "source": "/api/haulbrokr/marketing/:path*",
@@ -47,7 +43,7 @@
         {
           "type": "query",
           "key": "redirect_url",
-          "value": "(?<ru>.*(?:haulbrokr/admin|admin/marketing|haulbrokr\\.com).*)"
+          "value": "(?<ru>.*(?:admin/marketing|haulbrokr/admin/marketing).*)"
         }
       ],
       "destination": "https://kashventure.com/sign-in"
@@ -58,7 +54,7 @@
         {
           "type": "query",
           "key": "redirect_url",
-          "value": "(?<ru>.*(?:haulbrokr/admin|admin/marketing|haulbrokr\\.com).*)"
+          "value": "(?<ru>.*(?:admin/marketing|haulbrokr/admin/marketing).*)"
         }
       ],
       "destination": "https://kashventure.com/sign-in/:path*"
@@ -69,7 +65,7 @@
         {
           "type": "query",
           "key": "ru",
-          "value": "(?<ru>.*(?:haulbrokr/admin|admin/marketing|haulbrokr\\.com).*)"
+          "value": "(?<ru>.*(?:admin/marketing|haulbrokr/admin/marketing).*)"
         }
       ],
       "destination": "https://kashventure.com/sign-in"
@@ -80,7 +76,7 @@
         {
           "type": "query",
           "key": "ru",
-          "value": "(?<ru>.*(?:haulbrokr/admin|admin/marketing|haulbrokr\\.com).*)"
+          "value": "(?<ru>.*(?:admin/marketing|haulbrokr/admin/marketing).*)"
         }
       ],
       "destination": "https://kashventure.com/sign-in/:path*"
@@ -149,7 +145,34 @@
       ]
     },
     {
-      "source": "/haulbrokr/admin/:path*",
+      "source": "/haulbrokr/admin/marketing/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/haulbrokr/admin/marketing",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/admin/marketing/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/admin/marketing",
       "headers": [
         {
           "key": "Cache-Control",
